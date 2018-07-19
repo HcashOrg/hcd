@@ -1,0 +1,13 @@
+[Unit]
+Description=Hcd Full Node
+
+[Service]
+Type=simple
+User=hcd
+Group=hcd
+WorkingDirectory=/var/hcd
+ExecStart=/opt/decred/bin/hcd --appdata=/var/hcd
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
