@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
+	"regexp"
 	"fmt"
 	"math"
 	"net"
@@ -64,6 +65,7 @@ var (
 	// ourselves to other decred peers.
 	userAgentName = "hcd"
 
+	initAgentVersion = "2.0.0"
 	// userAgentVersion is the user agent version and is used to help
 	// identify ourselves to other peers.
 	userAgentVersion = fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
@@ -331,6 +333,39 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 
 	// Signal the block manager this peer is a new sync candidate.
 	sp.server.blockManager.NewPeer(sp)
+	//format example /hcd:2.0.0/
+	var valid = regexp.MustCompile("hcd:[0-9]*.[0-9]*.[0-9]*")
+	val := valid.FindAllStringSubmatch(p.UserAgent(), 1)
+	if !(len(val) !=0 && len(val[0])!=0) {
+		peerLog.Warnf("peer has no hcd agentVersion %s ",	sp)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+
+	receiveVerisonStr := strings.TrimLeft(strings.Replace(val[0][0], ".", "", -1),"hcd:")
+	receiveVerison, err := strconv.ParseInt(receiveVerisonStr, 10, 32)
+	if err != nil {
+		peerLog.Warnf("can not get peer remote app version %s ",	sp)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+
+	initVersion, err := strconv.ParseInt(strings.Replace(initAgentVersion, ".", "", -1), 10, 32)
+	if err != nil {
+		peerLog.Warnf("can not get peer local app version %s ",	sp)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+
+	if receiveVerison < initVersion {
+		peerLog.Warnf("too old version peer %s ",	sp)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
 
 	// Choose whether or not to relay transactions before a filter command
 	// is received.
