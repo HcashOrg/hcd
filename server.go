@@ -65,7 +65,7 @@ var (
 	// ourselves to other decred peers.
 	userAgentName = "hcd"
 
-	initAgentVersion = "2.0.0"
+	initAgentVersion = "2.0.1"
 	// userAgentVersion is the user agent version and is used to help
 	// identify ourselves to other peers.
 	userAgentVersion = fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
