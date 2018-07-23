@@ -10,20 +10,20 @@ import (
 	"io"
 )
 
-// MsgFilterClear implements the Message interface and represents a decred
+// MsgFilterClear implements the Message interface and represents a hcd
 // filterclear message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version and has
 // no payload.
 type MsgFilterClear struct{}
 
-// BtcDecode decodes r using the decred protocol encoding into the receiver.
+// BtcDecode decodes r using the hcd protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgFilterClear) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the decred protocol encoding.
+// BtcEncode encodes the receiver to w using the hcd protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgFilterClear) BtcEncode(w io.Writer, pver uint32) error {
 	return nil
@@ -41,7 +41,7 @@ func (msg *MsgFilterClear) MaxPayloadLength(pver uint32) uint32 {
 	return 0
 }
 
-// NewMsgFilterClear returns a new decred filterclear message that conforms to the Message
+// NewMsgFilterClear returns a new hcd filterclear message that conforms to the Message
 // interface.  See MsgFilterClear for details.
 func NewMsgFilterClear() *MsgFilterClear {
 	return &MsgFilterClear{}

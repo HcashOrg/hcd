@@ -9,15 +9,15 @@
 package dcrjson
 
 const (
-	// TicketPurchasedNtfnMethod is the method of the dcrwallet
+	// TicketPurchasedNtfnMethod is the method of the hcwallet
 	// ticketpurchased notification.
 	TicketPurchasedNtfnMethod = "ticketpurchased"
 
-	// VoteCreatedNtfnMethod is the method of the dcrwallet
+	// VoteCreatedNtfnMethod is the method of the hcwallet
 	// votecreated notification.
 	VoteCreatedNtfnMethod = "votecreated"
 
-	// RevocationCreatedNtfnMethod is the method of the dcrwallet
+	// RevocationCreatedNtfnMethod is the method of the hcwallet
 	// revocationcreated notification.
 	RevocationCreatedNtfnMethod = "revocationcreated"
 

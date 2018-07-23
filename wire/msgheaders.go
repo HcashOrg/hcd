@@ -12,10 +12,10 @@ import (
 )
 
 // MaxBlockHeadersPerMsg is the maximum number of block headers that can be in
-// a single decred headers message.
+// a single hcd headers message.
 const MaxBlockHeadersPerMsg = 2000
 
-// MsgHeaders implements the Message interface and represents a decred headers
+// MsgHeaders implements the Message interface and represents a hcd headers
 // message.  It is used to deliver block header information in response
 // to a getheaders message (MsgGetHeaders).  The maximum number of block headers
 // per message is currently 2000.  See MsgGetHeaders for details on requesting
@@ -36,7 +36,7 @@ func (msg *MsgHeaders) AddBlockHeader(bh *BlockHeader) error {
 	return nil
 }
 
-// BtcDecode decodes r using the decred protocol encoding into the receiver.
+// BtcDecode decodes r using the hcd protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgHeaders) BtcDecode(r io.Reader, pver uint32) error {
 	count, err := ReadVarInt(r, pver)
@@ -79,7 +79,7 @@ func (msg *MsgHeaders) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the decred protocol encoding.
+// BtcEncode encodes the receiver to w using the hcd protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgHeaders) BtcEncode(w io.Writer, pver uint32) error {
 	// Limit to max block headers per message.
@@ -129,7 +129,7 @@ func (msg *MsgHeaders) MaxPayloadLength(pver uint32) uint32 {
 		MaxBlockHeadersPerMsg)
 }
 
-// NewMsgHeaders returns a new decred headers message that conforms to the
+// NewMsgHeaders returns a new hcd headers message that conforms to the
 // Message interface.  See MsgHeaders for details.
 func NewMsgHeaders() *MsgHeaders {
 	return &MsgHeaders{

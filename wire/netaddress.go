@@ -18,7 +18,7 @@ import (
 // a TCP address as required.
 var ErrInvalidNetAddr = errors.New("provided net.Addr is not a net.TCPAddr")
 
-// maxNetAddressPayload returns the max payload size for a decred NetAddress
+// maxNetAddressPayload returns the max payload size for a hcd NetAddress
 // based on the protocol version.
 func maxNetAddressPayload(pver uint32) uint32 {
 	// Services 8 bytes + ip 16 bytes + port 2 bytes.

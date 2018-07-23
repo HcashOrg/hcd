@@ -1233,7 +1233,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 // requirements are met, detecting double spends, validating all values and
 // fees are in the legal range and the total output amount doesn't exceed the
 // input amount, and verifying the signatures to prove the spender was the
-// owner of the decred and therefore allowed to spend them.  As it checks the
+// owner of the hcd and therefore allowed to spend them.  As it checks the
 // inputs, it also calculates the total fees for the transaction and returns
 // that value.
 //

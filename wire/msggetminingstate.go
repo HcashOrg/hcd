@@ -15,13 +15,13 @@ import (
 // from a peer.
 type MsgGetMiningState struct{}
 
-// BtcDecode decodes r using the decred protocol encoding into the receiver.
+// BtcDecode decodes r using the hcd protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgGetMiningState) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the decred protocol encoding.
+// BtcEncode encodes the receiver to w using the hcd protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgGetMiningState) BtcEncode(w io.Writer, pver uint32) error {
 	return nil
@@ -39,7 +39,7 @@ func (msg *MsgGetMiningState) MaxPayloadLength(pver uint32) uint32 {
 	return 0
 }
 
-// NewMsgGetMiningState returns a new decred pong message that conforms to the Message
+// NewMsgGetMiningState returns a new hcd pong message that conforms to the Message
 // interface.  See MsgPong for details.
 func NewMsgGetMiningState() *MsgGetMiningState {
 	return &MsgGetMiningState{}

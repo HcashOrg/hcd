@@ -23,7 +23,7 @@ import (
 // --> Total 180 bytes.
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
 
-// BlockHeader defines information about a block and is used in the decred
+// BlockHeader defines information about a block and is used in the hcd
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
 	// Version of the block.  This is not the same as the protocol version.
@@ -186,7 +186,7 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 	}
 }
 
-// readBlockHeader reads a decred block header from r.  See Deserialize for
+// readBlockHeader reads a hcd block header from r.  See Deserialize for
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
 func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
@@ -197,7 +197,7 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
 }
 
-// writeBlockHeader writes a decred block header to w.  See Serialize for
+// writeBlockHeader writes a hcd block header to w.  See Serialize for
 // encoding block headers to be stored to disk, such as in a database, as
 // opposed to encoding for the wire.
 func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {

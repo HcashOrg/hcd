@@ -10,9 +10,9 @@ import (
 	"io"
 )
 
-// MsgPong implements the Message interface and represents a decred pong
+// MsgPong implements the Message interface and represents a hcd pong
 // message which is used primarily to confirm that a connection is still valid
-// in response to a decred ping message (MsgPing).
+// in response to a hcd ping message (MsgPing).
 //
 // This message was not added until protocol versions AFTER BIP0031Version.
 type MsgPong struct {
@@ -21,13 +21,13 @@ type MsgPong struct {
 	Nonce uint64
 }
 
-// BtcDecode decodes r using the decred protocol encoding into the receiver.
+// BtcDecode decodes r using the hcd protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgPong) BtcDecode(r io.Reader, pver uint32) error {
 	return readElement(r, &msg.Nonce)
 }
 
-// BtcEncode encodes the receiver to w using the decred protocol encoding.
+// BtcEncode encodes the receiver to w using the hcd protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgPong) BtcEncode(w io.Writer, pver uint32) error {
 	return writeElement(w, msg.Nonce)
@@ -50,7 +50,7 @@ func (msg *MsgPong) MaxPayloadLength(pver uint32) uint32 {
 	return plen
 }
 
-// NewMsgPong returns a new decred pong message that conforms to the Message
+// NewMsgPong returns a new hcd pong message that conforms to the Message
 // interface.  See MsgPong for details.
 func NewMsgPong(nonce uint64) *MsgPong {
 	return &MsgPong{

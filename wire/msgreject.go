@@ -50,7 +50,7 @@ func (code RejectCode) String() string {
 	return fmt.Sprintf("Unknown RejectCode (%d)", uint8(code))
 }
 
-// MsgReject implements the Message interface and represents a decred reject
+// MsgReject implements the Message interface and represents a hcd reject
 // message.
 //
 // This message was not added until protocol version RejectVersion.
@@ -73,7 +73,7 @@ type MsgReject struct {
 	Hash chainhash.Hash
 }
 
-// BtcDecode decodes r using the decred protocol encoding into the receiver.
+// BtcDecode decodes r using the hcd protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgReject) BtcDecode(r io.Reader, pver uint32) error {
 	// Command that was rejected.
@@ -109,7 +109,7 @@ func (msg *MsgReject) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the decred protocol encoding.
+// BtcEncode encodes the receiver to w using the hcd protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgReject) BtcEncode(w io.Writer, pver uint32) error {
 	// Command that was rejected.
@@ -161,7 +161,7 @@ func (msg *MsgReject) MaxPayloadLength(pver uint32) uint32 {
 	return plen
 }
 
-// NewMsgReject returns a new decred reject message that conforms to the
+// NewMsgReject returns a new hcd reject message that conforms to the
 // Message interface.  See MsgReject for details.
 func NewMsgReject(command string, code RejectCode, reason string) *MsgReject {
 	return &MsgReject{

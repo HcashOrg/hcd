@@ -1121,7 +1121,7 @@ func handleCreatedBlockTemplate(blockTemplate *BlockTemplate,
 //  |  <= policy.BlockMinSize)          |   |
 //   -----------------------------------  --
 //
-// TODO - DECRED
+// TODO - hcd
 // We also need to include a stake tx tree that looks like the following:
 //
 //   -----------------------------------  --  --

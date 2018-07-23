@@ -68,15 +68,15 @@ from a remote peer is:
 	// Use the most recent protocol version supported by the package and the
 	// main decred network.
 	pver := wire.ProtocolVersion
-	dcrnet := wire.MainNet
+	hcdnet := wire.MainNet
 
 	// Create a new getaddr decred message.
 	msg := wire.NewMsgGetAddr()
 
 	// Writes a decred message msg to conn using the protocol version
-	// pver, and the decred network dcrnet.  The return is a possible
+	// pver, and the decred network hcdnet.  The return is a possible
 	// error.
-	err := wire.WriteMessage(conn, msg, pver, dcrnet)
+	err := wire.WriteMessage(conn, msg, pver, hcdnet)
 	if err != nil {
 		// Log and handle the error
 	}

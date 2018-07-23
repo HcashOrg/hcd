@@ -72,21 +72,21 @@ type newPeerMsg struct {
 	peer *serverPeer
 }
 
-// blockMsg packages a decred block message and the peer it came from together
+// blockMsg packages a hcd block message and the peer it came from together
 // so the block handler has access to that information.
 type blockMsg struct {
 	block *hcutil.Block
 	peer  *serverPeer
 }
 
-// invMsg packages a decred inv message and the peer it came from together
+// invMsg packages a hcd inv message and the peer it came from together
 // so the block handler has access to that information.
 type invMsg struct {
 	inv  *wire.MsgInv
 	peer *serverPeer
 }
 
-// headersMsg packages a decred headers message and the peer it came from
+// headersMsg packages a hcd headers message and the peer it came from
 // together so the block handler has access to that information.
 type headersMsg struct {
 	headers *wire.MsgHeaders
@@ -98,7 +98,7 @@ type donePeerMsg struct {
 	peer *serverPeer
 }
 
-// txMsg packages a decred tx message and the peer it came from together
+// txMsg packages a hcd tx message and the peer it came from together
 // so the block handler has access to that information.
 type txMsg struct {
 	tx   *hcutil.Tx
@@ -2585,7 +2585,7 @@ func (b *blockManager) SetParentTemplate(bt *BlockTemplate) {
 	return
 }
 
-// newBlockManager returns a new decred block manager.
+// newBlockManager returns a new hcd block manager.
 // Use Start to begin processing asynchronous block and inv updates.
 func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockManager, error) {
 	bm := blockManager{

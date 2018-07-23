@@ -50,7 +50,7 @@ func (invtype InvType) String() string {
 	return fmt.Sprintf("Unknown InvType (%d)", uint32(invtype))
 }
 
-// InvVect defines a decred inventory vector which is used to describe data,
+// InvVect defines a hcd inventory vector which is used to describe data,
 // as specified by the Type field, that a peer wants, has, or does not have to
 // another peer.
 type InvVect struct {

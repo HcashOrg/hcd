@@ -56,7 +56,7 @@ func validDbType(dbType string) bool {
 	return false
 }
 
-// netName returns the name used when referring to a decred network.  At the
+// netName returns the name used when referring to a hcd network.  At the
 // time of writing, hcd currently places blocks for testnet version 2 in the
 // data and log directory "testnet2", which does not match the Name field of the
 // chaincfg parameters.  This function can be used to override this directory name

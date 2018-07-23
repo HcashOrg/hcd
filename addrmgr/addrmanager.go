@@ -29,7 +29,7 @@ import (
 )
 
 // AddrManager provides a concurrency safe address manager for caching potential
-// peers on the decred network.
+// peers on the hcd network.
 type AddrManager struct {
 	mtx            sync.Mutex
 	peersFile      string
@@ -1083,7 +1083,7 @@ func (a *AddrManager) GetBestLocalAddress(remoteAddr *wire.NetAddress) *wire.Net
 	return bestAddress
 }
 
-// New returns a new decred address manager.
+// New returns a new hcd address manager.
 // Use Start to begin processing asynchronous address updates.
 func New(dataDir string, lookupFunc func(string) ([]net.IP, error)) *AddrManager {
 	am := AddrManager{

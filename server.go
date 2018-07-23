@@ -71,7 +71,7 @@ var (
 	userAgentVersion = fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
 )
 
-// broadcastMsg provides the ability to house a decred message to be broadcast
+// broadcastMsg provides the ability to house a hcd message to be broadcast
 // to all connected peers except specified excluded peers.
 type broadcastMsg struct {
 	message      wire.Message
@@ -141,8 +141,8 @@ func (ps *peerState) forAllPeers(closure func(sp *serverPeer)) {
 	ps.forAllOutboundPeers(closure)
 }
 
-// server provides a decred server for handling communications to and from
-// decred peers.
+// server provides a hcd server for handling communications to and from
+// hcd peers.
 type server struct {
 	// The following variables must only be used atomically.
 	// Putting the uint64s first makes them 64-bit aligned for 32-bit systems.
@@ -2264,7 +2264,7 @@ func standardScriptVerifyFlags(chain *blockchain.BlockChain) (txscript.ScriptFla
 }
 
 // newServer returns a new hcd server configured to listen on addr for the
-// decred network type specified by chainParams.  Use start to begin accepting
+// hcd network type specified by chainParams.  Use start to begin accepting
 // connections from peers.
 func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Params) (*server, error) {
 	services := defaultServices

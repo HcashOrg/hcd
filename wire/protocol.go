@@ -37,7 +37,7 @@ const (
 	FeeFilterVersion uint32 = 5
 )
 
-// ServiceFlag identifies services supported by a decred peer.
+// ServiceFlag identifies services supported by a hcd peer.
 type ServiceFlag uint64
 
 const (
@@ -87,10 +87,10 @@ func (f ServiceFlag) String() string {
 	return s
 }
 
-// CurrencyNet represents which decred network a message belongs to.
+// CurrencyNet represents which hcd network a message belongs to.
 type CurrencyNet uint32
 
-// Constants used to indicate the message decred network.  They can also be
+// Constants used to indicate the message hcd network.  They can also be
 // used to seek to the next message when a stream's state is unknown, but
 // this package does not provide that functionality since it's generally a
 // better idea to simply disconnect clients that are misbehaving over TCP.
@@ -108,7 +108,7 @@ const (
 	SimNet CurrencyNet = 0x8a136344
 )
 
-// bnStrings is a map of decred networks back to their constant names for
+// bnStrings is a map of hcd networks back to their constant names for
 // pretty printing.
 var bnStrings = map[CurrencyNet]string{
 	MainNet:  "MainNet",
