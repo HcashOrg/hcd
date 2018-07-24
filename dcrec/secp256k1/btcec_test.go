@@ -1,6 +1,6 @@
 // Copyright 2011 The Go Authors. All rights reserved.
 // Copyright (c) 2015-2017 The Decred developers 
-// Copyright (c) 2018-2020 The Hcd developers
+// Copyright (c) 2018-2020 The Hc developers
 // Copyright 2011 ThePiachu. All rights reserved.
 // Copyright 2013-2016 The btcsuite developers
 // Use of this source code is governed by an ISC

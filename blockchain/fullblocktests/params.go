@@ -1,5 +1,5 @@
 // Copyright (c) 2016-2017 The Decred developers
-// Copyright (c) 2018-2020 The Hcd developers
+// Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
@@ -227,7 +227,7 @@ var simNetParams = &chaincfg.Params{
 	StakeValidationHeight: 16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:    []byte{0xde, 0xad, 0xbe, 0xef},
 
-	// Hcd organization related parameters
+	// Hc organization related parameters
 	OrganizationPkScript:        fromHex("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger: []*chaincfg.TokenPayout{
