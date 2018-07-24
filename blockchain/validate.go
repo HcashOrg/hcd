@@ -13,12 +13,12 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/HcashOrg//blockchain/stake"
-	"github.com/HcashOrg//chaincfg"
-	"github.com/HcashOrg//chaincfg/chainhash"
-	"github.com/HcashOrg//database"
-	"github.com/HcashOrg//txscript"
-	"github.com/HcashOrg//wire"
+	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/chaincfg"
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/txscript"
+	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcutil"
 )
 
