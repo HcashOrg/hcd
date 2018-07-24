@@ -2168,7 +2168,7 @@ func (b *BlockChain) maxBlockSize(prevNode *blockNode) (int64, error) {
 	// here because there is only one possible choice that can be active
 	// for the agenda, which is yes, so there is no need to check it.
 	maxSize := int64(b.chainParams.MaximumBlockSizes[0])
-	state, err := b.deploymentState(prevNode, 4, chaincfg.VoteIDMaxBlockSize)
+	state, err := b.deploymentState(prevNode, 7, chaincfg.VoteIDMaxBlockSize)
 	if err != nil {
 		return maxSize, err
 	}
