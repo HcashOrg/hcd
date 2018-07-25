@@ -189,7 +189,8 @@ func signMultiSig(tx *wire.MsgTx, idx int, subScript []byte, hashType SigHashTyp
 		if err != nil {
 			continue
 		}
-		sig, err := RawTxInSignature(tx, idx, subScript, hashType, key)
+		keyType := key.GetType()
+		sig, err := RawTxInSignatureAlt(tx, idx, subScript, hashType, key, sigTypes(keyType))
 		if err != nil {
 			continue
 		}
@@ -508,7 +509,14 @@ sigLoop:
 		tSig := sig[:len(sig)-1]
 		hashType := SigHashType(sig[len(sig)-1])
 
-		pSig, err := chainec.Secp256k1.ParseDERSignature(tSig)
+		var pSig hccrypto.Signature
+		var err error
+		if len(tSig) > 397 {
+			pSig, err = bs.BlissDSA.ParseDERSignature(tSig)
+		} else {
+			pSig, err = chainec.Secp256k1.ParseDERSignature(tSig)
+		}
+
 		if err != nil {
 			continue
 		}
@@ -525,25 +533,39 @@ sigLoop:
 			continue
 		}
 
+		var pubKey chainec.PublicKey
 		for _, addr := range addresses {
 			// All multisig addresses should be pubkey addreses
 			// it is an error to call this internal function with
 			// bad input.
-			pkaddr := addr.(*hcutil.AddressSecpPubKey)
 
-			pubKey := pkaddr.PubKey()
+			switch addr := addr.(type) {
+			case *hcutil.AddressSecpPubKey:
+				pubKey = addr.PubKey()
+				// If it matches we put it in the map. We only
+				// can take one signature per public key so if we
+				// already have one, we can throw this away.
+				r := pSig.GetR()
+				s := pSig.GetS()
 
-			// If it matches we put it in the map. We only
-			// can take one signature per public key so if we
-			// already have one, we can throw this away.
-			r := pSig.GetR()
-			s := pSig.GetS()
-			if chainec.Secp256k1.Verify(pubKey, hash, r, s) {
-				aStr := addr.EncodeAddress()
-				if _, ok := addrToSig[aStr]; !ok {
-					addrToSig[aStr] = sig
+				if chainec.Secp256k1.Verify(pubKey, hash, r, s) {
+					aStr := addr.EncodeAddress()
+					if _, ok := addrToSig[aStr]; !ok {
+						addrToSig[aStr] = sig
+					}
+					continue sigLoop
 				}
-				continue sigLoop
+			case *hcutil.AddressBlissPubKey:
+				pubKey = addr.PubKey()
+				if bs.BlissDSA.Verify(pubKey, hash, pSig) {
+					aStr := addr.EncodeAddress()
+					if _, ok := addrToSig[aStr]; !ok {
+						addrToSig[aStr] = sig
+					}
+					continue sigLoop
+				}
+			default:
+				continue
 			}
 		}
 	}

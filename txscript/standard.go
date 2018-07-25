@@ -189,7 +189,7 @@ func isMultiSig(pops []parsedOpcode) bool {
 
 	for _, pop := range pops[1 : l-2] {
 		// Valid pubkeys are either 33 or 65 bytes.
-		if len(pop.data) != 33 && len(pop.data) != 65 {
+		if len(pop.data) != 33 && len(pop.data) != 65 && len(pop.data) != 897 {
 			return false
 		}
 	}
@@ -1171,7 +1171,7 @@ func PayToAddrScript(addr hcutil.Address) ([]byte, error) {
 // nrequired of the keys in pubkeys are required to have signed the transaction
 // for success.  An ErrBadNumRequired will be returned if nrequired is larger
 // than the number of keys provided.
-func MultiSigScript(pubkeys []*hcutil.AddressSecpPubKey, nrequired int) ([]byte,
+func MultiSigScript(pubkeys []hcutil.Address, nrequired int) ([]byte,
 	error) {
 	if len(pubkeys) < nrequired {
 		return nil, ErrBadNumRequired
@@ -1375,12 +1375,23 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		// Extract the public keys while skipping any that are invalid.
 		addrs = make([]hcutil.Address, 0, numPubKeys)
 		for i := 0; i < numPubKeys; i++ {
-			pubkey, err := chainec.Secp256k1.ParsePubKey(pops[i+1].data)
-			if err == nil {
-				addr, err := hcutil.NewAddressSecpPubKeyCompressed(pubkey,
-					chainParams)
+			if len(pops[i+1].data) == 897 { //for bliss
+				pubkey, err := bs.Bliss.ParsePubKey(pops[i+1].data)
 				if err == nil {
-					addrs = append(addrs, addr)
+					addr, err := hcutil.NewAddressBlissPubKeyCompressed(pubkey,
+						chainParams)
+					if err == nil {
+						addrs = append(addrs, addr)
+					}
+				}
+			} else {
+				pubkey, err := chainec.Secp256k1.ParsePubKey(pops[i+1].data)
+				if err == nil {
+					addr, err := hcutil.NewAddressSecpPubKeyCompressed(pubkey,
+						chainParams)
+					if err == nil {
+						addrs = append(addrs, addr)
+					}
 				}
 			}
 		}

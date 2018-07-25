@@ -126,10 +126,11 @@ func CalcPriority(tx *wire.MsgTx, utxoView *blockchain.UtxoViewpoint, nextBlockH
 	// <33 byte compresed pubkey> + OP_CHECKSIG}]
 	//
 	// Thus 1 + 73 + 1 + 1 + 33 + 1 = 110
+	// Thus 1 + 733 + 1 + 1 + 897 + 1 = 1634,biss 733-byte sig,897 -bytes pk
 	overhead := 0
 	for _, txIn := range tx.TxIn {
 		// Max inputs + size can't possibly overflow here.
-		overhead += 41 + minInt(110, len(txIn.SignatureScript))
+		overhead += 41 + minInt(1634, len(txIn.SignatureScript))
 	}
 
 	serializedTxSize := tx.SerializeSize()

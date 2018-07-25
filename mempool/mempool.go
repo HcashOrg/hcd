@@ -1107,8 +1107,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 		currentPriority := CalcPriority(msgTx, utxoView,
 			nextBlockHeight)
 		if currentPriority <= MinHighPriority {
-			str := fmt.Sprintf("transaction %v has insufficient "+
-				"priority (%g <= %g)", txHash,
+			str := fmt.Sprintf("transaction %v has insufficient priority (%g <= %g)", txHash,
 				currentPriority, MinHighPriority)
 			return nil, txRuleError(wire.RejectInsufficientFee, str)
 		}
@@ -1435,8 +1434,8 @@ func (mp *TxPool) ProcessTransaction(tx *hcutil.Tx, allowOrphan, rateLimit, allo
 		// inputs is assumed to mean they are already spent
 		// which is not really always the case.
 		str := fmt.Sprintf("orphan transaction %v references "+
-			"outputs of unknown or fully-spent "+
-			"transaction %v", tx.Hash(), missingParents[0])
+			"outputs of unknown or fully-spent transaction %v",
+			tx.Hash(), missingParents[0])
 		return nil, txRuleError(wire.RejectDuplicate, str)
 	}
 

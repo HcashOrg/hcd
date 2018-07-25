@@ -241,8 +241,7 @@ func (vm *Engine) CheckErrorCondition(finalScript bool) error {
 	if vm.scriptIdx < len(vm.scripts) {
 		return ErrStackScriptUnfinished
 	}
-	if finalScript && vm.hasFlag(ScriptVerifyCleanStack) &&
-		vm.dstack.Depth() != 1 {
+	if finalScript && vm.hasFlag(ScriptVerifyCleanStack) && vm.dstack.Depth() != 1 {
 		return ErrStackCleanStack
 	} else if vm.dstack.Depth() < 1 {
 		return ErrStackEmptyStack
