@@ -37,7 +37,7 @@ const (
 
 	// generatedBlockVersionTest is the version of the block being generated
 	// for networks other than the main network.
-	generatedBlockVersionTest = 6
+	generatedBlockVersionTest = 8
 
 	// blockHeaderOverhead is the max number of bytes it takes to serialize
 	// a block header and max possible transaction count.
