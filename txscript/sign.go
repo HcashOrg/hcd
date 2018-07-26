@@ -15,7 +15,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcutil"
 	bs "github.com/HcashOrg/hcd/crypto/bliss"
-	hccrypto "github.com/coolsnady/hcd/crypto"
+	hccrypto "github.com/HcashOrg/hcd/crypto"
 )
 
 // RawTxInSignature returns the serialized ECDSA signature for the input idx of
