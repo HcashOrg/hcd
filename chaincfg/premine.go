@@ -11,7 +11,7 @@ package chaincfg
 var BlockOneLedgerMainNet = []*TokenPayout{
 	{"HsDMnqM8qaDquPeqYG9XUkRb9CWBWcevJue",40000000 * 1e8},
 	{"TspAtkQvUoYKMUzxtTQSUuk6gECEWd7ZuUV",2000000 * 1e8},
-	{"TbQ6WRtrx8w9oWXf49vyTqL3xDdsNRy1m7q",1430000 * 1e8},
+	{"TbQ6WRtrx8w9oWXf49vyTqL3xDdsNRy1m7q",1326010 * 1e8},
 }
 
 // BlockOneLedgerTestNet is the block one output ledger for the test
