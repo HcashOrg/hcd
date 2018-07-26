@@ -65,7 +65,6 @@ var (
 	// ourselves to other decred peers.
 	userAgentName = "hcd"
 
-	initAgentVersion = "2.0.2"
 	// userAgentVersion is the user agent version and is used to help
 	// identify ourselves to other peers.
 	userAgentVersion = fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
@@ -343,24 +342,41 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 		return
 	}
 
-	receiveVerisonStr := strings.TrimLeft(strings.Replace(val[0][0], ".", "", -1),"hcd:")
-	receiveVerison, err := strconv.ParseInt(receiveVerisonStr, 10, 32)
-	if err != nil {
-		peerLog.Warnf("can not get peer remote app version %s ",	sp)
+	receiveVerisonStr := strings.TrimLeft(val[0][0],"hcd:")
+	versionArray := strings.Split(receiveVerisonStr, ".")
+	if len(versionArray) != 3 {
+		peerLog.Warnf("parser remote app version %s fail",	sp)
 		sp.server.BanPeer(sp)
 		sp.Disconnect()
 		return
 	}
 
-	initVersion, err := strconv.ParseInt(strings.Replace(initAgentVersion, ".", "", -1), 10, 32)
-	if err != nil {
-		peerLog.Warnf("can not get peer local app version %s ",	sp)
+	oldAppMajor, err := strconv.ParseInt(versionArray[0], 10, 32)
+	if err !=nil {
+		peerLog.Warnf("parser remote app version %s fail",	sp)
 		sp.server.BanPeer(sp)
 		sp.Disconnect()
 		return
 	}
+	oldAppMinor, err := strconv.ParseInt(versionArray[1], 10, 32)
+	if err !=nil {
+		peerLog.Warnf("parser remote app version %s fail",	sp)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+	oldAppPatch, err := strconv.ParseInt(versionArray[2], 10, 32)
+	if err !=nil {
+		peerLog.Warnf("parser remote app version %s fail",	sp)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+	
+	oldVersion := int32(1000000 * oldAppMajor + 10000 * oldAppMinor +100 * oldAppPatch)
+	currVersion :=int32(1000000 * appMajor + 10000 * appMinor +100 * appPatch)
 
-	if receiveVerison < initVersion {
+	if oldVersion < currVersion {
 		peerLog.Warnf("too old version peer %s ",	sp)
 		sp.server.BanPeer(sp)
 		sp.Disconnect()

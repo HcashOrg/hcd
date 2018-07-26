@@ -726,75 +726,88 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 	}
 
 	if !fastAdd {
-		// Reject version 5 blocks for networks other than the main
-		// network once a majority of the network has upgraded.
-		if b.chainParams.Net != wire.MainNet && header.Version < 6 &&
-			b.isMajorityVersion(6, prevNode,
-				b.chainParams.BlockRejectNumRequired) {
-
-			str := "new blocks with version %d are no longer valid"
-			str = fmt.Sprintf(str, header.Version)
-			return ruleError(ErrBlockVersionTooOld, str)
+		var rulErr error
+		if b.chainParams.Net != wire.MainNet {
+			rulErr = b.CheckTestnetStakeVersion(header,prevNode)
+		} else {
+			rulErr = b.CheckTestnetStakeVersion(header,prevNode)
 		}
-
-		// Reject version 4 blocks once a majority of the network has
-		// upgraded.
-		if header.Version < 5 && b.isMajorityVersion(5, prevNode,
-			b.chainParams.BlockRejectNumRequired) {
-
-			str := "new blocks with version %d are no longer valid"
-			str = fmt.Sprintf(str, header.Version)
-			return ruleError(ErrBlockVersionTooOld, str)
-		}
-
-		// Reject version 3 blocks once a majority of the network has
-		// upgraded.
-		if header.Version < 4 && b.isMajorityVersion(4, prevNode,
-			b.chainParams.BlockRejectNumRequired) {
-
-			str := "new blocks with version %d are no longer valid"
-			str = fmt.Sprintf(str, header.Version)
-			return ruleError(ErrBlockVersionTooOld, str)
-		}
-
-		// Reject version 2 blocks once a majority of the network has
-		// upgraded.
-		if header.Version < 3 && b.isMajorityVersion(3, prevNode,
-			b.chainParams.BlockRejectNumRequired) {
-
-			str := "new blocks with version %d are no longer valid"
-			str = fmt.Sprintf(str, header.Version)
-			return ruleError(ErrBlockVersionTooOld, str)
-		}
-
-		// Reject version 1 blocks once a majority of the network has
-		// upgraded.
-		if header.Version < 2 && b.isMajorityVersion(2, prevNode,
-			b.chainParams.BlockRejectNumRequired) {
-
-			str := "new blocks with version %d are no longer valid"
-			str = fmt.Sprintf(str, header.Version)
-			return ruleError(ErrBlockVersionTooOld, str)
-		}
-
-		// Enforce the stake version in the header once a majority of
-		// the network has upgraded to version 3 blocks.
-		if header.Version >= 3 && b.isMajorityVersion(3, prevNode,
-			b.chainParams.BlockEnforceNumRequired) {
-
-			expectedStakeVer := b.calcStakeVersion(prevNode)
-			if header.StakeVersion != expectedStakeVer {
-				str := fmt.Sprintf("block stake version of %d "+
-					"is not the expected version of %d",
-					header.StakeVersion, expectedStakeVer)
-				return ruleError(ErrBadStakeVersion, str)
-			}
+		if rulErr !=nil {
+			return rulErr
 		}
 	}
 
 	return nil
 }
 
+//CheckMainnetStakeVersion  ensure the block sync with block version
+func  (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error{
+   		return nil
+}
+
+//CheckTestnetStakeVersion  ensure the block sync with block version
+func  (b *BlockChain) CheckTestnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error{
+	if header.Version < 6 && b.isMajorityVersion(6, prevNode,b.chainParams.BlockRejectNumRequired) {
+
+		str := "new blocks with version %d are no longer valid"
+		str = fmt.Sprintf(str, header.Version)
+		return ruleError(ErrBlockVersionTooOld, str)
+	}
+	// Reject version 4 blocks once a majority of the network has
+	// upgraded.
+	if header.Version < 5 && b.isMajorityVersion(5, prevNode,
+		b.chainParams.BlockRejectNumRequired) {
+
+		str := "new blocks with version %d are no longer valid"
+		str = fmt.Sprintf(str, header.Version)
+		return ruleError(ErrBlockVersionTooOld, str)
+	}
+
+	// Reject version 3 blocks once a majority of the network has
+	// upgraded.
+	if header.Version < 4 && b.isMajorityVersion(4, prevNode,
+		b.chainParams.BlockRejectNumRequired) {
+
+		str := "new blocks with version %d are no longer valid"
+		str = fmt.Sprintf(str, header.Version)
+		return ruleError(ErrBlockVersionTooOld, str)
+	}
+
+	// Reject version 2 blocks once a majority of the network has
+	// upgraded.
+	if header.Version < 3 && b.isMajorityVersion(3, prevNode,
+		b.chainParams.BlockRejectNumRequired) {
+
+		str := "new blocks with version %d are no longer valid"
+		str = fmt.Sprintf(str, header.Version)
+		return ruleError(ErrBlockVersionTooOld, str)
+	}
+
+	// Reject version 1 blocks once a majority of the network has
+	// upgraded.
+	if header.Version < 2 && b.isMajorityVersion(2, prevNode,
+		b.chainParams.BlockRejectNumRequired) {
+
+		str := "new blocks with version %d are no longer valid"
+		str = fmt.Sprintf(str, header.Version)
+		return ruleError(ErrBlockVersionTooOld, str)
+	}
+
+	// Enforce the stake version in the header once a majority of
+	// the network has upgraded to version 3 blocks.
+	if header.Version >= 3 && b.isMajorityVersion(3, prevNode,
+		b.chainParams.BlockEnforceNumRequired) {
+
+		expectedStakeVer := b.calcStakeVersion(prevNode)
+		if header.StakeVersion != expectedStakeVer {
+			str := fmt.Sprintf("block stake version of %d "+
+				"is not the expected version of %d",
+				header.StakeVersion, expectedStakeVer)
+			return ruleError(ErrBadStakeVersion, str)
+		}
+	}
+	return nil
+}
 // checkDupTxs ensures blocks do not contain duplicate transactions which
 // 'overwrite' older transactions that are not fully spent.  This prevents an
 // attack where a coinbase and all of its dependent transactions could be
