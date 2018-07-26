@@ -9,17 +9,7 @@ package chaincfg
 // BlockOneLedgerMainNet is the block one output ledger for the main
 // network.
 var BlockOneLedgerMainNet = []*TokenPayout{
-	{"HsJwqHsbVjb4SdgdYQBDxcWQCsyJxiJMqda", 4000000 * 1e8},
-	{"HsH2U86zVmqT6p17fsfxhx7CP5w73XhHcs3", 4000000 * 1e8},
-	{"HsLhsSN5ziYgK9XQosx8VjM59wEZjXAuzZC", 4000000 * 1e8},
-	{"HsPo3AJrYgtvHwpqQKNCEkrTPrLcY1irMqe", 4000000 * 1e8},
-	{"HsKrJGTiQKERFQmTu3UPN8c8toUgquMiY2i", 4000000 * 1e8},
-	{"HsJvzUrW3fcDbxCskspHYCj6zbRS6aDcDw1", 4000000 * 1e8},
-	{"HsFf124jsfwNaUwbrDU22BcuKJjim7nF6Y3", 4000000 * 1e8},
-	{"HsMJiuGD5afsr37yKrHUtkXoZTCCoj5sPMb", 4000000 * 1e8},
-	{"HsGXZUDR3L35TXH7UNXMhCTuRpNVHF6BsNr", 4000000 * 1e8},
-	{"HsNRWXPC7bRrfCakNNXF3izJoyQXTTNg8ik", 4000000 * 1e8},
-	{"HsLBVmVQ3RhdrqFJWJoFY8qEH31iKwtuapL", 4478231 * 1e8},
+	{"HsDMnqM8qaDquPeqYG9XUkRb9CWBWcevJue",40000000 * 1e8},
 }
 
 // BlockOneLedgerTestNet is the block one output ledger for the test
