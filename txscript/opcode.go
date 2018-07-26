@@ -2631,12 +2631,21 @@ func opcodeCheckMultiSig(op *parsedOpcode, vm *Engine) error {
 		}
 
 		sigInfo := signatures[signatureIdx]
-		pubKey := pubKeys[pubKeyIdx]
+		pubKeyBytes := pubKeys[pubKeyIdx]
+		var sigType sigTypes
+		switch len(pubKeyBytes) {
+		case 897:
+			sigType = bliss
+		case 33:
+			sigType = secp256k1
+		default:
+			vm.dstack.PushBool(false)
+			return nil
+		}
 
 		// The order of the signature and public key evaluation is
 		// important here since it can be distinguished by an
 		// OP_CHECKMULTISIG NOT when the strict encoding flag is set.
-
 		rawSig := sigInfo.signature
 		if len(rawSig) == 0 {
 			// Skip to the next pubkey if signature is empty.
@@ -2645,50 +2654,75 @@ func opcodeCheckMultiSig(op *parsedOpcode, vm *Engine) error {
 
 		// Split the signature into hash type and signature components.
 		hashType := SigHashType(rawSig[len(rawSig)-1])
-		signature := rawSig[:len(rawSig)-1]
+		sigBytes := rawSig[:len(rawSig)-1]
 
-		// Only parse and check the signature encoding once.
-		var parsedSig chainec.Signature
-		if !sigInfo.parsed {
-			if err := vm.checkHashTypeEncoding(hashType); err != nil {
-				return err
-			}
-			if err := vm.checkSignatureEncoding(signature); err != nil {
-				return err
-			}
-
-			// Parse the signature.
-			var err error
-			if vm.hasFlag(ScriptVerifyStrictEncoding) ||
-				vm.hasFlag(ScriptVerifyDERSignatures) {
-
-				parsedSig, err = chainec.Secp256k1.ParseDERSignature(signature)
-			} else {
-				parsedSig, err = chainec.Secp256k1.ParseSignature(signature)
-			}
-			sigInfo.parsed = true
+		// Get the public key from bytes.
+		var pubKey chainec.PublicKey
+		switch sigTypes(sigType) {
+		case secp256k1:
+			pubKeyEd, err := chainec.Secp256k1.ParsePubKey(pubKeyBytes)
 			if err != nil {
-				continue
+				vm.dstack.PushBool(false)
+				return nil
 			}
-			sigInfo.parsedSignature = parsedSig
-		} else {
-			// Skip to the next pubkey if the signature is invalid.
-			if sigInfo.parsedSignature == nil {
-				continue
+			pubKey = pubKeyEd
+		case edwards:
+			pubKeyEd, err := chainec.Edwards.ParsePubKey(pubKeyBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
 			}
-
-			// Use the already parsed signature.
-			parsedSig = sigInfo.parsedSignature
+			pubKey = pubKeyEd
+		case secSchnorr:
+			pubKeySec, err := chainec.SecSchnorr.ParsePubKey(pubKeyBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
+			}
+			pubKey = pubKeySec
+		case bliss:
+			pubKeySec, err := bs.Bliss.ParsePubKey(pubKeyBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
+			}
+			pubKey = pubKeySec
 		}
 
-		if err := vm.checkPubKeyEncoding(pubKey); err != nil {
-			return err
-		}
-
-		// Parse the pubkey.
-		parsedPubKey, err := chainec.Secp256k1.ParsePubKey(pubKey)
-		if err != nil {
-			continue
+		// Get the signature from bytes.
+		var signature chainec.Signature
+		switch sigTypes(sigType) {
+		case secp256k1:
+			sigEd, err := chainec.Secp256k1.ParseSignature(sigBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
+			}
+			signature = sigEd
+		case edwards:
+			sigEd, err := chainec.Edwards.ParseSignature(sigBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
+			}
+			signature = sigEd
+		case secSchnorr:
+			sigSec, err := chainec.SecSchnorr.ParseSignature(sigBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
+			}
+			signature = sigSec
+		case bliss:
+			sigSec, err := bs.Bliss.ParseSignature(sigBytes)
+			if err != nil {
+				vm.dstack.PushBool(false)
+				return nil
+			}
+			signature = sigSec
+		default:
+			vm.dstack.PushBool(false)
+			return nil
 		}
 
 		// Generate the signature hash based on the signature hash type.
@@ -2704,22 +2738,18 @@ func opcodeCheckMultiSig(op *parsedOpcode, vm *Engine) error {
 		if err != nil {
 			return err
 		}
-
 		var valid bool
-		if vm.sigCache != nil {
-			var sigHash chainhash.Hash
-			copy(sigHash[:], hash)
+		// Attempt to validate the signature.
+		switch sigTypes(sigType) {
+		case secp256k1:
+			valid = chainec.Secp256k1.Verify(pubKey, hash, signature.GetR(), signature.GetS())
+		case edwards:
+			valid = chainec.Edwards.Verify(pubKey, hash, signature.GetR(), signature.GetS())
 
-			valid = vm.sigCache.Exists(sigHash, parsedSig, parsedPubKey)
-			if !valid && chainec.Secp256k1.Verify(parsedPubKey, hash,
-				parsedSig.GetR(), parsedSig.GetS()) {
-
-				vm.sigCache.Add(sigHash, parsedSig, parsedPubKey)
-				valid = true
-			}
-		} else {
-			valid = chainec.Secp256k1.Verify(parsedPubKey, hash,
-				parsedSig.GetR(), parsedSig.GetS())
+		case secSchnorr:
+			valid = chainec.SecSchnorr.Verify(pubKey, hash, signature.GetR(), signature.GetS())
+		case bliss:
+			valid = bs.Bliss.Verify(pubKey, hash, signature)
 		}
 
 		if valid {

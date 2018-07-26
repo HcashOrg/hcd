@@ -90,6 +90,12 @@ type RedeemMultiSigOutsResult struct {
 	Results []RedeemMultiSigOutResult `json:"results"`
 }
 
+// GetStraightPubKeyResult models the data returned from the getStraightPubKey
+// command.
+type GetStraightPubKeyResult struct {
+	StraightPubKey string `json:"StraightPubKey"`
+}
+
 // SendToMultiSigResult models the data returned from the sendtomultisig
 // command.
 type SendToMultiSigResult struct {

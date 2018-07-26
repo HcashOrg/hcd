@@ -12,6 +12,8 @@ import (
 
 var pqcTypeBliss = 4
 
+var BlissDSA = newBlissDSA()
+
 type blissDSA struct {
 
 	// Private keys
