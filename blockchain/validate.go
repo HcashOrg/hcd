@@ -727,10 +727,10 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 
 	if !fastAdd {
 		var rulErr error
-		if b.chainParams.Net != wire.MainNet {
-			rulErr = b.CheckTestnetStakeVersion(header,prevNode)
+		if b.chainParams.Net == wire.MainNet {
+			rulErr = b.CheckMainnetStakeVersion(header,prevNode)
 		} else {
-			rulErr = b.CheckTestnetStakeVersion(header,prevNode)
+			rulErr = b.CheckTestnetStakeVersion (header,prevNode)
 		}
 		if rulErr !=nil {
 			return rulErr
@@ -742,11 +742,21 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 
 //CheckMainnetStakeVersion  ensure the block sync with block version
 func  (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error{
-   		return nil
+	//Enforce the stake version in the header
+	expectedStakeVer := b.calcStakeVersion(prevNode)
+	if header.StakeVersion != expectedStakeVer {
+		str := fmt.Sprintf("block stake version of %d "+
+			"is not the expected version of %d",
+			header.StakeVersion, expectedStakeVer)
+		return ruleError(ErrBadStakeVersion, str)
+	}
+	return nil
 }
 
 //CheckTestnetStakeVersion  ensure the block sync with block version
 func  (b *BlockChain) CheckTestnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error{
+	// Reject version 6 blocks once a majority of the network has
+	// upgraded.
 	if header.Version < 6 && b.isMajorityVersion(6, prevNode,b.chainParams.BlockRejectNumRequired) {
 
 		str := "new blocks with version %d are no longer valid"
