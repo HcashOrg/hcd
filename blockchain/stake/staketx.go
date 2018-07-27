@@ -351,7 +351,7 @@ func AddrFromSStxPkScrCommitment(pkScript []byte,
 	// The MSB (sign), not used ever normally, encodes whether
 	// or not it is a P2PKH or P2SH for the input.
 	amtEncoded := make([]byte, 8, 8)
-	copy(amtEncoded, pkScript[22:30])
+	copy(amtEncoded, pkScript[23:31])
 	isP2SH := !(amtEncoded[7]&(1<<7) == 0) // MSB set?
 
 	// The 20 byte PKH or SH.
@@ -380,7 +380,7 @@ func AmountFromSStxPkScrCommitment(pkScript []byte) (hcutil.Amount, error) {
 	// The MSB (sign), not used ever normally, encodes whether
 	// or not it is a P2PKH or P2SH for the input.
 	amtEncoded := make([]byte, 8, 8)
-	copy(amtEncoded, pkScript[22:30])
+	copy(amtEncoded, pkScript[23:31])
 	amtEncoded[7] &= ^uint8(1 << 7) // Clear bit for P2SH flag
 
 	return hcutil.Amount(binary.LittleEndian.Uint64(amtEncoded)), nil
