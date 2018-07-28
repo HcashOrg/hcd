@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -2695,29 +2695,25 @@ func opcodeCheckMultiSig(op *parsedOpcode, vm *Engine) error {
 		case secp256k1:
 			sigEd, err := chainec.Secp256k1.ParseSignature(sigBytes)
 			if err != nil {
-				vm.dstack.PushBool(false)
-				return nil
+				continue
 			}
 			signature = sigEd
 		case edwards:
 			sigEd, err := chainec.Edwards.ParseSignature(sigBytes)
 			if err != nil {
-				vm.dstack.PushBool(false)
-				return nil
+				continue
 			}
 			signature = sigEd
 		case secSchnorr:
 			sigSec, err := chainec.SecSchnorr.ParseSignature(sigBytes)
 			if err != nil {
-				vm.dstack.PushBool(false)
-				return nil
+				continue
 			}
 			signature = sigSec
 		case bliss:
 			sigSec, err := bs.Bliss.ParseSignature(sigBytes)
 			if err != nil {
-				vm.dstack.PushBool(false)
-				return nil
+				continue
 			}
 			signature = sigSec
 		default:
@@ -2860,7 +2856,7 @@ func opcodeCheckSigAlt(op *parsedOpcode, vm *Engine) error {
 	// 1 byte appened to the end for hashType).
 	switch sigTypes(sigType) {
 	case secp256k1:
-		if  len(fullSigBytes) < 70 || len(fullSigBytes) > 72   {  // length of fullSigBytes may be one of 70,71,72
+		if len(fullSigBytes) < 70 || len(fullSigBytes) > 72 { // length of fullSigBytes may be one of 70,71,72
 			vm.dstack.PushBool(false)
 			return nil
 		}
@@ -2994,7 +2990,7 @@ func opcodeCheckSigAlt(op *parsedOpcode, vm *Engine) error {
 	switch sigTypes(sigType) {
 	case secp256k1:
 		ok := chainec.Secp256k1.Verify(pubKey, hash, signature.GetR(),
-		signature.GetS())
+			signature.GetS())
 		vm.dstack.PushBool(ok)
 		return nil
 	case edwards:
