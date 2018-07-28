@@ -16,7 +16,7 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/database/ffldb"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // dbType is the database type name for this driver.

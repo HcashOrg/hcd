@@ -28,7 +28,7 @@ import (
 	_ "github.com/HcashOrg/hcd/database/ffldb"
 	"github.com/HcashOrg/hcd/mempool"
 	"github.com/HcashOrg/hcd/sampleconfig"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 	flags "github.com/jessevdk/go-flags"
 )
 

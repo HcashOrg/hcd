@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcutil"
 )
 
 // SequenceLock represents the minimum timestamp and minimum block height after

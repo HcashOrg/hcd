@@ -199,7 +199,7 @@ information.
 	  Hc scripts
     * [database](https://github.com/HcashOrg/hcd/tree/master/database) -
 	  Provides a database interface for the Hc block chain
-    * [hcutil](https://github.com/HcashOrg/hcutil) - Provides Hc-specific
+    * [hcutil](https://github.com/HcashOrg/hcd/hcutil) - Provides Hc-specific
 	  convenience functions and types
     * [chainhash](https://github.com/HcashOrg/hcd/tree/master/chaincfg/chainhash) -
 	  Provides a generic hash type and associated functions that allows the

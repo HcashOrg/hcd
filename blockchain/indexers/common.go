@@ -14,7 +14,7 @@ import (
 
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 var (

@@ -17,7 +17,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // cloneParams returns a deep copy of the provided parameters so the caller is

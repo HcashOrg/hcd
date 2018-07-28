@@ -20,7 +20,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 
 	rpc "github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // nodeConfig contains all the args, and data required to launch a hcd process

@@ -26,7 +26,7 @@ import (
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/database/internal/treap"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (

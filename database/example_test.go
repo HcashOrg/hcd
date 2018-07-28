@@ -15,7 +15,7 @@ import (
 	"github.com/HcashOrg/hcd/database"
 	_ "github.com/HcashOrg/hcd/database/ffldb"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // This example demonstrates creating a new database.

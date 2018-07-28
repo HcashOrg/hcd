@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -14,8 +14,8 @@ import (
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcutil"
 )
 
 // checkCoinbaseUniqueHeight checks to ensure that for all blocks height > 1
@@ -142,7 +142,6 @@ func (b *BlockChain) checkBlockContext(block *hcutil.Block, prevNode *blockNode,
 		if err != nil {
 			return err
 		}
-
 
 		// The height of this block is one more than the referenced
 		// previous block.

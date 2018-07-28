@@ -19,7 +19,7 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	. "github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // testName returns a descriptive test name for the given reference test data.

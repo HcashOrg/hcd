@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -12,10 +12,10 @@ import (
 
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcutil"
-	bs "github.com/HcashOrg/hcd/crypto/bliss"
 	hccrypto "github.com/HcashOrg/hcd/crypto"
+	bs "github.com/HcashOrg/hcd/crypto/bliss"
+	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/wire"
 )
 
 // RawTxInSignature returns the serialized ECDSA signature for the input idx of
@@ -232,16 +232,16 @@ func handleStakeOutSign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 		if err != nil {
 			return nil, class, nil, 0, err
 		}
-		keyType :=  key.GetType()
+		keyType := key.GetType()
 		var txscript []byte
 		if keyType == chainec.ECTypeSecp256k1 {
 			txscript, err = SignatureScriptAlt(tx, idx, subScript, hashType, key, compressed, chainec.ECTypeSecp256k1)
 		} else if keyType == bs.BSTypeBliss {
 			txscript, err = SignatureScriptAlt(tx, idx, subScript, hashType, key, compressed, bs.BSTypeBliss)
-		} else{
+		} else {
 			return nil, class, nil, 0, fmt.Errorf("not support type")
 		}
-	
+
 		if err != nil {
 			return nil, class, nil, 0, err
 		}

@@ -1036,7 +1036,7 @@ package main
 
 import (
 	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -1097,7 +1097,7 @@ package main
 
 import (
 	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/wire"
 	"io/ioutil"
 	"log"
@@ -1188,7 +1188,7 @@ package main
 
 import (
 	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/wire"
 	"io/ioutil"
 	"log"

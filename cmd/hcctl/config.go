@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/HcashOrg/hcd/dcrjson"
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 
 	flags "github.com/jessevdk/go-flags"
 )

@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/HcashOrg/hcutil"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/chaincfg"
 )
 
