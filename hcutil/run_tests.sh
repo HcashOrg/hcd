@@ -32,14 +32,14 @@ if [ $GOVERSION == "local" ]; then
     exit
 fi
 
-DOCKER_IMAGE_TAG=decred-golang-builder-$GOVERSION
+DOCKER_IMAGE_TAG=hcd-golang-builder-$GOVERSION
 
-docker pull decred/$DOCKER_IMAGE_TAG
+docker pull hcd/$DOCKER_IMAGE_TAG
 
-docker run --rm -it -v $(pwd):/src decred/$DOCKER_IMAGE_TAG /bin/bash -c "\
+docker run --rm -it -v $(pwd):/src hcd/$DOCKER_IMAGE_TAG /bin/bash -c "\
   rsync -ra --filter=':- .gitignore'  \
-  /src/ /go/src/github.com/decred/$REPO/ && \
-  cd github.com/decred/$REPO/ && \
+  /src/ /go/src/github.com/HcashOrg/$REPO/ && \
+  cd github.com/HcashOrg/$REPO/ && \
   glide install && \
   go install \$(glide novendor) && \
   $TESTCMD

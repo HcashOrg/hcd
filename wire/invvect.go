@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -15,7 +15,7 @@ import (
 
 const (
 	// MaxInvPerMsg is the maximum number of inventory vectors that can be in a
-	// single decred inv message.
+	// single HC inv message.
 	MaxInvPerMsg = 50000
 
 	// Maximum payload size for an inventory vector.

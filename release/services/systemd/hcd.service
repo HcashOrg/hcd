@@ -6,7 +6,7 @@ Type=simple
 User=hcd
 Group=hcd
 WorkingDirectory=/var/hcd
-ExecStart=/opt/decred/bin/hcd --appdata=/var/hcd
+ExecStart=/opt/hcd/bin/hcd --appdata=/var/hcd
 Restart=on-abnormal
 
 [Install]

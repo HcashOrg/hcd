@@ -187,7 +187,7 @@ the method name for further details such as parameter and return information.
 |31|[verifychain](#verifychain)|N|Verifies the block chain database.|
 |32|[debuglevel](#debuglevel)|N|Dynamically changes the debug logging level.|
 |33|[getbestblock](#getbestblock)|Y|Get block height and hash of best block in the main chain.|
-|34|[getcurrentnet](#getcurrentnet)|Y|Get decred network hcd is running on.|
+|34|[getcurrentnet](#getcurrentnet)|Y|Get HC network hcd is running on.|
 |35|[searchrawtransactions](#searchrawtransactions)|Y|Query for transactions related to a particular address.|
 |36|[node](#node)|N|Attempts to add or remove a peer. |
 |37|[generate](#generate)|N|When in simnet or regtest mode, generate a set number of blocks. |

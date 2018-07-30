@@ -5,7 +5,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package hdkeychain provides an API for decred hierarchical deterministic
+Package hdkeychain provides an API for HC hierarchical deterministic
 extended keys (based on BIP0032).
 
 Overview

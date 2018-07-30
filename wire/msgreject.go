@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -153,7 +153,7 @@ func (msg *MsgReject) Command() string {
 // receiver.  This is part of the Message interface implementation.
 func (msg *MsgReject) MaxPayloadLength(pver uint32) uint32 {
 	plen := uint32(0)
-	// Unfortunately the decred protocol does not enforce a sane
+	// Unfortunately the HC protocol does not enforce a sane
 	// limit on the length of the reason, so the max payload is the
 	// overall maximum message payload.
 	plen = MaxMessagePayload

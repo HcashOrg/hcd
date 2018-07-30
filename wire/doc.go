@@ -1,43 +1,43 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
 /*
-Package wire implements the decred wire protocol.
+Package wire implements the HC wire protocol.
 
-For the complete details of the decred protocol, see the official wiki entry
+For the complete details of the HC protocol, see the official wiki entry
 at https://en.bitcoin.it/wiki/Protocol_specification.  The following only serves
 as a quick overview to provide information on how to use the package.
 
 At a high level, this package provides support for marshalling and unmarshalling
-supported decred messages to and from the wire.  This package does not deal
+supported HC messages to and from the wire.  This package does not deal
 with the specifics of message handling such as what to do when a message is
 received.  This provides the caller with a high level of flexibility.
 
 Hcd Message Overview
 
-The decred protocol consists of exchanging messages between peers.  Each
+The HC protocol consists of exchanging messages between peers.  Each
 message is preceded by a header which identifies information about it such as
-which decred network it is a part of, its type, how big it is, and a checksum
+which HC network it is a part of, its type, how big it is, and a checksum
 to verify validity.  All encoding and decoding of message headers is handled by
 this package.
 
-To accomplish this, there is a generic interface for decred messages named
+To accomplish this, there is a generic interface for HC messages named
 Message which allows messages of any type to be read, written, or passed around
 through channels, functions, etc.  In addition, concrete implementations of most
-of the currently supported decred messages are provided.  For these supported
+of the currently supported HC messages are provided.  For these supported
 messages, all of the details of marshalling and unmarshalling to and from the
-wire using decred encoding are handled so the caller doesn't have to concern
+wire using HC encoding are handled so the caller doesn't have to concern
 themselves with the specifics.
 
 Message Interaction
 
-The following provides a quick summary of how the decred messages are intended
+The following provides a quick summary of how the HC messages are intended
 to interact with one another.  As stated above, these interactions are not
 directly handled by this package.  For more in-depth details about the
-appropriate interactions, see the official decred protocol wiki entry at
+appropriate interactions, see the official HC protocol wiki entry at
 https://en.bitcoin.it/wiki/Protocol_specification.
 
 The initial handshake consists of two peers sending each other a version message
@@ -67,7 +67,7 @@ interactions in no particular order.
 Common Parameters
 
 There are several common parameters that arise when using this package to read
-and write decred messages.  The following sections provide a quick overview of
+and write HC messages.  The following sections provide a quick overview of
 these parameters so the next sections can build on them.
 
 Protocol Version
@@ -81,8 +81,8 @@ negotiated.
 
 Hcd Network
 
-The decred network is a magic number which is used to identify the start of a
-message and which decred network the message applies to.  This package provides
+The HC network is a magic number which is used to identify the start of a
+message and which HC network the message applies to.  This package provides
 the following constants:
 
 	wire.MainNet
@@ -91,8 +91,8 @@ the following constants:
 
 Determining Message Type
 
-As discussed in the decred message overview section, this package reads
-and writes decred messages using a generic interface named Message.  In
+As discussed in the HC message overview section, this package reads
+and writes HC messages using a generic interface named Message.  In
 order to determine the actual concrete type of the message, use a type
 switch or type assertion.  An example of a type switch follows:
 
@@ -109,12 +109,12 @@ switch or type assertion.  An example of a type switch follows:
 
 Reading Messages
 
-In order to unmarshall decred messages from the wire, use the ReadMessage
+In order to unmarshall HC messages from the wire, use the ReadMessage
 function.  It accepts any io.Reader, but typically this will be a net.Conn to
-a remote node running a decred peer.  Example syntax is:
+a remote node running a HC peer.  Example syntax is:
 
-	// Reads and validates the next decred message from conn using the
-	// protocol version pver and the decred network btcnet.  The returns
+	// Reads and validates the next HC message from conn using the
+	// protocol version pver and the HC network btcnet.  The returns
 	// are a wire.Message, a []byte which contains the unmarshalled
 	// raw payload, and a possible error.
 	msg, rawPayload, err := wire.ReadMessage(conn, pver, btcnet)
@@ -124,16 +124,16 @@ a remote node running a decred peer.  Example syntax is:
 
 Writing Messages
 
-In order to marshall decred messages to the wire, use the WriteMessage
+In order to marshall HC messages to the wire, use the WriteMessage
 function.  It accepts any io.Writer, but typically this will be a net.Conn to
-a remote node running a decred peer.  Example syntax to request addresses
+a remote node running a HC peer.  Example syntax to request addresses
 from a remote peer is:
 
-	// Create a new getaddr decred message.
+	// Create a new getaddr HC message.
 	msg := wire.NewMsgGetAddr()
 
-	// Writes a decred message msg to conn using the protocol version
-	// pver, and the decred network btcnet.  The return is a possible
+	// Writes a HC message msg to conn using the protocol version
+	// pver, and the HC network btcnet.  The return is a possible
 	// error.
 	err := wire.WriteMessage(conn, msg, pver, btcnet)
 	if err != nil {

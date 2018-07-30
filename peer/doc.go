@@ -10,16 +10,16 @@ peers.
 Overview
 
 This package builds upon the wire package, which provides the fundamental
-primitives necessary to speak the decred wire protocol, in order to simplify
+primitives necessary to speak the HC wire protocol, in order to simplify
 the process of creating fully functional peers.  In essence, it provides a
 common base for creating concurrent safe fully validating nodes, Simplified
 Payment Verification (SPV) nodes, proxies, etc.
 
 A quick overview of the major features peer provides are as follows:
 
- - Provides a basic concurrent safe decred peer for handling decred
+ - Provides a basic concurrent safe HC peer for handling HC
    communications via the peer-to-peer protocol
- - Full duplex reading and writing of decred protocol messages
+ - Full duplex reading and writing of HC protocol messages
  - Automatic handling of the initial handshake process including protocol
    version negotiation
  - Asynchronous message queuing of outbound messages with optional channel for
@@ -32,7 +32,7 @@ A quick overview of the major features peer provides are as follows:
    - Hcd network
    - Service support signalling (full nodes, bloom filters, etc)
    - Maximum supported protocol version
-   - Ability to register callbacks for handling decred protocol messages
+   - Ability to register callbacks for handling HC protocol messages
  - Inventory message batching and send trickling with known inventory detection
    and avoidance
  - Automatic periodic keep-alive pinging and pong responses
@@ -54,8 +54,8 @@ A quick overview of the major features peer provides are as follows:
 Peer Configuration
 
 All peer configuration is handled with the Config struct.  This allows the
-caller to specify things such as the user agent name and version, the decred
-network to use, which services it supports, and callbacks to invoke when decred
+caller to specify things such as the user agent name and version, the HC
+network to use, which services it supports, and callbacks to invoke when HC
 messages are received.  See the documentation for each field of the Config
 struct for more details.
 
@@ -76,12 +76,12 @@ cleanup has completed.
 
 Callbacks
 
-In order to do anything useful with a peer, it is necessary to react to decred
+In order to do anything useful with a peer, it is necessary to react to HC
 messages.  This is accomplished by creating an instance of the MessageListeners
 struct with the callbacks to be invoke specified and setting the Listeners field
 of the Config struct specified when creating a peer to it.
 
-For convenience, a callback hook for all of the currently supported decred
+For convenience, a callback hook for all of the currently supported HC
 messages is exposed which receives the peer instance and the concrete message
 type.  In addition, a hook for OnRead is provided so even custom messages types
 for which this package does not directly provide a hook, as long as they

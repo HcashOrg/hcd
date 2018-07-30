@@ -23,7 +23,7 @@ report.
 - Easy serialization and deserialization for both private and public extended
   keys
 - Support for custom networks by registering them with chaincfg
-- Obtaining the underlying EC pubkeys, EC privkeys, and associated decred
+- Obtaining the underlying EC pubkeys, EC privkeys, and associated HC
   addresses ties in seamlessly with existing btcec and hcutil types which
   provide powerful tools for working with them to do things like sign
   transations and generate payment scripts

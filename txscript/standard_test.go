@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -14,8 +14,8 @@ import (
 
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/txscript"
 )
 
 // decodeHex decodes the passed hex string and returns the resulting bytes.  It
@@ -628,8 +628,8 @@ func TestPayToAddrScript(t *testing.T) {
 				"f9137f23c2c409273eb16e65 CHECKSIG",
 			nil,
 		},
-		// pay-to-pubkey address on mainnet. for decred this would
-		// be uncompressed, but standard for decred is 33 byte
+		// pay-to-pubkey address on mainnet. for HC this would
+		// be uncompressed, but standard for HC is 33 byte
 		// compressed public keys.
 		{
 			p2pkUncompressedMain,

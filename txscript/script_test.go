@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -297,7 +297,7 @@ func TestRemoveOpcodeByData(t *testing.T) {
 			remove: []byte{1, 2, 3, 5},
 			after:  []byte{txscript.OP_DATA_4, 1, 2, 3, 4},
 		},
-		// fix to allow for decred tests too
+		// fix to allow for HC tests too
 		/*
 			{
 				name:        "stakesubmission",

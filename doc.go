@@ -1,11 +1,11 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
 /*
-hcd is a full-node decred implementation written in Go.
+hcd is a full-node HC implementation written in Go.
 
 The default options are sane for most users.  This means hcd will work 'out of
 the box' for most users.  However, there are also a wide variety of flags that

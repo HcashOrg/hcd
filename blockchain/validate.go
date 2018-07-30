@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -17,9 +17,9 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -162,7 +162,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 	// output must not be negative or more than the max allowed per
 	// transaction.  Also, the total of all outputs must abide by the same
 	// restrictions.  All amounts in a transaction are in a unit value
-	// known as an atom.  One decred is a quantity of atoms as defined by
+	// known as an atom.  One HC is a quantity of atoms as defined by
 	// the AtomsPerCoin constant.
 	var totalAtom int64
 	for _, txOut := range tx.TxOut {
@@ -728,11 +728,11 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 	if !fastAdd {
 		var rulErr error
 		if b.chainParams.Net == wire.MainNet {
-			rulErr = b.CheckMainnetStakeVersion(header,prevNode)
+			rulErr = b.CheckMainnetStakeVersion(header, prevNode)
 		} else {
-			rulErr = b.CheckTestnetStakeVersion (header,prevNode)
+			rulErr = b.CheckTestnetStakeVersion(header, prevNode)
 		}
-		if rulErr !=nil {
+		if rulErr != nil {
 			return rulErr
 		}
 	}
@@ -741,7 +741,7 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 }
 
 //CheckMainnetStakeVersion  ensure the block sync with block version
-func  (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error{
+func (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error {
 	//Enforce the stake version in the header
 	expectedStakeVer := b.calcStakeVersion(prevNode)
 	if header.StakeVersion != expectedStakeVer {
@@ -754,10 +754,10 @@ func  (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNod
 }
 
 //CheckTestnetStakeVersion  ensure the block sync with block version
-func  (b *BlockChain) CheckTestnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error{
+func (b *BlockChain) CheckTestnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error {
 	// Reject version 6 blocks once a majority of the network has
 	// upgraded.
-	if header.Version < 6 && b.isMajorityVersion(6, prevNode,b.chainParams.BlockRejectNumRequired) {
+	if header.Version < 6 && b.isMajorityVersion(6, prevNode, b.chainParams.BlockRejectNumRequired) {
 
 		str := "new blocks with version %d are no longer valid"
 		str = fmt.Sprintf(str, header.Version)
@@ -818,6 +818,7 @@ func  (b *BlockChain) CheckTestnetStakeVersion(header *wire.BlockHeader, prevNod
 	}
 	return nil
 }
+
 // checkDupTxs ensures blocks do not contain duplicate transactions which
 // 'overwrite' older transactions that are not fully spent.  This prevents an
 // attack where a coinbase and all of its dependent transactions could be
@@ -1344,7 +1345,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 			sstxInAmts[idx] = utxoEntry.AmountByIndex(originTxIndex)
 		}
 
-		_, _, outAmt, chgAmt, _, _, _  := stake.TxSStxStakeOutputInfo(msgTx)
+		_, _, outAmt, chgAmt, _, _, _ := stake.TxSStxStakeOutputInfo(msgTx)
 		_, outAmtCalc, err := stake.SStxNullOutputAmounts(sstxInAmts,
 			chgAmt, msgTx.TxOut[0].Value)
 		if err != nil {
@@ -1833,7 +1834,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// output values of the input transactions must not be negative
 		// or more than the max allowed per transaction.  All amounts
 		// in a transaction are in a unit value known as an atom.  One
-		// decred is a quantity of atoms as defined by the AtomPerCoin
+		// HC is a quantity of atoms as defined by the AtomPerCoin
 		// constant.
 		originTxAtom := utxoEntry.AmountByIndex(originTxIndex)
 		if originTxAtom < 0 {

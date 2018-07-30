@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -44,11 +44,11 @@ import (
 	"github.com/HcashOrg/hcd/crypto/bliss"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/mempool"
 	"github.com/HcashOrg/hcd/mining"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // API version constants
@@ -1034,14 +1034,14 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 		var ssgenOut []byte
 		switch ssgenPayTypes[i] {
 		case false: // P2PKH
-			ssgenOut, err = txscript.PayToSSGenPKHDirect(ssgenPkh,int(sigTypes[i]))
+			ssgenOut, err = txscript.PayToSSGenPKHDirect(ssgenPkh, int(sigTypes[i]))
 			if err != nil {
 				return nil,
 					rpcInvalidError("Could not generate "+
 						"PKH script: %v", err)
 			}
 		case true: // P2SH
-			ssgenOut, err = txscript.PayToSSGenSHDirect(ssgenPkh,int(sigTypes[i]))
+			ssgenOut, err = txscript.PayToSSGenSHDirect(ssgenPkh, int(sigTypes[i]))
 			if err != nil {
 				return nil,
 					rpcInvalidError("Could not generate "+
@@ -1157,13 +1157,13 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		var ssrtxOutScript []byte
 		switch ssrtxPayTypes[i] {
 		case false: // P2PKH
-			ssrtxOutScript, err = txscript.PayToSSRtxPKHDirect(ssrtxPkh,int(sigTypes[i]))
+			ssrtxOutScript, err = txscript.PayToSSRtxPKHDirect(ssrtxPkh, int(sigTypes[i]))
 			if err != nil {
 				return nil, rpcInvalidError("Could not "+
 					"generate PKH script: %v", err)
 			}
 		case true: // P2SH
-			ssrtxOutScript, err = txscript.PayToSSRtxSHDirect(ssrtxPkh,int(sigTypes[i]))
+			ssrtxOutScript, err = txscript.PayToSSRtxSHDirect(ssrtxPkh, int(sigTypes[i]))
 			if err != nil {
 				return nil, rpcInvalidError("Could not "+
 					"generate SHD script: %v", err)
@@ -1768,7 +1768,7 @@ func handleGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 func handleGetAddedNodeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*dcrjson.GetAddedNodeInfoCmd)
 
-	// Retrieve a list of persistent (added) peers from the decred server
+	// Retrieve a list of persistent (added) peers from the HC server
 	// and filter the list of peers per the specified address (if any).
 	peers := s.server.AddedNodeInfo()
 	if c.Node != nil {
@@ -4569,7 +4569,7 @@ type retrievedTx struct {
 func fetchInputTxos(s *rpcServer, tx *wire.MsgTx) (map[wire.OutPoint]wire.TxOut, error) {
 	mp := s.server.txMemPool
 	originOutputs := make(map[wire.OutPoint]wire.TxOut)
-	voteTx, _:= stake.IsSSGen(tx)
+	voteTx, _ := stake.IsSSGen(tx)
 	for txInIndex, txIn := range tx.TxIn {
 		// vote tx have null input for vin[0],
 		// skip since it resolvces to an invalid transaction
@@ -4672,7 +4672,7 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 
 	// Stakebase transactions (votes) have two inputs: a null stake base
 	// followed by an input consuming a ticket's stakesubmission.
-	isSSGen,_ := stake.IsSSGen(mtx)
+	isSSGen, _ := stake.IsSSGen(mtx)
 
 	for i, txIn := range mtx.TxIn {
 		// Handle only the null input of a stakebase differently.

@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // makeHeader is a convenience function to make a message header in the form of
@@ -24,8 +24,8 @@ import (
 func makeHeader(dcrnet CurrencyNet, command string,
 	payloadLen uint32, checksum uint32) []byte {
 
-	// The length of a decred message header is 24 bytes.
-	// 4 byte magic number of the decred network + 12 byte command + 4 byte
+	// The length of a HC message header is 24 bytes.
+	// 4 byte magic number of the HC network + 12 byte command + 4 byte
 	// payload length + 4 byte checksum.
 	buf := make([]byte, 24)
 	binary.LittleEndian.PutUint32(buf, uint32(dcrnet))
