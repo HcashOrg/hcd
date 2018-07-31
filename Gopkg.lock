@@ -23,16 +23,7 @@
   branch = "master"
   name = "github.com/HcashOrg/hcrpcclient"
   packages = ["."]
-  revision = "ab4035ccd1248103b82290a76146645c0f6e9e5e"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/HcashOrg/hcutil"
-  packages = [
-    ".",
-    "base58"
-  ]
-  revision = "3744332ddbf115271697b74199630785dc87c474"
+  revision = "bc79ffac5bcef6131f880de25da5bc0d1a4b2b22"
 
 [[projects]]
   branch = "master"
