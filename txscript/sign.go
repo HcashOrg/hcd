@@ -512,10 +512,13 @@ sigLoop:
 
 		var pSig hccrypto.Signature
 		var err error
+		var sigType int
 		if len(tSig) > 397 {
 			pSig, err = bs.BlissDSA.ParseDERSignature(tSig)
+			sigType = bs.BSTypeBliss
 		} else {
 			pSig, err = chainec.Secp256k1.ParseDERSignature(tSig)
+			sigType = chainec.ECTypeSecp256k1
 		}
 
 		if err != nil {
@@ -542,6 +545,9 @@ sigLoop:
 
 			switch addr := addr.(type) {
 			case *hcutil.AddressSecpPubKey:
+				if sigType == bs.BSTypeBliss {
+					continue
+				}
 				pubKey = addr.PubKey()
 				// If it matches we put it in the map. We only
 				// can take one signature per public key so if we
@@ -557,6 +563,9 @@ sigLoop:
 					continue sigLoop
 				}
 			case *hcutil.AddressBlissPubKey:
+				if sigType == chainec.ECTypeSecp256k1 {
+					continue
+				}
 				pubKey = addr.PubKey()
 				if bs.BlissDSA.Verify(pubKey, hash, pSig) {
 					aStr := addr.EncodeAddress()
