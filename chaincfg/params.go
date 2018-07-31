@@ -463,8 +463,10 @@ var MainNetParams = Params{
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
 	GenesisHash:              &genesisHash,
-	PowLimit:                 mainPowLimit,
-	PowLimitBits:             0x1d00ffff,
+	PowLimit:                 testNetPowLimit,
+	PowLimitBits:             0x1e00ffff,
+	//PowLimit:                 mainPowLimit,
+	//PowLimitBits:             0x1d00ffff,
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        false,
@@ -565,9 +567,9 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "12008",
 	DNSSeeds:    []string{
-		  "testnet1.h.cash",
-		  "testnet2.h.cash",
-		  "testnet3.h.cash",
+		"testnet1.h.cash",
+		"testnet2.h.cash",
+		"testnet3.h.cash",
 	},
 
 	// Chain parameters
