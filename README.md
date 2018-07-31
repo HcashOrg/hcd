@@ -13,7 +13,7 @@ hcd maintains the entire past transactional ledger of Hc and allows
 Note: To send or receive funds and join Proof-of-Stake mining, you will also need
 [hcwallet](https://github.com/HcashOrg/hcwallet).
 
-Hc is forked from [HC](https://github.com/HcashOrg) and [btcd](https://github.com/btcsuite/btcd) which are full node implementations written in Go. Both projects are ongoing and under active development. Since hcd is synced and will merge with upstream commits from hcd and btcd, it will get the benefit of both hcd and btcd's ongoing upgrades to staking, voting, peer and connection handling, database optimization and other blockchain related technology improvements. Advances made by hcd can also be pulled back upstream to hcd and btcd including quantum resistant signature schemes and more.
+HC is forked from [Decred](https://github.com/HcashOrg) and [btcd](https://github.com/btcsuite/btcd) which are full node implementations written in Go. Both projects are ongoing and under active development. Since hcd is synced and will merge with upstream commits from hcd and btcd, it will get the benefit of both hcd and btcd's ongoing upgrades to staking, voting, peer and connection handling, database optimization and other blockchain related technology improvements. Advances made by hcd can also be pulled back upstream to hcd and btcd including quantum resistant signature schemes and more.
 
 ## Current State
 This project is currently under active development and is in a Beta state. The default branch of hcd is currently testnet1. Please make sure to use --testnet flag when running hcd and report any issues by using the integrated issue tracker. Do not yet use this software yet as a store of value!
@@ -33,29 +33,30 @@ This project is currently under active development and is in a Beta state. The d
 
 #### Build from Source
 
-- **Dependencies**
+- **Dep**
 
-  Glide is used to manage project dependencies and provide reproducible builds.
+  Dep is used to manage project dependencies and provide reproducible builds.
   To install:
 
-  `go get -u github.com/Masterminds/glide`
+  `go get -u github.com/golang/dep/cmd/dep`
 
-Unfortunately, the use of `glide` prevents a handy tool such as `go get` from
+Unfortunately, the use of `dep` prevents a handy tool such as `go get` from
 automatically downloading, building, and installing the source in a single
 command.  Instead, the latest project and dependency sources must be first
-obtained manually with `git` and `glide`, and then `go` is used to build and
+obtained manually with `git` and `dep`, and then `go` is used to build and
 install the project.
+
 
 **Getting the source**:
 
 For a first time installation, the project and dependency sources can be
-obtained manually with `git` and `glide` (create directories as needed):
+obtained manually with `git` and `dep` (create directories as needed):
 
 ```
-git clone https://github.com/HcashOrg/hcd $GOPATH/src/github.com/HcashOrg/hcd
-cd $GOPATH/src/github.com/HcashOrg/hcd
-glide install
-go install $(glide nv)
+git clone https://github.com/decred/dcrd $GOPATH/src/github.com/decred/dcrd
+cd $GOPATH/src/github.com/decred/dcrd
+dep ensure
+go install . ./cmd/...
 ```
 
 To update an existing source tree, pull the latest changes and install the
@@ -64,8 +65,8 @@ matching dependencies:
 ```
 cd $GOPATH/src/github.com/HcashOrg/hcd
 git pull
-glide install
-go install $(glide nv)
+dep ensure -update
+go install . ./cmd/...
 ```
 
 ## Running
