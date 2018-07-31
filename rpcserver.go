@@ -1606,6 +1606,10 @@ func handleExistsMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan s
 		return nil, err
 	}
 
+	for i := range hashes {
+		hashes[i].Reverse()
+	}
+
 	exists := s.server.blockManager.chain.CheckMissedTickets(hashes)
 	if len(exists) != len(hashes) {
 		return nil, rpcInvalidError("Invalid missed ticket count "+
@@ -1630,6 +1634,9 @@ func handleExistsExpiredTickets(s *rpcServer, cmd interface{}, closeChan <-chan 
 	hashes, err := dcrjson.DecodeConcatenatedHashes(c.TxHashBlob)
 	if err != nil {
 		return nil, err
+	}
+	for i := range hashes {
+		hashes[i].Reverse()
 	}
 
 	exists := s.server.blockManager.chain.CheckExpiredTickets(hashes)
@@ -1670,6 +1677,10 @@ func handleExistsLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan str
 		return nil, err
 	}
 
+	for i := range hashes {
+		hashes[i].Reverse()
+	}
+
 	exists := s.server.blockManager.chain.CheckLiveTickets(hashes)
 	if len(exists) != len(hashes) {
 		return nil, rpcInvalidError("Invalid live ticket count got "+
@@ -1687,6 +1698,14 @@ func handleExistsLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan str
 	return hex.EncodeToString([]byte(set)), nil
 }
 
+func reverseByteSlice(src []byte) []byte {
+	ret := src[:]
+	for i, j := 0, len(src)-1; i < j; i, j = i+1, j-1 {
+		ret[i], ret[j] = src[j], src[i]
+	}
+	return ret
+}
+
 // handleExistsMempoolTxs implements the existsmempooltxs command.
 func handleExistsMempoolTxs(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*dcrjson.ExistsMempoolTxsCmd)
@@ -1695,6 +1714,7 @@ func handleExistsMempoolTxs(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	if err != nil {
 		return nil, rpcDecodeHexError(c.TxHashBlob)
 	}
+	txHashBlob = reverseByteSlice(txHashBlob)
 
 	// It needs to be an exact number of hashes.
 	if len(txHashBlob)%32 != 0 {
