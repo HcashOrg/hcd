@@ -53,8 +53,8 @@ For a first time installation, the project and dependency sources can be
 obtained manually with `git` and `dep` (create directories as needed):
 
 ```
-git clone https://github.com/decred/dcrd $GOPATH/src/github.com/decred/dcrd
-cd $GOPATH/src/github.com/decred/dcrd
+git clone https://github.com/HcashOrg/hcd $GOPATH/src/github.com/HcashOrg/hcd
+cd $GOPATH/src/github.com/HcashOrg/hcd
 dep ensure
 go install . ./cmd/...
 ```
