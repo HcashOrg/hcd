@@ -2856,7 +2856,7 @@ func opcodeCheckSigAlt(op *parsedOpcode, vm *Engine) error {
 	// 1 byte appened to the end for hashType).
 	switch sigTypes(sigType) {
 	case secp256k1:
-		if len(fullSigBytes) < 70 || len(fullSigBytes) > 72 { // length of fullSigBytes may be one of 70,71,72
+		if len(fullSigBytes) < 69 || len(fullSigBytes) > 72 { // length of fullSigBytes may be one of 69, 70,71,72
 			vm.dstack.PushBool(false)
 			return nil
 		}
