@@ -925,8 +925,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	c := cmd.(*dcrjson.CreateRawSSGenTxCmd)
 	// Only a single SStx should be given
 	if len(c.Inputs) != 1 {
-		return nil, rpcInvalidError("SSGen Tx can only have one valid" +
-			" input")
+		return nil, rpcInvalidError("SSGen Tx can only have one valid input")
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later for
@@ -972,7 +971,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	mtx := wire.NewMsgTx()
 
 	stakeBaseOutPoint := wire.NewOutPoint(&chainhash.Hash{},
-		uint32(0xFFFFFFFF), int8(0x01))
+		uint32(0xFFFFFFFF), int8(0x00))
 	txInStakeBase := wire.NewTxIn(stakeBaseOutPoint, []byte{})
 	mtx.AddTxIn(txInStakeBase)
 
