@@ -1411,7 +1411,7 @@ func ExtractP2XScriptSigType(sdb ScriptDB, chainParams *chaincfg.Params, pkScrip
 
 	switch class {
 	case PubKeyTy:
-		return []uint8{uint8(chainec.ECTypeSecp256k1)}, 0, nil
+		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
 	case PubkeyAltTy:
 		sigType, err := ExtractPkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
@@ -1419,7 +1419,7 @@ func ExtractP2XScriptSigType(sdb ScriptDB, chainParams *chaincfg.Params, pkScrip
 		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
 	case PubkeyHashAltTy:
 		sigType, err := ExtractPkScriptAltSigType(pkScript)
-		return []uint8{sigType}, 0, err
+		return []uint8{sigType}, required, err
 	case ScriptHashTy:
 		if sdb == nil {
 			return []uint8{uint8(chainec.ECTypeSecp256k1)}, 1, nil
