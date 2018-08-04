@@ -2032,8 +2032,8 @@ out:
 
 			// Process at a random time up to 30mins (in seconds)
 			// in the future.
-			timer.Reset(time.Second *
-				time.Duration(randomUint16Number(1800)))
+			//timer.Reset(time.Second *
+			//	time.Duration(randomUint16Number(1800)))
 
 		case <-s.quit:
 			break out
