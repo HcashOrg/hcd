@@ -6,3 +6,4 @@ cmd/promptsecret/promptsecret
 vendor/
 .DS_Store
 glide.lock
+debug

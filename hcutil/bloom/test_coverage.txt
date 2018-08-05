@@ -1,6 +1,5 @@
 
 github.com/conformal/btcutil/bloom/murmurhash3.go	 MurmurHash3			 100.00% (31/31)
-github.com/conformal/btcutil/bloom/merkleblock.go	 NewMerkleBlock			 100.00% (19/19)
 github.com/conformal/btcutil/bloom/merkleblock.go	 merkleBlock.traverseAndBuild	 100.00% (10/10)
 github.com/conformal/btcutil/bloom/merkleblock.go	 merkleBlock.calcHash		 100.00% (8/8)
 github.com/conformal/btcutil/bloom/filter.go		 Filter.maybeAddOutpoint	 100.00% (7/7)

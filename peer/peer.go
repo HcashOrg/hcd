@@ -162,10 +162,6 @@ type MessageListeners struct {
 	// message.
 	OnFilterLoad func(p *Peer, msg *wire.MsgFilterLoad)
 
-	// OnMerkleBlock  is invoked when a peer receives a merkleblock wire
-	// message.
-	OnMerkleBlock func(p *Peer, msg *wire.MsgMerkleBlock)
-
 	// OnVersion is invoked when a peer receives a version wire message.
 	OnVersion func(p *Peer, msg *wire.MsgVersion)
 
@@ -1528,11 +1524,6 @@ out:
 		case *wire.MsgFilterLoad:
 			if p.cfg.Listeners.OnFilterLoad != nil {
 				p.cfg.Listeners.OnFilterLoad(p, msg)
-			}
-
-		case *wire.MsgMerkleBlock:
-			if p.cfg.Listeners.OnMerkleBlock != nil {
-				p.cfg.Listeners.OnMerkleBlock(p, msg)
 			}
 
 		case *wire.MsgReject:

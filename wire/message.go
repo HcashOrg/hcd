@@ -135,10 +135,7 @@ func makeEmptyMessage(command string) (Message, error) {
 
 	case CmdFilterLoad:
 		msg = &MsgFilterLoad{}
-
-	case CmdMerkleBlock:
-		msg = &MsgMerkleBlock{}
-
+		
 	case CmdReject:
 		msg = &MsgReject{}
 

@@ -701,8 +701,6 @@ func (sp *serverPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 			err = sp.server.pushTxMsg(sp, &iv.Hash, c, waitChan)
 		case wire.InvTypeBlock:
 			err = sp.server.pushBlockMsg(sp, &iv.Hash, c, waitChan)
-		case wire.InvTypeFilteredBlock:
-			err = sp.server.pushMerkleBlockMsg(sp, &iv.Hash, c, waitChan)
 		default:
 			peerLog.Warnf("Unknown type in inventory request %d",
 				iv.Type)
@@ -1221,63 +1219,6 @@ func (s *server) pushBlockMsg(sp *serverPeer, hash *chainhash.Hash, doneChan cha
 	return nil
 }
 
-// pushMerkleBlockMsg sends a merkleblock message for the provided block hash to
-// the connected peer.  Since a merkle block requires the peer to have a filter
-// loaded, this call will simply be ignored if there is no filter loaded.  An
-// error is returned if the block hash is not known.
-func (s *server) pushMerkleBlockMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
-	// Do not send a response if the peer doesn't have a filter loaded.
-	if !sp.filter.IsLoaded() {
-		if doneChan != nil {
-			doneChan <- struct{}{}
-		}
-		return nil
-	}
-
-	// Fetch the raw block bytes from the database.
-	blk, err := sp.server.blockManager.chain.BlockByHash(hash)
-	if err != nil {
-		peerLog.Tracef("Unable to fetch requested block hash %v: %v",
-			hash, err)
-
-		if doneChan != nil {
-			doneChan <- struct{}{}
-		}
-		return err
-	}
-
-	// Generate a merkle block by filtering the requested block according
-	// to the filter for the peer.
-	merkle, matchedTxIndices := bloom.NewMerkleBlock(blk, sp.filter)
-
-	// Once we have fetched data wait for any previous operation to finish.
-	if waitChan != nil {
-		<-waitChan
-	}
-
-	// Send the merkleblock.  Only send the done channel with this message
-	// if no transactions will be sent afterwards.
-	var dc chan<- struct{}
-	if len(matchedTxIndices) == 0 {
-		dc = doneChan
-	}
-	sp.QueueMessage(merkle, dc)
-
-	// Finally, send any matched transactions.
-	blkTransactions := blk.MsgBlock().Transactions
-	for i, txIndex := range matchedTxIndices {
-		// Only send the done channel on the final transaction.
-		var dc chan<- struct{}
-		if i == len(matchedTxIndices)-1 {
-			dc = doneChan
-		}
-		if txIndex < uint32(len(blkTransactions)) {
-			sp.QueueMessage(blkTransactions[txIndex], dc)
-		}
-	}
-
-	return nil
-}
 
 // handleUpdatePeerHeight updates the heights of all peers who were known to
 // announce a block we recently accepted.
@@ -2012,12 +1953,14 @@ out:
 			switch msg := riv.(type) {
 			// Incoming InvVects are added to our map of RPC txs.
 			case broadcastInventoryAdd:
+				srvrLog.Debugf("Add inventory : %v", msg.invVect)
 				pendingInvs[*msg.invVect] = msg.data
 
 			// When an InvVect has been added to a block, we can
 			// now remove it, if it was present.
 			case broadcastInventoryDel:
 				if _, ok := pendingInvs[*msg]; ok {
+					srvrLog.Debugf("Remove inventory : %v", msg)
 					delete(pendingInvs, *msg)
 				}
 			}
@@ -2025,16 +1968,17 @@ out:
 		case <-timer.C:
 			// Any inventory we have has not made it into a block
 			// yet. We periodically resubmit them until they have.
+			srvrLog.Debugf("Start relay inventory")
 			for iv, data := range pendingInvs {
+				srvrLog.Debugf("Relay inventory : %v",iv)
 				ivCopy := iv
 				s.RelayInventory(&ivCopy, data)
 			}
-
+			srvrLog.Debugf("Start relay complete")
 			// Process at a random time up to 30mins (in seconds)
 			// in the future.
-			//timer.Reset(time.Second *
-			//	time.Duration(randomUint16Number(1800)))
-
+			//timer.Reset(time.Second * time.Duration(randomUint16Number(1800)))
+			timer.Reset(time.Second * 300)
 		case <-s.quit:
 			break out
 		}

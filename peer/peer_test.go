@@ -381,9 +381,6 @@ func TestPeerListeners(t *testing.T) {
 			OnFilterLoad: func(p *peer.Peer, msg *wire.MsgFilterLoad) {
 				ok <- msg
 			},
-			OnMerkleBlock: func(p *peer.Peer, msg *wire.MsgMerkleBlock) {
-				ok <- msg
-			},
 			OnVersion: func(p *peer.Peer, msg *wire.MsgVersion) {
 				ok <- msg
 			},
