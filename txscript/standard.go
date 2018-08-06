@@ -1447,11 +1447,14 @@ func ExtractP2XScriptSigType(sdb ScriptDB, chainParams *chaincfg.Params, pkScrip
 		}
 		return sigTypes, required, nil
 	case StakeSubmissionTy:
-		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
+		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
+		return []uint8{sigType}, required, err
 	case StakeGenTy:
-		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
+		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
+		return []uint8{sigType}, required, err
 	case StakeRevocationTy:
-		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
+		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
+		return []uint8{sigType}, required, err
 	case StakeSubChangeTy:
 		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
 	case NullDataTy:
@@ -1530,6 +1533,39 @@ func ExtractPkScriptAltSigType(pkScript []byte) (uint8, error) {
 	}
 
 	return 0, fmt.Errorf("bad signature scheme type")
+}
+
+// ExtractPkScriptAltSigType returns the signature type
+// support :sstx ssgen ssrtx script
+func ExtractStakePkScriptAltSigType(pkScript []byte) (uint8, error) {
+	pops, err := parseScript(pkScript)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(pops) != 7 {
+		return uint8(chainec.ECTypeSecp256k1), fmt.Errorf("bad length")
+	} else {
+		sigTypeLoc := 5
+		valInt := extractOneBytePush(pops[sigTypeLoc])
+		if valInt < 0 {
+			return 0, fmt.Errorf("bad type push")
+		}
+		val := sigTypes(valInt)
+		switch val {
+		case secp256k1:
+			return uint8(val), nil
+		case edwards:
+			return uint8(val), nil
+		case secSchnorr:
+			return uint8(val), nil
+		case bliss:
+			return uint8(val), nil
+		default:
+			break
+		}
+		return 0, fmt.Errorf("bad signature scheme type")
+	}
 }
 
 // GetNullDataContent returns the content of a NullData (OP_RETURN) data push
