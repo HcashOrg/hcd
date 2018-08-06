@@ -463,20 +463,18 @@ var MainNetParams = Params{
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
 	GenesisHash:              &genesisHash,
-	PowLimit:                 testNetPowLimit,
-	PowLimitBits:             0x1e00ffff,
-	//PowLimit:                 mainPowLimit,
-	//PowLimitBits:             0x1d00ffff,
+	PowLimit:                 mainPowLimit,
+	PowLimitBits:             0x1d00ffff,
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        false,
-	MaximumBlockSizes:        []int{393216},
-	MaxTxSize:                393216,
+	MaximumBlockSizes:        []int{1000000},
+	MaxTxSize:                1000000,
 	TargetTimePerBlock:       time.Second * 150,
 	WorkDiffAlpha:            1,
-	WorkDiffWindowSize:       144,
+	WorkDiffWindowSize:       288,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Second * 150 * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 150 * 288, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -536,24 +534,24 @@ var MainNetParams = Params{
 	MinimumStakeDiff:        2 * 1e8, // 2 Coin
 	TicketPoolSize:          8192,
 	TicketsPerBlock:         5,
-	TicketMaturity:          256,
+	TicketMaturity:          512,
 	TicketExpiry:            40960, // 5*TicketPoolSize
-	CoinbaseMaturity:        256,
+	CoinbaseMaturity:        512,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
 	StakeDiffAlpha:          1, // Minimal
-	StakeDiffWindowSize:     144,
+	StakeDiffWindowSize:     288,
 	StakeDiffWindows:        20,
-	StakeVersionInterval:    144 * 2 * 7, // ~1 week
+	StakeVersionInterval:    288 * 2 * 7, // ~1 week
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
-	StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   4096,        // ~14 days
+	StakeEnabledHeight:      512 + 512,   // CoinbaseMaturity + TicketMaturity
+	StakeValidationHeight:   4096,        // ~7 days
 	StakeBaseSigScript:      []byte{0x00, 0x00},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
 
 	// Hcd organization related parameters
-	// Organization address is Dcur2mcGjmENx4DhNqDctW5wJCVyT3Qeqkx
+	// Organization address is xxxxxxx
 	OrganizationPkScript:        hexDecode("a914f5916158e3e2c4551c1796708db8367207ed13bb87"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerMainNet,

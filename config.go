@@ -47,7 +47,7 @@ const (
 	defaultDbType                = "ffldb"
 	defaultFreeTxRelayLimit      = 15.0
 	defaultBlockMinSize          = 0
-	defaultBlockMaxSize          = 375000
+	defaultBlockMaxSize          = 980000
 	blockMaxSizeMin              = 1000
 	defaultAddrIndex             = false
 	defaultGenerate              = false
