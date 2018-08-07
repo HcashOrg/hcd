@@ -94,7 +94,7 @@ var genesisBlock = wire.MsgBlock{
 		PrevBlock:    chainhash.Hash{},
 		MerkleRoot:   genesisMerkleRoot,
 		StakeRoot:    chainhash.Hash{},
-		Timestamp:    time.Unix(1522952251, 0), // Changed for dev use
+		Timestamp:    time.Unix(1533635700, 0), // Changed for dev use
 		Bits:         0x1b01ffff,               // Difficulty 32767
 		SBits:        2 * 1e8,                  // 2 Coin
 		Nonce:        0x00000000,
