@@ -552,7 +552,7 @@ var MainNetParams = Params{
 
 	// Hcd organization related parameters
 	// Organization address is xxxxxxx
-	OrganizationPkScript:        hexDecode("a914f5916158e3e2c4551c1796708db8367207ed13bb87"),
+	OrganizationPkScript:        hexDecode("76a9141842627102a8a153c1a8db39c9a30c0f8f5263d988ac"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerMainNet,
 }

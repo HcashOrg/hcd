@@ -9,9 +9,8 @@ package chaincfg
 // BlockOneLedgerMainNet is the block one output ledger for the main
 // network.
 var BlockOneLedgerMainNet = []*TokenPayout{
-	{"HsZg253iTjCrnQKRZVFdNv5JzuJ6xEWqRCz",40000000 * 1e8},
-	{"TspAtkQvUoYKMUzxtTQSUuk6gECEWd7ZuUV",2000000 * 1e8},
-	{"TbQ6WRtrx8w9oWXf49vyTqL3xDdsNRy1m7q",1326010 * 1e8},
+	{"HsXr6yF1EBx4KPpNagXCGXavzZB4jUHvHF9",41326010 * 1e8},
+	{"HsVcu6C3Xmb4iNin3uB5cGXkHZmzHDxUbXn", 2000000 * 1e8},
 }
 
 // BlockOneLedgerTestNet is the block one output ledger for the test
@@ -19,7 +18,6 @@ var BlockOneLedgerMainNet = []*TokenPayout{
 var BlockOneLedgerTestNet = []*TokenPayout{
 	{"TspAtg3jUAieeHhR9wgWso5CET3tZxQmvLq", 40000000 * 1e8},
 }
-
 // BlockOneLedgerTestNet2 is the block one output ledger for the 2nd test
 // network.
 var BlockOneLedgerTestNet2 = []*TokenPayout{
