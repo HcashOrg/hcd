@@ -5667,7 +5667,7 @@ func handleValidateAddress(s *rpcServer, cmd interface{}, closeChan <-chan struc
 
 	result := dcrjson.ValidateAddressChainResult{}
 	addr, err := hcutil.DecodeAddress(c.Address)
-	if err != nil {
+	if err != nil || !addr.IsForNet(s.server.chainParams) {
 		// Return the default value (false) for IsValid.
 		return result, nil
 	}

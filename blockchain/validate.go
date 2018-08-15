@@ -50,6 +50,10 @@ const (
 	// earlyVoteBitsValue is the only value of VoteBits allowed in a block
 	// header before stake validation height.
 	earlyVoteBitsValue = 0x0001
+
+	// maxRevocationsPerBlock is the maximum number of revocations that are
+	// allowed per block.
+	maxRevocationsPerBlock = 255
 )
 
 var (
@@ -517,6 +521,16 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			totalRevocations++
 		}
 	}
+
+		// A block must not contain more than the maximum allowed number of
+	// revocations.
+	if totalRevocations > maxRevocationsPerBlock {
+		errStr := fmt.Sprintf("block contains %d revocations which "+
+			"exceeds the maximum allowed amount of %d",
+			totalRevocations, maxRevocationsPerBlock)
+		return ruleError(ErrTooManyRevocations, errStr)
+	}
+
 
 	if totalTickets != int(block.MsgBlock().Header.FreshStake) {
 		errStr := fmt.Sprintf("%v tickets found in block, while "+
@@ -1178,7 +1192,6 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// PER BLOCK
 	// 3. Check and make sure that we have the same number of SSRtx tx as
 	//    we do revocations.
-	// 4. Check for revocation overflows.
 	numSSRtxTx := 0
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
@@ -1209,15 +1222,6 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 	// 3. Check and make sure that we have the same number of SSRtx tx as
 	//    we do revocations.  Already checked in checkBlockSanity.
-
-	// 4. Check for revocation overflows.  Should be impossible given the
-	//    above check, but check anyway.
-	if numSSRtxTx > math.MaxUint8 {
-		errStr := fmt.Sprintf("Error in stake consensus: the number "+
-			"of SSRtx tx in block %v was %v, overflowing the "+
-			"maximum allowed (255)", blockHash, numSSRtxTx)
-		return ruleError(ErrTooManyRevocations, errStr)
-	}
 
 	// -------------------------------------------------------------------
 	// Final Checks

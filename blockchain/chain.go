@@ -330,13 +330,13 @@ func (b *BlockChain) GetStakeVersions(hash *chainhash.Hash, count int32) ([]Stak
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
 
-	if count > int32(b.bestNode.height) {
-		count = int32(b.bestNode.height)
-	}
-
 	startNode, err := b.findNode(hash, 0)
 	if err != nil {
 		return nil, err
+	}
+
+	if count > int32(startNode.height+1) {
+		count = int32(startNode.height + 1)
 	}
 
 	result := make([]StakeVersions, 0, count)
