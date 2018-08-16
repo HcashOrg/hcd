@@ -1436,7 +1436,10 @@ mempoolLoop:
 	// trees if they fail one of the stake checks below the priorityQueue
 	// pop loop. This is buggy, but not catastrophic behaviour. A future
 	// release should fix it. TODO
-	blockSigOps := int64(0)
+	blockSigOps, err :=PreCalcCoinBaseSigNum(subsidyCache, server.chainParams, payToAddress, nextBlockHeight)
+	if err != nil {
+		return nil, miningRuleError(ErrCheckConnectBlock, "unable to get sigNum from coinbase tx")
+	}
 	totalFees := int64(0)
 
 	numSStx := 0
@@ -1866,7 +1869,6 @@ mempoolLoop:
 	}
 	numCoinbaseSigOps := int64(blockchain.CountSigOps(coinbaseTx, true, false))
 	blockSize += uint32(coinbaseTx.MsgTx().SerializeSize())
-	blockSigOps += numCoinbaseSigOps
 	txFeesMap[*coinbaseTx.Hash()] = 0
 	txSigOpCountsMap[*coinbaseTx.Hash()] = numCoinbaseSigOps
 
@@ -2157,4 +2159,38 @@ func UpdateBlockTime(msgBlock *wire.MsgBlock, bManager *blockManager) error {
 	}
 
 	return nil
+}
+// PreCalcCoinBaseSigNum pre calc 
+func PreCalcCoinBaseSigNum(subsidyCache  *blockchain.SubsidyCache,chainParams *chaincfg.Params, payToAddress hcutil.Address, nextBlockHeight int64) (int64, error){
+	coinbaseScript := []byte{0x00, 0x00}
+	coinbaseScript = append(coinbaseScript, []byte(coinbaseFlags)...)
+
+	// Add a random coinbase nonce to ensure that tx prefix hash
+	// so that our merkle root is unique for lookups needed for
+	// getwork, etc.
+	rand, err := wire.RandomUint64()
+	if err != nil {
+		return 0, err
+	}
+	opReturnPkScript, err := standardCoinbaseOpReturn(uint32(nextBlockHeight),
+		[]uint64{0, 0, 0, rand})
+	if err != nil {
+		return 0, err
+	}
+	coinbaseTx, err := createCoinbaseTx(subsidyCache,
+		coinbaseScript,
+		opReturnPkScript,
+		nextBlockHeight,
+		payToAddress,
+		uint16(0),
+		chainParams)
+	if err != nil {
+		return 0, err
+	}
+
+	coinbaseTx.SetTree(wire.TxTreeRegular) // Coinbase only in regular tx tree
+	if err != nil {
+		return 0, err
+	}
+	return int64(blockchain.CountSigOps(coinbaseTx, true, false)), nil
 }
