@@ -3,7 +3,7 @@ hcd
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 
-## Important Info for RC2.0.0 Testnet
+## What is HyperCash(HC)?
 hcd is a Hc full node implementation written in Go (golang).
 
 This acts as a chain daemon for the Hc cryptocurrency.
@@ -15,8 +15,8 @@ Note: To send or receive funds and join Proof-of-Stake mining, you will also nee
 
 HC is forked from [Decred](https://github.com/HcashOrg) and [btcd](https://github.com/btcsuite/btcd) which are full node implementations written in Go. Both projects are ongoing and under active development. Since hcd is synced and will merge with upstream commits from hcd and btcd, it will get the benefit of both hcd and btcd's ongoing upgrades to staking, voting, peer and connection handling, database optimization and other blockchain related technology improvements. Advances made by hcd can also be pulled back upstream to hcd and btcd including quantum resistant signature schemes and more.
 
-## Current State
-This project is currently under active development and is in a Beta state. The default branch of hcd is currently testnet1. Please make sure to use --testnet flag when running hcd and report any issues by using the integrated issue tracker. Do not yet use this software yet as a store of value!
+## Development Process
+The master branch is regularly built and tested, but is not guaranteed to be completely stable. Tags are created regularly to indicate new official, stable release versions of hcd.
 
 ## Requirements
 
