@@ -276,7 +276,7 @@ func NewListScriptsCmd() *ListScriptsCmd {
 type PurchaseTicketCmd struct {
 	FromAccount   string
 	SpendLimit    float64 // In Coins
-	MinConf       *int    `jsonrpcdefault:"1"`
+	MinConf       *int    `jsonrpcdefault:"2"`
 	TicketAddress *string
 	NumTickets    *int
 	PoolAddress   *string
@@ -367,7 +367,7 @@ type SendToMultiSigCmd struct {
 	Amount      float64
 	Pubkeys     []string
 	NRequired   *int `jsonrpcdefault:"1"`
-	MinConf     *int `jsonrpcdefault:"1"`
+	MinConf     *int `jsonrpcdefault:"2"`
 	Comment     *string
 }
 
@@ -391,7 +391,7 @@ type SendToSStxCmd struct {
 	Amounts     map[string]int64
 	Inputs      []SStxInput
 	COuts       []SStxCommitOut
-	MinConf     *int `jsonrpcdefault:"1"`
+	MinConf     *int `jsonrpcdefault:"2"`
 	Comment     *string
 }
 

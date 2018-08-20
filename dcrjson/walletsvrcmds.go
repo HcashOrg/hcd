@@ -112,7 +112,7 @@ func NewGetAddressesByAccountCmd(account string) *GetAddressesByAccountCmd {
 // GetBalanceCmd defines the getbalance JSON-RPC command.
 type GetBalanceCmd struct {
 	Account *string
-	MinConf *int `jsonrpcdefault:"1"`
+	MinConf *int `jsonrpcdefault:"2"`
 }
 
 // NewGetBalanceCmd returns a new instance which can be used to issue a
@@ -164,7 +164,7 @@ func NewGetRawChangeAddressCmd(account *string) *GetRawChangeAddressCmd {
 // GetReceivedByAccountCmd defines the getreceivedbyaccount JSON-RPC command.
 type GetReceivedByAccountCmd struct {
 	Account string
-	MinConf *int `jsonrpcdefault:"1"`
+	MinConf *int `jsonrpcdefault:"2"`
 }
 
 // NewGetReceivedByAccountCmd returns a new instance which can be used to issue
@@ -182,7 +182,7 @@ func NewGetReceivedByAccountCmd(account string, minConf *int) *GetReceivedByAcco
 // GetReceivedByAddressCmd defines the getreceivedbyaddress JSON-RPC command.
 type GetReceivedByAddressCmd struct {
 	Address string
-	MinConf *int `jsonrpcdefault:"1"`
+	MinConf *int `jsonrpcdefault:"2"`
 }
 
 // NewGetReceivedByAddressCmd returns a new instance which can be used to issue
@@ -255,7 +255,7 @@ func NewKeyPoolRefillCmd(newSize *uint) *KeyPoolRefillCmd {
 
 // ListAccountsCmd defines the listaccounts JSON-RPC command.
 type ListAccountsCmd struct {
-	MinConf *int `jsonrpcdefault:"1"`
+	MinConf *int `jsonrpcdefault:"2"`
 }
 
 // NewListAccountsCmd returns a new instance which can be used to issue a
@@ -280,7 +280,7 @@ func NewListLockUnspentCmd() *ListLockUnspentCmd {
 
 // ListReceivedByAccountCmd defines the listreceivedbyaccount JSON-RPC command.
 type ListReceivedByAccountCmd struct {
-	MinConf          *int  `jsonrpcdefault:"1"`
+	MinConf          *int  `jsonrpcdefault:"2"`
 	IncludeEmpty     *bool `jsonrpcdefault:"false"`
 	IncludeWatchOnly *bool `jsonrpcdefault:"false"`
 }
@@ -300,7 +300,7 @@ func NewListReceivedByAccountCmd(minConf *int, includeEmpty, includeWatchOnly *b
 
 // ListReceivedByAddressCmd defines the listreceivedbyaddress JSON-RPC command.
 type ListReceivedByAddressCmd struct {
-	MinConf          *int  `jsonrpcdefault:"1"`
+	MinConf          *int  `jsonrpcdefault:"2"`
 	IncludeEmpty     *bool `jsonrpcdefault:"false"`
 	IncludeWatchOnly *bool `jsonrpcdefault:"false"`
 }
@@ -362,7 +362,7 @@ func NewListTransactionsCmd(account *string, count, from *int, includeWatchOnly 
 
 // ListUnspentCmd defines the listunspent JSON-RPC command.
 type ListUnspentCmd struct {
-	MinConf   *int `jsonrpcdefault:"1"`
+	MinConf   *int `jsonrpcdefault:"2"`
 	MaxConf   *int `jsonrpcdefault:"9999999"`
 	Addresses *[]string
 }
@@ -400,7 +400,7 @@ type SendFromCmd struct {
 	FromAccount string
 	ToAddress   string
 	Amount      float64 // In HC
-	MinConf     *int    `jsonrpcdefault:"1"`
+	MinConf     *int    `jsonrpcdefault:"2"`
 	Comment     *string
 	CommentTo   *string
 }
@@ -425,7 +425,7 @@ func NewSendFromCmd(fromAccount, toAddress string, amount float64, minConf *int,
 type SendManyCmd struct {
 	FromAccount string
 	Amounts     map[string]float64 `jsonrpcusage:"{\"address\":amount,...}"` // In HC
-	MinConf     *int               `jsonrpcdefault:"1"`
+	MinConf     *int               `jsonrpcdefault:"2"`
 	Comment     *string
 }
 
