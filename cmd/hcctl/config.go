@@ -17,7 +17,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/HcashOrg/hcd/dcrjson"
+	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
 
 	flags "github.com/jessevdk/go-flags"
@@ -27,18 +27,18 @@ const (
 	// unusableFlags are the command usage flags which this utility are not
 	// able to use.  In particular it doesn't support websockets and
 	// consequently notifications.
-	unusableFlags = dcrjson.UFWebsocketOnly | dcrjson.UFNotification
+	unusableFlags = hcjson.UFWebsocketOnly | hcjson.UFNotification
 )
 
 var (
-	dcrdHomeDir            = hcutil.AppDataDir("hcd", false)
+	hcdHomeDir             = hcutil.AppDataDir("hcd", false)
 	hcctlHomeDir           = hcutil.AppDataDir("hcctl", false)
-	dcrwalletHomeDir       = hcutil.AppDataDir("hcwallet", false)
+	hcwalletHomeDir        = hcutil.AppDataDir("hcwallet", false)
 	defaultConfigFile      = filepath.Join(hcctlHomeDir, "hcctl.conf")
 	defaultRPCServer       = "localhost"
 	defaultWalletRPCServer = "localhost"
-	defaultRPCCertFile     = filepath.Join(dcrdHomeDir, "rpc.cert")
-	defaultWalletCertFile  = filepath.Join(dcrwalletHomeDir, "rpc.cert")
+	defaultRPCCertFile     = filepath.Join(hcdHomeDir, "rpc.cert")
+	defaultWalletCertFile  = filepath.Join(hcwalletHomeDir, "rpc.cert")
 )
 
 // listCommands categorizes and lists all of the usable commands along with
@@ -51,10 +51,10 @@ func listCommands() {
 	)
 
 	// Get a list of registered commands and categorize and filter them.
-	cmdMethods := dcrjson.RegisteredCmdMethods()
+	cmdMethods := hcjson.RegisteredCmdMethods()
 	categorized := make([][]string, numCategories)
 	for _, method := range cmdMethods {
-		flags, err := dcrjson.MethodUsageFlags(method)
+		flags, err := hcjson.MethodUsageFlags(method)
 		if err != nil {
 			// This should never happen since the method was just
 			// returned from the package, but be safe.
@@ -66,7 +66,7 @@ func listCommands() {
 			continue
 		}
 
-		usage, err := dcrjson.MethodUsageText(method)
+		usage, err := hcjson.MethodUsageText(method)
 		if err != nil {
 			// This should never happen since the method was just
 			// returned from the package, but be safe.
@@ -75,7 +75,7 @@ func listCommands() {
 
 		// Categorize the command based on the usage flags.
 		category := categoryChain
-		if flags&dcrjson.UFWalletOnly != 0 {
+		if flags&hcjson.UFWalletOnly != 0 {
 			category = categoryWallet
 		}
 		categorized[category] = append(categorized[category], usage)
@@ -342,18 +342,18 @@ func loadConfig() (*config, []string, error) {
 func createDefaultConfigFile(destinationPath string) error {
 	// Nothing to do when there is no existing hcd conf file at the default
 	// path to extract the details from.
-	dcrdConfigPath := filepath.Join(dcrdHomeDir, "hcd.conf")
-	if !fileExists(dcrdConfigPath) {
+	hcdConfigPath := filepath.Join(hcdHomeDir, "hcd.conf")
+	if !fileExists(hcdConfigPath) {
 		return nil
 	}
 
 	// Read hcd.conf from its default path
-	dcrdConfigFile, err := os.Open(dcrdConfigPath)
+	hcdConfigFile, err := os.Open(hcdConfigPath)
 	if err != nil {
 		return err
 	}
-	defer dcrdConfigFile.Close()
-	content, err := ioutil.ReadAll(dcrdConfigFile)
+	defer hcdConfigFile.Close()
+	content, err := ioutil.ReadAll(hcdConfigFile)
 	if err != nil {
 		return err
 	}

@@ -1,17 +1,17 @@
 package bliss
 
 import (
-	dcrcrypto "github.com/HcashOrg/hcd/crypto"
+	hccrypto "github.com/HcashOrg/hcd/crypto"
 	"github.com/HcashOrg/bliss"
 )
 
 type PrivateKey struct {
-	dcrcrypto.PrivateKeyAdapter
+	hccrypto.PrivateKeyAdapter
 	bliss.PrivateKey
 }
 
 // Public returns the PublicKey corresponding to this private key.
-func (p PrivateKey) PublicKey() dcrcrypto.PublicKey {
+func (p PrivateKey) PublicKey() hccrypto.PublicKey {
 	blissPkp := p.PrivateKey.PublicKey()
 	pk := &PublicKey{
 		PublicKey: *blissPkp,

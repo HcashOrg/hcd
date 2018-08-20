@@ -1,12 +1,12 @@
 package bliss
 
 import (
-	dcrcrypto "github.com/HcashOrg/hcd/crypto"
 	"github.com/HcashOrg/bliss"
+	hccrypto "github.com/HcashOrg/hcd/crypto"
 )
 
 type PublicKey struct {
-	dcrcrypto.PublicKeyAdapter
+	hccrypto.PublicKeyAdapter
 	bliss.PublicKey
 }
 

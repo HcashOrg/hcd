@@ -4,10 +4,10 @@ import (
 	"crypto/rand"
 	"io"
 
-	dcrcrypto "github.com/HcashOrg/hcd/crypto"
 	"github.com/HcashOrg/bliss"
 	"github.com/HcashOrg/bliss/poly"
 	"github.com/HcashOrg/bliss/sampler"
+	hccrypto "github.com/HcashOrg/hcd/crypto"
 )
 
 var pqcTypeBliss = 4
@@ -17,25 +17,25 @@ var BlissDSA = newBlissDSA()
 type blissDSA struct {
 
 	// Private keys
-	newPrivateKey    func(s1, s2, a *poly.PolyArray) dcrcrypto.PrivateKey
-	privKeyFromBytes func(pk []byte) (dcrcrypto.PrivateKey, dcrcrypto.PublicKey)
+	newPrivateKey    func(s1, s2, a *poly.PolyArray) hccrypto.PrivateKey
+	privKeyFromBytes func(pk []byte) (hccrypto.PrivateKey, hccrypto.PublicKey)
 	privKeyBytesLen  func() int
 
 	// Public keys
-	newPublicKey   func(a *poly.PolyArray) dcrcrypto.PublicKey
-	parsePubKey    func(pubKeyStr []byte) (dcrcrypto.PublicKey, error)
+	newPublicKey   func(a *poly.PolyArray) hccrypto.PublicKey
+	parsePubKey    func(pubKeyStr []byte) (hccrypto.PublicKey, error)
 	pubKeyBytesLen func() int
 
 	// Signatures
-	newSignature      func(z1, z2 *poly.PolyArray, c []uint32) dcrcrypto.Signature
-	parseDERSignature func(sigStr []byte) (dcrcrypto.Signature, error)
-	parseSignature    func(sigStr []byte) (dcrcrypto.Signature, error)
-	recoverCompact    func(signature, hash []byte) (dcrcrypto.PublicKey, bool, error)
+	newSignature      func(z1, z2 *poly.PolyArray, c []uint32) hccrypto.Signature
+	parseDERSignature func(sigStr []byte) (hccrypto.Signature, error)
+	parseSignature    func(sigStr []byte) (hccrypto.Signature, error)
+	recoverCompact    func(signature, hash []byte) (hccrypto.PublicKey, bool, error)
 
 	//
-	generateKey func(rand io.Reader) (dcrcrypto.PrivateKey, dcrcrypto.PublicKey, error)
-	sign        func(priv dcrcrypto.PrivateKey, hash []byte) (dcrcrypto.Signature, error)
-	verify      func(pub dcrcrypto.PublicKey, hash []byte, sig dcrcrypto.Signature) bool
+	generateKey func(rand io.Reader) (hccrypto.PrivateKey, hccrypto.PublicKey, error)
+	sign        func(priv hccrypto.PrivateKey, hash []byte) (hccrypto.Signature, error)
+	verify      func(pub hccrypto.PublicKey, hash []byte, sig hccrypto.Signature) bool
 
 	// Symmetric cipher encryption
 	//generateSharedSecret func(privkey []byte, x, y *big.Int) []byte
@@ -44,10 +44,10 @@ type blissDSA struct {
 }
 
 // Private keys
-func (sp blissDSA) NewPrivateKey(s1, s2, a *poly.PolyArray) dcrcrypto.PrivateKey {
+func (sp blissDSA) NewPrivateKey(s1, s2, a *poly.PolyArray) hccrypto.PrivateKey {
 	return sp.newPrivateKey(s1, s2, a)
 }
-func (sp blissDSA) PrivKeyFromBytes(pk []byte) (dcrcrypto.PrivateKey, dcrcrypto.PublicKey) {
+func (sp blissDSA) PrivKeyFromBytes(pk []byte) (hccrypto.PrivateKey, hccrypto.PublicKey) {
 	return sp.privKeyFromBytes(pk)
 }
 func (sp blissDSA) PrivKeyBytesLen() int {
@@ -55,10 +55,10 @@ func (sp blissDSA) PrivKeyBytesLen() int {
 }
 
 // Public keys
-func (sp blissDSA) NewPublicKey(a *poly.PolyArray) dcrcrypto.PublicKey {
+func (sp blissDSA) NewPublicKey(a *poly.PolyArray) hccrypto.PublicKey {
 	return sp.newPublicKey(a)
 }
-func (sp blissDSA) ParsePubKey(pubKeyStr []byte) (dcrcrypto.PublicKey, error) {
+func (sp blissDSA) ParsePubKey(pubKeyStr []byte) (hccrypto.PublicKey, error) {
 	return sp.parsePubKey(pubKeyStr)
 }
 func (sp blissDSA) PubKeyBytesLen() int {
@@ -66,29 +66,29 @@ func (sp blissDSA) PubKeyBytesLen() int {
 }
 
 // Signatures
-func (sp blissDSA) NewSignature(z1, z2 *poly.PolyArray, c []uint32) dcrcrypto.Signature {
+func (sp blissDSA) NewSignature(z1, z2 *poly.PolyArray, c []uint32) hccrypto.Signature {
 	return sp.newSignature(z1, z2, c)
 }
-func (sp blissDSA) ParseDERSignature(sigStr []byte) (dcrcrypto.Signature, error) {
+func (sp blissDSA) ParseDERSignature(sigStr []byte) (hccrypto.Signature, error) {
 	return sp.parseDERSignature(sigStr)
 }
-func (sp blissDSA) ParseSignature(sigStr []byte) (dcrcrypto.Signature, error) {
+func (sp blissDSA) ParseSignature(sigStr []byte) (hccrypto.Signature, error) {
 	return sp.parseSignature(sigStr)
 }
-func (sp blissDSA) RecoverCompact(signature, hash []byte) (dcrcrypto.PublicKey, bool,
+func (sp blissDSA) RecoverCompact(signature, hash []byte) (hccrypto.PublicKey, bool,
 	error) {
 	return sp.recoverCompact(signature, hash)
 }
 
 // ECDSA
-func (sp blissDSA) GenerateKey(rand io.Reader) (dcrcrypto.PrivateKey, dcrcrypto.PublicKey,
+func (sp blissDSA) GenerateKey(rand io.Reader) (hccrypto.PrivateKey, hccrypto.PublicKey,
 	error) {
 	return sp.generateKey(rand)
 }
-func (sp blissDSA) Sign(priv dcrcrypto.PrivateKey, hash []byte) (dcrcrypto.Signature, error) {
+func (sp blissDSA) Sign(priv hccrypto.PrivateKey, hash []byte) (hccrypto.Signature, error) {
 	return sp.sign(priv, hash)
 }
-func (sp blissDSA) Verify(pub dcrcrypto.PublicKey, hash []byte, sig dcrcrypto.Signature) bool {
+func (sp blissDSA) Verify(pub hccrypto.PublicKey, hash []byte, sig hccrypto.Signature) bool {
 	return sp.verify(pub, hash, sig)
 }
 
@@ -96,7 +96,7 @@ func newBlissDSA() DSA {
 	var bliss DSA = &blissDSA{
 
 		// Private keys
-		newPrivateKey: func(s1, s2, a *poly.PolyArray) dcrcrypto.PrivateKey {
+		newPrivateKey: func(s1, s2, a *poly.PolyArray) hccrypto.PrivateKey {
 			if s1 == nil || s2 == nil || a == nil {
 				return nil
 			}
@@ -122,7 +122,7 @@ func newBlissDSA() DSA {
 				PrivateKey: *blissPK,
 			}
 		},
-		privKeyFromBytes: func(pk []byte) (dcrcrypto.PrivateKey, dcrcrypto.PublicKey) {
+		privKeyFromBytes: func(pk []byte) (hccrypto.PrivateKey, hccrypto.PublicKey) {
 			blissPK, err := bliss.DeserializePrivateKey(pk)
 			if err != nil {
 				return nil, nil
@@ -139,7 +139,7 @@ func newBlissDSA() DSA {
 		},
 
 		// Public keys
-		newPublicKey: func(a *poly.PolyArray) dcrcrypto.PublicKey {
+		newPublicKey: func(a *poly.PolyArray) hccrypto.PublicKey {
 			if a == nil {
 				return nil
 			}
@@ -160,7 +160,7 @@ func newBlissDSA() DSA {
 				PublicKey: *blissPK,
 			}
 		},
-		parsePubKey: func(pubKeyStr []byte) (dcrcrypto.PublicKey, error) {
+		parsePubKey: func(pubKeyStr []byte) (hccrypto.PublicKey, error) {
 			blissPK, err := bliss.DeserializePublicKey(pubKeyStr)
 			if err != nil {
 				return nil, err
@@ -175,7 +175,7 @@ func newBlissDSA() DSA {
 		},
 
 		// Signatures
-		newSignature: func(z1, z2 *poly.PolyArray, c []uint32) dcrcrypto.Signature {
+		newSignature: func(z1, z2 *poly.PolyArray, c []uint32) hccrypto.Signature {
 			if z1 == nil || z2 == nil || c == nil {
 				return nil
 			}
@@ -240,7 +240,7 @@ func newBlissDSA() DSA {
 			}
 
 		},
-		parseDERSignature: func(sigStr []byte) (dcrcrypto.Signature, error) {
+		parseDERSignature: func(sigStr []byte) (hccrypto.Signature, error) {
 			sig, err := bliss.DeserializeBlissSignature(sigStr)
 			if err != nil {
 				return nil, err
@@ -250,7 +250,7 @@ func newBlissDSA() DSA {
 				Signature: *sig,
 			}, nil
 		},
-		parseSignature: func(sigStr []byte) (dcrcrypto.Signature, error) {
+		parseSignature: func(sigStr []byte) (hccrypto.Signature, error) {
 			sig, err := bliss.DeserializeBlissSignature(sigStr)
 			if err != nil {
 				return nil, err
@@ -260,11 +260,11 @@ func newBlissDSA() DSA {
 				Signature: *sig,
 			}, nil
 		},
-		recoverCompact: func(signature, hash []byte) (dcrcrypto.PublicKey, bool, error) {
+		recoverCompact: func(signature, hash []byte) (hccrypto.PublicKey, bool, error) {
 			return nil, false, nil
 		},
 
-		generateKey: func(rand io.Reader) (dcrcrypto.PrivateKey, dcrcrypto.PublicKey, error) {
+		generateKey: func(rand io.Reader) (hccrypto.PrivateKey, hccrypto.PublicKey, error) {
 			seed := make([]byte, sampler.SHA_512_DIGEST_LENGTH)
 			rand.Read(seed)
 			entropy, err := sampler.NewEntropy(seed)
@@ -284,7 +284,7 @@ func newBlissDSA() DSA {
 			return privateKey, publicKey, nil
 		},
 
-		sign: func(priv dcrcrypto.PrivateKey, hash []byte) (dcrcrypto.Signature, error) {
+		sign: func(priv hccrypto.PrivateKey, hash []byte) (hccrypto.Signature, error) {
 			seed := make([]byte, sampler.SHA_512_DIGEST_LENGTH)
 			rand.Read(seed)
 			entropy, err := sampler.NewEntropy(seed)
@@ -301,7 +301,7 @@ func newBlissDSA() DSA {
 			}, nil
 		},
 
-		verify: func(pub dcrcrypto.PublicKey, hash []byte, sig dcrcrypto.Signature) bool {
+		verify: func(pub hccrypto.PublicKey, hash []byte, sig hccrypto.Signature) bool {
 			signature := sig.(*Signature)
 			blissSig := signature.Signature
 			result, _ := pub.(*PublicKey).Verify(hash, &blissSig)

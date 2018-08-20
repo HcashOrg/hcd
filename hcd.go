@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -26,12 +26,12 @@ var cfg *config
 // as a service and reacts accordingly.
 var winServiceMain func() (bool, error)
 
-// dcrdMain is the real main function for hcd.  It is necessary to work around
+// hcdMain is the real main function for hcd.  It is necessary to work around
 // the fact that deferred functions do not run when os.Exit() is called.  The
 // optional serverChan parameter is mainly used by the service code to be
 // notified with the server once it is setup so it can gracefully stop it when
 // requested from the service control manager.
-func dcrdMain(serverChan chan<- *server) error {
+func hcdMain(serverChan chan<- *server) error {
 	// Load configuration and parse command line.  This function also
 	// initializes logging and configures it accordingly.
 	tcfg, _, err := loadConfig()
@@ -49,17 +49,17 @@ func dcrdMain(serverChan chan<- *server) error {
 	// triggered either from an OS signal such as SIGINT (Ctrl+C) or from
 	// another subsystem such as the RPC server.
 	interruptedChan := interruptListener()
-	defer dcrdLog.Info("Shutdown complete")
+	defer hcdLog.Info("Shutdown complete")
 
 	// Show version and home dir at startup.
-	dcrdLog.Infof("Version %s (Go version %s)", version(), runtime.Version())
-	dcrdLog.Infof("Home dir: %s", cfg.HomeDir)
+	hcdLog.Infof("Version %s (Go version %s)", version(), runtime.Version())
+	hcdLog.Infof("Home dir: %s", cfg.HomeDir)
 
 	// Enable http profiling server if requested.
 	if cfg.Profile != "" {
 		go func() {
 			listenAddr := cfg.Profile
-			dcrdLog.Infof("Creating profiling server "+
+			hcdLog.Infof("Creating profiling server "+
 				"listening on %s", listenAddr)
 			profileRedirect := http.RedirectHandler("/debug/pprof",
 				http.StatusSeeOther)
@@ -75,7 +75,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	if cfg.CPUProfile != "" {
 		f, err := os.Create(cfg.CPUProfile)
 		if err != nil {
-			dcrdLog.Errorf("Unable to create cpu profile: %v", err.Error())
+			hcdLog.Errorf("Unable to create cpu profile: %v", err.Error())
 			return err
 		}
 		pprof.StartCPUProfile(f)
@@ -87,7 +87,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	if cfg.MemProfile != "" {
 		f, err := os.Create(cfg.MemProfile)
 		if err != nil {
-			dcrdLog.Errorf("Unable to create cpu profile: %v", err)
+			hcdLog.Errorf("Unable to create cpu profile: %v", err)
 			return err
 		}
 		timer := time.NewTimer(time.Minute * 20) // 20 minutes
@@ -121,13 +121,13 @@ func dcrdMain(serverChan chan<- *server) error {
 	lifetimeNotifier.notifyStartupEvent(lifetimeEventDBOpen)
 	db, err := loadBlockDB()
 	if err != nil {
-		dcrdLog.Errorf("%v", err)
+		hcdLog.Errorf("%v", err)
 		return err
 	}
 	defer func() {
 		// Ensure the database is sync'd and closed on shutdown.
 		lifetimeNotifier.notifyShutdownEvent(lifetimeEventDBOpen)
-		dcrdLog.Infof("Gracefully shutting down the database...")
+		hcdLog.Infof("Gracefully shutting down the database...")
 		db.Close()
 	}()
 
@@ -142,7 +142,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	// drops the address index since it relies on it.
 	if cfg.DropAddrIndex {
 		if err := indexers.DropAddrIndex(db); err != nil {
-			dcrdLog.Errorf("%v", err)
+			hcdLog.Errorf("%v", err)
 			return err
 		}
 
@@ -150,7 +150,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	}
 	if cfg.DropTxIndex {
 		if err := indexers.DropTxIndex(db); err != nil {
-			dcrdLog.Errorf("%v", err)
+			hcdLog.Errorf("%v", err)
 			return err
 		}
 
@@ -158,7 +158,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	}
 	if cfg.DropExistsAddrIndex {
 		if err := indexers.DropExistsAddrIndex(db); err != nil {
-			dcrdLog.Errorf("%v", err)
+			hcdLog.Errorf("%v", err)
 			return err
 		}
 
@@ -170,13 +170,13 @@ func dcrdMain(serverChan chan<- *server) error {
 	server, err := newServer(cfg.Listeners, db, activeNetParams.Params)
 	if err != nil {
 		// TODO(oga) this logging could do with some beautifying.
-		dcrdLog.Errorf("Unable to start server on %v: %v",
+		hcdLog.Errorf("Unable to start server on %v: %v",
 			cfg.Listeners, err)
 		return err
 	}
 	defer func() {
 		lifetimeNotifier.notifyShutdownEvent(lifetimeEventP2PServer)
-		dcrdLog.Infof("Gracefully shutting down the server...")
+		hcdLog.Infof("Gracefully shutting down the server...")
 		server.Stop()
 		server.WaitForShutdown()
 		srvrLog.Infof("Server shutdown complete")
@@ -231,7 +231,7 @@ func main() {
 	}
 
 	// Work around defer not working after os.Exit()
-	if err := dcrdMain(nil); err != nil {
+	if err := hcdMain(nil); err != nil {
 		os.Exit(1)
 	}
 }

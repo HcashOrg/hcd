@@ -135,7 +135,7 @@ func makeEmptyMessage(command string) (Message, error) {
 
 	case CmdFilterLoad:
 		msg = &MsgFilterLoad{}
-		
+
 	case CmdReject:
 		msg = &MsgReject{}
 
@@ -206,7 +206,7 @@ func discardInput(r io.Reader, n uint32) {
 // WriteMessageN writes a HC Message to w including the necessary header
 // information and returns the number of bytes written.    This function is the
 // same as WriteMessage except it also returns the number of bytes written.
-func WriteMessageN(w io.Writer, msg Message, pver uint32, dcrnet CurrencyNet) (int, error) {
+func WriteMessageN(w io.Writer, msg Message, pver uint32, hcnet CurrencyNet) (int, error) {
 	totalBytes := 0
 
 	// Enforce max command size.
@@ -247,7 +247,7 @@ func WriteMessageN(w io.Writer, msg Message, pver uint32, dcrnet CurrencyNet) (i
 
 	// Create header for the message.
 	hdr := messageHeader{}
-	hdr.magic = dcrnet
+	hdr.magic = hcnet
 	hdr.command = cmd
 	hdr.length = uint32(lenp)
 	copy(hdr.checksum[:], chainhash.HashB(payload)[0:4])
@@ -276,8 +276,8 @@ func WriteMessageN(w io.Writer, msg Message, pver uint32, dcrnet CurrencyNet) (i
 // doesn't return the number of bytes written.  This function is mainly provided
 // for backwards compatibility with the original API, but it's also useful for
 // callers that don't care about byte counts.
-func WriteMessage(w io.Writer, msg Message, pver uint32, dcrnet CurrencyNet) error {
-	_, err := WriteMessageN(w, msg, pver, dcrnet)
+func WriteMessage(w io.Writer, msg Message, pver uint32, hcnet CurrencyNet) error {
+	_, err := WriteMessageN(w, msg, pver, hcnet)
 	return err
 }
 
@@ -286,7 +286,7 @@ func WriteMessage(w io.Writer, msg Message, pver uint32, dcrnet CurrencyNet) err
 // bytes read in addition to the parsed Message and raw bytes which comprise the
 // message.  This function is the same as ReadMessage except it also returns the
 // number of bytes read.
-func ReadMessageN(r io.Reader, pver uint32, dcrnet CurrencyNet) (int, Message, []byte, error) {
+func ReadMessageN(r io.Reader, pver uint32, hcnet CurrencyNet) (int, Message, []byte, error) {
 	totalBytes := 0
 	n, hdr, err := readMessageHeader(r)
 	totalBytes += n
@@ -304,7 +304,7 @@ func ReadMessageN(r io.Reader, pver uint32, dcrnet CurrencyNet) (int, Message, [
 	}
 
 	// Check for messages from the wrong HC network.
-	if hdr.magic != dcrnet {
+	if hdr.magic != hcnet {
 		discardInput(r, hdr.length)
 		str := fmt.Sprintf("message from other network [%v]", hdr.magic)
 		return totalBytes, nil, nil, messageError("ReadMessage", str)
@@ -372,7 +372,7 @@ func ReadMessageN(r io.Reader, pver uint32, dcrnet CurrencyNet) (int, Message, [
 // from ReadMessageN in that it doesn't return the number of bytes read.  This
 // function is mainly provided for backwards compatibility with the original
 // API, but it's also useful for callers that don't care about byte counts.
-func ReadMessage(r io.Reader, pver uint32, dcrnet CurrencyNet) (Message, []byte, error) {
-	_, msg, buf, err := ReadMessageN(r, pver, dcrnet)
+func ReadMessage(r io.Reader, pver uint32, hcnet CurrencyNet) (Message, []byte, error) {
+	_, msg, buf, err := ReadMessageN(r, pver, hcnet)
 	return msg, buf, err
 }

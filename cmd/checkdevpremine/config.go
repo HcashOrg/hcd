@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	dcrdHomeDir        = hcutil.AppDataDir("hcd", false)
+	hcdHomeDir         = hcutil.AppDataDir("hcd", false)
 	appHomeDir         = hcutil.AppDataDir("checkdevpremine", false)
 	defaultConfigFile  = filepath.Join(appHomeDir, "checkdevpremine.conf")
 	defaultRPCServer   = "localhost"
-	defaultRPCCertFile = filepath.Join(dcrdHomeDir, "rpc.cert")
+	defaultRPCCertFile = filepath.Join(hcdHomeDir, "rpc.cert")
 )
 
 // config defines the configuration options for hcctl.
@@ -120,7 +120,7 @@ func loadConfig() (*config, []string, error) {
 	}
 
 	// Create the home directory if it doesn't already exist.
-	err := os.MkdirAll(dcrdHomeDir, 0700)
+	err := os.MkdirAll(hcdHomeDir, 0700)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(-1)

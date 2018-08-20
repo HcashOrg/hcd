@@ -393,7 +393,7 @@ func (k *ExtendedKey) Neuter() (*ExtendedKey, error) {
 		k.depth, k.childNum, false, k.algtype), nil
 }
 
-// ECPubKey converts the extended key to a dcrec public key and returns it.
+// ECPubKey converts the extended key to a hcec public key and returns it.
 func (k *ExtendedKey) ECPubKey() (chainec.PublicKey, error) {
 	if k.algtype == keyEc {
 		return chainec.Secp256k1.ParsePubKey(k.pubKeyBytes())
@@ -403,7 +403,7 @@ func (k *ExtendedKey) ECPubKey() (chainec.PublicKey, error) {
 	return nil, ErrUnknownAlg
 }
 
-// ECPrivKey converts the extended key to a dcrec private key and returns it.
+// ECPrivKey converts the extended key to a hcec private key and returns it.
 // As you might imagine this is only possible if the extended key is a private
 // extended key (as determined by the IsPrivate function).  The ErrNotPrivExtKey
 // error will be returned if this function is called on a public extended key.

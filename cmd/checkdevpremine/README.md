@@ -39,8 +39,8 @@ utility (`checkdevpremine -h`).
 Config file example:
 
 ```
-rpcuser=your_dcrd_RPC_server_username
-rpcpass=your_dcrd_RPC_server_password
+rpcuser=your_hcd_RPC_server_username
+rpcpass=your_hcd_RPC_server_password
 ```
 
 ## Example Usage
