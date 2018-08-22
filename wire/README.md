@@ -43,13 +43,13 @@ to a remote node running a HC peer.  Example syntax is:
 	// Use the most recent protocol version supported by the package and the
 	// main HC network.
 	pver := wire.ProtocolVersion
-	dcrnet := wire.MainNet
+	hcnet := wire.MainNet
 
 	// Reads and validates the next HC message from conn using the
-	// protocol version pver and the HC network dcrnet.  The returns
+	// protocol version pver and the HC network hcnet.  The returns
 	// are a wire.Message, a []byte which contains the unmarshalled
 	// raw payload, and a possible error.
-	msg, rawPayload, err := wire.ReadMessage(conn, pver, dcrnet)
+	msg, rawPayload, err := wire.ReadMessage(conn, pver, hcnet)
 	if err != nil {
 		// Log and handle the error
 	}

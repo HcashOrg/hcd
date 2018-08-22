@@ -184,7 +184,7 @@ information.
 * The Hc-related Go Packages:
     * [hcrpcclient](https://github.com/HcashOrg/hcrpcclient) - Implements a
 	  robust and easy to use Websocket-enabled Hc JSON-RPC client
-    * [dcrjson](https://github.com/HcashOrg/dcrjson) - Provides an extensive API
+    * [hcjson](https://github.com/HcashOrg/hcjson) - Provides an extensive API
 	  for the underlying JSON-RPC command and return values
     * [wire](https://github.com/HcashOrg/hcd/tree/master/wire) - Implements the
 	  Hc wire protocol
@@ -194,7 +194,7 @@ information.
 	  Implements Hc block handling and chain selection rules
     * [txscript](https://github.com/HcashOrg/hcd/tree/master/txscript) -
 	  Implements the Hc transaction scripting language
-    * [dcrec](https://github.com/HcashOrg/hcd/tree/master/dcrec) - Implements
+    * [hcec](https://github.com/HcashOrg/hcd/tree/master/hcec) - Implements
 	  support for the elliptic curve cryptographic functions needed for the
 	  Hc scripts
     * [database](https://github.com/HcashOrg/hcd/tree/master/database) -

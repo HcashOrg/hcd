@@ -23,7 +23,7 @@
   branch = "master"
   name = "github.com/HcashOrg/hcrpcclient"
   packages = ["."]
-  revision = "bc79ffac5bcef6131f880de25da5bc0d1a4b2b22"
+  revision = "90a10418b98085c301c982c309a6ae9709598a3a"
 
 [[projects]]
   branch = "master"
@@ -90,10 +90,10 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/dchest/blake256"
@@ -121,7 +121,7 @@
     "sha3",
     "ssh/terminal"
   ]
-  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
+  revision = "aabede6cba87e37f413b3e60ebfc214f8eeca1b0"
 
 [[projects]]
   branch = "master"
@@ -130,11 +130,11 @@
     "unix",
     "windows"
   ]
-  revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
+  revision = "1c9583448a9c3aa0f9a6a5241bf73c0bd8aafded"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6b1fb4427dae1972429e0dbcb993abf180e9745948ec5f037f600f82981efb93"
+  inputs-digest = "ae0cdc70a447260dd5f237fd4ad569c0039b65c290cca3779f90d589b78c41b2"
   solver-name = "gps-cdcl"
   solver-version = 1

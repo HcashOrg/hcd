@@ -459,7 +459,7 @@ func NewAddressSecpPubKey(serializedPubKey []byte,
 	}
 
 	// Set the format of the pubkey.  This probably should be returned
-	// from dcrec, but do it here to avoid API churn.  We already know the
+	// from hcec, but do it here to avoid API churn.  We already know the
 	// pubkey is valid since it parsed above, so it's safe to simply examine
 	// the leading byte to get the format.
 	pkFormat := PKFUncompressed

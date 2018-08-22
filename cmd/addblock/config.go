@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -14,8 +14,8 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/database"
 	_ "github.com/HcashOrg/hcd/database/ffldb"
-	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/wire"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -26,8 +26,8 @@ const (
 )
 
 var (
-	dcrdHomeDir     = hcutil.AppDataDir("hcd", false)
-	defaultDataDir  = filepath.Join(dcrdHomeDir, "data")
+	hcdHomeDir      = hcutil.AppDataDir("hcd", false)
+	defaultDataDir  = filepath.Join(hcdHomeDir, "data")
 	knownDbTypes    = database.SupportedDrivers()
 	activeNetParams = &chaincfg.MainNetParams
 )

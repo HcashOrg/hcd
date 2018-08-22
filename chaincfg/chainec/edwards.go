@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,7 +10,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/HcashOrg/hcd/dcrec/edwards"
+	"github.com/HcashOrg/hcd/hcec/edwards"
 )
 
 type edwardsDSA struct {

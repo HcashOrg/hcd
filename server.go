@@ -1219,7 +1219,6 @@ func (s *server) pushBlockMsg(sp *serverPeer, hash *chainhash.Hash, doneChan cha
 	return nil
 }
 
-
 // handleUpdatePeerHeight updates the heights of all peers who were known to
 // announce a block we recently accepted.
 func (s *server) handleUpdatePeerHeights(state *peerState, umsg updatePeerHeightsMsg) {
@@ -1708,7 +1707,7 @@ func (s *server) peerHandler() {
 
 	if !cfg.DisableDNSSeed {
 		// Add peers discovered through DNS to the address manager.
-		connmgr.SeedFromDNS(activeNetParams.Params, dcrdLookup, func(addrs []*wire.NetAddress) {
+		connmgr.SeedFromDNS(activeNetParams.Params, hcdLookup, func(addrs []*wire.NetAddress) {
 			// Bitcoind uses a lookup of the dns seeder here. This
 			// is rather strange since the values looked up by the
 			// DNS seed lookups will vary quite a lot.
@@ -1825,7 +1824,7 @@ func (s *server) OutboundGroupCount(key string) int {
 	return <-replyChan
 }
 
-// AddedNodeInfo returns an array of dcrjson.GetAddedNodeInfoResult structures
+// AddedNodeInfo returns an array of hcjson.GetAddedNodeInfoResult structures
 // describing the persistent (added) nodes.
 func (s *server) AddedNodeInfo() []*serverPeer {
 	replyChan := make(chan []*serverPeer)
@@ -1970,7 +1969,7 @@ out:
 			// yet. We periodically resubmit them until they have.
 			srvrLog.Debugf("Start relay inventory")
 			for iv, data := range pendingInvs {
-				srvrLog.Debugf("Relay inventory : %v",iv)
+				srvrLog.Debugf("Relay inventory : %v", iv)
 				ivCopy := iv
 				s.RelayInventory(&ivCopy, data)
 			}
@@ -2232,7 +2231,7 @@ func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Param
 		services &^= wire.SFNodeBloom
 	}
 
-	amgr := addrmgr.New(cfg.DataDir, dcrdLookup)
+	amgr := addrmgr.New(cfg.DataDir, hcdLookup)
 
 	var listeners []net.Listener
 	var nat NAT
@@ -2522,7 +2521,7 @@ func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Param
 		OnAccept:       s.inboundPeerConnected,
 		RetryDuration:  connectionRetryInterval,
 		TargetOutbound: uint32(targetOutbound),
-		Dial:           dcrdDial,
+		Dial:           hcdDial,
 		OnConnection:   s.outboundPeerConnected,
 		GetNewAddress:  newAddressFunc,
 	})
@@ -2574,9 +2573,9 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 	}
 
 	// Attempt to look up an IP address associated with the parsed host.
-	// The dcrdLookup function will transparently handle performing the
+	// The hcdLookup function will transparently handle performing the
 	// lookup over Tor if necessary.
-	ips, err := dcrdLookup(host)
+	ips, err := hcdLookup(host)
 	if err != nil {
 		return nil, err
 	}

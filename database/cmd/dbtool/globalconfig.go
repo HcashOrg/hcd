@@ -18,13 +18,13 @@ import (
 )
 
 var (
-	dcrdHomeDir     = hcutil.AppDataDir("hcd", false)
+	hcdHomeDir      = hcutil.AppDataDir("hcd", false)
 	knownDbTypes    = database.SupportedDrivers()
 	activeNetParams = &chaincfg.MainNetParams
 
 	// Default global config.
 	cfg = &config{
-		DataDir: filepath.Join(dcrdHomeDir, "data"),
+		DataDir: filepath.Join(hcdHomeDir, "data"),
 		DbType:  "ffldb",
 	}
 )
