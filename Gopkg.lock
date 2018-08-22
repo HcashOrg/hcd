@@ -23,7 +23,7 @@
   branch = "master"
   name = "github.com/HcashOrg/hcrpcclient"
   packages = ["."]
-  revision = "90a10418b98085c301c982c309a6ae9709598a3a"
+  revision = "de69c7288a2006f5af420a60cb3751c24238ed00"
 
 [[projects]]
   branch = "master"
@@ -121,7 +121,7 @@
     "sha3",
     "ssh/terminal"
   ]
-  revision = "aabede6cba87e37f413b3e60ebfc214f8eeca1b0"
+  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
 
 [[projects]]
   branch = "master"
@@ -130,7 +130,7 @@
     "unix",
     "windows"
   ]
-  revision = "1c9583448a9c3aa0f9a6a5241bf73c0bd8aafded"
+  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
 
 [solve-meta]
   analyzer-name = "dep"
