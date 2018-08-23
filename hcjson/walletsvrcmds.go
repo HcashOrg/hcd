@@ -443,6 +443,28 @@ func NewSendManyCmd(fromAccount string, amounts map[string]float64, minConf *int
 	}
 }
 
+// SendManyV2Cmd defines the SendManyV2Cmd JSON-RPC command.
+type SendManyV2Cmd struct {
+	FromAccount string
+	Amounts     map[string]float64 `jsonrpcusage:"{\"address\":amount,...}"` // In HC
+	ChangeAddr  *string
+	MinConf     *int `jsonrpcdefault:"2"`
+}
+
+// NewSendManyCmd returns a new instance which can be used to issue a SendManyV2Cmd
+// JSON-RPC command.
+//
+// The parameters which are pointers indicate they are optional.  Passing nil
+// for optional parameters will use the default value.
+func NewSendManyV2Cmd(fromAccount string, amounts map[string]float64, changeAddr *string, minConf *int) *SendManyV2Cmd {
+	return &SendManyV2Cmd{
+		FromAccount: fromAccount,
+		Amounts:     amounts,
+		ChangeAddr:  changeAddr,
+		MinConf:     minConf,
+	}
+}
+
 // SendToAddressCmd defines the sendtoaddress JSON-RPC command.
 type SendToAddressCmd struct {
 	Address   string
@@ -594,6 +616,7 @@ func init() {
 	MustRegisterCmd("lockunspent", (*LockUnspentCmd)(nil), flags)
 	MustRegisterCmd("sendfrom", (*SendFromCmd)(nil), flags)
 	MustRegisterCmd("sendmany", (*SendManyCmd)(nil), flags)
+	MustRegisterCmd("sendmanyv2", (*SendManyV2Cmd)(nil), flags)
 	MustRegisterCmd("sendtoaddress", (*SendToAddressCmd)(nil), flags)
 	MustRegisterCmd("settxfee", (*SetTxFeeCmd)(nil), flags)
 	MustRegisterCmd("signmessage", (*SignMessageCmd)(nil), flags)
