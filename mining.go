@@ -1383,8 +1383,7 @@ mempoolLoop:
 				}
 				deps[*prioItem.tx.Hash()] = prioItem
 				if prioItem.dependsOn == nil {
-					prioItem.dependsOn = make(
-						map[chainhash.Hash]struct{})
+					prioItem.dependsOn = make(map[chainhash.Hash]struct{})
 				}
 				prioItem.dependsOn[*originHash] = struct{}{}
 
@@ -1436,7 +1435,7 @@ mempoolLoop:
 	// trees if they fail one of the stake checks below the priorityQueue
 	// pop loop. This is buggy, but not catastrophic behaviour. A future
 	// release should fix it. TODO
-	blockSigOps, err :=PreCalcCoinBaseSigNum(subsidyCache, server.chainParams, payToAddress, nextBlockHeight)
+	blockSigOps, err := PreCalcCoinBaseSigNum(subsidyCache, server.chainParams, payToAddress, nextBlockHeight)
 	if err != nil {
 		return nil, miningRuleError(ErrCheckConnectBlock, "unable to get sigNum from coinbase tx")
 	}
@@ -1936,7 +1935,7 @@ mempoolLoop:
 	// the total fees accordingly.
 	if nextBlockHeight > 1 {
 		blockSize -= wire.MaxVarIntPayload -
-			uint32(wire.VarIntSerializeSize(uint64(len(blockTxnsRegular))+
+			uint32(wire.VarIntSerializeSize(uint64(len(blockTxnsRegular)) +
 				uint64(len(blockTxnsStake))))
 		coinbaseTx.MsgTx().TxOut[2].Value += totalFees
 		txFees[0] = -totalFees
@@ -2160,8 +2159,9 @@ func UpdateBlockTime(msgBlock *wire.MsgBlock, bManager *blockManager) error {
 
 	return nil
 }
-// PreCalcCoinBaseSigNum pre calc 
-func PreCalcCoinBaseSigNum(subsidyCache  *blockchain.SubsidyCache,chainParams *chaincfg.Params, payToAddress hcutil.Address, nextBlockHeight int64) (int64, error){
+
+// PreCalcCoinBaseSigNum pre calc
+func PreCalcCoinBaseSigNum(subsidyCache *blockchain.SubsidyCache, chainParams *chaincfg.Params, payToAddress hcutil.Address, nextBlockHeight int64) (int64, error) {
 	coinbaseScript := []byte{0x00, 0x00}
 	coinbaseScript = append(coinbaseScript, []byte(coinbaseFlags)...)
 
