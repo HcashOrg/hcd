@@ -87,7 +87,7 @@ func hcdMain(serverChan chan<- *server) error {
 	if cfg.MemProfile != "" {
 		f, err := os.Create(cfg.MemProfile)
 		if err != nil {
-			hcdLog.Errorf("Unable to create cpu profile: %v", err)
+			hcdLog.Errorf("Unable to create memory profile: %v", err)
 			return err
 		}
 		timer := time.NewTimer(time.Minute * 20) // 20 minutes
