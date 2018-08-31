@@ -381,6 +381,8 @@ func testMemWalletReorg(r *Harness, t *testing.T) {
 func testMemWalletLockedOutputs(r *Harness, t *testing.T) {
 	// Obtain the initial balance of the wallet at this point.
 	startingBalance := r.ConfirmedBalance()
+	
+	fmt.println("startingBalance:",startingBalance)
 
 	// First, create a signed transaction spending some outputs.
 	addr, err := r.NewAddress()
