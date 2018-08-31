@@ -151,6 +151,7 @@ func TestChainSvrWsNtfns(t *testing.T) {
 				test.name, err)
 			continue
 		}
+		fmt.Println(marshalled)
 
 		if !bytes.Equal(marshalled, []byte(test.marshalled)) {
 			t.Errorf("Test #%d (%s) unexpected marshalled data - "+
