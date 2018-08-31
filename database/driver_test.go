@@ -48,6 +48,7 @@ func TestAddDuplicateDriver(t *testing.T) {
 		t.Errorf("no backends to test")
 		return
 	}
+	fmt.Println(supportedDrivers)
 	dbType := supportedDrivers[0]
 
 	// bogusCreateDB is a function which acts as a bogus create and open
