@@ -6,6 +6,7 @@ package chaincfg
 
 import (
 	"testing"
+	"fmt"
 )
 
 var (
@@ -377,5 +378,6 @@ func TestDeployments(t *testing.T) {
 			t.Fatalf("%v: got '%v' expected '%v'", test.name, err,
 				test.expected)
 		}
+		fmt.Println(test)
 	}
 }
