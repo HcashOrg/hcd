@@ -452,6 +452,7 @@ func TestMain(m *testing.M) {
 	}
 
 	exitCode := m.Run()
+	fmt.println("exitCode:",exitCode)
 
 	// Clean up any active harnesses that are still currently running.
 	if len(ActiveHarnesses()) > 0 {
