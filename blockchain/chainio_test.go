@@ -1186,7 +1186,7 @@ func TestBestChainStateSerialization(t *testing.T) {
 		}
 		if !reflect.DeepEqual(state, test.state) {
 			t.Errorf("deserializeBestChainState #%d (%s) "+
-				"mismatched state - got %v, want %v", i,
+				"mismatched  state - got %v, want %v", i,
 				test.name, state, test.state)
 			continue
 
