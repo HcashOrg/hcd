@@ -381,6 +381,8 @@ func testMemWalletReorg(r *Harness, t *testing.T) {
 func testMemWalletLockedOutputs(r *Harness, t *testing.T) {
 	// Obtain the initial balance of the wallet at this point.
 	startingBalance := r.ConfirmedBalance()
+	
+	fmt.println("startingBalance:",startingBalance)
 
 	// First, create a signed transaction spending some outputs.
 	addr, err := r.NewAddress()
@@ -452,6 +454,7 @@ func TestMain(m *testing.M) {
 	}
 
 	exitCode := m.Run()
+	fmt.println("exitCode:",exitCode)
 
 	// Clean up any active harnesses that are still currently running.
 	if len(ActiveHarnesses()) > 0 {
