@@ -138,7 +138,7 @@ func (b *addrIndexBucket) sanityCheck(addrKey [addrKeySize]byte, expectedTotal i
 		maxEntries *= 2
 	}
 	if totalEntries != expectedTotal {
-		return fmt.Errorf("expected %d entries - got %d", expectedTotal,
+		return fmt.Errorf("err expected %d  entries - got %d", expectedTotal,
 			totalEntries)
 	}
 
