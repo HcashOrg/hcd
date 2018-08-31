@@ -84,6 +84,7 @@ func Example_newOutboundPeer() {
 		fmt.Printf("NewOutboundPeer: error %v\n", err)
 		return
 	}
+	fmt.Println(p)
 
 	// Establish the connection to the peer address and mark it connected.
 	conn, err := net.Dial("tcp", p.Addr())
