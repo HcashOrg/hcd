@@ -510,6 +510,7 @@ func TestSimpleOrphanChain(t *testing.T) {
 			t.Fatalf("IsTransactionInPool: false for accepted tx %v",
 				tx.Hash())
 		}
+		fmt.Println(tx)
 	}
 }
 
