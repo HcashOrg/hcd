@@ -382,7 +382,7 @@ func testMemWalletLockedOutputs(r *Harness, t *testing.T) {
 	// Obtain the initial balance of the wallet at this point.
 	startingBalance := r.ConfirmedBalance()
 	
-	fmt.println("startingBalance:",startingBalance)
+	fmt.Println("startingBalance:",startingBalance)
 
 	// First, create a signed transaction spending some outputs.
 	addr, err := r.NewAddress()
@@ -454,7 +454,7 @@ func TestMain(m *testing.M) {
 	}
 
 	exitCode := m.Run()
-	fmt.println("exitCode:",exitCode)
+	fmt.Println("exitCode:",exitCode)
 
 	// Clean up any active harnesses that are still currently running.
 	if len(ActiveHarnesses()) > 0 {
@@ -470,7 +470,7 @@ func TestMain(m *testing.M) {
 func TestHarness(t *testing.T) {
 	// We should have the expected amount of mature unspent outputs.
 	expectedBalance := hcutil.Amount(numMatureOutputs * 300 * hcutil.AtomsPerCoin)
-	fmt.println("expectedBalance:",expectedBalance)
+	fmt.Println("expectedBalance:",expectedBalance)
 	harnessBalance := mainHarness.ConfirmedBalance()
 	if harnessBalance != expectedBalance {
 		t.Fatalf("expected wallet balance of %v instead have %v",
