@@ -92,6 +92,7 @@ testLoop:
 					test.name, nonces[newLruIndex])
 				continue testLoop
 			}
+			fmt.Println(newLruIndex)
 		}
 
 		// Delete all of the entries in the list, including those that
