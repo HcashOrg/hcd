@@ -34,6 +34,7 @@ func TestStakeTxFeePrioHeap(t *testing.T) {
 		{feePerKB: 1234, txType: stake.TxTypeRegular, priority: 5},
 		{feePerKB: 1234, txType: stake.TxTypeRegular, priority: 5}, // Duplicate fee and prio
 		{feePerKB: 1234, txType: stake.TxTypeRegular, priority: 2},
+		{feePerKB: 1234, txType: stake.TxTypeRegular, priority: 2},
 		{feePerKB: 10000, txType: stake.TxTypeRegular, priority: 0}, // Higher fee, smaller prio
 		{feePerKB: 0, txType: stake.TxTypeRegular, priority: 10000}, // Higher prio, lower fee
 	}
