@@ -24,6 +24,7 @@ $ go get -u github.com/HcashOrg/hcd/rpctest
 ```
 
 ## License
+## License
 
 
 Package rpctest is licensed under the [copyfree](http://copyfree.org) ISC
