@@ -8,6 +8,7 @@ package stake_test
 
 import (
 	"testing"
+	"fmt"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
 )
@@ -84,6 +85,7 @@ func TestRuleError(t *testing.T) {
 			"human-readable error",
 		},
 	}
+	fmt.Println(tests)
 
 	t.Logf("Running %d tests", len(tests))
 	for i, test := range tests {
