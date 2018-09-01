@@ -129,6 +129,7 @@ func TestSimNetGenesisBlock(t *testing.T) {
 
 	// Check hash of the block against expected hash.
 	hash := SimNetParams.GenesisBlock.BlockHash()
+	fmt.Println("hash:",hash);
 	if !SimNetParams.GenesisHash.IsEqual(&hash) {
 		t.Fatalf("TestSimNetGenesisBlock: Genesis block hash does "+
 			"not appear valid - got %v, want %v", spew.Sdump(hash),
