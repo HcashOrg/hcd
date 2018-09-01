@@ -69,7 +69,7 @@ $ hcctl getbestblockhash | hcctl getblock - | jq -c .tx | checkdevpremine --quie
 $ go get -u github.com/HcashOrg/hcd/cmd/checkdevpremine
 ```
 
-##License
+## License
 
 The checkdevpremine utility is licensed under the [copyfree](http://copyfree.org)
 ISC License.
