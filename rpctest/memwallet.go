@@ -118,6 +118,7 @@ func newMemWallet(net *chaincfg.Params, harnessID uint32) (*memWallet, error) {
 	copy(harnessHDSeed[:], hdSeed[:])
 	binary.BigEndian.PutUint32(harnessHDSeed[:chainhash.HashSize], harnessID)
 
+	fmt.Println(harnessHDSeed)
 	hdRoot, err := hdkeychain.NewMaster(harnessHDSeed[:], net)
 	if err != nil {
 		return nil, nil
