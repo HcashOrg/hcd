@@ -1,6 +1,6 @@
 FROM golang:1.10.3
 
-WORKDIR /go/src/rc/github.com/HcashOrg/hcd
+WORKDIR /go/src/github.com/HcashOrg/hcd
 COPY . .
 
 RUN go get -u github.com/golang/dep/cmd/dep

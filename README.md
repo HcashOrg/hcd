@@ -93,9 +93,9 @@ hcctl -u YOURUNIQUEUSERNAME -P YOURUNIQUEPASSWORD --testnet setgenerate true
 
 ## Docker
 
-### Running dcrd
+### Running hcd
 
-You can run a decred node from inside a docker container.  To build the image
+You can run a HC node from inside a docker container.  To build the image
 yourself, use the following command:
 
 ```
