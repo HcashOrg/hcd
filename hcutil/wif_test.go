@@ -87,7 +87,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"PmQdMn8xafwaQouk8ngs1CccRCB1ZmsqQxBaxNR4vhQi5a5QB5716",
+					"Hm37RK5N6Pv1d1GZ8QFKuNjpR6vtLpPGTaoa1cf9yNWruUXwm3ySf",
 				},
 				{
 					wif2,
@@ -105,7 +105,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"PmQfJXKC2ho1633ZiVbSdCZw1y68BVXYFpyE2UfDcbQN5xa3DByDn",
+					"Hm39N4FbYRmSJEQNi79uXNh91sqzxY2yJTbD5iuJfGWWus2dSyYDz",
 				},
 				{
 					wif2,
@@ -123,7 +123,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"PmQhFGVRUjeRmGBPJCW2FCXFck1EoDBF6hks6auNJVQ26M4h73W9W",
+					"Hm3BJoRpzTcryTYCHp4V9NeTcem7aFgg9LNr9q9TMAWAvFXF8pu2e",
 				},
 				{
 					wif2,

@@ -551,7 +551,7 @@ func TestExtendedKeyAPI(t *testing.T) {
 			parentFP:  0,
 			privKey:   "33a63922ea4e6686c9fc31daf136888297537f66c1aabe3363df06af0b8274c7",
 			pubKey:    "039f2e1d7b50b8451911c64cf745f9ba16193b319212a64096e5679555449d8f37",
-			address:   "Dsk8SfRLF2hssYuLcb6Gu4zh19rg2QBEDGs",
+			address:   "HsWosoy2BzcnYcZeWgk8UPDU9gR5MqNxDiq",
 		},
 		{
 			name:       "test vector 2 chain m/0/2147483647/1/2147483646/2",
@@ -560,7 +560,7 @@ func TestExtendedKeyAPI(t *testing.T) {
 			parentFP:   4220580796,
 			privKeyErr: hdkeychain.ErrNotPrivExtKey,
 			pubKey:     "03dceb0b07698ec3d6ac08ae7297e7f5e63d7fda99d3fce1ded31d36badcdd4d36",
-			address:    "DsZcjfdSKUrEQxoyjkWEo7dM4YZKhma8wCa",
+			address:    "HsLJApB8GSm962UHdrA6NRr8D57j3H1uegt",
 		},
 	}
 
@@ -625,7 +625,7 @@ func TestExtendedKeyAPI(t *testing.T) {
 			continue
 		}
 
-		addr, err := key.Address(&chaincfg.MainNetParams)
+		addr, err := key.Address(&chaincfg.MainNetParams, 0)
 		if err != nil {
 			t.Errorf("Address #%d (%s): unexpected error: %v", i,
 				test.name, err)
@@ -905,8 +905,8 @@ func TestZero(t *testing.T) {
 			return false
 		}
 
-		wantAddr := "DsWuefL3Rgj6NXoMFqqBzxY2nmh87RZyPkv"
-		addr, err := key.Address(&chaincfg.MainNetParams)
+		wantAddr := "HsHb5osjNee13bTf9wV3aGkowJFXSxv8ouo"
+		addr, err := key.Address(&chaincfg.MainNetParams, 0)
 		if err != nil {
 			t.Errorf("Addres s #%d (%s): unexpected error: %v", i,
 				testName, err)
