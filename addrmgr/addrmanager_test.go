@@ -470,5 +470,4 @@ func TestNetAddressKey(t *testing.T) {
 			continue
 		}
 	}
-
 }
