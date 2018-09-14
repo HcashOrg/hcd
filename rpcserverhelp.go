@@ -104,6 +104,7 @@ var helpDescsEnUS = map[string]string{
 
 	// VinPrevOut help.
 	"vinprevout-coinbase":    "The hex-encoded bytes of the signature script (coinbase txns only)",
+	"vinprevout-stakebase":   "The hash of the stake transaction",
 	"vinprevout-txid":        "The hash of the origin transaction (non-coinbase txns only)",
 	"vinprevout-vout":        "The index of the output being redeemed from the origin transaction (non-coinbase txns only)",
 	"vinprevout-tree":        "The transaction tree of the origin transaction (non-coinbase txns only)",
@@ -116,6 +117,7 @@ var helpDescsEnUS = map[string]string{
 
 	// Vin help.
 	"vin-coinbase":    "The hex-encoded bytes of the signature script (coinbase txns only)",
+	"vin-stakebase":   "The hash of the stake transaction",
 	"vin-txid":        "The hash of the origin transaction (non-coinbase txns only)",
 	"vin-vout":        "The index of the output being redeemed from the origin transaction (non-coinbase txns only)",
 	"vin-scriptSig":   "The signature script used to redeem the origin transaction as a JSON object (non-coinbase txns only)",
@@ -731,7 +733,7 @@ var helpDescsEnUS = map[string]string{
 
 	// VerifyBlissMessageCmd help.
 	"verifyblissmessage--synopsis": "Verify a signed message.",
-	"verifyblissmessage-pubKey":    "The hypercash bliss public key to use for the signature",
+	"verifyblissmessage-pubkey":    "The hypercash bliss public key to use for the signature",
 	"verifyblissmessage-signature": "The base-64 encoded signature provided by the signer",
 	"verifyblissmessage-message":   "The signed message",
 	"verifyblissmessage--result0":  "Whether or not the signature verified",
