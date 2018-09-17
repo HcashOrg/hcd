@@ -167,7 +167,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			marshalled: `{"jsonrpc":"1.0","method":"getbalance","params":[],"id":1}`,
 			unmarshalled: &hcjson.GetBalanceCmd{
 				Account: nil,
-				MinConf: hcjson.Int(1),
+				MinConf: hcjson.Int(2),
 			},
 		},
 		{
@@ -181,7 +181,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			marshalled: `{"jsonrpc":"1.0","method":"getbalance","params":["acct"],"id":1}`,
 			unmarshalled: &hcjson.GetBalanceCmd{
 				Account: hcjson.String("acct"),
-				MinConf: hcjson.Int(1),
+				MinConf: hcjson.Int(2),
 			},
 		},
 		{
@@ -263,7 +263,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			marshalled: `{"jsonrpc":"1.0","method":"getreceivedbyaccount","params":["acct"],"id":1}`,
 			unmarshalled: &hcjson.GetReceivedByAccountCmd{
 				Account: "acct",
-				MinConf: hcjson.Int(1),
+				MinConf: hcjson.Int(2),
 			},
 		},
 		{
@@ -291,7 +291,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			marshalled: `{"jsonrpc":"1.0","method":"getreceivedbyaddress","params":["1Address"],"id":1}`,
 			unmarshalled: &hcjson.GetReceivedByAddressCmd{
 				Address: "1Address",
-				MinConf: hcjson.Int(1),
+				MinConf: hcjson.Int(2),
 			},
 		},
 		{
@@ -433,7 +433,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"listaccounts","params":[],"id":1}`,
 			unmarshalled: &hcjson.ListAccountsCmd{
-				MinConf: hcjson.Int(1),
+				MinConf: hcjson.Int(2),
 			},
 		},
 		{
@@ -470,7 +470,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"listreceivedbyaccount","params":[],"id":1}`,
 			unmarshalled: &hcjson.ListReceivedByAccountCmd{
-				MinConf:          hcjson.Int(1),
+				MinConf:          hcjson.Int(2),
 				IncludeEmpty:     hcjson.Bool(false),
 				IncludeWatchOnly: hcjson.Bool(false),
 			},
@@ -530,7 +530,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"listreceivedbyaddress","params":[],"id":1}`,
 			unmarshalled: &hcjson.ListReceivedByAddressCmd{
-				MinConf:          hcjson.Int(1),
+				MinConf:          hcjson.Int(2),
 				IncludeEmpty:     hcjson.Bool(false),
 				IncludeWatchOnly: hcjson.Bool(false),
 			},
@@ -732,7 +732,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"listunspent","params":[],"id":1}`,
 			unmarshalled: &hcjson.ListUnspentCmd{
-				MinConf:   hcjson.Int(1),
+				MinConf:   hcjson.Int(2),
 				MaxConf:   hcjson.Int(9999999),
 				Addresses: nil,
 			},
@@ -815,7 +815,7 @@ func TestWalletSvrCmds(t *testing.T) {
 				FromAccount: "from",
 				ToAddress:   "1Address",
 				Amount:      0.5,
-				MinConf:     hcjson.Int(1),
+				MinConf:     hcjson.Int(2),
 				Comment:     nil,
 				CommentTo:   nil,
 			},
@@ -889,7 +889,7 @@ func TestWalletSvrCmds(t *testing.T) {
 			unmarshalled: &hcjson.SendManyCmd{
 				FromAccount: "from",
 				Amounts:     map[string]float64{"1Address": 0.5},
-				MinConf:     hcjson.Int(1),
+				MinConf:     hcjson.Int(2),
 				Comment:     nil,
 			},
 		},
