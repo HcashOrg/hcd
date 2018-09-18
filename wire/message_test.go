@@ -74,26 +74,6 @@ func TestMessage(t *testing.T) {
 	msgFilterAdd := NewMsgFilterAdd([]byte{0x01})
 	msgFilterClear := NewMsgFilterClear()
 	msgFilterLoad := NewMsgFilterLoad([]byte{0x01}, 10, 0, BloomUpdateNone)
-	bh := NewBlockHeader(
-		int32(0),                                    // Version
-		&chainhash.Hash{},                           // PrevHash
-		&chainhash.Hash{},                           // MerkleRoot
-		&chainhash.Hash{},                           // StakeRoot
-		uint16(0x0000),                              // VoteBits
-		[6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // FinalState
-		uint16(0x0000),                              // Voters
-		uint8(0x00),                                 // FreshStake
-		uint8(0x00),                                 // Revocations
-		uint32(0),                                   // Poolsize
-		uint32(0x00000000),                          // Bits
-		int64(0x0000000000000000),                   // Sbits
-		uint32(0),                                   // Height
-		uint32(0),                                   // Size
-		uint32(0x00000000),                          // Nonce
-		[32]byte{},                                  // ExtraData
-		uint32(0xcab005e0),                          // StakeVersion
-	)
-	msgMerkleBlock := NewMsgMerkleBlock(bh)
 	msgReject := NewMsgReject("block", RejectDuplicate, "duplicate block")
 
 	tests := []struct {
@@ -103,7 +83,7 @@ func TestMessage(t *testing.T) {
 		hcnet CurrencyNet // Network to use for wire encoding
 		bytes int         // Expected num bytes read/written
 	}{
-		{msgVersion, msgVersion, pver, MainNet, 125},         // [0]
+		{msgVersion, msgVersion, pver, MainNet, 124},         // [0]
 		{msgVerack, msgVerack, pver, MainNet, 24},            // [1]
 		{msgGetAddr, msgGetAddr, pver, MainNet, 24},          // [2]
 		{msgAddr, msgAddr, pver, MainNet, 25},                // [3]
@@ -122,7 +102,6 @@ func TestMessage(t *testing.T) {
 		{msgFilterAdd, msgFilterAdd, pver, MainNet, 26},      // [16]
 		{msgFilterClear, msgFilterClear, pver, MainNet, 24},  // [17]
 		{msgFilterLoad, msgFilterLoad, pver, MainNet, 35},    // [18]
-		{msgMerkleBlock, msgMerkleBlock, pver, MainNet, 215}, // [19]
 		{msgReject, msgReject, pver, MainNet, 79},            // [20]
 	}
 
