@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -141,20 +141,20 @@ func assertStakeDiffParams(t *testing.T, params *chaincfg.Params) {
 			"%d, got %d", file, line, 200000000,
 			params.MinimumStakeDiff)
 	}
-	if params.TicketMaturity != 256 {
+	if params.TicketMaturity != 512 {
 		_, file, line, _ := runtime.Caller(1)
 		t.Fatalf("%s:%d -- expect params with ticket maturity of "+
-			"%d, got %d", file, line, 256, params.TicketMaturity)
+			"%d, got %d", file, line, 512, params.TicketMaturity)
 	}
 	if params.StakeValidationHeight != 4096 {
 		_, file, line, _ := runtime.Caller(1)
 		t.Fatalf("%s:%d -- expect params with stake val height of %d, "+
 			"got %d", file, line, 4096, params.StakeValidationHeight)
 	}
-	if params.StakeDiffWindowSize != 144 {
+	if params.StakeDiffWindowSize != 288 {
 		_, file, line, _ := runtime.Caller(1)
 		t.Fatalf("%s:%d -- expect params with stake diff interval of "+
-			"%d, got %d", file, line, 144, params.StakeDiffWindowSize)
+			"%d, got %d", file, line, 288, params.StakeDiffWindowSize)
 	}
 	if params.TicketsPerBlock != 5 {
 		_, file, line, _ := runtime.Caller(1)
