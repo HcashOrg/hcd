@@ -506,14 +506,6 @@ func TestPeerListeners(t *testing.T) {
 			"OnFilterLoad",
 			wire.NewMsgFilterLoad([]byte{0x01}, 10, 0, wire.BloomUpdateNone),
 		},
-		{
-			"OnMerkleBlock",
-			wire.NewMsgMerkleBlock(wire.NewBlockHeader(0,
-				&chainhash.Hash{}, &chainhash.Hash{},
-				&chainhash.Hash{}, 1, [6]byte{},
-				1, 1, 1, 1, 1, 1, 1, 1, 1, [32]byte{},
-				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}))),
-		},
 		// only one version message is allowed
 		// only one verack message is allowed
 		{
