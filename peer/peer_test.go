@@ -241,8 +241,8 @@ func TestPeerConnection(t *testing.T) {
 		wantLastPingNonce:   uint64(0),
 		wantLastPingMicros:  int64(0),
 		wantTimeOffset:      int64(0),
-		wantBytesSent:       158, // 134 version + 24 verack
-		wantBytesReceived:   158,
+		wantBytesSent:       157, // 134 version + 24 verack
+		wantBytesReceived:   157,
 	}
 	tests := []struct {
 		name  string
