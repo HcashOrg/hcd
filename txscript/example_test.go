@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers
+// Copyright (c) 2015-2017 The Decred developers 
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -13,9 +13,9 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 var secp = 0
@@ -81,7 +81,7 @@ func ExampleExtractPkScriptAddrs() {
 
 	// Output:
 	// Script Class: pubkeyhash
-	// Addresses: [HsDLAAP6zDtWop9K1Bs4GTzvm4iCB9EUg81]
+	// Addresses: [DsSej1qR3Fyc8kV176DCh9n9cY9nqf9Quxk]
 	// Required Signatures: 1
 }
 

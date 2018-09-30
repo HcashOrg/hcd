@@ -91,29 +91,6 @@ To begin CPU mining after hcd is already running you can run the following in yo
 hcctl -u YOURUNIQUEUSERNAME -P YOURUNIQUEPASSWORD --testnet setgenerate true
 ```
 
-## Docker
-
-### Running hcd
-
-You can run a HC node from inside a docker container.  To build the image
-yourself, use the following command:
-
-```
-docker build -t hcashorg/hcd .
-```
-
-Or you can create an alpine based image (requires Docker 17.05 or higher):
-
-```
-docker build -t hcashorg/hcd:alpine -f Dockerfile.alpine .
-```
-
-You can then run the image using:
-
-```
-docker run hcashorg/hcd
-```
-
 ## REINSTALL
 
 #### Linux

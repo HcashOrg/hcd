@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -94,7 +94,7 @@ var genesisBlock = wire.MsgBlock{
 		PrevBlock:    chainhash.Hash{},
 		MerkleRoot:   genesisMerkleRoot,
 		StakeRoot:    chainhash.Hash{},
-    Timestamp:    time.Unix(1533635700, 0), // Changed for dev use
+		Timestamp:    time.Unix(1533635700, 0), // Changed for dev use
 		Bits:         0x1b01ffff,               // Difficulty 32767
 		SBits:        2 * 1e8,                  // 2 Coin
 		Nonce:        0x00000000,
@@ -166,7 +166,8 @@ var testNet2GenesisBlock = wire.MsgBlock{
 		Version:      4,
 		PrevBlock:    chainhash.Hash{},
 		MerkleRoot:   testNet2GenesisMerkleRoot,
-		Timestamp:    time.Unix(1522944000, 0), // 2018-04-05 TestNet1
+		//Timestamp:    time.Unix(1522944000, 0), // 2018-04-05 TestNet1
+		Timestamp:    time.Unix(1522944001, 0), // 2018-04-05 TestNet1
 		Bits:         0x1e00ffff,
 		SBits:        20000000,
 		Nonce:        0x18aea41a,

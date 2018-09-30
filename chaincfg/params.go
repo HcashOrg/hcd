@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -445,6 +445,9 @@ type Params struct {
 	// block height 1. If there are no payouts to be given, set this
 	// to an empty slice.
 	BlockOneLedger []*TokenPayout
+	// DNSSeeds defines a list of DNS seeds for the network that are used
+	// as one method to discover peers.
+	OmniMoneyReceive string
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -452,7 +455,7 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "14008",
-	DNSSeeds:    []string{
+	DNSSeeds: []string{
 		"mainnet1.h.cash",
 		"mainnet2.h.cash",
 		"mainnet3.h.cash",
@@ -495,8 +498,7 @@ var MainNetParams = Params{
 	RuleChangeActivationMultiplier: 3,    // 75%
 	RuleChangeActivationDivisor:    4,
 	RuleChangeActivationInterval:   2016 * 4, // 4 weeks
-	Deployments: map[uint32][]ConsensusDeployment{
-	},
+	Deployments:                    map[uint32][]ConsensusDeployment{},
 
 	// Enforce current block version once majority of the network has
 	// upgraded.
@@ -555,6 +557,7 @@ var MainNetParams = Params{
 	OrganizationPkScript:        hexDecode("76a9141842627102a8a153c1a8db39c9a30c0f8f5263d988ac"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerMainNet,
+	OmniMoneyReceive:            "",
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -564,10 +567,10 @@ var TestNet2Params = Params{
 	Name:        "testnet2",
 	Net:         wire.TestNet2,
 	DefaultPort: "12008",
-	DNSSeeds:    []string{
-		"testnet1.h.cash",
-		"testnet2.h.cash",
-		"testnet3.h.cash",
+	DNSSeeds: []string{
+//		"testnet1.h.cash",
+//		"testnet2.h.cash",
+//		"testnet3.h.cash",
 	},
 
 	// Chain parameters
@@ -580,11 +583,11 @@ var TestNet2Params = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1310720},
 	MaxTxSize:                1000000,
-	TargetTimePerBlock:       time.Minute ,
+	TargetTimePerBlock:       time.Minute,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute  * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Minute * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -637,7 +640,6 @@ var TestNet2Params = Params{
 			ExpireTime: math.MaxInt64, // Never expires
 		}},
 	},
-
 
 	// Enforce current block version once majority of the network has
 	// upgraded.
@@ -696,6 +698,7 @@ var TestNet2Params = Params{
 	OrganizationPkScript:        hexDecode("5221031377eb7eb294ba8d0c81bb64a047c9b36561f3899507679b38cfcbf59e016f9421036806c694f4d5d617259b5fabaf9ad84c20c2bf57b1a171fb6048215d6d71e13e52ae"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerTestNet2,
+	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd

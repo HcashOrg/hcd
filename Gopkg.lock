@@ -121,7 +121,7 @@
     "sha3",
     "ssh/terminal"
   ]
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
 
 [[projects]]
   branch = "master"
@@ -130,7 +130,7 @@
     "unix",
     "windows"
   ]
-  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
+  revision = "2b024373dcd9800f0cae693839fac6ede8d64a8c"
 
 [solve-meta]
   analyzer-name = "dep"

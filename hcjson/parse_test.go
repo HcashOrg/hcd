@@ -113,7 +113,7 @@ func TestEncodeConcatenatedVoteBits(t *testing.T) {
 
 	// Test too long voteBits extended.
 	testVbs = []stake.VoteBits{
-		{Bits: 0, ExtendedBits: bytes.Repeat([]byte{0x00}, 76)},
+		{Bits: 0, ExtendedBits: bytes.Repeat([]byte{0x00}, 74)},
 	}
 	_, err = hcjson.EncodeConcatenatedVoteBits(testVbs)
 	if err == nil {
@@ -225,7 +225,7 @@ func TestInvalidDecodeConcatenatedHashes(t *testing.T) {
 		_, err := hcjson.DecodeConcatenatedHashes(str.str)
 		if err == nil {
 			t.Fatalf("DecodeConcatenatedHashes passed on '%s' "+
-				"when it should have failed", str.str)
+				"when it should have failed", str)
 		}
 		rpcError, ok := err.(*hcjson.RPCError)
 		if !ok {

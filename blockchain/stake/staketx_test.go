@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Decred developers
+// Copyright (c) 2015-2017 The Decred developers 
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -14,9 +14,9 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // SSTX TESTING -------------------------------------------------------------------
@@ -797,7 +797,7 @@ func TestGetSStxStakeOutputInfo(t *testing.T) {
 
 	correctLimit := uint16(4)
 
-	typs, pkhs, amts, changeAmts, rules, limits, _ :=
+	typs, pkhs, amts, changeAmts, rules, limits :=
 		stake.TxSStxStakeOutputInfo(sstx.MsgTx())
 
 	if typs[2] != correctTyp {
@@ -1346,7 +1346,7 @@ func TestVerifyRealTxs(t *testing.T) {
 	sstxMtx := new(wire.MsgTx)
 	sstxMtx.FromBytes(hexSstx)
 	sstxTx := hcutil.NewTx(sstxMtx)
-	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits, _ :=
+	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits :=
 		stake.TxSStxStakeOutputInfo(sstxTx.MsgTx())
 
 	hexSsrtx, _ := hex.DecodeString("010000000147f4453f244f2589551aea7c714d" +
@@ -1395,7 +1395,7 @@ func TestVerifyRealTxs(t *testing.T) {
 
 	// Correct this and make sure it passes.
 	ssrtxTx.MsgTx().TxOut[1].Value = 47460913
-	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits, _ =
+	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits =
 		stake.TxSStxStakeOutputInfo(sstxTx.MsgTx())
 	ssrtxTypes, ssrtxAddrs, ssrtxAmts, err =
 		stake.TxSSRtxStakeOutputInfo(ssrtxTx.MsgTx(), &chaincfg.TestNet2Params)
@@ -1421,7 +1421,7 @@ func TestVerifyRealTxs(t *testing.T) {
 	// Spend too much fees for the limit in the first output and
 	// make sure it fails.
 	ssrtxTx.MsgTx().TxOut[0].Value = 0
-	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits, _ =
+	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits =
 		stake.TxSStxStakeOutputInfo(sstxTx.MsgTx())
 	ssrtxTypes, ssrtxAddrs, ssrtxAmts, err =
 		stake.TxSSRtxStakeOutputInfo(ssrtxTx.MsgTx(), &chaincfg.TestNet2Params)
@@ -1452,7 +1452,7 @@ func TestVerifyRealTxs(t *testing.T) {
 	sstxTx.MsgTx().TxOut[4].Value = 0
 	ssrtxTx.MsgTx().TxOut[0].Value = 108730066
 	ssrtxTx.MsgTx().TxOut[1].Value = 108730066
-	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits, _ =
+	sstxTypes, sstxAddrs, sstxAmts, _, sstxRules, sstxLimits =
 		stake.TxSStxStakeOutputInfo(sstxTx.MsgTx())
 	ssrtxTypes, ssrtxAddrs, ssrtxAmts, err =
 		stake.TxSSRtxStakeOutputInfo(ssrtxTx.MsgTx(), &chaincfg.TestNet2Params)
@@ -1554,7 +1554,7 @@ var sstxTxOut1 = wire.TxOut{
 		0x52, 0xde, 0x3d, 0x7c,
 		0x00, 0xe3, 0x23, 0x21, // Transaction amount
 		0x00, 0x00, 0x00, 0x00,
-		0x44, 0x3f, 0x3f, // Fee limits
+		0x44, 0x3f, // Fee limits
 	},
 }
 
@@ -1592,7 +1592,7 @@ var sstxTxOut3 = wire.TxOut{
 		0x52, 0xde, 0x3d, 0x7c,
 		0x00, 0xe3, 0x23, 0x21, // Transaction amount
 		0x00, 0x00, 0x00, 0x80, // Last byte flagged
-		0x44, 0x3f, 0x3f, // Fee limits
+		0x44, 0x3f, // Fee limits
 	},
 }
 

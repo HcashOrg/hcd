@@ -241,8 +241,8 @@ func TestPeerConnection(t *testing.T) {
 		wantLastPingNonce:   uint64(0),
 		wantLastPingMicros:  int64(0),
 		wantTimeOffset:      int64(0),
-		wantBytesSent:       157, // 134 version + 24 verack
-		wantBytesReceived:   157,
+		wantBytesSent:       158, // 134 version + 24 verack
+		wantBytesReceived:   158,
 	}
 	tests := []struct {
 		name  string
@@ -505,6 +505,14 @@ func TestPeerListeners(t *testing.T) {
 		{
 			"OnFilterLoad",
 			wire.NewMsgFilterLoad([]byte{0x01}, 10, 0, wire.BloomUpdateNone),
+		},
+		{
+			"OnMerkleBlock",
+			wire.NewMsgMerkleBlock(wire.NewBlockHeader(0,
+				&chainhash.Hash{}, &chainhash.Hash{},
+				&chainhash.Hash{}, 1, [6]byte{},
+				1, 1, 1, 1, 1, 1, 1, 1, 1, [32]byte{},
+				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}))),
 		},
 		// only one version message is allowed
 		// only one verack message is allowed
