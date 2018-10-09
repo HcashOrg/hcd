@@ -124,19 +124,6 @@ func TestCheckErrorCondition(t *testing.T) {
 		},
 		LockTime: 0,
 	}
-	pkScript := []byte{
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_NOP,
-		txscript.OP_TRUE,
-	}
 
 	vm, err := txscript.NewEngine(pkScript, tx, 0, 0, 0, nil)
 	if err != nil {
