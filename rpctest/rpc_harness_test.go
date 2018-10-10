@@ -137,7 +137,24 @@ func testConnectNode(r *Harness, t *testing.T) {
 	assertConnectedTo(t, harness, r)
 }
 
+func testTearDownAll(t *testing.T) {
+	// Grab a local copy of the currently active harnesses before
+	// attempting to tear them all down.
+	initialActiveHarnesses := ActiveHarnesses()
 
+	// Tear down all currently active harnesses.
+	if err := TearDownAll(); err != nil {
+		t.Fatalf("unable to teardown all harnesses: %v", err)
+	}
+
+	// The global testInstances map should now be fully purged with no
+	// active test harnesses remaining.
+	if len(ActiveHarnesses()) != 0 {
+		t.Fatalf("test harnesses still active after TearDownAll")
+	}
+
+
+}
 
 func testActiveHarnesses(r *Harness, t *testing.T) {
 	numInitialHarnesses := len(ActiveHarnesses())
