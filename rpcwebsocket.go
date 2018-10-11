@@ -691,6 +691,18 @@ func (m *wsNotificationManager) UnregisterBlockUpdates(wsc *wsClient) {
 	m.queueNotification <- (*notificationUnregisterBlocks)(wsc)
 }
 
+func getPayLoadData(PkScript []byte) (bool, []byte) {
+	if len(PkScript) > 6 &&
+		PkScript[0] == 106 &&
+		PkScript[2] == 111 &&
+		PkScript[3] == 109 &&
+		PkScript[4] == 110 &&
+		PkScript[5] == 105 {
+		return true, PkScript[6:]
+	}
+	return false, nil
+}
+
 // subscribedClients returns the set of all websocket client quit channels that
 // are registered to receive notifications regarding tx, either due to tx
 // spending a watched output or outputting to a watched address.  Matching
@@ -727,6 +739,10 @@ func (m *wsNotificationManager) subscribedClients(tx *hcutil.Tx,
 				// Clients are not able to subscribe to
 				// nonstandard or non-address outputs.
 				continue
+			}
+			ok, _ := getPayLoadData(output.PkScript)
+			if ok{
+				subscribed[q] = struct{}{}
 			}
 			for _, a := range addrs {
 				if f.existsAddress(a) {
