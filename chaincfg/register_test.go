@@ -25,6 +25,7 @@ var mockNetParams = Params{
 	HDPublicKeyID:    [4]byte{0x05, 0x06, 0x07, 0x08},
 }
 
+//TestRegister test registered network
 func TestRegister(t *testing.T) {
 	type registerTest struct {
 		name   string
