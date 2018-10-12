@@ -14,8 +14,8 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/database"
 	_ "github.com/HcashOrg/hcd/database/ffldb"
-	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/wire"
 )
 
 // This example demonstrates creating a new database.
@@ -174,5 +174,5 @@ func Example_blockStorageAndRetrieval() {
 	fmt.Printf("Serialized block size: %d bytes\n", len(loadedBlockBytes))
 
 	// Output:
-	// Serialized block size: 300 bytes
+	// Serialized block size: 445 bytes
 }
