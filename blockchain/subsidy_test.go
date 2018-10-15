@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -52,7 +52,7 @@ func TestBlockSubsidy(t *testing.T) {
 		}
 	}
 
-	if totalSubsidy != 2099999999800912 {
-		t.Errorf("Bad total subsidy; want 2099999999800912, got %v", totalSubsidy)
+	if totalSubsidy != 8396842244524544 {
+		t.Errorf("Bad total subsidy; want  8396842244524544, got %v", totalSubsidy)
 	}
 }
