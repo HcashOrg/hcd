@@ -14,7 +14,57 @@ import (
 
 	"github.com/HcashOrg/hcd/hcjson"
 )
+// TestChainSvrCmdErrors ensures any errors that occur in the command during
+// custom mashal and unmarshal are as expected.
+func TestChainSvrCmdErrors(t *testing.T) {
+	t.Parallel()
 
+	tests := []struct {
+		name       string
+		result     interface{}
+		marshalled string
+		err        error
+	}{
+		{
+			name:       "template request with invalid type",
+			result:     &hcjson.TemplateRequest{},
+			marshalled: `{"mode":1}`,
+			err:        &json.UnmarshalTypeError{},
+		},
+		{
+			name:       "invalid template request sigoplimit field",
+			result:     &hcjson.TemplateRequest{},
+			marshalled: `{"sigoplimit":"invalid"}`,
+			err:        hcjson.Error{Code: hcjson.ErrInvalidType},
+		},
+		{
+			name:       "invalid template request sizelimit field",
+			result:     &hcjson.TemplateRequest{},
+			marshalled: `{"sizelimit":"invalid"}`,
+			err:        hcjson.Error{Code: hcjson.ErrInvalidType},
+		},
+	}
+
+	t.Logf("Running %d tests", len(tests))
+	for i, test := range tests {
+		err := json.Unmarshal([]byte(test.marshalled), &test.result)
+		if reflect.TypeOf(err) != reflect.TypeOf(test.err) {
+			t.Errorf("Test #%d (%s) wrong error type - got `%T` (%v), got `%T`",
+				i, test.name, err, err, test.err)
+			continue
+		}
+
+		if terr, ok := test.err.(hcjson.Error); ok {
+			gotErrorCode := err.(hcjson.Error).Code
+			if gotErrorCode != terr.Code {
+				t.Errorf("Test #%d (%s) mismatched error code "+
+					"- got %v (%v), want %v", i, test.name,
+					gotErrorCode, terr, terr.Code)
+				continue
+			}
+		}
+	}
+}
 // TestChainSvrCmds tests all of the chain server commands marshal and unmarshal
 // into valid results include handling of optional fields being omitted in the
 // marshalled command, while optional fields with defaults have the default
@@ -1047,54 +1097,5 @@ func TestChainSvrCmds(t *testing.T) {
 	}
 }
 
-// TestChainSvrCmdErrors ensures any errors that occur in the command during
-// custom mashal and unmarshal are as expected.
-func TestChainSvrCmdErrors(t *testing.T) {
-	t.Parallel()
 
-	tests := []struct {
-		name       string
-		result     interface{}
-		marshalled string
-		err        error
-	}{
-		{
-			name:       "template request with invalid type",
-			result:     &hcjson.TemplateRequest{},
-			marshalled: `{"mode":1}`,
-			err:        &json.UnmarshalTypeError{},
-		},
-		{
-			name:       "invalid template request sigoplimit field",
-			result:     &hcjson.TemplateRequest{},
-			marshalled: `{"sigoplimit":"invalid"}`,
-			err:        hcjson.Error{Code: hcjson.ErrInvalidType},
-		},
-		{
-			name:       "invalid template request sizelimit field",
-			result:     &hcjson.TemplateRequest{},
-			marshalled: `{"sizelimit":"invalid"}`,
-			err:        hcjson.Error{Code: hcjson.ErrInvalidType},
-		},
-	}
 
-	t.Logf("Running %d tests", len(tests))
-	for i, test := range tests {
-		err := json.Unmarshal([]byte(test.marshalled), &test.result)
-		if reflect.TypeOf(err) != reflect.TypeOf(test.err) {
-			t.Errorf("Test #%d (%s) wrong error type - got `%T` (%v), got `%T`",
-				i, test.name, err, err, test.err)
-			continue
-		}
-
-		if terr, ok := test.err.(hcjson.Error); ok {
-			gotErrorCode := err.(hcjson.Error).Code
-			if gotErrorCode != terr.Code {
-				t.Errorf("Test #%d (%s) mismatched error code "+
-					"- got %v (%v), want %v", i, test.name,
-					gotErrorCode, terr, terr.Code)
-				continue
-			}
-		}
-	}
-}
