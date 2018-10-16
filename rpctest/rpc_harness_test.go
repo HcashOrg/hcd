@@ -152,7 +152,12 @@ func testTearDownAll(t *testing.T) {
 	if len(ActiveHarnesses()) != 0 {
 		t.Fatalf("test harnesses still active after TearDownAll")
 	}
-
+	for _, harness := range initialActiveHarnesses {
+		// Ensure all test directories have been deleted.
+		if _, err := os.Stat(harness.testNodeDir); err == nil {
+			t.Errorf("created test datadir was not deleted.")
+		}
+	}
 
 }
 
