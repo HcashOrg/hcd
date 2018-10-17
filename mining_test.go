@@ -116,14 +116,6 @@ func TestStakeTxFeePrioHeap(t *testing.T) {
 						txpi.feePerKB, last.feePerKB, txpi.txType, last.txType)
 				}
 			}
-			if bothAreLowStakePriority {
-				if txpi.priority > last.priority &&
-					compareStakePriority(txpi, last) >= 0 {
-					t.Errorf("bad pop: %v priority was more than last of %v "+
-						"while the txtype was %v but last was %v",
-						txpi.feePerKB, last.feePerKB, txpi.txType, last.txType)
-				}
-			}
 			last = txpi
 		}
 	}
