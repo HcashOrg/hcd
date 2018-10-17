@@ -57,19 +57,7 @@ func TestDcrdCmds(t *testing.T) {
 				Count: 1,
 			},
 		},
-		{
-			name: "getvoteinfo",
-			newCmd: func() (interface{}, error) {
-				return hcjson.NewCmd("getvoteinfo", 1)
-			},
-			staticCmd: func() interface{} {
-				return hcjson.NewGetVoteInfoCmd(1)
-			},
-			marshalled: `{"jsonrpc":"1.0","method":"getvoteinfo","params":[1],"id":1}`,
-			unmarshalled: &hcjson.GetVoteInfoCmd{
-				Version: 1,
-			},
-		},
+
 	}
 
 	t.Logf("Running %d tests", len(tests))
