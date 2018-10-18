@@ -148,6 +148,7 @@ var pubKeyTests = []pubKeyTest{
 	},
 }
 
+// TestPubKeys tests secp256k1 pubkey
 func TestPubKeys(t *testing.T) {
 	for _, test := range pubKeyTests {
 		pk, err := Secp256k1.ParsePubKey(test.key)
