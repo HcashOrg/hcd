@@ -47,6 +47,7 @@ func TestGeneralEd25519(t *testing.T) {
 	}
 }
 
+// TestPrivKeysEdwards tests the edwards privkey
 func TestPrivKeysEdwards(t *testing.T) {
 	tests := []struct {
 		name string
