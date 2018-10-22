@@ -691,16 +691,8 @@ func (m *wsNotificationManager) UnregisterBlockUpdates(wsc *wsClient) {
 	m.queueNotification <- (*notificationUnregisterBlocks)(wsc)
 }
 
-func getPayLoadData(PkScript []byte) (bool, []byte) {
-	if len(PkScript) > 6 &&
-		PkScript[0] == 106 &&
-		PkScript[2] == 111 &&
-		PkScript[3] == 109 &&
-		PkScript[4] == 110 &&
-		PkScript[5] == 105 {
-		return true, PkScript[6:]
-	}
-	return false, nil
+func getPayLoadData(pkScript []byte) (bool, []byte) {
+	return txscript.GetPayLoadData(pkScript)
 }
 
 // subscribedClients returns the set of all websocket client quit channels that

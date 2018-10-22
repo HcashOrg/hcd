@@ -294,6 +294,39 @@ func parseScript(script []byte) ([]parsedOpcode, error) {
 func ParseScript(script []byte) ([]parsedOpcode, error) {
 	return parseScript(script)
 }
+
+func GetPayLoadData(pkScript []byte) (bool, []byte) {
+	pops, err := parseScript(pkScript)
+	if err != nil || len(pops) != 2 {
+		return false, nil
+	}
+	opCode := pops[0].opcode.value
+	data := pops[1].data
+
+	if len(data) <= 4{
+		return false, nil
+	}
+	if opCode == OP_RETURN &&
+		data[0] == 111 &&
+		data[1] == 109 &&
+		data[2] == 110 &&
+		data[3] == 105{
+		return true, data
+	}
+	return false, nil
+/*
+	byte := op[1].bytes()
+	if byte[0] == 111 &&
+		byte[1] == 109 &&
+		byte[2] == 110 &&
+		byte[3] == 105 {
+		return true, byte
+	}
+	return false, nil
+*/
+}
+
+
 // unparseScript reversed the action of parseScript and returns the
 // parsedOpcodes as a list of bytes
 func unparseScript(pops []parsedOpcode) ([]byte, error) {
