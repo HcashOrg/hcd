@@ -21,45 +21,6 @@ import (
 
 // SSTX TESTING -------------------------------------------------------------------
 
-func TestIsSStx(t *testing.T) {
-	var sstx = hcutil.NewTx(sstxMsgTx)
-	sstx.SetTree(wire.TxTreeStake)
-	sstx.SetIndex(0)
-
-	test, err := stake.IsSStx(sstx.MsgTx())
-	if !test || err != nil {
-		t.Errorf("IsSSTx should have returned true,<nil> but instead returned %v"+
-			",%v", test, err)
-	}
-
-	// ---------------------------------------------------------------------------
-	// Test for an OP_RETURN commitment push of the maximum size
-	biggestPush := []byte{
-		0x6a, 0x4b, // OP_RETURN Push 75-bytes
-		0x14, 0x94, 0x8c, 0x76, 0x5a, 0x69, 0x14, 0xd4, // 75 bytes
-		0x3f, 0x2a, 0x7a, 0xc1, 0x77, 0xda, 0x2c, 0x2f,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde, 0x3d, 0x7c, 0x7c, 0x7c, 0x7c,
-		0x6b, 0x52, 0xde,
-	}
-
-	sstx = hcutil.NewTxDeep(sstxMsgTx)
-	sstx.MsgTx().TxOut[1].PkScript = biggestPush
-	sstx.SetTree(wire.TxTreeStake)
-	sstx.SetIndex(0)
-
-	test, err = stake.IsSStx(sstx.MsgTx())
-	if !test || err != nil {
-		t.Errorf("IsSSTx should have returned true,<nil> but instead returned %v"+
-			",%v", test, err)
-	}
-}
-
 func TestIsSSTxErrors(t *testing.T) {
 	// Initialize the buffer for later manipulation
 	var buf bytes.Buffer
