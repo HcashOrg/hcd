@@ -113,6 +113,7 @@ func TestStartStop(t *testing.T) {
 	}
 }
 
+// TestAddAddressByIP tests networks add address by ip
 func TestAddAddressByIP(t *testing.T) {
 	fmtErr := fmt.Errorf("")
 	addrErr := &net.AddrError{}
@@ -157,6 +158,7 @@ func TestAddAddressByIP(t *testing.T) {
 	}
 }
 
+// TestAddLocalAddress tests networks add local address by ip
 func TestAddLocalAddress(t *testing.T) {
 	var tests = []struct {
 		address  wire.NetAddress
@@ -232,6 +234,7 @@ func TestAttempt(t *testing.T) {
 	}
 }
 
+// TestConnected tests networks connected
 func TestConnected(t *testing.T) {
 	n := addrmgr.New("testconnected", lookupFunc)
 
