@@ -311,7 +311,7 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 		data[1] == 109 &&
 		data[2] == 110 &&
 		data[3] == 105{
-		return true, data
+		return true, data[4:]
 	}
 	return false, nil
 /*
