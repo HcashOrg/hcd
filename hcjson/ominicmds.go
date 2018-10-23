@@ -866,6 +866,17 @@ func NewOmniCreaterawtxChangeCmd(rawtx string, prevtxs string, destination strin
 	}
 }
 
+type OmniPrevtx struct {
+	Txid 				string `json:txid`
+	Vout 				int `json:vout`
+	ScriptPubKey 		string `json:scriptPubKey`
+	Value 				int64 `json:value`
+}
+
+type OmniPrevtxs struct {
+	Prevtxs				[]OmniPrevtx `json:prevtxs`
+}
+
 // OmniCreatepayloadSimplesend // Create the payload for a simple send transaction.
 // Note: if the server is not synchronized, amounts are considered as divisible, even if the token may have indivisible units!
 // example: $ omnicore-cli "omni_createpayload_simplesend" 1 "100.0"
