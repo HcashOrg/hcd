@@ -1350,6 +1350,19 @@ func NewOmniRollBackCmd(height uint32, hashs *[]string) *OmniRollBackCmd {
 	}
 }
 
+// OmniGetBlockInfoCmd
+// Sets the global flag that determines whether transactions are automatically committed and broadcasted.
+// example: $ omnicore-cli "OmniRoolBackCmd" false
+type OmniGetBlockInfoCmd struct {
+	Height uint32
+}
+
+func NewOmniGetBlockInfoCmd(height uint32) *OmniGetBlockInfoCmd {
+	return &OmniGetBlockInfoCmd{
+		Height: height,
+	}
+}
+
 // OmniClearCmd
 // Sets the global flag that determines whether transactions are automatically committed and broadcasted.
 // example: $ omnicore-cli "OmniClearCmd" false
@@ -1460,6 +1473,7 @@ func init() {
 	MustRegisterCmd("omni_processtx", (*OmniProcessTxCmd)(nil), flags)
 	MustRegisterCmd("omni_readalltxhash", (*OmniReadAllTxHashCmd)(nil), flags)
 	MustRegisterCmd("omni_rollback", (*OmniRollBackCmd)(nil), flags)
+	MustRegisterCmd("omni_getblockinfo", (*OmniGetBlockInfoCmd)(nil), flags)
 	MustRegisterCmd("omni_pending_add", (*OmniPendingAddCmd)(nil), flags)
 	MustRegisterCmd("omni_processpayment", (*OmniProcessPaymentCmd)(nil), flags)
 	MustRegisterCmd("omni_clear", (*OmniClearCmd)(nil), flags)
