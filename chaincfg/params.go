@@ -557,7 +557,7 @@ var MainNetParams = Params{
 	OrganizationPkScript:        hexDecode("76a9141842627102a8a153c1a8db39c9a30c0f8f5263d988ac"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerMainNet,
-	OmniMoneyReceive:            "",
+	OmniMoneyReceive:            "HsXA4B34vrsJLyv3iSRJXMQjUXaCkANUQcB",
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
