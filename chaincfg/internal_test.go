@@ -11,6 +11,7 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 )
 
+// TestInvalidHashStr tests against the NewHashFromStr function.
 func TestInvalidHashStr(t *testing.T) {
 	_, err := chainhash.NewHashFromStr("banana")
 	if err == nil {

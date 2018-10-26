@@ -356,6 +356,7 @@ func TestGetAddress(t *testing.T) {
 	}
 }
 
+// TestGetBestLocalAddress tests get best local address
 func TestGetBestLocalAddress(t *testing.T) {
 	localAddrs := []wire.NetAddress{
 		{IP: net.ParseIP("192.168.0.100")},
