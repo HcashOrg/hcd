@@ -82,18 +82,7 @@ func (s *fakeChain) FetchUtxoView(tx *hcutil.Tx, treeValid bool) (*blockchain.Ut
 	return viewpoint, nil
 }
 
-// BlockByHash returns the block with the given hash from the fake chain
-// instance.  Blocks can be added to the instance with the AddBlock function.
-func (s *fakeChain) BlockByHash(hash *chainhash.Hash) (*hcutil.Block, error) {
-	s.RLock()
-	block, ok := s.blocks[*hash]
-	s.RUnlock()
-	if !ok {
-		return nil, fmt.Errorf("unable to find block %v in fake chain",
-			hash)
-	}
-	return block, nil
-}
+
 
 // AddBlock adds a block that will be available to the BlockByHash function to
 // the fake chain instance.
@@ -150,6 +139,18 @@ func (s *fakeChain) SetPastMedianTime(medianTime time.Time) {
 	s.Lock()
 	s.medianTime = medianTime
 	s.Unlock()
+}
+// BlockByHash returns the block with the given hash from the fake chain
+// instance.  Blocks can be added to the instance with the AddBlock function.
+func (s *fakeChain) BlockByHash(hash *chainhash.Hash) (*hcutil.Block, error) {
+	s.RLock()
+	block, ok := s.blocks[*hash]
+	s.RUnlock()
+	if !ok {
+		return nil, fmt.Errorf("unable to find block %v in fake chain",
+			hash)
+	}
+	return block, nil
 }
 
 // CalcSequenceLock returns the current sequence lock for the passed transaction
