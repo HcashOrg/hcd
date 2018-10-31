@@ -15,6 +15,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 )
 
+//TestBigToCompact tests big number to compact
 func TestBigToCompact(t *testing.T) {
 	tests := []struct {
 		in  int64
@@ -35,6 +36,7 @@ func TestBigToCompact(t *testing.T) {
 	}
 }
 
+//TestBigToCompact tests compact to big number
 func TestCompactToBig(t *testing.T) {
 	tests := []struct {
 		in  uint32
