@@ -182,6 +182,7 @@ func TestPubKeys(t *testing.T) {
 	}
 }
 
+// TestPrivKeys tests secp256k1 privkey import, sign and serialize
 func TestPrivKeys(t *testing.T) {
 	tests := []struct {
 		name string
@@ -265,6 +266,7 @@ var signatureTests = []signatureTest{
 	},
 }
 
+// TestSignatures tests secp256k1 parse signature
 func TestSignatures(t *testing.T) {
 	for _, test := range signatureTests {
 		var err error
