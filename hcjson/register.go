@@ -37,7 +37,7 @@ const (
 
 	// OMiniOnly indicates that the command can only be used with an RPC
 	// server that supports omini commands.
-	OMiniOnly
+	Omni
 
 	// highestUsageFlagBit is the maximum usage flag bit and is used in the
 	// stringer and tests to ensure all of the above constants have been
@@ -50,6 +50,7 @@ var usageFlagStrings = map[UsageFlag]string{
 	UFWalletOnly:    "UFWalletOnly",
 	UFWebsocketOnly: "UFWebsocketOnly",
 	UFNotification:  "UFNotification",
+	Omni:"Omni",
 }
 
 // String returns the UsageFlag in human-readable form.

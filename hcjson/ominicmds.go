@@ -1389,7 +1389,7 @@ func NewTXExodusFundraiserCmd() *OmniTXExodusFundraiserCmd {
 
 func init() {
 	// The commands in this file are only usable with a wallet server.
-	flags := OMiniOnly
+	flags := Omni
 	MustRegisterCmd("omni_send", (*OmniSendCmd)(nil), flags)
 	MustRegisterCmd("omni_senddexsell", (*OmniSenddexsellCmd)(nil), flags)
 	MustRegisterCmd("omni_senddexaccept", (*OmniSenddexacceptCmd)(nil), flags)

@@ -47,6 +47,7 @@ func listCommands() {
 	const (
 		categoryChain uint8 = iota
 		categoryWallet
+		categoryOmni
 		numCategories
 	)
 
@@ -77,6 +78,9 @@ func listCommands() {
 		category := categoryChain
 		if flags&hcjson.UFWalletOnly != 0 {
 			category = categoryWallet
+		}
+		if flags&hcjson.Omni == 1 {
+			category = categoryOmni
 		}
 		categorized[category] = append(categorized[category], usage)
 	}
