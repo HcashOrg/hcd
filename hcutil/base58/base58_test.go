@@ -64,7 +64,7 @@ var hexTests = []struct {
 	{"00000000000000000000", "1111111111"},
 }
 
-// TestBase58Check tests base58 CheckEncode and CheckDecode
+// TestBase58 tests base58 Encode and Decode
 func TestBase58(t *testing.T) {
 	// Encode tests
 	for x, test := range stringTests {
