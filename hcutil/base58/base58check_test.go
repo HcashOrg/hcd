@@ -30,6 +30,7 @@ var checkEncodingStringTests = []struct {
 	{20, "00000000000000000000000000000000000000000000000000000000000000", "3cmTs9hNQGCVmurJUgS7UokKFYZCCJWvWfYRBCaox5hXDn3Giiy1u9AEKn7vLS8K87BcDr6Ckr4JYRnnaSMRDsB49i3eU"},
 }
 
+// TestBase58Check tests base58 CheckEncode and CheckDecode
 func TestBase58Check(t *testing.T) {
 	for x, test := range checkEncodingStringTests {
 		var ver [2]byte
