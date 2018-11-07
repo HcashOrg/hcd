@@ -182,6 +182,74 @@ func createSpendingTx(sigScript, pkScript []byte) *wire.MsgTx {
 	return spendingTx
 }
 
+// TestScriptInvalidTests ensures all of the tests in script_invalid.json fail
+// as expected.
+func TestScriptInvalidTests(t *testing.T) {
+	file, err := ioutil.ReadFile("data/script_invalid.json")
+	if err != nil {
+		t.Errorf("TestScriptInvalidTests: %v\n", err)
+		return
+	}
+
+	var tests [][]string
+	err = json.Unmarshal(file, &tests)
+	if err != nil {
+		t.Errorf("TestScriptInvalidTests couldn't Unmarshal: %v",
+			err)
+		return
+	}
+	sigCache := NewSigCache(10)
+
+	sigCacheToggle := []bool{true, false}
+	for _, useSigCache := range sigCacheToggle {
+		for i, test := range tests {
+			// Skip comments
+			if len(test) == 1 {
+				continue
+			}
+			name, err := testName(test)
+			if err != nil {
+				t.Errorf("TestScriptInvalidTests: invalid test #%d",
+					i)
+				continue
+			}
+			scriptSig, err := parseShortForm(test[0])
+			if err != nil {
+				t.Errorf("%s: can't parse scriptSig; %v", name, err)
+				continue
+			}
+			scriptPubKey, err := parseShortForm(test[1])
+			if err != nil {
+				t.Errorf("%s: can't parse scriptPubkey; %v", name, err)
+				continue
+			}
+			flags, err := parseScriptFlags(test[2])
+			if err != nil {
+				t.Errorf("%s: %v", name, err)
+				continue
+			}
+			tx := createSpendingTx(scriptSig, scriptPubKey)
+
+			var vm *Engine
+			if useSigCache {
+				vm, err = NewEngine(scriptPubKey, tx, 0, flags,
+					0, sigCache)
+			} else {
+				vm, err = NewEngine(scriptPubKey, tx, 0, flags,
+					0, nil)
+			}
+
+			if err == nil {
+				if err := vm.Execute(); err == nil {
+					t.Errorf("%s test succeeded when it "+
+						"should have failed\n", name)
+				}
+				continue
+			}
+		}
+	}
+}
+
 // TestScriptValidTests ensures all of the tests in script_valid.json pass as
 // expected.
 func TestScriptValidTests(t *testing.T) {
