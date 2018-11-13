@@ -16,9 +16,9 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // TestCalcMinRequiredTxRelayFee tests the calcMinRequiredTxRelayFee API.
@@ -251,13 +251,6 @@ func TestDust(t *testing.T) {
 			"25 byte public key script with value 60300, relay fee 1e5",
 			wire.TxOut{Value: 60300, Version: 0, PkScript: pkScript},
 			1e5,
-			false,
-		},
-		{
-			// Maximum allowed value is never dust.
-			"max amount is never dust",
-			wire.TxOut{Value: hcutil.MaxAmount, Version: 0, PkScript: pkScript},
-			hcutil.MaxAmount,
 			false,
 		},
 		{
