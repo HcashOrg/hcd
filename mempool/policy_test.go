@@ -261,6 +261,13 @@ func TestDust(t *testing.T) {
 			true,
 		},
 		{
+			// Maximum allowed value is never dust.
+			"max amount is never dust",
+			wire.TxOut{Value: hcutil.MaxAmount, Version: 0, PkScript: pkScript},
+			hcutil.MaxAmount,
+			true,
+		},
+		{
 			// Unspendable pkScript due to an invalid public key
 			// script.
 			"unspendable pkScript",
