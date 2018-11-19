@@ -14,6 +14,7 @@ import (
 	. "github.com/HcashOrg/hcd/hcutil"
 )
 
+//TestEncodeDecodeWIF tests encode and decode wallet import format
 func TestEncodeDecodeWIF(t *testing.T) {
 	suites := []int{
 		chainec.ECTypeSecp256k1,
