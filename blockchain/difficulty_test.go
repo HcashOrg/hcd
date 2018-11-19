@@ -668,33 +668,6 @@ func TestEstimateNextStakeDiffV2(t *testing.T) {
 			useMaxTickets: false,
 			expectedDiff:  minStakeDiff,
 		},
-		{
-			// Next retarget is at 4464.  Post stake validation
-			// height.
-			name: "31st retarget interval, waning demand, 117th block",
-			ticketInfo: []ticketInfo{
-				{256, 0, minStakeDiff},   // 256
-				{2047, 20, minStakeDiff}, // 2303
-				{144, 20, 208418769},     // 2447
-				{144, 20, 231326567},     // 2591
-				{144, 20, 272451490},     // 2735
-				{144, 20, 339388424},     // 2879
-				{144, 20, 445827839},     // 3023
-				{144, 20, 615949254},     // 3167
-				{144, 20, 892862990},     // 3311
-				{144, 20, 1354989669},    // 3455
-				{144, 20, 2148473276},    // 3599
-				{144, 20, 3552797658},    // 3743
-				{144, 13, 6116808441},    // 3887
-				{144, 0, 10645659768},    // 4031
-				{144, 0, 18046712136},    // 4175
-				{144, 0, 22097687698},    // 4319
-				{117, 0, 22152524112},    // 4436
-			},
-			useMaxTickets: false,
-			newTickets:    0,
-			expectedDiff:  22207360526,
-		},
 	}
 
 nextTest:
