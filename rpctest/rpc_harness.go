@@ -274,6 +274,24 @@ func (h *Harness) TearDown() error {
 	return nil
 }
 
+
+
+// NewAddress returns a fresh address spendable by the Harness' internal
+// wallet.
+//
+// This function is safe for concurrent access.
+func (h *Harness) NewAddress() (hcutil.Address, error) {
+	return h.wallet.NewAddress()
+}
+
+// ConfirmedBalance returns the confirmed balance of the Harness' internal
+// wallet.
+//
+// This function is safe for concurrent access.
+func (h *Harness) ConfirmedBalance() hcutil.Amount {
+	return h.wallet.ConfirmedBalance()
+}
+
 // connectRPCClient attempts to establish an RPC connection to the created hcd
 // process belonging to this Harness instance. If the initial connection
 // attempt fails, this function will retry h.maxConnRetries times, backing off
@@ -301,23 +319,6 @@ func (h *Harness) connectRPCClient() error {
 	h.wallet.SetRPCClient(client)
 	return nil
 }
-
-// NewAddress returns a fresh address spendable by the Harness' internal
-// wallet.
-//
-// This function is safe for concurrent access.
-func (h *Harness) NewAddress() (hcutil.Address, error) {
-	return h.wallet.NewAddress()
-}
-
-// ConfirmedBalance returns the confirmed balance of the Harness' internal
-// wallet.
-//
-// This function is safe for concurrent access.
-func (h *Harness) ConfirmedBalance() hcutil.Amount {
-	return h.wallet.ConfirmedBalance()
-}
-
 // SendOutputs creates, signs, and finally broadcasts a transaction spending
 // the harness' available mature coinbase outputs creating new outputs
 // according to targetOutputs.
