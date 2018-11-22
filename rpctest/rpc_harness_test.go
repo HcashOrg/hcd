@@ -290,6 +290,48 @@ func testJoinMempools(r *Harness, t *testing.T) {
 	}
 }
 
+func testMemWalletReorg(r *Harness, t *testing.T) {
+	// Create a fresh harness, we'll be using the main harness to force a
+	// re-org on this local harness.
+	harness, err := New(&chaincfg.SimNetParams, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := harness.SetUp(true, 5); err != nil {
+		t.Fatalf("unable to complete rpctest setup: %v", err)
+	}
+	defer harness.TearDown()
+
+	// Ensure the internal wallet has the expected balance.
+	expectedBalance := hcutil.Amount(5 * 300 * hcutil.AtomsPerCoin)
+	walletBalance := harness.ConfirmedBalance()
+	if expectedBalance != walletBalance {
+		t.Fatalf("wallet balance incorrect: expected %v, got %v",
+			expectedBalance, walletBalance)
+	}
+
+	// Now connect this local harness to the main harness then wait for
+	// their chains to synchronize.
+	if err := ConnectNode(harness, r); err != nil {
+		t.Fatalf("unable to connect harnesses: %v", err)
+	}
+	nodeSlice := []*Harness{r, harness}
+	if err := JoinNodes(nodeSlice, Blocks); err != nil {
+		t.Fatalf("unable to join node on blocks: %v", err)
+	}
+
+	// The original wallet should now have a balance of 0 Coin as its entire
+	// chain should have been decimated in favor of the main harness'
+	// chain.
+	expectedBalance = hcutil.Amount(0)
+	walletBalance = harness.ConfirmedBalance()
+	if expectedBalance != walletBalance {
+		t.Fatalf("wallet balance incorrect: expected %v, got %v",
+			expectedBalance, walletBalance)
+	}
+}
+
+// testJoinBlocks tests new block join blockchain
 func testJoinBlocks(r *Harness, t *testing.T) {
 	// Create a second harness with only the genesis block so it is behind
 	// the main harness.
@@ -334,47 +376,6 @@ func testJoinBlocks(r *Harness, t *testing.T) {
 		// fall through
 	case <-time.After(time.Minute):
 		t.Fatalf("blocks never detected as synced")
-	}
-}
-
-func testMemWalletReorg(r *Harness, t *testing.T) {
-	// Create a fresh harness, we'll be using the main harness to force a
-	// re-org on this local harness.
-	harness, err := New(&chaincfg.SimNetParams, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := harness.SetUp(true, 5); err != nil {
-		t.Fatalf("unable to complete rpctest setup: %v", err)
-	}
-	defer harness.TearDown()
-
-	// Ensure the internal wallet has the expected balance.
-	expectedBalance := hcutil.Amount(5 * 300 * hcutil.AtomsPerCoin)
-	walletBalance := harness.ConfirmedBalance()
-	if expectedBalance != walletBalance {
-		t.Fatalf("wallet balance incorrect: expected %v, got %v",
-			expectedBalance, walletBalance)
-	}
-
-	// Now connect this local harness to the main harness then wait for
-	// their chains to synchronize.
-	if err := ConnectNode(harness, r); err != nil {
-		t.Fatalf("unable to connect harnesses: %v", err)
-	}
-	nodeSlice := []*Harness{r, harness}
-	if err := JoinNodes(nodeSlice, Blocks); err != nil {
-		t.Fatalf("unable to join node on blocks: %v", err)
-	}
-
-	// The original wallet should now have a balance of 0 Coin as its entire
-	// chain should have been decimated in favor of the main harness'
-	// chain.
-	expectedBalance = hcutil.Amount(0)
-	walletBalance = harness.ConfirmedBalance()
-	if expectedBalance != walletBalance {
-		t.Fatalf("wallet balance incorrect: expected %v, got %v",
-			expectedBalance, walletBalance)
 	}
 }
 
