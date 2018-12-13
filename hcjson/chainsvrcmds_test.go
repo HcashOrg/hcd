@@ -971,20 +971,6 @@ func TestChainSvrCmds(t *testing.T) {
 			},
 		},
 		{
-			name: "verifychain",
-			newCmd: func() (interface{}, error) {
-				return hcjson.NewCmd("verifychain")
-			},
-			staticCmd: func() interface{} {
-				return hcjson.NewVerifyChainCmd(nil, nil)
-			},
-			marshalled: `{"jsonrpc":"1.0","method":"verifychain","params":[],"id":1}`,
-			unmarshalled: &hcjson.VerifyChainCmd{
-				CheckLevel: hcjson.Int64(3),
-				CheckDepth: hcjson.Int64(288),
-			},
-		},
-		{
 			name: "verifychain optional1",
 			newCmd: func() (interface{}, error) {
 				return hcjson.NewCmd("verifychain", 2)
@@ -998,6 +984,21 @@ func TestChainSvrCmds(t *testing.T) {
 				CheckDepth: hcjson.Int64(288),
 			},
 		},
+		{
+			name: "verifychain",
+			newCmd: func() (interface{}, error) {
+				return hcjson.NewCmd("verifychain")
+			},
+			staticCmd: func() interface{} {
+				return hcjson.NewVerifyChainCmd(nil, nil)
+			},
+			marshalled: `{"jsonrpc":"1.0","method":"verifychain","params":[],"id":1}`,
+			unmarshalled: &hcjson.VerifyChainCmd{
+				CheckLevel: hcjson.Int64(3),
+				CheckDepth: hcjson.Int64(288),
+			},
+		},
+
 		{
 			name: "verifychain optional2",
 			newCmd: func() (interface{}, error) {
