@@ -39,13 +39,6 @@ func testName(test []string) (string, error) {
 	return name, nil
 }
 
-// parse hex string into a []byte.
-func parseHex(tok string) ([]byte, error) {
-	if !strings.HasPrefix(tok, "0x") {
-		return nil, errors.New("not a hex number")
-	}
-	return hex.DecodeString(tok[2:])
-}
 
 // shortFormOps holds a map of opcode names to values for use in short form
 // parsing.  It is declared here so it only needs to be created once.
@@ -115,6 +108,14 @@ func parseShortForm(script string) ([]byte, error) {
 
 	}
 	return builder.Script()
+}
+
+// parse hex string into a []byte.
+func parseHex(tok string) ([]byte, error) {
+	if !strings.HasPrefix(tok, "0x") {
+		return nil, errors.New("not a hex number")
+	}
+	return hex.DecodeString(tok[2:])
 }
 
 // parseScriptFlags parses the provided flags string from the format used in the
