@@ -128,8 +128,7 @@ func TestScriptBuilderAddInt64(t *testing.T) {
 		{name: "push -128", val: -128, expected: []byte{txscript.OP_DATA_2, 0x80, 0x80}},
 		{name: "push -255", val: -255, expected: []byte{txscript.OP_DATA_2, 0xff, 0x80}},
 		{name: "push -256", val: -256, expected: []byte{txscript.OP_DATA_2, 0x00, 0x81}},
-		{name: "push -32767", val: -32767, expected: []byte{txscript.OP_DATA_2, 0xff, 0xff}},
-		{name: "push -32768", val: -32768, expected: []byte{txscript.OP_DATA_3, 0x00, 0x80, 0x80}},
+
 	}
 
 	builder := txscript.NewScriptBuilder()
