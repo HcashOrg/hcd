@@ -86,6 +86,12 @@ func TestIPTypes(t *testing.T) {
 			false, false, false, false, false, true, false, true, false),
 		newIPTest("203.0.113.1", false, false, false, false, false, false, false,
 			false, false, false, false, false, false, false, true, false),
+		newIPTest("105:0:abcd::1:1", false, false, false, false, false, false,
+			false, true, false, false, false, false, false, false, true, false),
+		newIPTest("2071:10:abcd::1:16", false, false, false, false, false, false,
+			false, true, false, false, false, false, false, false, true, false),
+		newIPTest("1820:1065:abcd::1:7", false, false, false, false, false, false,
+			false, true, false, false, false, false, false, false, true, false),
 	}
 
 	t.Logf("Running %d tests", len(tests))
