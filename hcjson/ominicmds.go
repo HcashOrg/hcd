@@ -1387,6 +1387,33 @@ func NewTXExodusFundraiserCmd() *OmniTXExodusFundraiserCmd {
 	return &OmniTXExodusFundraiserCmd{}
 }
 
+// OmniCreateAgreementCmd
+type OmniCreateAgreementCmd struct{
+	AgtType 				string
+	AgtContent  			string
+	AgtnonencryptedContent 	string
+	AgtKey 					string
+	AgtEncryptedContent 	string
+}
+
+func NewOmniCreateAgreementCmd() *OmniCreateAgreementCmd {
+	return &OmniCreateAgreementCmd{}
+}
+
+// OmniSendAgreementCmd
+type OmniSendAgreementCmd struct{
+	FromAddress				string
+	ToAddress 				string
+	AgtId 					string
+	AgtnonencryptedContent 	string
+	AgtKey 					string
+	AgtEncryptedContent 	string
+}
+
+func NewOmniSendAgreementCmd() *OmniSendAgreementCmd {
+	return &OmniSendAgreementCmd{}
+}
+
 func init() {
 	// The commands in this file are only usable with a wallet server.
 	flags := Omni
@@ -1478,4 +1505,6 @@ func init() {
 	MustRegisterCmd("omni_processpayment", (*OmniProcessPaymentCmd)(nil), flags)
 	MustRegisterCmd("omni_clear", (*OmniClearCmd)(nil), flags)
 	MustRegisterCmd("omni_txexodus_fundraiser", (*OmniTXExodusFundraiserCmd)(nil), flags)
+	MustRegisterCmd("omni_createagreement", (*OmniCreateAgreementCmd)(nil), flags)
+	MustRegisterCmd("omni_sendagreement", (*OmniSendAgreementCmd)(nil), flags)
 }
