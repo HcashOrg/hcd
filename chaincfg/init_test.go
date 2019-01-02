@@ -257,6 +257,34 @@ var (
 			},
 		},
 	}
+	doubleChoice = Vote{
+		Id:          "voteforpedro",
+		Description: "You should always vote for Pedro",
+		Mask:        0x6, // 0b0110
+		Choices: []Choice{
+			{
+				Id:          "Abstain",
+				Description: "Abstain voting for Pedro",
+				Bits:        0x0, // 0b0000
+				IsAbstain:   true,
+				IsNo:        false,
+			},
+			{
+				Id:          "Yes",
+				Description: "Vote for Pedro",
+				Bits:        0x2,  // 0b0010
+				IsAbstain:   true, // XXX this is the invalid choice
+				IsNo:        false,
+			},
+			{
+				Id:          "No",
+				Description: "Dont vote for Pedro",
+				Bits:        0x4, // 0b0100
+				IsAbstain:   false,
+				IsNo:        true,
+			},
+		},
+	}
 
 	dupChoice = Vote{
 		Id:          "voteforpedro",
