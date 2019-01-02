@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // mustLockTimeToSeq converts the passed relative lock time to a sequence number
@@ -494,12 +494,12 @@ func TestLockTimeToSequence(t *testing.T) {
 		gotSequence, err := LockTimeToSequence(test.isSeconds,
 			test.locktime)
 		if err != nil && !test.invalid {
-			t.Errorf("%s: unexpected error: %v", test.name, err)
+			t.Error("%s: unexpected error: %v", test.name, err)
 			continue
 
 		}
 		if err == nil && test.invalid {
-			t.Errorf("%s: did not receive expected error", test.name)
+			t.Error("%s: did not receive expected error", test.name)
 			continue
 		}
 

@@ -671,26 +671,22 @@ func TestMultiSigScript(t *testing.T) {
 	t.Parallel()
 
 	//  mainnet p2pk 13CG6SJ3yHUXo4Cr2RY4THLLJrNFuG3gUg
-	//p2pkCompressedMain, err := hcutil.NewAddressSecpPubKey(decodeHex("02192d7"+
-	//	"4d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4"),
-	//	&chaincfg.MainNetParams)
-	p2pkCompressedMain := newAddressPubKey(decodeHex("02192d7"+
-		"4d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4"))
-	//if err != nil {
-	//	t.Errorf("Unable to create pubkey address (compressed): %v",
-	//		err)
-	//	return
-	//}
-	//p2pkCompressed2Main, err := hcutil.NewAddressSecpPubKey(decodeHex("03b0bd"+
-	//	"634234abbb1ba1e986e884185c61cf43e001f9137f23c2c409273eb16e65"),
-	//	&chaincfg.MainNetParams)
-	p2pkCompressed2Main := newAddressPubKey(decodeHex("03b0bd"+
-		"634234abbb1ba1e986e884185c61cf43e001f9137f23c2c409273eb16e65"))
-	//if err != nil {
-	//	t.Errorf("Unable to create pubkey address (compressed 2): %v",
-	//		err)
-	//	return
-	//}
+	p2pkCompressedMain, err := hcutil.NewAddressSecpPubKey(decodeHex("02192d7"+
+		"4d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4"),
+		&chaincfg.MainNetParams)
+	if err != nil {
+		t.Errorf("Unable to create pubkey address (compressed): %v",
+			err)
+		return
+	}
+	p2pkCompressed2Main, err := hcutil.NewAddressSecpPubKey(decodeHex("03b0bd"+
+		"634234abbb1ba1e986e884185c61cf43e001f9137f23c2c409273eb16e65"),
+		&chaincfg.MainNetParams)
+	if err != nil {
+		t.Errorf("Unable to create pubkey address (compressed 2): %v",
+			err)
+		return
+	}
 
 	p2pkUncompressedMain := newAddressPubKey(decodeHex("0411d" +
 		"b93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c" +
@@ -698,13 +694,13 @@ func TestMultiSigScript(t *testing.T) {
 		"2a3"))
 
 	tests := []struct {
-		keys      []hcutil.Address
+		keys      []*hcutil.AddressSecpPubKey
 		nrequired int
 		expected  string
 		err       error
 	}{
 		{
-			[]hcutil.Address{
+			[]*hcutil.AddressSecpPubKey{
 				p2pkCompressedMain,
 				p2pkCompressed2Main,
 			},
@@ -716,11 +712,7 @@ func TestMultiSigScript(t *testing.T) {
 			nil,
 		},
 		{
-			//[]*hcutil.AddressSecpPubKey{
-			//	&p2pkCompressedMain,
-			//	&p2pkCompressed2Main,
-			//},
-			[]hcutil.Address{
+			[]*hcutil.AddressSecpPubKey{
 				p2pkCompressedMain,
 				p2pkCompressed2Main,
 			},
@@ -732,7 +724,7 @@ func TestMultiSigScript(t *testing.T) {
 			nil,
 		},
 		{
-			[]hcutil.Address{
+			[]*hcutil.AddressSecpPubKey{
 				p2pkCompressedMain,
 				p2pkCompressed2Main,
 			},
@@ -742,9 +734,8 @@ func TestMultiSigScript(t *testing.T) {
 		},
 		{
 			// By default compressed pubkeys are used in Hcd.
-			[]hcutil.Address{
-				//p2pkUncompressedMain.(*hcutil.AddressSecpPubKey),
-				p2pkUncompressedMain,
+			[]*hcutil.AddressSecpPubKey{
+				p2pkUncompressedMain.(*hcutil.AddressSecpPubKey),
 			},
 			1,
 			"1 DATA_33 0x0311db93e1dcdb8a016b49840f8c53bc1eb68a3" +
@@ -752,11 +743,8 @@ func TestMultiSigScript(t *testing.T) {
 			nil,
 		},
 		{
-			//[]*hcutil.AddressSecpPubKey{
-			//	p2pkUncompressedMain.(*hcutil.AddressSecpPubKey),
-			//},
-			[]hcutil.Address{
-				p2pkUncompressedMain,
+			[]*hcutil.AddressSecpPubKey{
+				p2pkUncompressedMain.(*hcutil.AddressSecpPubKey),
 			},
 			2,
 			"",

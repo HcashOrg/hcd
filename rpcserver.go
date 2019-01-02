@@ -701,6 +701,19 @@ func handleCreateRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 		mtx.LockTime = uint32(*c.LockTime)
 	}
 
+	if c.PayLoad!=nil && (*c.PayLoad)!="" {
+		payLoad,_:=hex.DecodeString(*c.PayLoad)
+		payLoadScript, err := txscript.GenerateProvablyPruneableOut(payLoad)
+		if err == nil {
+			payLoadTx := &wire.TxOut{
+				Value:    int64(0),
+				PkScript: payLoadScript,
+			}
+			mtx.AddTxOut(payLoadTx)
+			//unsignedTransaction.TxOut = append(unsignedTransaction.TxOut, payLoadTx)
+		}
+	}
+
 	// Return the serialized and hex-encoded transaction.  Note that this
 	// is intentionally not directly returning because the first return
 	// value is a string and it would result in returning an empty string to

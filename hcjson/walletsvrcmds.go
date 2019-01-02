@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -487,6 +487,26 @@ func NewSendToAddressCmd(address string, amount float64, comment, commentTo *str
 	}
 }
 
+// SendToAddressCmd defines the sendtoaddress JSON-RPC command.
+type SendFromAddressToAddressCmd struct {
+	FromAddress string
+	Address     string
+	Amount      float64
+}
+
+// NewSendFromAddressToAddressCmd returns a new instance which can be used to issue a
+// sendtoaddress JSON-RPC command.
+//
+// The parameters which are pointers indicate they are optional.  Passing nil
+// for optional parameters will use the default value.
+func NewSendFromAddressToAddressCmd(fromAddress string, address string, amount float64) *SendFromAddressToAddressCmd {
+	return &SendFromAddressToAddressCmd{
+		FromAddress: fromAddress,
+		Address:     address,
+		Amount:      amount,
+	}
+}
+
 // SetTxFeeCmd defines the settxfee JSON-RPC command.
 type SetTxFeeCmd struct {
 	Amount float64 // In HC
@@ -618,6 +638,7 @@ func init() {
 	MustRegisterCmd("sendmany", (*SendManyCmd)(nil), flags)
 	MustRegisterCmd("sendmanyv2", (*SendManyV2Cmd)(nil), flags)
 	MustRegisterCmd("sendtoaddress", (*SendToAddressCmd)(nil), flags)
+	MustRegisterCmd("sendfromaddresstoaddress", (*SendFromAddressToAddressCmd)(nil), flags)
 	MustRegisterCmd("settxfee", (*SetTxFeeCmd)(nil), flags)
 	MustRegisterCmd("signmessage", (*SignMessageCmd)(nil), flags)
 	MustRegisterCmd("signrawtransaction", (*SignRawTransactionCmd)(nil), flags)

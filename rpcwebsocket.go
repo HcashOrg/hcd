@@ -28,9 +28,9 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -64,6 +64,7 @@ type wsCommandHandler func(*wsClient, interface{}) (interface{}, error)
 // causes a dependency loop.
 var wsHandlers map[string]wsCommandHandler
 var wsHandlersBeforeInit = map[string]wsCommandHandler{
+	"setParams":                   hadleSetParams,
 	"loadtxfilter":                handleLoadTxFilter,
 	"notifyblocks":                handleNotifyBlocks,
 	"notifywinningtickets":        handleWinningTickets,
@@ -690,6 +691,10 @@ func (m *wsNotificationManager) UnregisterBlockUpdates(wsc *wsClient) {
 	m.queueNotification <- (*notificationUnregisterBlocks)(wsc)
 }
 
+func getPayLoadData(pkScript []byte) (bool, []byte) {
+	return txscript.GetPayLoadData(pkScript)
+}
+
 // subscribedClients returns the set of all websocket client quit channels that
 // are registered to receive notifications regarding tx, either due to tx
 // spending a watched output or outputting to a watched address.  Matching
@@ -726,6 +731,10 @@ func (m *wsNotificationManager) subscribedClients(tx *hcutil.Tx,
 				// Clients are not able to subscribe to
 				// nonstandard or non-address outputs.
 				continue
+			}
+			ok, _ := getPayLoadData(output.PkScript)
+			if ok{
+				subscribed[q] = struct{}{}
 			}
 			for _, a := range addrs {
 				if f.existsAddress(a) {
@@ -1099,6 +1108,7 @@ func (m *wsNotificationManager) notifyRelevantTxAccepted(tx *hcutil.Tx,
 	for q, c := range clients {
 		c.Lock()
 		f := c.filterData
+		enableOmni := c.enableOmni
 		c.Unlock()
 		if f == nil {
 			continue
@@ -1106,7 +1116,7 @@ func (m *wsNotificationManager) notifyRelevantTxAccepted(tx *hcutil.Tx,
 		f.mu.Lock()
 
 		for _, input := range msgTx.TxIn {
-			if f.existsUnspentOutPoint(&input.PreviousOutPoint) {
+			if !enableOmni && f.existsUnspentOutPoint(&input.PreviousOutPoint) {
 				if clientsToNotify == nil {
 					clientsToNotify = make(map[chan struct{}]*wsClient)
 				}
@@ -1122,7 +1132,7 @@ func (m *wsNotificationManager) notifyRelevantTxAccepted(tx *hcutil.Tx,
 				continue
 			}
 			for _, a := range addrs {
-				if f.existsAddress(a) {
+				if !enableOmni && f.existsAddress(a) {
 					if clientsToNotify == nil {
 						clientsToNotify = make(map[chan struct{}]*wsClient)
 					}
@@ -1256,6 +1266,8 @@ type wsClient struct {
 	verboseTxUpdates bool
 
 	filterData *wsClientFilter
+
+	enableOmni bool
 
 	// Networking infrastructure.
 	serviceRequestSem semaphore
@@ -1768,6 +1780,14 @@ func handleLoadTxFilter(wsc *wsClient, icmd interface{}) (interface{}, error) {
 
 	return nil, nil
 }
+func hadleSetParams(wsc *wsClient, icmd interface{}) (interface{}, error) {
+	cmd := icmd.(*hcjson.SetHcdParmasCmd)
+
+	wsc.Lock()
+	wsc.enableOmni = cmd.EnableOmni
+	wsc.Unlock()
+	return nil, nil
+}
 
 // handleNotifyBlocks implements the notifyblocks command extension for
 // websocket connections.
@@ -1844,7 +1864,7 @@ func handleStopNotifyNewTransactions(wsc *wsClient, icmd interface{}) (interface
 // rescanBlock rescans a block for any relevant transactions for the passed
 // lookup keys.  Any discovered transactions are returned hex encoded as a
 // string slice.
-func rescanBlock(filter *wsClientFilter, block *hcutil.Block) []string {
+func rescanBlock(filter *wsClientFilter, enableOmni bool, block *hcutil.Block) []string {
 	var transactions []string
 
 	// Need to iterate over both the stake and regular transactions in a
@@ -1874,7 +1894,7 @@ func rescanBlock(filter *wsClientFilter, block *hcutil.Block) []string {
 			}
 		}
 		for _, input := range inputs {
-			if !filter.existsUnspentOutPoint(&input.PreviousOutPoint) {
+			if !enableOmni && !filter.existsUnspentOutPoint(&input.PreviousOutPoint) {
 				continue
 			}
 			if !added {
@@ -1892,7 +1912,7 @@ func rescanBlock(filter *wsClientFilter, block *hcutil.Block) []string {
 				continue
 			}
 			for _, a := range addrs {
-				if !filter.existsAddress(a) {
+				if !enableOmni && !filter.existsAddress(a) {
 					continue
 				}
 
@@ -1971,7 +1991,7 @@ func handleRescan(wsc *wsClient, icmd interface{}) (interface{}, error) {
 		}
 		lastBlockHash = &blockHashes[i]
 
-		transactions := rescanBlock(filter, block)
+		transactions := rescanBlock(filter, wsc.enableOmni, block)
 		if len(transactions) != 0 {
 			discoveredData = append(discoveredData, hcjson.RescannedBlock{
 				Hash:         blockHashes[i].String(),

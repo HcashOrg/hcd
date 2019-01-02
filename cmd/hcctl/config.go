@@ -47,6 +47,7 @@ func listCommands() {
 	const (
 		categoryChain uint8 = iota
 		categoryWallet
+		categoryOmni
 		numCategories
 	)
 
@@ -78,6 +79,9 @@ func listCommands() {
 		if flags&hcjson.UFWalletOnly != 0 {
 			category = categoryWallet
 		}
+		if flags&hcjson.Omni != 0 {
+			category = categoryOmni
+		}
 		categorized[category] = append(categorized[category], usage)
 	}
 
@@ -85,6 +89,7 @@ func listCommands() {
 	categoryTitles := make([]string, numCategories)
 	categoryTitles[categoryChain] = "Chain Server Commands:"
 	categoryTitles[categoryWallet] = "Wallet Server Commands (--wallet):"
+	categoryTitles[categoryOmni] = "Omni Wallet Server Commands (--wallet):"
 	for category := uint8(0); category < numCategories; category++ {
 		fmt.Println(categoryTitles[category])
 		for _, usage := range categorized[category] {

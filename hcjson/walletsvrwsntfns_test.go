@@ -124,6 +124,7 @@ func TestWalletSvrWsNtfns(t *testing.T) {
 				test.name, err)
 			continue
 		}
+		fmt.Println("marshalled:",marshalled);
 
 		if !bytes.Equal(marshalled, []byte(test.marshalled)) {
 			t.Errorf("Test #%d (%s) unexpected marshalled data - "+

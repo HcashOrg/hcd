@@ -363,7 +363,7 @@ func TestVersionOptionalFields(t *testing.T) {
 			Port:      8333,
 		},
 	}
-	onlyRequiredVersionEncoded := make([]byte, len(baseVersionEncoded)-54)
+	onlyRequiredVersionEncoded := make([]byte, len(baseVersionEncoded)-55)
 	copy(onlyRequiredVersionEncoded, baseVersionEncoded)
 
 	// addrMeVersion is a version message that contains all fields through
@@ -375,14 +375,14 @@ func TestVersionOptionalFields(t *testing.T) {
 		IP:        net.ParseIP("127.0.0.1"),
 		Port:      8333,
 	}
-	addrMeVersionEncoded := make([]byte, len(baseVersionEncoded)-28)
+	addrMeVersionEncoded := make([]byte, len(baseVersionEncoded)-29)
 	copy(addrMeVersionEncoded, baseVersionEncoded)
 
 	// nonceVersion is a version message that contains all fields through
 	// the Nonce field.
 	nonceVersion := addrMeVersion
 	nonceVersion.Nonce = 123123 // 0x1e0f3
-	nonceVersionEncoded := make([]byte, len(baseVersionEncoded)-20)
+	nonceVersionEncoded := make([]byte, len(baseVersionEncoded)-21)
 	copy(nonceVersionEncoded, baseVersionEncoded)
 
 	// uaVersion is a version message that contains all fields through
@@ -487,8 +487,8 @@ var baseVersionEncoded = []byte{
 	0x00, 0x00, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x01, // IP 127.0.0.1
 	0x20, 0x8d, // Port 8333 in big-endian
 	0xf3, 0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, // Nonce
-	0x0f, // Varint for user agent length
-	0x2f, 0x68, 0x63, 0x64, 0x74, 0x65, 0x73,
+	0x10, // Varint for user agent length
+	0x2f, 0x64, 0x63, 0x72, 0x64, 0x74, 0x65, 0x73,
 	0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
 	0xfa, 0x92, 0x03, 0x00, // Last block
 }
@@ -533,8 +533,8 @@ var baseVersionBIP0037Encoded = []byte{
 	0x00, 0x00, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x01, // IP 127.0.0.1
 	0x20, 0x8d, // Port 8333 in big-endian
 	0xf3, 0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, // Nonce
-	0x0f, // Varint for user agent length
-	0x2f, 0x68, 0x63, 0x64, 0x74, 0x65, 0x73,
+	0x10, // Varint for user agent length
+	0x2f, 0x64, 0x63, 0x72, 0x64, 0x74, 0x65, 0x73,
 	0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
 	0xfa, 0x92, 0x03, 0x00, // Last block
 	0x01, // Relay tx

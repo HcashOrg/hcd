@@ -50,6 +50,16 @@ func NewLoadTxFilterCmd(reload bool, addresses []string, outPoints []OutPoint) *
 	}
 }
 
+type SetHcdParmasCmd struct {
+	EnableOmni bool
+}
+
+func NewSetHcdParmasCmd(enableOmni bool) *SetHcdParmasCmd {
+	return &SetHcdParmasCmd{
+		EnableOmni: enableOmni,
+	}
+}
+
 // NotifyBlocksCmd defines the notifyblocks JSON-RPC command.
 type NotifyBlocksCmd struct{}
 
@@ -165,9 +175,9 @@ func NewRescanCmd(blockHashes string) *RescanCmd {
 func init() {
 	// The commands in this file are only usable by websockets.
 	flags := UFWebsocketOnly
-
 	MustRegisterCmd("authenticate", (*AuthenticateCmd)(nil), flags)
 	MustRegisterCmd("loadtxfilter", (*LoadTxFilterCmd)(nil), flags)
+	MustRegisterCmd("setParams", (*SetHcdParmasCmd)(nil), flags)
 	MustRegisterCmd("notifyblocks", (*NotifyBlocksCmd)(nil), flags)
 	MustRegisterCmd("notifynewtransactions", (*NotifyNewTransactionsCmd)(nil), flags)
 	MustRegisterCmd("notifynewtickets", (*NotifyNewTicketsCmd)(nil), flags)

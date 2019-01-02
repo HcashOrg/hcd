@@ -1754,11 +1754,10 @@ func TestSignTxOutput(t *testing.T) {
 			}
 
 			pkScript, err := txscript.MultiSigScript(
-				[]hcutil.Address{address1,address2},
-				//[]*hcutil.AddressSecpPubKey{address1, address2},
+				[]*hcutil.AddressSecpPubKey{address1, address2},
 				2)
 			if err != nil {
-					t.Errorf("failed to make pkscript "+
+				t.Errorf("failed to make pkscript "+
 					"for %s: %v", msg, err)
 			}
 
@@ -1830,8 +1829,7 @@ func TestSignTxOutput(t *testing.T) {
 			}
 
 			pkScript, err := txscript.MultiSigScript(
-				[]hcutil.Address{address1,address2},
-				//[]*hcutil.AddressSecpPubKey{address1, address2},
+				[]*hcutil.AddressSecpPubKey{address1, address2},
 				2)
 			if err != nil {
 				t.Errorf("failed to make pkscript "+
@@ -1925,8 +1923,7 @@ func TestSignTxOutput(t *testing.T) {
 			}
 
 			pkScript, err := txscript.MultiSigScript(
-				//[]*hcutil.AddressSecpPubKey{address1, address2},
-				[]hcutil.Address{address1,address2},
+				[]*hcutil.AddressSecpPubKey{address1, address2},
 				2)
 			if err != nil {
 				t.Errorf("failed to make pkscript "+

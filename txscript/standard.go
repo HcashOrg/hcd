@@ -8,6 +8,7 @@ package txscript
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"github.com/HcashOrg/hcd/chaincfg"
@@ -238,7 +239,7 @@ func isNullData(pops []parsedOpcode) bool {
 	return l == 2 &&
 		pops[0].opcode.value == OP_RETURN &&
 		(isSmallInt(pops[1].opcode) || pops[1].opcode.value <=
-		OP_PUSHDATA4) &&
+			OP_PUSHDATA4) &&
 		len(pops[1].data) <= MaxDataCarrierSize
 }
 
@@ -670,6 +671,45 @@ func CalcMultiSigStats(script []byte) (int, int, error) {
 // signature redeem script from a P2SH-redeeming input. It returns
 // nil if the signature script is not a multisignature script.
 func MultisigRedeemScriptFromScriptSig(script []byte) ([]byte, error) {
+	pops, err := parseScript(script)
+	if err != nil {
+		return nil, err
+	}
+
+	// The redeemScript is always the last item on the stack of
+	// the script sig.
+	return pops[len(pops)-1].data, nil
+}
+
+// AddressFromScriptSig attempts to extract a address from signature
+func AddressFromScriptSig(script []byte, chainParams *chaincfg.Params) (hcutil.Address, error) {
+	pops, err := parseScript(script)
+	if err != nil {
+		return nil, err
+	}
+	data := pops[1].data
+	if len(data) == 897 { //for bliss
+		pubkey, err := bs.Bliss.ParsePubKey(data)
+		if err == nil {
+			return hcutil.NewAddressBlissPubKeyCompressed(pubkey, chainParams)
+		} else {
+			return nil, err
+		}
+	} else {
+		pubkey, err := chainec.Secp256k1.ParsePubKey(data)
+		if err == nil {
+			return hcutil.NewAddressSecpPubKeyCompressed(pubkey, chainParams)
+		} else {
+			return nil, err
+		}
+	}
+	return nil, errors.New("unknown algo type")
+}
+
+// MultisigRedeemScriptFromScriptSig attempts to extract a multi-
+// signature redeem script from a P2SH-redeeming input. It returns
+// nil if the signature script is not a multisignature script.
+func ScriptFromScriptSig(script []byte) ([]byte, error) {
 	pops, err := parseScript(script)
 	if err != nil {
 		return nil, err

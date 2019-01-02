@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -35,6 +35,10 @@ const (
 	// This means when it is marshalled, the ID must be nil.
 	UFNotification
 
+	// OMiniOnly indicates that the command can only be used with an RPC
+	// server that supports omini commands.
+	Omni
+
 	// highestUsageFlagBit is the maximum usage flag bit and is used in the
 	// stringer and tests to ensure all of the above constants have been
 	// tested.
@@ -46,6 +50,7 @@ var usageFlagStrings = map[UsageFlag]string{
 	UFWalletOnly:    "UFWalletOnly",
 	UFWebsocketOnly: "UFWebsocketOnly",
 	UFNotification:  "UFNotification",
+	Omni:"Omni",
 }
 
 // String returns the UsageFlag in human-readable form.
