@@ -161,3 +161,34 @@ func TestRPCError(t *testing.T) {
 		}
 	}
 }
+
+
+func TestMarshalResponseRaw(t *testing.T) {
+
+	t.Parallel()
+
+	testID := 6
+
+	tests := []struct {
+		name     string
+		result   interface{}
+		jsonErr  *hcjson.RPCError
+		expected []byte
+	}{
+		{
+			name:     "respon result with no error",
+			result:   true,
+			jsonErr:  nil,
+			expected: []byte(`{"result":true,"error":null,"id":6}`),
+		},
+		{
+			name:   "result with error",
+			result: nil,
+			jsonErr: func() *hcjson.RPCError {
+				return hcjson.NewRPCError(hcjson.ErrRPCBlockNotFound, "678 not found")
+			}(),
+			expected: []byte(`{"result":null,"error":{"code":-5,"message":"678 not found"},"id":1}`),
+		},
+
+	}
+}
