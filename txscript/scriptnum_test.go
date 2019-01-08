@@ -46,7 +46,8 @@ func TestScriptNumBytes(t *testing.T) {
 		{-256, hexToBytes("0081")},
 		{32767, hexToBytes("ff7f")},
 		{-32767, hexToBytes("ffff")},
-		
+		{32768, hexToBytes("008000")},
+		{-32768, hexToBytes("008080")},
 		{65535, hexToBytes("ffff00")},
 		{-65535, hexToBytes("ffff80")},
 		{524288, hexToBytes("000008")},
