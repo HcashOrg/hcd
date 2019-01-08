@@ -51,7 +51,9 @@ func ExamplePayToAddrScript() {
 		return
 	}
 	fmt.Println("Script Disassembly:", disasm)
-
+	// Output:
+	// Script Hex: 76a914128004ff2fcaf13b2b91eb654b1dc2b674f7ec6188ac
+	// Script Disassembly: OP_DUP OP_HASH160 128004ff2fcaf13b2b91eb654b1dc2b674f7ec61 OP_EQUALVERIFY OP_CHECKSIG
 }
 
 // This example demonstrates extracting information from a standard public key
