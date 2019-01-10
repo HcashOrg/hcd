@@ -414,9 +414,13 @@ func removeOpcodeByData(pkscript []parsedOpcode, data []byte) []parsedOpcode {
 }
 
 // CalcSignatureHash is an exported version for testing.
-func CalcSignatureHash(script []parsedOpcode, hashType SigHashType,
+func CalcSignatureHash(script []byte, hashType SigHashType,
 	tx *wire.MsgTx, idx int, cachedPrefix *chainhash.Hash) ([]byte, error) {
-	return calcSignatureHash(script, hashType, tx, idx, cachedPrefix)
+	parsedScript, err := parseScript(script)
+	if err != nil {
+		return nil, err
+	}
+	return calcSignatureHash(parsedScript, hashType, tx, idx, cachedPrefix)
 }
 
 // calcSignatureHash will, given a script and hash type for the current script
