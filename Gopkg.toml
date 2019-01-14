@@ -67,7 +67,7 @@
 
 [[constraint]]
   name = "github.com/dchest/blake256"
-  version = "master"
+  version = "1.0.0"
 
 [[constraint]]
   name = "github.com/jessevdk/go-flags"
