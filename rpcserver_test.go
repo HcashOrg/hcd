@@ -165,3 +165,45 @@ func TestRpcServer(t *testing.T) {
 		currentTestNum++
 	}
 }
+
+func testGetBlockCountTwo(r *rpctest.Harness, t *testing.T) {
+
+	// Save the current count.
+
+	currentCount, err := r.Node.GetBlockCount()
+
+	if err != nil {
+
+		t.Fatalf("Unable to get block count: %v", err)
+
+	}
+
+
+
+	if _, err := r.Node.Generate(2); err != nil {
+
+		t.Fatalf("Unable to generate block: %v", err)
+
+	}
+
+
+
+	// Count should have increased by one.
+
+	newCount, err := r.Node.GetBlockCount()
+
+	if err != nil {
+
+		t.Fatalf("Unable to get block count: %v", err)
+
+	}
+
+	if newCount != currentCount+2 {
+
+		t.Fatalf("Block count incorrect. Got %v should be %v",
+
+			newCount, currentCount+1)
+
+	}
+
+}
