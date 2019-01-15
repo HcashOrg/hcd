@@ -1,5 +1,6 @@
 // Copyright (c) 2016 The btcsuite developers
 // Copyright (c) 2017 The Decred developers
+// Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 // This file is ignored during the regular tests due to the following build tag.
