@@ -192,3 +192,79 @@ func TestMarshalResponseRaw(t *testing.T) {
 
 	}
 }
+
+func TestIsValidIDTypeB(t *testing.T) {
+
+
+	tests := []struct {
+
+		name    string
+
+		id      interface{}
+
+		isValid bool
+
+	}{
+
+		{"int", int(10), true},
+
+		{"int8", int8(16), true},
+
+		{"int16", int16(1), true},
+
+		{"int32", int32(61), true},
+
+		{"int64", int64(18), true},
+
+		{"uint", uint(16), true},
+
+		{"uint8", uint8(12), true},
+
+		{"uint16", uint16(51), true},
+
+		{"uint32", uint32(15), true},
+
+		{"uint64", uint64(1), true},
+
+		{"string", "1", true},
+
+		{"nil", nil, true},
+
+		{"float32", float32(1), true},
+
+		{"float64", float64(1), true},
+
+		{"bool", true, false},
+
+		{"chan int", make(chan int), false},
+
+		{"complex64", complex64(1), false},
+
+		{"complex128", complex128(1), false},
+
+		{"func", func() {}, false},
+
+	}
+
+
+
+	t.log("for test start")
+
+	for i, test := range tests {
+
+		if hcjson.IsValidIDType(test.id) != test.isValid {
+
+			t.Errorf("Test #%d (%s) valid mismatch - got %v, "+
+
+				"want %v", i, test.name, !test.isValid,
+
+				test.isValid)
+
+			continue
+
+		}
+
+	}
+
+}
+
