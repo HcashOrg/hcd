@@ -55,12 +55,7 @@ func TestBadPC(t *testing.T) {
 				Sequence:        4294967295,
 			},
 		},
-		TxOut: []*wire.TxOut{
-			{
-				Value:    1000000000,
-				PkScript: nil,
-			},
-		},
+		
 		LockTime: 0,
 	}
 	pkScript := []byte{txscript.OP_NOP}
