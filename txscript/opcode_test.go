@@ -17,20 +17,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 )
 
-// testScriptFlags are the script flags which are used in the tests when
-// executing transaction scripts to enforce additional checks.  Note these flags
-// are different than what is required for the consensus rules in that they are
-// more strict.
-const testScriptFlags = ScriptBip16 |
-	ScriptVerifyDERSignatures |
-	ScriptVerifyStrictEncoding |
-	ScriptVerifyMinimalData |
-	ScriptDiscourageUpgradableNops |
-	ScriptVerifyCleanStack |
-	ScriptVerifyCheckLockTimeVerify |
-	ScriptVerifyCheckSequenceVerify |
-	ScriptVerifyLowS |
-	ScriptVerifySHA256
+
 
 // TestOpcodeDisabled tests the opcodeDisabled function manually because all
 // disabled opcodes result in a script execution failure when executed normally,
