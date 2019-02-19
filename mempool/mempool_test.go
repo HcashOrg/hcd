@@ -37,14 +37,7 @@ type fakeChain struct {
 	scriptFlags   txscript.ScriptFlags
 }
 
-// NextStakeDifficulty returns the next stake difficulty associated with the
-// fake chain instance.
-func (s *fakeChain) NextStakeDifficulty() (int64, error) {
-	s.RLock()
-	nextStakeDiff := s.nextStakeDiff
-	s.RUnlock()
-	return nextStakeDiff, nil
-}
+
 
 // SetNextStakeDifficulty sets the next stake difficulty associated with the
 // fake chain instance.
