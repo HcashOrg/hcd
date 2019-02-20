@@ -25,12 +25,7 @@ type naTest struct {
 	want string
 }
 
-// naTests houses all of the tests to be performed against the NetAddressKey
-// method.
-var naTests = make([]naTest, 0)
 
-// Put some IP in here for convenience. Points to google.
-var someIP = "173.194.115.66"
 
 // addNaTests
 func addNaTests() {
