@@ -39,15 +39,7 @@ type mockConn struct {
 	rAddr net.Addr
 }
 
-// LocalAddr returns the local address for the connection.
-func (c mockConn) LocalAddr() net.Addr {
-	return &mockAddr{c.lnet, c.laddr}
-}
 
-// RemoteAddr returns the remote address for the connection.
-func (c mockConn) RemoteAddr() net.Addr {
-	return &mockAddr{c.rAddr.Network(), c.rAddr.String()}
-}
 
 // Close handles closing the connection.
 func (c mockConn) Close() error {
