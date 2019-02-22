@@ -85,14 +85,6 @@ func (s *fakeChain) AddBlock(block *hcutil.Block) {
 	s.Unlock()
 }
 
-// BestHash returns the current best hash associated with the fake chain
-// instance.
-func (s *fakeChain) BestHash() *chainhash.Hash {
-	s.RLock()
-	hash := &s.currentHash
-	s.RUnlock()
-	return hash
-}
 
 // SetHash sets the current best hash associated with the fake chain instance.
 func (s *fakeChain) SetBestHash(hash *chainhash.Hash) {
