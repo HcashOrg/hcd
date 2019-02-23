@@ -28,7 +28,7 @@ func TestDynamicBanScoreDecay(t *testing.T) {
 		t.Errorf("Halflife check failed - %d instead of 125", r)
 	}
 
-	r = bs.int(base.Add(7 * time.Minute))
+	r = bs.int(base.Add(10 * time.Minute))
 	if r != 100 {
 		t.Errorf("Decay after 7m - %d instead of 100", r)
 	}
