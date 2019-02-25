@@ -202,11 +202,19 @@ type serverPeer struct {
 	knownAddresses  map[string]struct{}
 	banScore        connmgr.DynamicBanScore
 	quit            chan struct{}
-
+	// It is used to prevent more than one response per connection.
+	addrsSent bool
 	// The following chans are used to sync blockmanager and server.
 	txProcessed    chan struct{}
 	blockProcessed chan struct{}
 }
+// Only respond with addresses once per connection
+if sp.addrsSent {
+	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
+	return
+}
+
+sp.addrsSent = true
 
 // newServerPeer returns a new serverPeer instance. The peer needs to be set by
 // the caller.
