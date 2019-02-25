@@ -324,3 +324,26 @@ func TestPointConversion(t *testing.T) {
 		encodedPointsIdx++
 	}
 }
+
+func testConversionMax() []ConversionVector {
+	r := rand.New(rand.NewSource(4242314))
+
+	numCvs := 1000000
+	cvs := make([]ConversionVector, numCvs, numCvs)
+	for i := 0; i < numCvs; i++ {
+		bIn := new([32]byte)
+		for j := 0; j < fieldIntSize; j++ {
+			randByte := r.Intn(255)
+			bIn[j] = uint8(randByte)
+		}
+
+		// Zero out the LSB as these aren't points.
+		bIn[31] = bIn[31] &^ (1 << 7)
+		cvs[i] = ConversionVector{bIn}
+		r.Seed(int64(i) + 12345)
+	}
+
+	return cvs
+}
+
+
