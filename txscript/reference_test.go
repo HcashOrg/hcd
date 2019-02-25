@@ -152,6 +152,8 @@ func parseScriptFlags(flagStr string) (ScriptFlags, error) {
 			flags |= ScriptVerifyStrictEncoding
 		case "SHA256":
 			flags |= ScriptVerifySHA256
+		case "P2SH_STAKE_OPCODES":
+			flags |= ScriptVerifyLowS	
 		default:
 			return flags, fmt.Errorf("invalid flag: %s", flag)
 		}
