@@ -638,6 +638,8 @@ func loadConfig() (*config, []string, error) {
 	cfg.DataDir = cleanAndExpandPath(cfg.DataDir)
 	var oldTestNets []string
 	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet"))
+	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet2"))
+	
 	cfg.DataDir = filepath.Join(cfg.DataDir, netName(activeNetParams))
 
 	// Append the network type to the log directory so it is "namespaced"
