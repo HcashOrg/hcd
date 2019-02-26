@@ -316,14 +316,13 @@ var _ mining.TxSource = (*TxPool)(nil)
 //
 // This function MUST be called with the mempool lock held (for writes).
 func (mp *TxPool) removeOrphan(txHash *chainhash.Hash) {
-	log.Tracef("Removing orphan transaction %v", txHash)
 
 	// Nothing to do if passed tx is not an orphan.
 	tx, exists := mp.orphans[*txHash]
 	if !exists {
 		return
 	}
-
+	log.Tracef("Removing orphan transaction %v", txHash)
 	// Remove the reference from the previous orphan index.
 	for _, txIn := range tx.MsgTx().TxIn {
 		originTxHash := txIn.PreviousOutPoint.Hash
@@ -563,6 +562,7 @@ func (mp *TxPool) removeTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 
 	// Remove the transaction if needed.
 	if txDesc, exists := mp.pool[*txHash]; exists {
+		log.Tracef("Removing orphan transaction %v", txHash)
 		// Remove unconfirmed address index entries associated with the
 		// transaction if enabled.
 		if mp.cfg.AddrIndex != nil {
