@@ -251,7 +251,7 @@ func TestTicketDBLongChain(t *testing.T) {
 	// Declare some useful variables.
 	params := &chaincfg.SimNetParams
 	testBCHeight := int64(1001)
-	filename := filepath.Join("..", "/../blockchain/testdata", "testexpiry.bz2")
+	filename := filepath.Join("testdata", "testexpiry.bz2")
 	fi, err := os.Open(filename)
 	bcStream := bzip2.NewReader(fi)
 	defer fi.Close()
@@ -570,7 +570,7 @@ func TestTicketDBGeneral(t *testing.T) {
 	// Declare some useful variables.
 	params := &chaincfg.SimNetParams
 	testBCHeight := int64(168)
-	filename := filepath.Join("..", "/../blockchain/testdata", "blocks0to168.bz2")
+	filename := filepath.Join("testdata", "blocks0to168.bz2")
 	fi, err := os.Open(filename)
 	bcStream := bzip2.NewReader(fi)
 	defer fi.Close()
