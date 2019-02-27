@@ -434,7 +434,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 		params:               node.params,
 	}
 
-	// We only have to deal with voted related issues and expiry after
+	// We only have to deal with vote-related issues and expiry after
 	// StakeEnabledHeight.
 	var err error
 	if connectedNode.height >= uint32(connectedNode.params.StakeEnabledHeight) {
@@ -598,8 +598,8 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 			})
 	}
 
-	// The first block voted on is at StakeEnabledHeight, so begin calculating
-	// winners at the block before StakeEnabledHeight.
+	// The first block voted on is at StakeValidationHeight, so begin calculating
+	// winners at the block before StakeValidationHeight.
 	if connectedNode.height >=
 		uint32(connectedNode.params.StakeValidationHeight-1) {
 		// Find the next set of winners.
