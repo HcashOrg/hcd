@@ -898,6 +898,10 @@ func (sp *serverPeer) OnGetHeaders(p *peer.Peer, msg *wire.MsgGetHeaders) {
 		peerLog.Errorf("OnGetHeaders: failed to fetch hashes: %v", err)
 		return
 	}
+	if len(blockHashes) == 0 {
+		// Nothing to send.
+		return
+	}
 	blockHeaders, err := fetchHeaders(sp.server.db, blockHashes)
 	if err != nil {
 		peerLog.Errorf("OnGetHeaders: failed to fetch block headers: "+
