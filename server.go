@@ -401,6 +401,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// to specified peers and actively avoids advertising and connecting to
 	// discovered peers.
 	if !cfg.SimNet {
+		remoteAddr := sp.NA()
 		addrManager := sp.server.addrManager
 		// Outbound connections.
 		if !p.Inbound() {
@@ -408,7 +409,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 			// download and the local address is routable.
 			if !cfg.DisableListen /* && isCurrent? */ {
 				// Get address that best matches.
-				lna := addrManager.GetBestLocalAddress(p.NA())
+				lna := addrManager.GetBestLocalAddress(remoteAddr)
 				if addrmgr.IsRoutable(lna) {
 					// Filter addresses the peer already knows about.
 					addresses := []*wire.NetAddress{lna}
@@ -423,7 +424,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 			}
 
 			// Mark the address as a known good address.
-			addrManager.Good(p.NA())
+			addrManager.Good(remoteAddr)
 		}
 	}
 
