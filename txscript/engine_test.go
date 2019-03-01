@@ -36,6 +36,12 @@ func TestBadPC(t *testing.T) {
 	tx := &wire.MsgTx{
 		SerType: wire.TxSerializeFull,
 		Version: 1,
+		TxOut: []*wire.TxOut{
+		    {
+			Value:    1000000000,
+			PkScript: nil,
+		    },
+		},
 		TxIn: []*wire.TxIn{
 			{
 				PreviousOutPoint: wire.OutPoint{
