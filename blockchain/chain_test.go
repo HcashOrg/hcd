@@ -87,8 +87,18 @@ func TestBlockchainFunctions(t *testing.T) {
 	if err := bcDecoder.Decode(&blockChain); err != nil {
 		t.Errorf("error decoding test blockchain: %v", err.Error())
 	}
+	// Insert blocks 1 to 168 and perform various tests.
+	 for i := 1; i <= 168; i++ {
+		bl, err := hcutil.NewBlockFromBytes(blockChain[int64(i)])
+		if err != nil {
+		    t.Errorf("NewBlockFromBytes error: %v", err.Error())
+		}
 
-	
+		_, _, err = chain.ProcessBlock(bl, blockchain.BFNone)
+		if err != nil {
+		    t.Fatalf("ProcessBlock error at height %v: %v", i, err.Error())
+		}
+	    }
 
 	val, err := chain.TicketPoolValue()
 	if err != nil {
