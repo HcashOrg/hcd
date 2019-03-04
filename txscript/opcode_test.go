@@ -17,6 +17,16 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 )
 
+const testScriptFlags = ScriptBip16 |
+	ScriptVerifyDERSignatures |
+	ScriptVerifyStrictEncoding |
+	ScriptVerifyMinimalData |
+	ScriptDiscourageUpgradableNops |
+	ScriptVerifyCleanStack |
+	ScriptVerifyCheckLockTimeVerify |
+	ScriptVerifyCheckSequenceVerify |
+	ScriptVerifyLowS |
+	ScriptVerifySHA256
 
 
 // TestOpcodeDisabled tests the opcodeDisabled function manually because all
