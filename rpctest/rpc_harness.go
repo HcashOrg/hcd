@@ -58,6 +58,32 @@ var (
 	// Used to protest concurrent access to above declared variables.
 	harnessStateMtx sync.RWMutex
 )
+// Harness fully encapsulates an active hcd process to provide a unified
+// platform for creating rpc driven integration tests involving hcd. The
+// active hcd node will typically be run in simnet mode in order to allow for
+// easy generation of test blockchains.  The active hcd process is fully
+// managed by Harness, which handles the necessary initialization, and teardown
+// of the process along with any temporary directories created as a result.
+// Multiple Harness instances may be run concurrently, in order to allow for
+// testing complex scenarios involving multiple nodes. The harness also
+// includes an in-memory wallet to streamline various classes of tests.
+type Harness struct {
+	// ActiveNet is the parameters of the blockchain the Harness belongs
+	// to.
+	ActiveNet *chaincfg.Params
+
+	Node     *hcrpcclient.Client
+	node     *node
+	handlers *hcrpcclient.NotificationHandlers
+
+	wallet *memWallet
+
+	testNodeDir    string
+	maxConnRetries int
+	nodeNum        int
+
+	sync.Mutex
+}
 
 const (
 	// BlockVersion is the default block version used when generating
