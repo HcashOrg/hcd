@@ -21,6 +21,9 @@ import (
 // exponentially decrease the number of hashes as a function of the distance
 // from the block being located.
 //
+// Calculate the max number of entries that will ultimately be in the
+// block locator.  See the description of the algorithm for how these
+// numbers are derived.
 // For example, assume you have a block chain with a side chain as depicted
 // below:
 // 	genesis -> 1 -> 2 -> ... -> 15 -> 16  -> 17  -> 18
