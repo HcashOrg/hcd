@@ -38,8 +38,8 @@ type BlockLocator []*chainhash.Hash
 //
 //  - If the genesis hash is passed, there are no previous hashes to add and
 //    therefore the block locator will only consist of the genesis hash
-//  - If the passed hash is not currently known, the block locator will only
-//    consist of the passed hash
+//  - If the passed hash is not currently known, the block locator will be for
+//    the latest known tip of the main (best) chain
 //
 // This function MUST be called with the chain state lock held (for reads).
 func (b *BlockChain) blockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
