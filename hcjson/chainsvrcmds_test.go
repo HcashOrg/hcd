@@ -92,6 +92,19 @@ func TestChainSvrCmds(t *testing.T) {
 			unmarshalled: &hcjson.AddNodeCmd{Addr: "127.0.0.1", SubCmd: hcjson.ANRemove},
 		},
 		{
+			name: "debuglevel",
+			newCmd: func() (interface{}, error) {
+				return dcrjson.NewCmd("debuglevel", "trace")
+			},
+			staticCmd: func() interface{} {
+				return dcrjson.NewDebugLevelCmd("trace")
+			},
+			marshalled: `{"jsonrpc":"1.0","method":"debuglevel","params":["trace"],"id":1}`,
+			unmarshalled: &dcrjson.DebugLevelCmd{
+				LevelSpec: "trace",
+			},
+		},
+		{
 			name: "createrawtransaction",
 			newCmd: func() (interface{}, error) {
 				return hcjson.NewCmd("createrawtransaction", `[{"txid":"123","vout":1}]`,
