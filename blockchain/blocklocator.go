@@ -154,18 +154,18 @@ func (b *BlockChain) blockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
 	return locator
 }
 // fastLog2Floor calculates and returns floor(log2(x)) in a constant 5 steps.
-func fastLog2Floor(n uint32) uint8 {
-	rv := uint8(0)
-	exponent := uint8(16)
-	for i := 0; i < 5; i++ {
-		if n&log2FloorMasks[i] != 0 {
-			rv += exponent
-			n >>= exponent
-		}
-		exponent >>= 1
-	}
-	return rv
-}
+//func fastLog2Floor(n uint32) uint8 {
+//	rv := uint8(0)
+//	exponent := uint8(16)
+//	for i := 0; i < 5; i++ {
+//		if n&log2FloorMasks[i] != 0 {
+//			rv += exponent
+//			n >>= exponent
+//		}
+//		exponent >>= 1
+//	}
+//	return rv
+//}
 
 // BlockLocatorFromHash returns a block locator for the passed block hash.
 // See BlockLocator for details on the algorithm used to create a block locator.

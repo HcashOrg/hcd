@@ -209,12 +209,12 @@ type serverPeer struct {
 	blockProcessed chan struct{}
 }
 // Only respond with addresses once per connection
-if sp.addrsSent {
-	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
-	return
-}
+//if sp.addrsSent {
+//	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
+//	return
+//}
 
-sp.addrsSent = true
+//sp.addrsSent = true
 
 // newServerPeer returns a new serverPeer instance. The peer needs to be set by
 // the caller.

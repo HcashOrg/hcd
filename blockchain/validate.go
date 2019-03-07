@@ -141,7 +141,7 @@ func SequenceLockActive(lock *SequenceLock, blockHeight int64, medianTime time.T
 }
 
 // IsFinalizedTransaction determines whether or not a transaction is finalized.
-func IsFinalzedTransaction(tx *dcrutil.Tx, blockHeight int64, blockTime time.Time) bool {
+func IsFinalzedTransaction(tx *hcutil.Tx, blockHeight int64, blockTime time.Time) bool {
 	// Lock time of zero means the transaction is finalized.
 	msgTx := tx.MsgTx()
 	lockTime := msgTx.LockTime
