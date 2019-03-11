@@ -767,7 +767,7 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 		proxyaddress, _, err := net.SplitHostPort(p.cfg.Proxy)
 		// invalid proxy means poorly configured, be on the safe side.
 		if err != nil || p.na.IP.String() == proxyaddress {
-			theirNA = wire.NewNetAddressIPPort(net.IP([]byte{0, 0, 0, 0}), 0, 0)
+			theirNA = wire.NewNetAddressIPPort(net.IP([]byte{0, 0, 0, 0}), 0, theirNA.Services)
 		}
 	}
 
@@ -813,8 +813,9 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	//      actually supports
 	//    - Set the remote netaddress services to the what was advertised by
 	//      by the remote peer in its version message
-	msg.AddrYou.Services = wire.SFNodeNetwork
+	//msg.AddrYou.Services = wire.SFNodeNetwork
 
+	// Advertise local services.
 	// Advertise the services flag
 	msg.Services = p.cfg.Services
 
@@ -1036,6 +1037,8 @@ func (p *Peer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 	// Set the supported services for the peer to what the remote peer
 	// advertised.
 	p.services = msg.Services
+
+	p.na.Services=msg.Services
 	// Set the remote peer's user agent.
 	p.userAgent = msg.UserAgent
 	p.flagsMtx.Unlock()
@@ -2054,14 +2057,14 @@ func NewOutboundPeer(cfg *Config, addr string) (*Peer, error) {
 	}
 
 	if cfg.HostToNetAddress != nil {
-		na, err := cfg.HostToNetAddress(host, uint16(port), cfg.Services)
+		na, err := cfg.HostToNetAddress(host, uint16(port), 0)
 		if err != nil {
 			return nil, err
 		}
 		p.na = na
 	} else {
 		p.na = wire.NewNetAddressIPPort(net.ParseIP(host), uint16(port),
-			cfg.Services)
+			0)
 	}
 
 	return p, nil
