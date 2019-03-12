@@ -147,6 +147,16 @@ func (s *fakeChain) CalcSequenceLock(tx *hcutil.Tx, view *blockchain.UtxoViewpoi
 	}, nil
 }
 
+// BestHash returns the current best hash associated with the fake chain
+// instance.
+func (s *fakeChain) BestHash() *chainhash.Hash {
+	s.RLock()
+	hash := &s.currentHash
+	s.RUnlock()
+	return hash
+}
+
+
 // StandardVerifyFlags returns the standard verification script flags associated
 // with the fake chain instance.
 func (s *fakeChain) StandardVerifyFlags() (txscript.ScriptFlags, error) {
