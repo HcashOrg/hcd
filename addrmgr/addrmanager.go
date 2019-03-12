@@ -1102,3 +1102,25 @@ func New(dataDir string, lookupFunc func(string) ([]net.IP, error)) *AddrManager
 	am.reset()
 	return &am
 }
+
+
+// SetServices sets the services for the giiven address to the provided value.
+func (a *AddrManager) SetServices(addr *wire.NetAddress, services wire.ServiceFlag) {
+	a.mtx.Lock()
+	defer a.mtx.Unlock()
+
+	ka := a.find(addr)
+	if ka == nil {
+		return
+	}
+
+	// Update the services if needed.
+	if ka.na.Services != services {
+		// ka.na is immutable, so replace it.
+		ka.mtx.Lock()
+		naCopy := *ka.na
+		naCopy.Services = services
+		ka.na = &naCopy
+		ka.mtx.Unlock()
+	}
+}
