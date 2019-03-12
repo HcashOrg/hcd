@@ -850,9 +850,11 @@ func (a *AddrManager) Connected(addr *wire.NetAddress) {
 	now := time.Now()
 	if now.After(ka.na.Timestamp.Add(time.Minute * 20)) {
 		// ka.na is immutable, so replace it.
+		ka.mtx.Lock()
 		naCopy := *ka.na
 		naCopy.Timestamp = time.Now()
 		ka.na = &naCopy
+		ka.mtx.Unlock()
 	}
 }
 
