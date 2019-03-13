@@ -434,7 +434,8 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 		if !p.Inbound() {
 			// TODO(davec): Only do this if not doing the initial block
 			// download and the local address is routable.
-			if !cfg.DisableListen /* && isCurrent? */ {
+			//if !cfg.DisableListen /* && isCurrent? */ {
+			if !cfg.DisableListen && sp.server.blockManager.IsCurrent() {
 				// Get address that best matches.
 				lna := addrManager.GetBestLocalAddress(remoteAddr)
 				if addrmgr.IsRoutable(lna) {
