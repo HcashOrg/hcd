@@ -353,7 +353,8 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// it is updated regardless in the case a new minimum protocol version is
 	// enforced and the remote node has not upgraded yet.
 	addrManager := sp.server.addrManager
-	if !cfg.SimNet && !sp.Inbound() {
+	isInbound:=sp.Inbound()
+	if !cfg.SimNet && !isInbound {
 		addrManager.SetServices(sp.NA(), msg.Services)
 	}
 	// Ignore peers that have a protcol version that is too old.  The peer
