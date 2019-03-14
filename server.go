@@ -354,8 +354,9 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// enforced and the remote node has not upgraded yet.
 	addrManager := sp.server.addrManager
 	isInbound:=sp.Inbound()
+	remoteAddr := sp.NA()
 	if !cfg.SimNet && !isInbound {
-		addrManager.SetServices(sp.NA(), msg.Services)
+		addrManager.SetServices(remoteAddr, msg.Services)
 	}
 	// Ignore peers that have a protcol version that is too old.  The peer
 	// negotiation logic will disconnect it after this callback returns.
@@ -429,7 +430,6 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// to specified peers and actively avoids advertising and connecting to
 	// discovered peers.
 	if !cfg.SimNet {
-		remoteAddr := sp.NA()
 		//addrManager := sp.server.addrManager
 		// Outbound connections.
 		if !p.Inbound() {
