@@ -882,7 +882,7 @@ var SimNetParams = Params{
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
 
-	UpdateHeight:				 73000,
+	UpdateHeight:				 128 * 20,
 }
 
 var (
