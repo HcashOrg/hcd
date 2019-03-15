@@ -248,6 +248,7 @@ type Params struct {
 	// TargetTimePerBlock is the desired amount of time to generate each
 	// block.
 	TargetTimePerBlock time.Duration
+	TargetTimePerBlockV2 time.Duration
 
 	// WorkDiffAlpha is the stake difficulty EMA calculation alpha (smoothing)
 	// value. It is different from a normal EMA alpha. Closer to 1 --> smoother.
@@ -267,6 +268,7 @@ type Params struct {
 	// generation rate.  This value should correspond to the product of
 	// WorkDiffWindowSize and TimePerBlock above.
 	TargetTimespan time.Duration
+	TargetTimespanV2 time.Duration
 
 	// RetargetAdjustmentFactor is the adjustment factor used to limit
 	// the minimum and maximum amount of adjustment that can occur between
@@ -284,9 +286,11 @@ type Params struct {
 
 	// BaseSubsidy is the starting subsidy amount for mined blocks.
 	BaseSubsidy int64
+	BaseSubsidyV2 int64
 
 	// Subsidy reduction multiplier.
 	MulSubsidy int64
+	MulSubsidyV2 int64
 
 	// Subsidy reduction divisor.
 	DivSubsidy int64
@@ -449,6 +453,8 @@ type Params struct {
 	// as one method to discover peers.
 	OmniMoneyReceive string
 	OmniStartHeight uint64
+
+	UpdateHeight uint64
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -728,15 +734,19 @@ var SimNetParams = Params{
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
 	TargetTimePerBlock:       time.Second,
+	TargetTimePerBlockV2:     time.Millisecond * 500,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
 	TargetTimespan:           time.Second * 8, // TimePerBlock * WindowSize
+	TargetTimespanV2:         time.Millisecond * 500 * 8, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
 	BaseSubsidy:              640000000, // ~84m = Premine + Total subsidy
+	BaseSubsidyV2:            250000000, // ~84m = Premine + Total subsidy
 	MulSubsidy:               999,
+	MulSubsidyV2:             998,
 	DivSubsidy:               1000,
 	SubsidyReductionInterval: 128,
 	WorkRewardProportion:     6,
@@ -871,6 +881,8 @@ var SimNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
+
+	UpdateHeight:				 73000,
 }
 
 var (

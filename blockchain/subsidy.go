@@ -72,6 +72,9 @@ func (s *SubsidyCache) CalcBlockSubsidy(height int64) int64 {
 	if height == 1 {
 		return s.params.BlockOneSubsidy()
 	}
+	if uint64(height) >= s.params.UpdateHeight {
+		return s.CalcBlockSubsidyV2(height)
+	}
 
 	iteration := uint64(height / s.params.SubsidyReductionInterval)
 
@@ -101,6 +104,49 @@ func (s *SubsidyCache) CalcBlockSubsidy(height int64) int64 {
 		temp = float64(s.params.BaseSubsidy) * (1.0 - float64(iteration) * 59363.0 / 100000000.0) * math.Pow(q,float64(iteration))
 	}else{//after 99 years
 		temp = 100000000.0/float64(s.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iteration)-1681.0))
+	}
+	subsidy := int64(temp)
+	s.subsidyCacheLock.Lock()
+	s.subsidyCache[iteration] = subsidy
+	s.subsidyCacheLock.Unlock()
+	return subsidy
+}
+
+func (s *SubsidyCache) CalcBlockSubsidyV2(height int64) int64 {
+	// Block height 1 subsidy is 'special' and used to
+	// distribute initial tokens, if any.
+	if height == 1 {
+		return s.params.BlockOneSubsidy()
+	}
+
+	iteration := uint64(height / s.params.SubsidyReductionInterval)
+
+	if iteration == 0 {
+		return s.params.BaseSubsidy
+	}
+
+	// First, check the cache.
+	s.subsidyCacheLock.RLock()
+	cachedValue, existsInCache := s.subsidyCache[iteration]
+	s.subsidyCacheLock.RUnlock()
+	if existsInCache {
+		return cachedValue
+	}
+
+	// Is the previous one in the cache? If so, calculate
+	// the subsidy from the previous known value and store
+	// it in the database and the cache.
+	//A(n) = (a1+(n-1)d)q^(n-1)
+	//S(n) = a1(1-q^n)/(1-q) + d[q(1-q^(n-1))/((1-q)^2) - (n-1)q^n/(1-q)]
+	//A(n) = A(n-1) *q + d*q^(n-1)
+
+	var q float64 = float64(s.params.MulSubsidyV2)/float64(s.params.DivSubsidy)
+	var temp float64 = 0.0
+
+	if iteration < 4205 {
+		temp = float64(s.params.BaseSubsidyV2) * (1.0 + float64(iteration) * 0.00331) * math.Pow(q,float64(iteration))
+	}else{//after 99 years
+		temp = 100000000.0/float64(s.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iteration)-4204.0))
 	}
 	subsidy := int64(temp)
 	s.subsidyCacheLock.Lock()

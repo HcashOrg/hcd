@@ -3370,7 +3370,10 @@ func handleGetNetworkHashPS(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	// chain parameters.
 	blocksPerRetarget := int64(s.server.chainParams.TargetTimespan /
 		s.server.chainParams.TargetTimePerBlock)
-
+	if uint64(*c.Height) >= s.server.chainParams.UpdateHeight {
+		blocksPerRetarget = int64(s.server.chainParams.TargetTimespan /
+			s.server.chainParams.TargetTimePerBlockV2)
+	}
 	// Calculate the starting block height based on the passed number of
 	// blocks.  When the passed value is negative, use the last block the
 	// difficulty changed as the starting height.  Also make sure the

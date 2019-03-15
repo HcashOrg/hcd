@@ -256,15 +256,33 @@ func UniqueOpReturnScript() []byte {
 //A(n) = A(n-1) *q + d*q^(n-1)
 	
 func (g *Generator) calcFullSubsidy(blockHeight uint32) hcutil.Amount {
+	if uint64(blockHeight) >= g.params.UpdateHeight {
+		return g.calcFullSubsidyV2(blockHeight)
+	}
 	iterations := int64(blockHeight) / g.params.SubsidyReductionInterval
 	subsidy := g.params.BaseSubsidy
 	var q float64 = float64(g.params.MulSubsidy)/float64(g.params.DivSubsidy)
 	var temp float64 = 0.0
-	
+
 	if iterations < 1682 {
 		temp = float64(g.params.BaseSubsidy) * (1.0 - float64(iterations) * 59363.0 / 100000000.0) * math.Pow(q,float64(iterations))
 	}else{//after 99 years
 		temp = 100000000.0/float64(g.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iterations)-1681.0))
+	}
+	subsidy = int64(temp)
+	return hcutil.Amount(subsidy)
+}
+
+func (g *Generator) calcFullSubsidyV2(blockHeight uint32) hcutil.Amount {
+	iterations := int64(blockHeight) / g.params.SubsidyReductionInterval
+	subsidy := g.params.BaseSubsidyV2
+	var q float64 = float64(g.params.MulSubsidyV2)/float64(g.params.DivSubsidy)
+	var temp float64 = 0.0
+
+	if iterations < 4205 {
+		temp = float64(g.params.BaseSubsidyV2) * (1.0 + float64(iterations) * 0.00331) * math.Pow(q,float64(iterations))
+	}else{//after 99 years
+		temp = 100000000.0/float64(g.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iterations)-4204.0))
 	}
 	subsidy = int64(temp)
 	return hcutil.Amount(subsidy)
@@ -739,6 +757,9 @@ func (g *Generator) calcNextRequiredDifficulty() uint32 {
 	tempBig := big.NewInt(0)
 	weightedTimespanSum, weightSum := big.NewInt(0), big.NewInt(0)
 	targetTimespan := int64(g.params.TargetTimespan)
+	if uint64(g.tip.Header.Height) >=  g.params.UpdateHeight{
+		targetTimespan = int64(g.params.TargetTimespanV2)
+	}
 	targetTimespanBig := big.NewInt(targetTimespan)
 	numWindows := g.params.WorkDiffWindows
 	weightAlpha := g.params.WorkDiffAlpha
@@ -1777,6 +1798,9 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 			ts = g.tip.Header.Timestamp.Add(time.Second)
 		} else {
 			addDuration := g.params.TargetTimespan * 7 / 8
+			if uint64(g.tip.Header.Height) >=  g.params.UpdateHeight{
+				addDuration = g.params.TargetTimespanV2 * 7 / 8
+			}
 			ts = g.tip.Header.Timestamp.Add(addDuration)
 		}
 	}

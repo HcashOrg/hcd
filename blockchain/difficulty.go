@@ -176,6 +176,10 @@ func (b *BlockChain) calcEasiestDifficulty(bits uint32,
 	adjustmentFactor := big.NewInt(b.chainParams.RetargetAdjustmentFactor)
 	maxRetargetTimespan := int64(b.chainParams.TargetTimespan) *
 		b.chainParams.RetargetAdjustmentFactor
+	if uint64(b.bestNode.height) >= b.chainParams.UpdateHeight{
+		maxRetargetTimespan = int64(b.chainParams.TargetTimespanV2) *
+			b.chainParams.RetargetAdjustmentFactor
+	}
 
 	// The test network rules allow minimum difficulty blocks once too much
 	// time has elapsed without mining a block.
@@ -273,7 +277,11 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode,
 			if newBlockTime.After(allowMinTime) {
 				timePassed := newBlockTime.Sub(curNode.header.Timestamp)
 				timePassed -= b.chainParams.MinDiffReductionTime
+
 				shifts := uint((timePassed / b.chainParams.TargetTimePerBlock) + 1)
+				if uint64(curNode.height) >= b.chainParams.UpdateHeight {
+					shifts = uint((timePassed / b.chainParams.TargetTimePerBlockV2) + 1)
+				}
 
 				// Scale the difficulty with time passed.
 				oldTarget := CompactToBig(curNode.header.Bits)
@@ -345,6 +353,9 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode,
 			timeDifBig := big.NewInt(timeDifference)
 			timeDifBig.Lsh(timeDifBig, 32) // Add padding
 			targetTemp := big.NewInt(int64(b.chainParams.TargetTimespan))
+			if uint64(b.bestNode.height) >= b.chainParams.UpdateHeight {
+				targetTemp = big.NewInt(int64(b.chainParams.TargetTimespanV2))
+			}
 
 			windowAdjusted := targetTemp.Div(timeDifBig, targetTemp)
 
@@ -501,7 +512,9 @@ func estimateSupply(params *chaincfg.Params, height int64) int64 {
 	if height <= 0 {
 		return 0
 	}
-
+	if uint64(height) >= params.UpdateHeight {
+		return estimateSupplyV2(params, height)
+	}
 	// Estimate the supply by calculating the full block subsidy for each
 	// reduction interval and multiplying it the number of blocks in the
 	// interval then adding the subsidy produced by number of blocks in the
@@ -525,10 +538,10 @@ func estimateSupply(params *chaincfg.Params, height int64) int64 {
 		temp1 := (1 * (1-math.Pow(q,n)))/(1-q)
 		temp2 := (1-math.Pow(q,n-1))/(1-q)/(1-q)*d*q
 		temp3 := (n-1)*math.Pow(q,n)/(1-q)*d
-		
+
 		sum := float64(subsidy * params.SubsidyReductionInterval) * (temp1 + temp2 - temp3)
 		supply += int64(sum);
-		
+
 		temp = float64(params.BaseSubsidy) * (1.0 - float64(n) * 59363.0 / 100000000.0) * math.Pow(q,float64(n))
 		subsidy = int64(temp)
 
@@ -549,6 +562,61 @@ func estimateSupply(params *chaincfg.Params, height int64) int64 {
 
 	return supply
 }
+
+
+func estimateSupplyV2(params *chaincfg.Params, height int64) int64 {
+	if height <= 0 {
+		return 0
+	}
+
+	// Estimate the supply by calculating the full block subsidy for each
+	// reduction interval and multiplying it the number of blocks in the
+	// interval then adding the subsidy produced by number of blocks in the
+	// current interval.
+	//A(n) = (a1+(n-1)d)q^(n-1)
+	//S(n) = a1(1-q^n)/(1-q) + d[q(1-q^(n-1))/((1-q)^2) - (n-1)q^n/(1-q)]
+	//A(n) = A(n-1) *q + d*q^(n-1)
+
+	var temp float64 = 0.0
+	var q float64 = float64(params.MulSubsidyV2)/float64(params.DivSubsidy)
+	var d float64 = 0.00331
+	supply := params.BlockOneSubsidy()
+	reductions := int64(height) / params.SubsidyReductionInterval
+	subsidy := params.BaseSubsidyV2
+
+	if reductions > 0 {
+		n:= float64(reductions)
+		if reductions >= 4204 {
+			n = 4204.0
+		}
+		temp1 := (1 * (1-math.Pow(q,n)))/(1-q)
+		temp2 := (1-math.Pow(q,n-1))/(1-q)/(1-q)*d*q
+		temp3 := (n-1)*math.Pow(q,n)/(1-q)*d
+
+		sum := float64(subsidy * params.SubsidyReductionInterval) * (temp1 + temp2 - temp3)
+		supply += int64(sum);
+
+		temp = float64(params.BaseSubsidyV2) * (1.0 + float64(n) * 0.00331) * math.Pow(q,float64(n))
+		subsidy = int64(temp)
+
+		if reductions > 4204{
+			n := reductions - 4204
+			sum:= 0.1 *(1-math.Pow(0.1, float64(n)))/ (1-q) * float64(params.BaseSubsidyV2)
+			supply += int64(sum)
+			A := float64(params.BaseSubsidyV2) * math.Pow(0.1, float64(n))
+			subsidy = int64(A)
+		}
+	}
+	supply += (1 + int64(height)%params.SubsidyReductionInterval) * subsidy
+
+	// Blocks 0 and 1 have special subsidy amounts that have already been
+	// added above, so remove what their subsidies would have normally been
+	// which were also added above.
+	supply -= params.BaseSubsidyV2 * 2
+
+	return supply
+}
+
 
 // sumPurchasedTickets returns the sum of the number of tickets purchased in the
 // most recent specified number of blocks from the point of view of the passed
