@@ -576,9 +576,9 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "12008",
 	DNSSeeds: []string{
-		"testnet1.h.cash",
-		"testnet2.h.cash",
-		"testnet3.h.cash",
+//		"testnet1.h.cash",
+//		"testnet2.h.cash",
+//		"testnet3.h.cash",
 	},
 
 	// Chain parameters
@@ -591,16 +591,20 @@ var TestNet2Params = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1310720},
 	MaxTxSize:                1000000,
-	TargetTimePerBlock:       time.Minute,
+	TargetTimePerBlock:       time.Second * 8,
+	TargetTimePerBlockV2:     time.Second * 4,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 8 * 144, // TimePerBlock * WindowSize
+	TargetTimespanV2:         time.Second * 4 * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
 	BaseSubsidy:              640000000, // ~84m = Premine + Total subsidy
+	BaseSubsidyV2:            250000000, // ~84m = Premine + Total subsidy
 	MulSubsidy:               999,
+	MulSubsidyV2:             998,
 	DivSubsidy:               1000,
 	SubsidyReductionInterval: 2048,
 	WorkRewardProportion:     6,
@@ -708,6 +712,7 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
+	UpdateHeight:				100000000,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
