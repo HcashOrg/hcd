@@ -298,7 +298,7 @@ const FileContents = `[Application Options]
 ; generate=false
 
 ; Add addresses to pay mined blocks to for CPU mining and the block templates
-; generated for the getwork RPC as desired.  One address per line.
+; generated for the getwork RPC service as desired.  One address per line.
 ; miningaddr=youraddress
 ; miningaddr=youraddress2
 ; miningaddr=youraddress3
