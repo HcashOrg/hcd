@@ -712,7 +712,7 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
-	UpdateHeight:				100000000,
+	UpdateHeight:				2048 * 1,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
