@@ -31,7 +31,8 @@ var (
 
 	// testNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the test network.  It is the value 2^232 - 1.
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
+	//testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
 
 	// simNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
@@ -585,7 +586,8 @@ var TestNet2Params = Params{
 	GenesisBlock:             &testNet2GenesisBlock,
 	GenesisHash:              &testNet2GenesisHash,
 	PowLimit:                 testNetPowLimit,
-	PowLimitBits:             0x1e00ffff,
+	//PowLimitBits:             0x1e00ffff,
+	PowLimitBits:             0x207fffff,
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,

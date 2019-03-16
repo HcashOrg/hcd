@@ -3370,7 +3370,7 @@ func handleGetNetworkHashPS(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	// chain parameters.
 	blocksPerRetarget := int64(s.server.chainParams.TargetTimespan /
 		s.server.chainParams.TargetTimePerBlock)
-	if uint64(*c.Height) >= s.server.chainParams.UpdateHeight {
+	if uint64(best.Height) >= s.server.chainParams.UpdateHeight {
 		blocksPerRetarget = int64(s.server.chainParams.TargetTimespan /
 			s.server.chainParams.TargetTimePerBlockV2)
 	}
