@@ -1083,6 +1083,7 @@ func (sp *serverPeer) OnAddr(p *peer.Peer, msg *wire.MsgAddr) {
 		return
 	}
 
+	now := time.Now()
 	for _, na := range msg.AddrList {
 		// Don't add more address if we're disconnecting.
 		if !p.Connected() {
@@ -1092,7 +1093,7 @@ func (sp *serverPeer) OnAddr(p *peer.Peer, msg *wire.MsgAddr) {
 		// Set the timestamp to 5 days ago if it's more than 24 hours
 		// in the future so this address is one of the first to be
 		// removed when space is needed.
-		now := time.Now()
+		
 		if na.Timestamp.After(now.Add(time.Minute * 10)) {
 			na.Timestamp = now.Add(-1 * time.Hour * 24 * 5)
 		}
