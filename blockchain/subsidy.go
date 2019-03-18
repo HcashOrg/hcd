@@ -121,6 +121,7 @@ func (s *SubsidyCache) CalcBlockSubsidyV2(height int64) int64 {
 
 	iteration := uint64(height / s.params.SubsidyReductionInterval)
 
+	iteration += s.params.UpdateHeightOffsetV2
 	if iteration == 0 {
 		return s.params.BaseSubsidy
 	}

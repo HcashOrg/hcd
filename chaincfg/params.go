@@ -456,6 +456,7 @@ type Params struct {
 	OmniStartHeight uint64
 
 	UpdateHeightV2 uint64
+	UpdateHeightOffsetV2 uint64
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -572,6 +573,7 @@ var MainNetParams = Params{
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
 	OmniStartHeight:			 46000,
 	UpdateHeightV2:				12288 * 11, //equal V2 27
+	UpdateHeightOffsetV2:		16, //(V2)27 - (v1)11
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -720,7 +722,10 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
-	UpdateHeightV2:				2048 * 1,
+	//UpdateHeightV2:				2048 * 143, // 292864
+	UpdateHeightV2:				2048 * 136, // 278528
+
+	UpdateHeightOffsetV2:		151,// (V2)287 - (V1)136
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
@@ -896,6 +901,7 @@ var SimNetParams = Params{
 	OmniStartHeight:			 46000,
 
 	UpdateHeightV2:				 128 * 20,
+	UpdateHeightOffsetV2:		 0,
 }
 
 var (

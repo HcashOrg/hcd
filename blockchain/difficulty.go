@@ -582,6 +582,8 @@ func estimateSupplyV2(params *chaincfg.Params, height int64) int64 {
 	var d float64 = 0.00331
 	supply := params.BlockOneSubsidy()
 	reductions := int64(height) / params.SubsidyReductionInterval
+	reductions += int64(params.UpdateHeightOffsetV2)
+
 	subsidy := params.BaseSubsidyV2
 
 	if reductions > 0 {

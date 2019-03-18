@@ -279,6 +279,8 @@ func (g *Generator) calcFullSubsidyV2(blockHeight uint32) hcutil.Amount {
 	var q float64 = float64(g.params.MulSubsidyV2)/float64(g.params.DivSubsidy)
 	var temp float64 = 0.0
 
+	iterations += int64(g.params.UpdateHeightOffsetV2)
+
 	if iterations < 4205 {
 		temp = float64(g.params.BaseSubsidyV2) * (1.0 + float64(iterations) * 0.00331) * math.Pow(q,float64(iterations))
 	}else{//after 99 years
