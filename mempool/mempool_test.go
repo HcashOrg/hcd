@@ -92,6 +92,15 @@ func (s *fakeChain) SetBestHash(hash *chainhash.Hash) {
 	s.currentHash = *hash
 	s.Unlock()
 }
+// NextStakeDifficulty returns the next stake difficulty associated with the
+// fake chain instance.
+func (s *fakeChain) NextStakeDifficulty() (int64, error) {
+    s.RLock()
+    nextStakeDiff := s.nextStakeDiff
+    s.RUnlock()
+    return nextStakeDiff, nil
+}
+
 
 // BestHeight returns the current height associated with the fake chain
 // instance.
