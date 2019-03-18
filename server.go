@@ -384,7 +384,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	oldVersion := int32(1000000*oldAppMajor + 10000*oldAppMinor + 100*oldAppPatch)
 	currVersion := int32(1000000*appMajor + 10000*appMinor + 100*appPatch)
 
-	if uint64(p.LastBlock()) < sp.server.chainParams.UpdateHeight{
+	if uint64(p.LastBlock()) < sp.server.chainParams.UpdateHeightV2{
 		if oldVersion < currVersion && oldVersion != 2000300{
 			peerLog.Warnf("too old version peer %s ", sp)
 			sp.server.BanPeer(sp)

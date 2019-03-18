@@ -455,7 +455,7 @@ type Params struct {
 	OmniMoneyReceive string
 	OmniStartHeight uint64
 
-	UpdateHeight uint64
+	UpdateHeightV2 uint64
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -482,15 +482,19 @@ var MainNetParams = Params{
 	MaximumBlockSizes:        []int{1000000},
 	MaxTxSize:                1000000,
 	TargetTimePerBlock:       time.Second * 150,
+	TargetTimePerBlockV2:     time.Second * 60,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       288,
 	WorkDiffWindows:          20,
 	TargetTimespan:           time.Second * 150 * 288, // TimePerBlock * WindowSize
+	TargetTimespanV2:         time.Second * 60 * 288, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
 	BaseSubsidy:              640000000, // ~84m = Premine + Total subsidy
+	BaseSubsidyV2:            250000000, // ~84m = Premine + Total subsidy
 	MulSubsidy:               999,
+	MulSubsidyV2:             998,
 	DivSubsidy:               1000,
 	SubsidyReductionInterval: 12288,
 	WorkRewardProportion:     6,
@@ -567,6 +571,7 @@ var MainNetParams = Params{
 	BlockOneLedger:              BlockOneLedgerMainNet,
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
 	OmniStartHeight:			 46000,
+	UpdateHeightV2:				12288 * 11, //equal V2 27
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -715,7 +720,7 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
-	UpdateHeight:				2048 * 1,
+	UpdateHeightV2:				2048 * 1,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
@@ -890,7 +895,7 @@ var SimNetParams = Params{
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
 
-	UpdateHeight:				 128 * 20,
+	UpdateHeightV2:				 128 * 20,
 }
 
 var (

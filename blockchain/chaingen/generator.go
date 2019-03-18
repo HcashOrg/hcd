@@ -256,7 +256,7 @@ func UniqueOpReturnScript() []byte {
 //A(n) = A(n-1) *q + d*q^(n-1)
 	
 func (g *Generator) calcFullSubsidy(blockHeight uint32) hcutil.Amount {
-	if uint64(blockHeight) >= g.params.UpdateHeight {
+	if uint64(blockHeight) >= g.params.UpdateHeightV2 {
 		return g.calcFullSubsidyV2(blockHeight)
 	}
 	iterations := int64(blockHeight) / g.params.SubsidyReductionInterval
@@ -757,7 +757,7 @@ func (g *Generator) calcNextRequiredDifficulty() uint32 {
 	tempBig := big.NewInt(0)
 	weightedTimespanSum, weightSum := big.NewInt(0), big.NewInt(0)
 	targetTimespan := int64(g.params.TargetTimespan)
-	if uint64(g.tip.Header.Height) >=  g.params.UpdateHeight{
+	if uint64(g.tip.Header.Height) >=  g.params.UpdateHeightV2{
 		targetTimespan = int64(g.params.TargetTimespanV2)
 	}
 	targetTimespanBig := big.NewInt(targetTimespan)
@@ -1798,7 +1798,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 			ts = g.tip.Header.Timestamp.Add(time.Second)
 		} else {
 			addDuration := g.params.TargetTimespan * 7 / 8
-			if uint64(g.tip.Header.Height) >=  g.params.UpdateHeight{
+			if uint64(g.tip.Header.Height) >=  g.params.UpdateHeightV2{
 				addDuration = g.params.TargetTimespanV2 * 7 / 8
 			}
 			ts = g.tip.Header.Timestamp.Add(addDuration)

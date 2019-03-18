@@ -176,7 +176,7 @@ func (b *BlockChain) calcEasiestDifficulty(bits uint32,
 	adjustmentFactor := big.NewInt(b.chainParams.RetargetAdjustmentFactor)
 	maxRetargetTimespan := int64(b.chainParams.TargetTimespan) *
 		b.chainParams.RetargetAdjustmentFactor
-	if uint64(b.bestNode.height) >= b.chainParams.UpdateHeight{
+	if uint64(b.bestNode.height) >= b.chainParams.UpdateHeightV2{
 		maxRetargetTimespan = int64(b.chainParams.TargetTimespanV2) *
 			b.chainParams.RetargetAdjustmentFactor
 	}
@@ -279,7 +279,7 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode,
 				timePassed -= b.chainParams.MinDiffReductionTime
 
 				shifts := uint((timePassed / b.chainParams.TargetTimePerBlock) + 1)
-				if uint64(curNode.height) >= b.chainParams.UpdateHeight {
+				if uint64(curNode.height) >= b.chainParams.UpdateHeightV2 {
 					shifts = uint((timePassed / b.chainParams.TargetTimePerBlockV2) + 1)
 				}
 
@@ -353,7 +353,7 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode,
 			timeDifBig := big.NewInt(timeDifference)
 			timeDifBig.Lsh(timeDifBig, 32) // Add padding
 			targetTemp := big.NewInt(int64(b.chainParams.TargetTimespan))
-			if uint64(b.bestNode.height) >= b.chainParams.UpdateHeight {
+			if uint64(b.bestNode.height) >= b.chainParams.UpdateHeightV2 {
 				targetTemp = big.NewInt(int64(b.chainParams.TargetTimespanV2))
 			}
 
@@ -512,7 +512,7 @@ func estimateSupply(params *chaincfg.Params, height int64) int64 {
 	if height <= 0 {
 		return 0
 	}
-	if uint64(height) >= params.UpdateHeight {
+	if uint64(height) >= params.UpdateHeightV2 {
 		return estimateSupplyV2(params, height)
 	}
 	// Estimate the supply by calculating the full block subsidy for each

@@ -72,7 +72,7 @@ func (s *SubsidyCache) CalcBlockSubsidy(height int64) int64 {
 	if height == 1 {
 		return s.params.BlockOneSubsidy()
 	}
-	if uint64(height) >= s.params.UpdateHeight {
+	if uint64(height) >= s.params.UpdateHeightV2 {
 		return s.CalcBlockSubsidyV2(height)
 	}
 
