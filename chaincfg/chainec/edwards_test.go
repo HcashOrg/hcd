@@ -83,6 +83,12 @@ func TestPrivKeysEdwards(t *testing.T) {
 			t.Errorf("%s could not verify: %v", test.name, err)
 			continue
 		}
+		// add serilalizeKey test
+		serializedKey := priv.Serialize()
+		if !bytes.Equal(serializedKey, test.key) {
+		    t.Errorf("%s unexpected serialized bytes - got: %x, "+
+			"want: %x", test.name, serializedKey, test.key)
+		}
 
 	}
 }
