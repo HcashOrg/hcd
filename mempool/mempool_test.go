@@ -118,6 +118,16 @@ func (s *fakeChain) SetHeight(height int64) {
 	s.Unlock()
 }
 
+// BestHash returns the current best hash associated with the fake chain
+// instance.
+func (s *fakeChain) BestHash() *chainhash.Hash {
+    s.RLock()
+    hash := &s.currentHash
+    s.RUnlock()
+    return hash
+}
+
+
 // PastMedianTime returns the current median time associated with the fake chain
 // instance.
 func (s *fakeChain) PastMedianTime() time.Time {
