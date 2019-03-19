@@ -32,7 +32,7 @@ var (
 	// testNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the test network.  It is the value 2^232 - 1.
 	//testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
 
 	// simNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
@@ -584,29 +584,28 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "12008",
 	DNSSeeds: []string{
-//		"testnet1.h.cash",
-//		"testnet2.h.cash",
-//		"testnet3.h.cash",
+		"testnet1.h.cash",
+		"testnet2.h.cash",
+		"testnet3.h.cash",
 	},
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
 	GenesisHash:              &testNet2GenesisHash,
 	PowLimit:                 testNetPowLimit,
-	//PowLimitBits:             0x1e00ffff,
-	PowLimitBits:             0x207fffff,
+	PowLimitBits:             0x1e00ffff,
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1310720},
 	MaxTxSize:                1000000,
-	TargetTimePerBlock:       time.Second * 8,
-	TargetTimePerBlockV2:     time.Second * 4,
+	TargetTimePerBlock:       time.Minute,
+	TargetTimePerBlockV2:     time.Second * 30,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Second * 8 * 144, // TimePerBlock * WindowSize
-	TargetTimespanV2:         time.Second * 4 * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Minute * 144, // TimePerBlock * WindowSize
+	TargetTimespanV2:         time.Second * 30 * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -695,8 +694,7 @@ var TestNet2Params = Params{
 	HDCoinType: uint32(171),
 
 	// Hcd PoS parameters
-	//MinimumStakeDiff:        20000000, // 0.2 Coin
-	MinimumStakeDiff:        20000, // 0.2 Coin
+	MinimumStakeDiff:        20000000, // 0.2 Coin
 	TicketPoolSize:          1024,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
