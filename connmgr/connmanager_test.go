@@ -50,6 +50,12 @@ func (c mockConn) SetDeadline(t time.Time) error      { return nil }
 func (c mockConn) SetReadDeadline(t time.Time) error  { return nil }
 func (c mockConn) SetWriteDeadline(t time.Time) error { return nil }
 
+// LocalAddr returns the local address for the connection.
+func (c mockConn) LocalAddr() net.Addr {
+    return &mockAddr{c.lnet, c.laddr}
+}
+
+
 // mockDialer mocks the net.Dial interface by returning a mock connection to
 // the given address.
 func mockDialer(addr net.Addr) (net.Conn, error) {
