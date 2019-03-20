@@ -25,9 +25,9 @@
 #   unused-packages = true
 
 
-#[[constraint]]
-#  branch = "master"
-#  name = "github.com/HcashOrg/bitset"
+[[constraint]]
+  branch = "master"
+  name = "github.com/HcashOrg/bitset"
 
 [[constraint]]
   branch = "master"
