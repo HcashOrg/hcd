@@ -30,8 +30,9 @@ what conditions must be met in order to spend HCs.
 
 Errors
 
-Errors returned by this package are of the form txscript.ErrStackX where X
-indicates the specific error.  See Variables in the package documentation for a
-full list.
+Errors returned by this package are of type txscript.Error.  This allows the
+caller to programmatically determine the specific error by examining the
+ErrorCode field of the type asserted txscript.Error while still providing rich
+error messages with contextual information.
 */
 package txscript
