@@ -66,6 +66,11 @@ func mockDialer(addr net.Addr) (net.Conn, error) {
 	return c, nil
 }
 
+// RemoteAddr returns the remote address for the connection.
+func (c mockConn) RemoteAddr() net.Addr {
+    return &mockAddr{c.rAddr.Network(), c.rAddr.String()}
+}
+
 // TestNewConfig tests that new ConnManager config is validated as expected.
 func TestNewConfig(t *testing.T) {
 	_, err := New(&Config{})
