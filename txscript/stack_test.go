@@ -157,14 +157,8 @@ func TestStack(t *testing.T) {
 			"popInt 0",
 			[][]byte{{0x0}},
 			func(s *stack) error {
-				v, err := s.PopInt(mathOpCodeMaxScriptNumLen)
-				if err != nil {
-					return err
-				}
-				if v != 0 {
-					return errors.New("0 != 0 on PopInt")
-				}
-				return nil
+				_, err := s.PopInt(mathOpCodeMaxScriptNumLen)
+				return err
 			},
 			nil,
 			nil,
