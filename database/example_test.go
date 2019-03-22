@@ -20,13 +20,6 @@ import (
 
 // This example demonstrates creating a new database.
 func ExampleCreate() {
-	// This example assumes the ffldb driver is imported.
-	//
-	// import (
-	// 	"github.com/HcashOrg/hcd/database2"
-	// 	_ "github.com/HcashOrg/hcd/database/ffldb"
-	// )
-
 	// Create a database and schedule it to be closed and removed on exit.
 	// Typically you wouldn't want to remove the database right away like
 	// this, nor put it in the temp directory, but it's done here to ensure
