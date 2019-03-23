@@ -721,9 +721,9 @@ var TestNet2Params = Params{
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
 	//UpdateHeightV2:				2048 * 143, // 292864
-	UpdateHeightV2:				2048 * 137, // 278528
+	UpdateHeightV2:				2048 * 139, // 278528
 
-	UpdateHeightOffsetV2:		153,// (V2)290 - (V1)137
+	UpdateHeightOffsetV2:		154,// (V2)293 - (V1)139
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
