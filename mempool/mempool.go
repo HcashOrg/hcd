@@ -322,7 +322,6 @@ func (mp *TxPool) removeOrphan(txHash *chainhash.Hash) {
 	if !exists {
 		return
 	}
-	log.Tracef("Removing orphan transaction %v", txHash)
 	// Remove the reference from the previous orphan index.
 	for _, txIn := range tx.MsgTx().TxIn {
 		originTxHash := txIn.PreviousOutPoint.Hash
