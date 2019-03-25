@@ -135,6 +135,8 @@ func (vm *Engine) isBranchExecuting() bool {
 func (vm *Engine) executeOpcode(pop *parsedOpcode) error {
 	// Disabled opcodes are fail on program counter.
 	if pop.isDisabled() {
+		log.Tracef("attempt to execute disabled opcode %s",
+			pop.opcode.name)
 		return ErrStackOpDisabled
 	}
 
