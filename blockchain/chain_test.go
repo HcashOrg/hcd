@@ -47,7 +47,7 @@ func mustParseHash(s string) *chainhash.Hash {
 	}
 	return hash
 }
-
+// rejected expects the block to be rejected with the provided error
 // TestBlockchainFunction tests the various blockchain API to ensure proper
 // functionality.
 func TestBlockchainFunctions(t *testing.T) {
@@ -87,8 +87,8 @@ func TestBlockchainFunctions(t *testing.T) {
 	if err := bcDecoder.Decode(&blockChain); err != nil {
 		t.Errorf("error decoding test blockchain: %v", err.Error())
 	}
-	// Insert blocks 1 to 168 and perform various tests.
-	 for i := 1; i <= 168; i++ {
+	// Insert blocks 1 to 180 and perform various tests.
+	 for i := 1; i <= 180; i++ {
 		bl, err := hcutil.NewBlockFromBytes(blockChain[int64(i)])
 		if err != nil {
 		    t.Errorf("NewBlockFromBytes error: %v", err.Error())
