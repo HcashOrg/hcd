@@ -539,8 +539,6 @@ func (mp *TxPool) HaveTransactions(hashes []*chainhash.Hash) []bool {
 //
 // This function MUST be called with the mempool lock held (for writes).
 func (mp *TxPool) removeTransaction(tx *hcutil.Tx, removeRedeemers bool) {
-	log.Tracef("Removing transaction %v", tx.Hash())
-
 	msgTx := tx.MsgTx()
 	txHash := tx.Hash()
 	var txType stake.TxType
