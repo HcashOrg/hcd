@@ -788,6 +788,7 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		// server is currently on.
 		switch addr.(type) {
 		case *hcutil.AddressPubKeyHash:
+		case *hcutil.AddressScriptHash:
 		default:
 			return nil, rpcAddressKeyError("Invalid address type: "+
 				"%T", addr)
