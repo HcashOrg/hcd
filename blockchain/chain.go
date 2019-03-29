@@ -1811,7 +1811,7 @@ func (b *BlockChain) reorganizeChain(detachNodes, attachNodes *list.List,
 	return nil
 }
 
-// forceReorganizationToBlock forces a reorganization of the block chain to the
+// forceHeadReorganization forces a reorganization of the block chain to the
 // block hash requested, so long as it matches up with the current organization
 // of the best chain.
 func (b *BlockChain) forceHeadReorganization(formerBest chainhash.Hash, newBest chainhash.Hash) error {
@@ -1902,6 +1902,11 @@ func (b *BlockChain) forceHeadReorganization(formerBest chainhash.Hash, newBest 
 }
 
 // ForceHeadReorganization is the exported version of forceHeadReorganization.
+// ForceHeadReorganization forces a reorganization of the block chain to the
+// block hash requested, so long as it matches up with the current organization
+// of the best chain.
+//
+// This function is safe for concurrent access.
 func (b *BlockChain) ForceHeadReorganization(formerBest chainhash.Hash, newBest chainhash.Hash) error {
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
