@@ -54,6 +54,20 @@ func TestChainSvrWsCmds(t *testing.T) {
 			unmarshalled: &hcjson.NotifyWinningTicketsCmd{},
 		},
 		{
+			name: "estimatesmartfee",
+			newCmd: func() (interface{}, error) {
+				return NewCmd("estimatesmartfee", 6)
+			},
+			staticCmd: func() interface{} {
+				return NewEstimateSmartFeeCmd(6, nil)
+			},
+			marshalled: `{"jsonrpc":"1.0","method":"estimatesmartfee","params":[6],"id":1}`,
+			unmarshalled: &EstimateSmartFeeCmd{
+				Confirmations: 6,
+				Mode:          EstimateSmartFeeModeAddr(EstimateSmartFeeConservative),
+			},
+		},
+		{
 			name: "notifyspentandmissedtickets",
 			newCmd: func() (interface{}, error) {
 				return hcjson.NewCmd("notifyspentandmissedtickets")
