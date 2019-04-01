@@ -1863,9 +1863,6 @@ mempoolLoop:
 	}
 
 	coinbaseTx.SetTree(wire.TxTreeRegular) // Coinbase only in regular tx tree
-	if err != nil {
-		return nil, err
-	}
 	numCoinbaseSigOps := int64(blockchain.CountSigOps(coinbaseTx, true, false))
 	blockSize += uint32(coinbaseTx.MsgTx().SerializeSize())
 	txFeesMap[*coinbaseTx.Hash()] = 0
