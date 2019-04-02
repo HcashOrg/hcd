@@ -4315,10 +4315,8 @@ func handleGetWorkSubmission(s *rpcServer, hexData string) (interface{}, error) 
 	}
 
 	// Reconstruct the block using the submitted header stored block info.
-	// A temporary block is used because we will be mutating the contents
-	// for the construction of the correct regular merkle tree. You must
-	// also deep copy the block itself because it could be accessed outside
-	// of the GW workstate mutexes once it gets submitted to the
+	// The MsgBlock is copied here because it could be accessed
+	// outside of the GW workstate mutexes once it gets submitted to the
 	// blockchain.
 	tempBlock := hcutil.NewBlockDeepCopy(blockInfo.msgBlock)
 	msgBlock := tempBlock.MsgBlock()
