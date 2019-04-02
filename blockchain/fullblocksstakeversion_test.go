@@ -21,6 +21,7 @@ func TestStakeVersion(t *testing.T) {
 	// Create a test generator instance initialized with the genesis block
 	// as the tip as well as some cached payment scripts to be used
 	// throughout the tests.
+	// Create a test harness initialized with the genesis block as the tip.
 	params := &chaincfg.SimNetParams
 	g, err := chaingen.MakeGenerator(params)
 	if err != nil {
