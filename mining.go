@@ -1207,7 +1207,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 
 	// Calculate the stake enabled height.
 	stakeValidationHeight := server.chainParams.StakeValidationHeight
-
+	// Have SSGen should be present after this height.
 	if nextBlockHeight >= stakeValidationHeight {
 		// Obtain the entire generation of blocks stemming from this parent.
 		children, err := blockManager.TipGeneration()
