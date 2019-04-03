@@ -460,7 +460,7 @@ func deserializeSpendJournalEntry(serialized []byte, txns []*wire.MsgTx) ([]spen
 		// the associated stxo.
 		for txInIdx := len(tx.TxIn) - 1; txInIdx > -1; txInIdx-- {
 			// Skip stakebase.
-			if txInIdx == 0 && txType == stake.TxTypeSSGen {
+			if txType == stake.TxTypeSSGen && txInIdx == 0  {
 				continue
 			}
 
