@@ -259,7 +259,7 @@ func NewAddressPubKeyHash(pkHash []byte, net *chaincfg.Params,
 // newAddressPubKeyHash is the internal API to create a pubkey hash address
 // with a known leading identifier byte for a network, rather than looking
 // it up through its parameters.  This is useful when creating a new address
-// structure from a string encoding where the identifer byte is already
+// structure from a string encoding where the identifier byte is already
 // known.
 func newAddressPubKeyHash(pkHash []byte, netID [2]byte) (*AddressPubKeyHash,
 	error) {
