@@ -105,6 +105,19 @@ func TestChainSvrCmds(t *testing.T) {
 			},
 		},
 		{
+			name: "estimatefee",
+			newCmd: func() (interface{}, error) {
+				return NewCmd("estimatefee", 6)
+			},
+			staticCmd: func() interface{} {
+				return NewEstimateFeeCmd(6)
+			},
+			marshalled: `{"jsonrpc":"1.0","method":"estimatefee","params":[6],"id":1}`,
+			unmarshalled: &EstimateFeeCmd{
+				NumBlocks: 6,
+			},
+		},
+		{
 			name: "createrawtransaction",
 			newCmd: func() (interface{}, error) {
 				return hcjson.NewCmd("createrawtransaction", `[{"txid":"123","vout":1}]`,
