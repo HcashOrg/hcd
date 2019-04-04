@@ -558,6 +558,26 @@ func NewOmniListtransactionsCmd(txid *string, count *int64, skip *int64, startbl
 	}
 }
 
+// OmniListwallettransactions // List wallet transactions, optionally filtered by block boundaries.
+// example: $ omnicore-cli "omni_listwallettransactions"
+type OmniListwallettransactionsCmd struct {
+	Addrlist   []string `json:"Addrlist" desc:"address filter (default: "*")"`
+	Count      *int64  `json:"count" desc:"show at most n transactions (default: 10)"`
+	Skip       *int64  `json:"skip" desc:"skip the first n transactions (default: 0)"`
+	Startblock *int64  `json:"startblock" desc:"first block to begin the search (default: 0)"`
+	Endblock   *int64  `json:"endblock" desc:"last block to include in the search (default: 999999999)"`
+}
+
+func NewOmniListwallettransactionsCmd(addrlist []string, count *int64, skip *int64, startblock *int64, endblock *int64) *OmniListwallettransactionsCmd {
+	return &OmniListwallettransactionsCmd{
+		Addrlist:   addrlist,
+		Count:      count,
+		Skip:       skip,
+		Startblock: startblock,
+		Endblock:   endblock,
+	}
+}
+
 // OmniListblocktransactions // Lists all Omni transactions in a block.
 // example: $ omnicore-cli "omni_listblocktransactions" 279007
 type OmniListblocktransactionsCmd struct {
@@ -1448,6 +1468,7 @@ func init() {
 	MustRegisterCmd("omni_getwalletaddressbalances", (*OmniGetwalletaddressbalancesCmd)(nil), flags)
 	MustRegisterCmd("omni_gettransaction", (*OmniGettransactionCmd)(nil), flags)
 	MustRegisterCmd("omni_listtransactions", (*OmniListtransactionsCmd)(nil), flags)
+	MustRegisterCmd("omni_listwallettransactions", (*OmniListwallettransactionsCmd)(nil), flags)
 	MustRegisterCmd("omni_listblocktransactions", (*OmniListblocktransactionsCmd)(nil), flags)
 	MustRegisterCmd("omni_listpendingtransactions", (*OmniListpendingtransactionsCmd)(nil), flags)
 	MustRegisterCmd("omni_getactivedexsells", (*OmniGetactivedexsellsCmd)(nil), flags)
