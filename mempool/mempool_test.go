@@ -269,6 +269,11 @@ func (p *poolHarness) CreateCoinbaseTx(blockHeight int64, numOutputs uint32) (*h
 // inputs and generates the provided number of outputs by evenly splitting the
 // total input amount.  All outputs will be to the payment script associated
 // with the harness and all inputs are assumed to do the same.
+
+// Additionally, if one or more munge functions are specified, they will be
+// invoked with the transaction prior to signing it.  This provides callers with
+// the opportunity to modify the transaction which is especially useful for
+// testing.
 func (p *poolHarness) CreateSignedTx(inputs []spendableOutput, numOutputs uint32) (*hcutil.Tx, error) {
 	// Calculate the total input amount and split it amongst the requested
 	// number of outputs.
