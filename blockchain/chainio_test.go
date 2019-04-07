@@ -223,7 +223,7 @@ func TestStxoDecodeErrors(t *testing.T) {
 			stxo:       spentTxOut{},
 			serialized: hexToBytes("1400016edbc6c4d31bae9f1ccc38538a114bf42de65e86"),
 			errType:    errDeserialize(""),
-			bytesRead:  23,
+			bytesRead:  53,
 		},
 		{
 			name:       "no stakeextra data after script for ticket",
