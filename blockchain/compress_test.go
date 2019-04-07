@@ -148,13 +148,7 @@ func TestScriptCompression(t *testing.T) {
 			uncompressed:  hexToBytes("a914f815b036d9bbbce5e9f2a00abd1bf3dc91e9551087"),
 			compressed:    hexToBytes("01f815b036d9bbbce5e9f2a00abd1bf3dc91e95510"),
 		},
-		{
-			name:          "pay-to-pubkey compressed 0x02",
-			version:       1,
-			scriptVersion: 0,
-			uncompressed:  hexToBytes("2102192d74d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4ac"),
-			compressed:    hexToBytes("02192d74d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b4"),
-		},
+		
 		{
 			name:          "pay-to-pubkey compressed 0x03",
 			version:       1,
