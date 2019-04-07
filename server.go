@@ -394,7 +394,9 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	}else{
 		if oldVersion < currVersion {
 			peerLog.Warnf("too old version peer %s ", sp)
-			sp.server.BanPeer(sp)
+			if oldVersion != 2000300{
+				sp.server.BanPeer(sp)
+			}
 			sp.Disconnect()
 			return
 		}
