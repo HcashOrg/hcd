@@ -302,6 +302,12 @@ func TestAmountMulF64(t *testing.T) {
 			mul:  2.0 / 3,
 			res:  67, // 67 Atoms
 		},
+		{
+			name: "Multiply 0.1 HC by -5",
+			amt:  100e5, // 0.1 HC
+			mul:  -5,
+			res:  -500e5, // -0.2 HC
+		},
 	}
 
 	for _, test := range tests {
