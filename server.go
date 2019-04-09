@@ -204,6 +204,10 @@ type serverPeer struct {
 	quit            chan struct{}
 	// It is used to prevent more than one response per connection.
 	addrsSent bool
+	// addrsSent and getMiningStateSent both track whether or not the peer
+	// has already sent the respective request.  It is used to prevent more
+	// than one response per connection.
+	getMiningStateSent bool
 	// The following chans are used to sync blockmanager and server.
 	txProcessed    chan struct{}
 	blockProcessed chan struct{}
@@ -536,6 +540,11 @@ func (sp *serverPeer) pushMiningStateMsg(height uint32, blockHashes []chainhash.
 // It constructs a list of the current best blocks and votes that should be
 // mined on and pushes a miningstate wire message back to the requesting peer.
 func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState) {
+	if sp.getMiningStateSent {
+		peerLog.Tracef("Ignoring getminingstate from %v - already sent", sp.Peer)
+		return
+	}
+	sp.getMiningStateSent = true
 	// Access the block manager and get the list of best blocks to mine on.
 	bm := sp.server.blockManager
 	mp := sp.server.txMemPool
