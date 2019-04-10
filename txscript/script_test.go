@@ -365,15 +365,6 @@ func TestRemoveOpcodeByData(t *testing.T) {
 			after:  []byte{txscript.OP_PUSHDATA2, 4, 0, 1, 2, 3, 4},
 		},
 		{
-			// This is padded to make the push canonical.
-			name: "simple case (pushdata4)",
-			before: append(append([]byte{txscript.OP_PUSHDATA4, 0, 0, 1, 0},
-				bytes.Repeat([]byte{0}, 65532)...),
-				[]byte{1, 2, 3, 4}...),
-			remove: []byte{1, 2, 3, 4},
-			after:  nil,
-		},
-		{
 			name:   "simple case (pushdata4 miss noncanonical)",
 			before: []byte{txscript.OP_PUSHDATA4, 4, 0, 0, 0, 1, 2, 3, 4},
 			remove: []byte{1, 2, 3, 4},
