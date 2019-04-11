@@ -163,3 +163,42 @@ func ActiveHarnesses() []*Harness {
 
 	return activeNodes
 }
+
+
+
+// NodesConnected verifies whether there is a connection via the p2p interface
+// between the specified nodes. If allowReverse is true, connectivity is also
+// checked in the reverse direction (to->from).
+func NodesConnected(from, to *Harness, allowReverse bool) (bool, error) {
+	peerInfo, err := from.Node.GetPeerInfo()
+	if err != nil {
+		return false, err
+	}
+
+	targetAddr := to.node.config.listen
+	for _, p := range peerInfo {
+		if p.Addr == targetAddr {
+			return true, nil
+		}
+	}
+
+	if !allowReverse {
+		return false, nil
+	}
+
+	// Check in the reverse direction.
+	peerInfo, err = to.Node.GetPeerInfo()
+	if err != nil {
+		return false, err
+	}
+
+	targetAddr = from.node.config.listen
+	for _, p := range peerInfo {
+		if p.Addr == targetAddr {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
