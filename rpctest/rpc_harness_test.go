@@ -546,7 +546,10 @@ func testNodesConnected(r *Harness, t *testing.T) {
 		}
 	}
 
-
+	// Disconnect the nodes.
+	if err := RemoveNode(harness, r); err != nil {
+		t.Fatalf("unable to disconnect local to main harness: %v", err)
+	}
 	// All test cases must return false now.
 	for _, tc := range testCases {
 		actual, err := NodesConnected(tc.from, tc.to, tc.allowReverse)
