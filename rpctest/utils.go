@@ -202,3 +202,36 @@ func NodesConnected(from, to *Harness, allowReverse bool) (bool, error) {
 	return false, nil
 }
 
+
+// RemoveNode removes the peer-to-peer connection between the "from" harness and
+// the "to" harness. The connection is only removed in this direction, therefore
+// if the reverse connection exists, the nodes may still be connected.
+//
+// This function returns an error if the nodes were not previously connected.
+func RemoveNode(from *Harness, to *Harness) error {
+	targetAddr := to.node.config.listen
+	if err := from.Node.AddNode(targetAddr, hcrpcclient.ANRemove); err != nil {
+		// AddNode(..., ANRemove) returns an error if the peer is not found
+		return err
+	}
+
+	// Block until this particular connection has been dropped.
+	for {
+		peerInfo, err := from.Node.GetPeerInfo()
+		if err != nil {
+			return err
+		}
+		for _, p := range peerInfo {
+			if p.Addr == targetAddr {
+				// Nodes still connected. Skip and re-fetch the list of nodes.
+				continue
+			}
+		}
+
+		// If this point is reached, then the nodes are not connected anymore.
+		break
+	}
+
+	return nil
+}
+
