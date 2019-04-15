@@ -31,7 +31,7 @@ func TestChainSvrWsNtfns(t *testing.T) {
 		unmarshalled interface{}
 	}{
 		{
-			name: "blockconnected",
+			name: "blockconnected-0",
 			newNtfn: func() (interface{}, error) {
 				return hcjson.NewCmd("blockconnected", "header", []string{"tx0", "tx1"})
 			},
@@ -42,6 +42,20 @@ func TestChainSvrWsNtfns(t *testing.T) {
 			unmarshalled: &hcjson.BlockConnectedNtfn{
 				Header:        "header",
 				SubscribedTxs: []string{"tx0", "tx1"},
+			},
+		},
+		{
+			name: "blockconnected-1",
+			newNtfn: func() (interface{}, error) {
+				return hcjson.NewCmd("blockconnected", "header", []string{"tx8", "tx9"})
+			},
+			staticNtfn: func() interface{} {
+				return hcjson.NewBlockConnectedNtfn("header", []string{"tx8", "tx9"})
+			},
+			marshalled: `{"jsonrpc":"1.0","method":"blockconnected","params":["header",["tx8","tx9"]],"id":null}`,
+			unmarshalled: &hcjson.BlockConnectedNtfn{
+				Header:        "header",
+				SubscribedTxs: []string{"tx8", "tx9"},
 			},
 		},
 		{
