@@ -242,25 +242,6 @@ func TestStxoDecodeErrors(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		// Ensure the expected error type is returned.
-		gotBytesRead, err := decodeSpentTxOut(test.serialized,
-			&test.stxo, test.stxo.amount, test.stxo.height, test.stxo.index)
-		if reflect.TypeOf(err) != reflect.TypeOf(test.errType) {
-			t.Errorf("decodeSpentTxOut (%s): expected error type "+
-				"does not match - got %T, want %T", test.name,
-				err, test.errType)
-			continue
-		}
-
-		// Ensure the expected number of bytes read is returned.
-		if gotBytesRead != test.bytesRead {
-			t.Errorf("decodeSpentTxOut (%s): unexpected number of "+
-				"bytes read - got %d, want %d", test.name,
-				gotBytesRead, test.bytesRead)
-			continue
-		}
-	}
 }
 
 // TestSpendJournalSerialization ensures serializing and deserializing spend
