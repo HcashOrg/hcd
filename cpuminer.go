@@ -432,8 +432,7 @@ out:
 		}
 	}
 
-	// Wait until all workers shut down to stop the speed monitor since
-	// they rely on being able to send updates to it.
+	// Wait until all workers shut down.
 	m.workerWg.Wait()
 	close(m.speedMonitorQuit)
 	m.wg.Done()
