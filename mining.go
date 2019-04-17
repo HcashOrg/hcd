@@ -103,6 +103,30 @@ func (pq *txPriorityQueue) Push(x interface{}) {
 	pq.items = append(pq.items, x.(*txPrioItem))
 }
 
+// getCoinbaseExtranonce extracts the extranonce from a block template's
+// coinbase transaction.
+func getCoinbaseExtranonces(msgBlock *wire.MsgBlock) []uint64 {
+	if len(msgBlock.Transactions[0].TxOut) < 2 {
+		return []uint64{0, 0, 0, 0}
+	}
+
+	if len(msgBlock.Transactions[0].TxOut[1].PkScript) < 38 {
+		return []uint64{0, 0, 0, 0}
+	}
+
+	ens := make([]uint64, 4) // 32-bytes
+	ens[0] = binary.LittleEndian.Uint64(
+		msgBlock.Transactions[0].TxOut[1].PkScript[6:14])
+	ens[1] = binary.LittleEndian.Uint64(
+		msgBlock.Transactions[0].TxOut[1].PkScript[14:22])
+	ens[2] = binary.LittleEndian.Uint64(
+		msgBlock.Transactions[0].TxOut[1].PkScript[22:30])
+	ens[3] = binary.LittleEndian.Uint64(
+		msgBlock.Transactions[0].TxOut[1].PkScript[30:38])
+
+	return ens
+}
+
 // Pop removes the highest priority item (according to Less) from the priority
 // queue and returns it.  It is part of the heap.Interface implementation.
 func (pq *txPriorityQueue) Pop() interface{} {
@@ -464,29 +488,6 @@ func (bt *BlockTemplate) getCoinbaseExtranonces() []uint64 {
 	return ens
 }
 
-// getCoinbaseExtranonce extracts the extranonce from a block template's
-// coinbase transaction.
-func getCoinbaseExtranonces(msgBlock *wire.MsgBlock) []uint64 {
-	if len(msgBlock.Transactions[0].TxOut) < 2 {
-		return []uint64{0, 0, 0, 0}
-	}
-
-	if len(msgBlock.Transactions[0].TxOut[1].PkScript) < 38 {
-		return []uint64{0, 0, 0, 0}
-	}
-
-	ens := make([]uint64, 4) // 32-bytes
-	ens[0] = binary.LittleEndian.Uint64(
-		msgBlock.Transactions[0].TxOut[1].PkScript[6:14])
-	ens[1] = binary.LittleEndian.Uint64(
-		msgBlock.Transactions[0].TxOut[1].PkScript[14:22])
-	ens[2] = binary.LittleEndian.Uint64(
-		msgBlock.Transactions[0].TxOut[1].PkScript[22:30])
-	ens[3] = binary.LittleEndian.Uint64(
-		msgBlock.Transactions[0].TxOut[1].PkScript[30:38])
-
-	return ens
-}
 
 // UpdateExtraNonce updates the extra nonce in the coinbase script of the passed
 // block by regenerating the coinbase script with the passed value and block
