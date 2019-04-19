@@ -26,23 +26,6 @@ func (b *BlockChain) NextLotteryData() ([]chainhash.Hash, int, [6]byte, error) {
 		b.bestNode.stakeNode.FinalState(), nil
 }
 
-// lotteryDataForNode is a helper function that returns winning tickets
-// along with the ticket pool size and PRNG checksum for a given node.
-//
-// This function is NOT safe for concurrent access and MUST be called
-// with the chainLock held for writes.
-func (b *BlockChain) lotteryDataForNode(node *blockNode) ([]chainhash.Hash, int, [6]byte, error) {
-	if node.height < b.chainParams.StakeEnabledHeight {
-		return []chainhash.Hash{}, 0, [6]byte{}, nil
-	}
-	stakeNode, err := b.fetchStakeNode(node)
-	if err != nil {
-		return []chainhash.Hash{}, 0, [6]byte{}, err
-	}
-
-	return stakeNode.Winners(), b.bestNode.stakeNode.PoolSize(),
-		b.bestNode.stakeNode.FinalState(), nil
-}
 
 // lotteryDataForBlock takes a node block hash and returns the next tickets
 // eligible for voting, the number of tickets in the ticket pool, and the
@@ -200,6 +183,24 @@ func (b *BlockChain) CheckExpiredTicket(hash chainhash.Hash) bool {
 	b.chainLock.RUnlock()
 
 	return sn.ExistsExpiredTicket(hash)
+}
+
+// lotteryDataForNode is a helper function that returns winning tickets
+// along with the ticket pool size and PRNG checksum for a given node.
+//
+// This function is NOT safe for concurrent access and MUST be called
+// with the chainLock held for writes.
+func (b *BlockChain) lotteryDataForNode(node *blockNode) ([]chainhash.Hash, int, [6]byte, error) {
+	if node.height < b.chainParams.StakeEnabledHeight {
+		return []chainhash.Hash{}, 0, [6]byte{}, nil
+	}
+	stakeNode, err := b.fetchStakeNode(node)
+	if err != nil {
+		return []chainhash.Hash{}, 0, [6]byte{}, err
+	}
+
+	return stakeNode.Winners(), b.bestNode.stakeNode.PoolSize(),
+		b.bestNode.stakeNode.FinalState(), nil
 }
 
 // CheckExpiredTickets returns whether or not a ticket in a slice of
