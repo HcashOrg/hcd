@@ -2196,6 +2196,17 @@ func (b *BlockChain) MaxBlockSize() (int64, error) {
 	return maxSize, err
 }
 
+// ChainWork returns the total work up to and including the block of the
+// provided block hash.
+func (b *BlockChain) ChainWork(hash *chainhash.Hash) (*big.Int, error) {
+	node := b.index[*hash]
+	if node == nil {
+		return nil, fmt.Errorf("block %s is not known", hash)
+	}
+
+	return node.workSum, nil
+}
+
 // IndexManager provides a generic interface that the is called when blocks are
 // connected and disconnected to and from the tip of the main chain for the
 // purpose of supporting optional indexes.

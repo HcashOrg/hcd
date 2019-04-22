@@ -211,6 +211,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"gethashespersec":       handleGetHashesPerSec,
 	"getheaders":            handleGetHeaders,
 	"getinfo":               handleGetInfo,
+	"getblockchaininfo":     handleGetBlockchainInfo,
 	"getmempoolinfo":        handleGetMempoolInfo,
 	"getmininginfo":         handleGetMiningInfo,
 	"getnettotals":          handleGetNetTotals,
@@ -462,14 +463,14 @@ type gbtWorkState struct {
 	minTimestamp  time.Time
 	template      *BlockTemplate
 	notifyMap     map[chainhash.Hash]map[int64]chan struct{}
-	timeSource    blockchain.MedianTimeSource
+	timeSource blockchain.MedianTimeSource
 }
 
 // newGbtWorkState returns a new instance of a gbtWorkState with all internal
 // fields initialized and ready to use.
 func newGbtWorkState(timeSource blockchain.MedianTimeSource) *gbtWorkState {
 	return &gbtWorkState{
-		notifyMap:  make(map[chainhash.Hash]map[int64]chan struct{}),
+		notifyMap: make(map[chainhash.Hash]map[int64]chan struct{}),
 		timeSource: timeSource,
 	}
 }
@@ -701,8 +702,8 @@ func handleCreateRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 		mtx.LockTime = uint32(*c.LockTime)
 	}
 
-	if c.PayLoad!=nil && (*c.PayLoad)!="" {
-		payLoad,_:=hex.DecodeString(*c.PayLoad)
+	if c.PayLoad != nil && (*c.PayLoad) != "" {
+		payLoad, _ := hex.DecodeString(*c.PayLoad)
 		payLoadScript, err := txscript.GenerateProvablyPruneableOut(payLoad)
 		if err == nil {
 			payLoadTx := &wire.TxOut{
@@ -1764,7 +1765,7 @@ func handleGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 
 	blockHashes, err := s.server.cpuMiner.GenerateNBlocks(c.NumBlocks)
 	if err != nil {
-		return nil, rpcInternalError(err.Error(),"Could not generate blocks")
+		return nil, rpcInternalError(err.Error(), "Could not generate blocks")
 	}
 
 	// Mine the correct number of blocks, assigning the hex representation of the
@@ -2330,7 +2331,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 	if template == nil || state.prevHash == nil ||
 		!state.prevHash.IsEqual(latestHash) ||
 		(state.lastTxUpdate != lastTxUpdate &&
-			time.Now().After(state.lastGenerated.Add(time.Second*
+			time.Now().After(state.lastGenerated.Add(time.Second *
 				gbtRegenerateSeconds))) {
 
 		// Reset the previous best hash the block template was generated
@@ -2875,7 +2876,7 @@ func handleGetBlockTemplateLongPoll(s *rpcServer, longPollID string, useCoinbase
 	case <-closeChan:
 		return nil, ErrClientQuit
 
-	// Wait until signal received to send the reply.
+		// Wait until signal received to send the reply.
 	case <-longPollChan:
 		// Fallthrough
 	}
@@ -3712,6 +3713,83 @@ func convertVersionMap(m map[int]int) []hcjson.VersionCount {
 	}
 
 	return sorted
+}
+
+// handleGetBlockchainInfo implements the getblockchaininfo command.
+func handleGetBlockchainInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	best := s.chain.BestSnapshot()
+
+	// Fetch the current chain work using the the best block hash.
+	chainWork, err := s.chain.ChainWork(best.Hash)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not fetch chain work.")
+	}
+
+	// Estimate the verification progress of the node.
+	syncHeight := s.server.blockManager.chainState.newestHeight
+	var verifyProgress float64
+	if syncHeight > 0 {
+		verifyProgress = math.Min(float64(best.Height)/float64(syncHeight), 1.0)
+	}
+
+	// Fetch the maximum allowed block size.
+	maxBlockSize, err := s.chain.MaxBlockSize()
+	if err != nil {
+		return nil, rpcInternalError(err.Error(),
+			"Could not fetch max block size.")
+	}
+
+	// Fetch the agendas of the consensus deployments as well as their
+	// threshold states and state activation heights.
+
+	//dInfo := make(map[string]hcjson.AgendaInfo)
+	//params := s.server.chainParams
+	//for version, deployments := range params.Deployments {
+	//	for _, agenda := range deployments {
+	//		aInfo := hcjson.AgendaInfo{
+	//			StartTime:  agenda.StartTime,
+	//			ExpireTime: agenda.ExpireTime,
+	//		}
+	//
+	//		state, err := s.chain.NextThresholdState(&best.PrevHash, version,
+	//			agenda.Vote.Id)
+	//		if err != nil {
+	//			return nil, rpcInternalError(err.Error(),
+	//				fmt.Sprintf("Could not fetch threshold state "+
+	//					"for agenda with id (%v).", agenda.Vote.Id))
+	//		}
+	//
+	//		stateChangedHeight, err := s.chain.StateLastChangedHeight(
+	//			&best.Hash, version, agenda.Vote.Id)
+	//		if err != nil {
+	//			return nil, rpcInternalError(err.Error(),
+	//				fmt.Sprintf("Could not fetch state last changed "+
+	//					"height for agenda with id (%v).", agenda.Vote.Id))
+	//		}
+	//
+	//		aInfo.Since = stateChangedHeight
+	//		aInfo.Status = state.String()
+	//		dInfo[agenda.Vote.Id] = aInfo
+	//	}
+	//}
+
+	// Generate rpc response.
+	response := hcjson.GetBlockChainInfoResult{
+		Chain:      s.server.chainParams.Name,
+		Blocks:     int32(best.Height),
+		Headers:    int32(best.Height),
+		SyncHeight: syncHeight,
+		ChainWork:  fmt.Sprintf("%064x", chainWork),
+		//InitialBlockDownload: !s.chain.IsCurrent(),
+		VerificationProgress: verifyProgress,
+		BestBlockHash:        best.Hash.String(),
+		Difficulty:           float64(best.Bits),
+		DifficultyRatio:      getDifficultyRatio(best.Bits),
+		MaxBlockSize:         maxBlockSize,
+		//Deployments:          dInfo,
+	}
+
+	return response, nil
 }
 
 // handleGetStakeVersionInfo implements the getstakeversioninfo command.
@@ -6355,7 +6433,7 @@ func newRPCServer(listenAddrs []string, policy *mining.Policy, s *server) (*rpcS
 		gbtWorkState:           newGbtWorkState(s.timeSource),
 		helpCacher:             newHelpCacher(),
 		requestProcessShutdown: make(chan struct{}),
-		quit: make(chan int),
+		quit:                   make(chan int),
 	}
 	if cfg.RPCUser != "" && cfg.RPCPass != "" {
 		login := cfg.RPCUser + ":" + cfg.RPCPass

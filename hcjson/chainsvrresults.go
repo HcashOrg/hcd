@@ -107,6 +107,9 @@ type GetBlockChainInfoResult struct {
 	Difficulty           float64 `json:"difficulty"`
 	VerificationProgress float64 `json:"verificationprogress"`
 	ChainWork            string  `json:"chainwork"`
+	SyncHeight           int64   `json:"syncheight"`
+	DifficultyRatio      float64 `json:"difficultyratio"`
+	MaxBlockSize         int64   `json:"maxblocksize"`
 }
 
 // GetBlockSubsidyResult models the data returned from the getblocksubsidy
