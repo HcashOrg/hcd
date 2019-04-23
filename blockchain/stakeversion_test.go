@@ -740,6 +740,25 @@ func TestIsStakeMajorityVersion(t *testing.T) {
 	}
 }
 
+// newTestNode creates a block node
+func newTestNode(parent *blockNode, blockVersion int32, timestamp time.Time) *blockNode {
+	// Make up a header and create a block node from it.
+	header := &wire.BlockHeader{
+		Version:      blockVersion,
+		PrevBlock:    parent.hash,
+		VoteBits:     0x00,
+		Bits:         02,
+		Height:       uint32(parent.height) + 1,
+		Timestamp:    timestamp,
+		StakeVersion: 01,
+	}
+	node := newBlockNode(header, nil, nil, nil)
+	node.parent = parent
+	node.workSum.Add(parent.workSum, node.workSum)
+	return node
+}
+
+
 func TestLarge(t *testing.T) {
 	params := &chaincfg.MainNetParams
 
