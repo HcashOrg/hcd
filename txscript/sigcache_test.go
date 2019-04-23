@@ -144,3 +144,22 @@ func TestSigCacheAddMaxEntriesZeroOrNegative(t *testing.T) {
 			"been added", len(sigCache.validSigs))
 	}
 }
+
+func genTargetSig(bytes []byte) (*chainhash.Hash, chainec.Signature, error) {
+	secp256k1 := chainec.Secp256k1
+
+	priv := secp256k1.NewPrivateKey(new(big.Int).SetBytes(bytes))
+
+	var msgHash chainhash.Hash
+	if _, err := rand.Read(msgHash[:]); err != nil {
+		return nil, nil, err
+	}
+
+	r, s, err := secp256k1.Sign(priv, msgHash[:])
+	if err != nil {
+		return nil, nil,  err
+	}
+	sig := secp256k1.NewSignature(r, s)
+
+	return &msgHash, sig, nil
+}
