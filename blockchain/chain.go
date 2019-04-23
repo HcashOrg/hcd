@@ -7,7 +7,6 @@
 package blockchain
 
 import (
-	"container/list"
 	"fmt"
 	"math/big"
 	"sort"
@@ -982,15 +981,20 @@ func (b *BlockChain) pruneStakeNodes() {
 	// just before each new node is created.  However, that might be tuned
 	// later to only prune at intervals, so the code needs to account for
 	// the possibility of multiple nodes.
-	deleteNodes := list.New()
+// 	deleteNodes := list.New()
+	var deleteNodes []*blockNode
+	
 	for node := pruneToNode.parent; node != nil; node = node.parent {
-		deleteNodes.PushFront(node)
+// 		deleteNodes.PushFront(node)
+		deleteNodes = append(deleteNodes, node)
 	}
 
 	// Loop through each node to prune, unlink its children, remove it from
 	// the dependency index, and remove it from the node index.
-	for e := deleteNodes.Front(); e != nil; e = e.Next() {
-		node := e.Value.(*blockNode)
+// 	for e := deleteNodes.Front(); e != nil; e = e.Next() {
+	for i := len(deleteNodes) - 1; i >= 0; i-- {
+// 		node := e.Value.(*blockNode)
+		node := deleteNodes[i]
 		// Do not attempt to prune if the node should already have been pruned,
 		// for example if you're adding an old side chain block.
 		if node.height > b.bestNode.height-minMemoryNodes {
