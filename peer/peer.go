@@ -1571,7 +1571,8 @@ out:
 // to outHandler to be actually written.
 func (p *Peer) queueHandler() {
 	pendingMsgs := list.New()
-	invSendQueue := list.New()
+	//invSendQueue := list.New()
+	var invSendQueue []*wire.InvVect
 	trickleTicker := time.NewTicker(trickleTimeout)
 	defer trickleTicker.Stop()
 
@@ -1619,7 +1620,8 @@ out:
 		case iv := <-p.outputInvChan:
 			// No handshake?  They'll find out soon enough.
 			if p.VersionKnown() {
-				invSendQueue.PushBack(iv)
+				//invSendQueue.PushBack(iv)
+				invSendQueue = append(invSendQueue, iv)
 			}
 
 		case <-trickleTicker.C:
@@ -1627,15 +1629,18 @@ out:
 			// is no queued inventory.
 			// version is known if send queue has any entries.
 			if atomic.LoadInt32(&p.disconnect) != 0 ||
-				invSendQueue.Len() == 0 {
+				//invSendQueue.Len() == 0 {
+				len(invSendQueue) == 0 {
 				continue
 			}
 
 			// Create and send as many inv messages as needed to
 			// drain the inventory send queue.
-			invMsg := wire.NewMsgInvSizeHint(uint(invSendQueue.Len()))
-			for e := invSendQueue.Front(); e != nil; e = invSendQueue.Front() {
-				iv := invSendQueue.Remove(e).(*wire.InvVect)
+			//invMsg := wire.NewMsgInvSizeHint(uint(invSendQueue.Len()))
+			invMsg := wire.NewMsgInvSizeHint(uint(len(invSendQueue)))
+			//for e := invSendQueue.Front(); e != nil; e = invSendQueue.Front() {
+			for _, iv := range invSendQueue {
+				//iv := invSendQueue.Remove(e).(*wire.InvVect)
 
 				// Don't send inventory that became known after
 				// the initial check.
@@ -1648,7 +1653,8 @@ out:
 					waiting = queuePacket(
 						outMsg{msg: invMsg},
 						pendingMsgs, waiting)
-					invMsg = wire.NewMsgInvSizeHint(uint(invSendQueue.Len()))
+					//invMsg = wire.NewMsgInvSizeHint(uint(invSendQueue.Len()))
+					invMsg = wire.NewMsgInvSizeHint(uint(len(invSendQueue)))
 				}
 
 				// Add the inventory that is being relayed to
@@ -1659,6 +1665,7 @@ out:
 				waiting = queuePacket(outMsg{msg: invMsg},
 					pendingMsgs, waiting)
 			}
+			invSendQueue = nil
 
 		case <-p.quit:
 			break out
@@ -1691,7 +1698,6 @@ cleanup:
 	close(p.queueQuit)
 	log.Tracef("Peer queue handler done for %s", p)
 }
-
 // shouldLogWriteError returns whether or not the passed error, which is
 // expected to have come from writing to the remote peer in the outHandler,
 // should be logged.
