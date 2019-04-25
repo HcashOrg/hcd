@@ -112,3 +112,8 @@ func (ka *KnownAddress) isBad() bool {
 
 	return false
 }
+// Services returns the services supported by the peer with the known address.
+func (ka *KnownAddress) Services() wire.ServiceFlag {
+	return ka.na.Services
+}
+
