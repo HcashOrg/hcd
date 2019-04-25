@@ -8,7 +8,6 @@ package peer
 
 import (
 	"bytes"
-	"container/list"
 	"errors"
 	"fmt"
 	"io"
@@ -1570,8 +1569,9 @@ out:
 // handlers will not block on us sending a message.  That data is then passed on
 // to outHandler to be actually written.
 func (p *Peer) queueHandler() {
-	pendingMsgs := list.New()
+	//pendingMsgs := list.New()
 	//invSendQueue := list.New()
+	var pendingMsgs []outMsg
 	var invSendQueue []*wire.InvVect
 	trickleTicker := time.NewTicker(trickleTimeout)
 	defer trickleTicker.Stop()
@@ -1586,11 +1586,12 @@ func (p *Peer) queueHandler() {
 	waiting := false
 
 	// To avoid duplication below.
-	queuePacket := func(msg outMsg, list *list.List, waiting bool) bool {
+	queuePacket := func(msg outMsg, list *[]outMsg, waiting bool) bool {
 		if !waiting {
 			p.sendQueue <- msg
 		} else {
-			list.PushBack(msg)
+			//list.PushBack(msg)
+			*list = append(*list, msg)
 		}
 		// we are always waiting now.
 		return true
@@ -1599,23 +1600,29 @@ out:
 	for {
 		select {
 		case msg := <-p.outputQueue:
-			waiting = queuePacket(msg, pendingMsgs, waiting)
+			//waiting = queuePacket(msg, pendingMsgs, waiting)
+			waiting = queuePacket(msg, &pendingMsgs, waiting)
 
 		// This channel is notified when a message has been sent across
 		// the network socket.
 		case <-p.sendDoneQueue:
 			// No longer waiting if there are no more messages
 			// in the pending messages queue.
-			next := pendingMsgs.Front()
-			if next == nil {
+			//next := pendingMsgs.Front()
+			//if next == nil {
+			if len(pendingMsgs) == 0 {
 				waiting = false
 				continue
 			}
 
 			// Notify the outHandler about the next item to
 			// asynchronously send.
-			val := pendingMsgs.Remove(next)
-			p.sendQueue <- val.(outMsg)
+			//val := pendingMsgs.Remove(next)
+			//p.sendQueue <- val.(outMsg)
+
+			next := pendingMsgs[0]
+			pendingMsgs = pendingMsgs[1:]
+			p.sendQueue <- next
 
 		case iv := <-p.outputInvChan:
 			// No handshake?  They'll find out soon enough.
@@ -1652,7 +1659,7 @@ out:
 				if len(invMsg.InvList) >= maxInvTrickleSize {
 					waiting = queuePacket(
 						outMsg{msg: invMsg},
-						pendingMsgs, waiting)
+						&pendingMsgs, waiting)
 					//invMsg = wire.NewMsgInvSizeHint(uint(invSendQueue.Len()))
 					invMsg = wire.NewMsgInvSizeHint(uint(len(invSendQueue)))
 				}
@@ -1663,7 +1670,7 @@ out:
 			}
 			if len(invMsg.InvList) > 0 {
 				waiting = queuePacket(outMsg{msg: invMsg},
-					pendingMsgs, waiting)
+					&pendingMsgs, waiting)
 			}
 			invSendQueue = nil
 
@@ -1674,9 +1681,10 @@ out:
 
 	// Drain any wait channels before we go away so we don't leave something
 	// waiting for us.
-	for e := pendingMsgs.Front(); e != nil; e = pendingMsgs.Front() {
-		val := pendingMsgs.Remove(e)
-		msg := val.(outMsg)
+	//for e := pendingMsgs.Front(); e != nil; e = pendingMsgs.Front() {
+	//	val := pendingMsgs.Remove(e)
+		//msg := val.(outMsg)
+	for _, msg := range pendingMsgs {
 		if msg.doneChan != nil {
 			msg.doneChan <- struct{}{}
 		}
