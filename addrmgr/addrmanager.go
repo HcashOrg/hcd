@@ -670,7 +670,24 @@ func (a *AddrManager) AddressCache() []*wire.NetAddress {
 	// slice off the limit we are willing to share.
 	return allAddr[0:numAddresses]
 }
+// getAddresses returns all of the addresses currently found within the
+// manager's address cache.
+func (a *AddrManager) getAddresses() []*wire.NetAddress {
+	a.mtx.Lock()
+	defer a.mtx.Unlock()
 
+	addrIndexLen := len(a.addrIndex)
+	if addrIndexLen == 0 {
+		return nil
+	}
+
+	addrs := make([]*wire.NetAddress, 0, addrIndexLen)
+	for _, v := range a.addrIndex {
+		addrs = append(addrs, v.na)
+	}
+
+	return addrs
+}
 // reset resets the address manager by reinitialising the random source
 // and allocating fresh empty bucket storage.
 func (a *AddrManager) reset() {
