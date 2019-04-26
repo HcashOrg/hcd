@@ -640,21 +640,23 @@ func (a *AddrManager) NeedMoreAddresses() bool {
 // AddressCache returns the current address cache.  It must be treated as
 // read-only (but since it is a copy now, this is not as dangerous).
 func (a *AddrManager) AddressCache() []*wire.NetAddress {
-	a.mtx.Lock()
-	defer a.mtx.Unlock()
+	//a.mtx.Lock()
+	//defer a.mtx.Unlock()
+	//
+	//addrIndexLen := len(a.addrIndex)
+	//if addrIndexLen == 0 {
+	//	return nil
+	//}
+	//
+	//allAddr := make([]*wire.NetAddress, 0, addrIndexLen)
+	//// Iteration order is undefined here, but we randomise it anyway.
+	//for _, v := range a.addrIndex {
+	//	allAddr = append(allAddr, v.na)
+	//}
+	allAddr := a.getAddresses()
 
-	addrIndexLen := len(a.addrIndex)
-	if addrIndexLen == 0 {
-		return nil
-	}
-
-	allAddr := make([]*wire.NetAddress, 0, addrIndexLen)
-	// Iteration order is undefined here, but we randomise it anyway.
-	for _, v := range a.addrIndex {
-		allAddr = append(allAddr, v.na)
-	}
-
-	numAddresses := addrIndexLen * getAddrPercent / 100
+	//numAddresses := addrIndexLen * getAddrPercent / 100
+	numAddresses := len(allAddr) * getAddrPercent / 100
 	if numAddresses > getAddrMax {
 		numAddresses = getAddrMax
 	}
@@ -663,7 +665,8 @@ func (a *AddrManager) AddressCache() []*wire.NetAddress {
 	// `numAddresses' since we are throwing the rest.
 	for i := 0; i < numAddresses; i++ {
 		// pick a number between current index and the end
-		j := rand.Intn(addrIndexLen-i) + i
+		//j := rand.Intn(addrIndexLen-i) + i
+		j := rand.Intn(len(allAddr)-i) + i
 		allAddr[i], allAddr[j] = allAddr[j], allAddr[i]
 	}
 
