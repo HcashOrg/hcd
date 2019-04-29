@@ -94,11 +94,6 @@ func (b *BlockChain) blockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
 	// Generate the block locators according to the algorithm described in
 	// in the BlockLocator comment and make sure to leave room for the final
 	// genesis hash.
-	//
-	// The error is intentionally ignored here since the only way the code
-	// could fail is if there is something wrong with the database which
-	// will be caught in short order anyways and it's also safe to ignore
-	// block locators.
 	_ = b.db.View(func(dbTx database.Tx) error {
 		iterNode := node
 		increment := int64(1)
