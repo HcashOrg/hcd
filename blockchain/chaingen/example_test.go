@@ -49,8 +49,7 @@ func Example_basicUsage() {
 		fmt.Println(g.TipName())
 	}
 	g.AssertTipHeight(uint32(coinbaseMaturity) + 1)
-
-	// Output:
+	// below is the output
 	// bp
 	// bm0
 	// bm1
