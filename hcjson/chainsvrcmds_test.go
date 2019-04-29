@@ -136,26 +136,26 @@ func TestChainSvrCmds(t *testing.T) {
 				Amounts: map[string]float64{"456": .0123},
 			},
 		},
-		{
-			name: "createrawtransaction optional",
-			newCmd: func() (interface{}, error) {
-				return hcjson.NewCmd("createrawtransaction", `[{"txid":"123","vout":1,"tree":0}]`,
-					`{"456":0.0123}`, int64(12312333333))
-			},
-			staticCmd: func() interface{} {
-				txInputs := []hcjson.TransactionInput{
-					{Txid: "123", Vout: 1},
-				}
-				amounts := map[string]float64{"456": .0123}
-				return hcjson.NewCreateRawTransactionCmd(txInputs, amounts, hcjson.Int64(12312333333))
-			},
-			marshalled: `{"jsonrpc":"1.0","method":"createrawtransaction","params":[[{"txid":"123","vout":1,"tree":0}],{"456":0.0123},12312333333],"id":1}`,
-			unmarshalled: &hcjson.CreateRawTransactionCmd{
-				Inputs:   []hcjson.TransactionInput{{Txid: "123", Vout: 1}},
-				Amounts:  map[string]float64{"456": .0123},
-				LockTime: hcjson.Int64(12312333333),
-			},
-		},
+// 		{
+// 			name: "createrawtransaction optional",
+// 			newCmd: func() (interface{}, error) {
+// 				return hcjson.NewCmd("createrawtransaction", `[{"txid":"123","vout":1,"tree":0}]`,
+// 					`{"456":0.0123}`, int64(12312333333))
+// 			},
+// 			staticCmd: func() interface{} {
+// 				txInputs := []hcjson.TransactionInput{
+// 					{Txid: "123", Vout: 1},
+// 				}
+// 				amounts := map[string]float64{"456": .0123}
+// 				return hcjson.NewCreateRawTransactionCmd(txInputs, amounts, hcjson.Int64(12312333333))
+// 			},
+// 			marshalled: `{"jsonrpc":"1.0","method":"createrawtransaction","params":[[{"txid":"123","vout":1,"tree":0}],{"456":0.0123},12312333333],"id":1}`,
+// 			unmarshalled: &hcjson.CreateRawTransactionCmd{
+// 				Inputs:   []hcjson.TransactionInput{{Txid: "123", Vout: 1}},
+// 				Amounts:  map[string]float64{"456": .0123},
+// 				LockTime: hcjson.Int64(12312333333),
+// 			},
+// 		},
 		{
 			name: "decoderawtransaction",
 			newCmd: func() (interface{}, error) {
