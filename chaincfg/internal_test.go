@@ -18,3 +18,11 @@ func TestInvalidHashStr(t *testing.T) {
 		t.Error("Invalid string should fail.")
 	}
 }
+
+//TestIsPubKeyHashAddrId
+func TestIsPubKeyHashAddrID(t *testing.T) {
+	is:=IsPubKeyAddrID([2]byte{34,28})
+	if !is {
+		t.Log("not pubKeyHashAddr")
+	}
+}
