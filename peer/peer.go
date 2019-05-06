@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"container/list"
 	"net"
 	"strconv"
 	"sync"
@@ -1563,6 +1564,12 @@ out:
 	close(p.inQuit)
 	log.Tracef("Peer input handler done for %s", p)
 }
+//KnownInverntory list
+func (p *Peer)KnownInventory() *list.List {
+	return p.knownInventory.invList
+}
+
+
 
 // queueHandler handles the queuing of outgoing data for the peer. This runs as
 // a muxer for various sources of input so we can ensure that server and peer
