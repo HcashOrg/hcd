@@ -27,8 +27,10 @@ func TestMruNonceMap(t *testing.T) {
 	}{
 		{name: "limit 0", limit: 0},
 		{name: "limit 1", limit: 1},
+		{name: "limit 3", limit: 3},
 		{name: "limit 5", limit: 5},
 		{name: "limit 7", limit: 7},
+		{name: "limit 9", limit: 9},
 		{name: "limit one less than available", limit: numNonces - 1},
 		{name: "limit all available", limit: numNonces},
 	}
