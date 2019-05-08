@@ -3,7 +3,7 @@ set -ex
 
 # The script does automatic checking on a Go package and its sub-packages,
 # including:
-# 1. gofmt         (http://golang.org/cmd/gofmt/)
+# 1. gofmt         (https://golang.org/cmd/gofmt/)
 # 2. go vet        (http://golang.org/cmd/vet)
 # 3. unconvert     (https://github.com/mdempsky/unconvert)
 # 4. race detector (http://blog.golang.org/race-detector)
