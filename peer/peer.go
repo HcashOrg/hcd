@@ -1958,6 +1958,7 @@ func (p *Peer) WaitForDisconnect() {
 // peer.  If the next message is not a version message or the version is not
 // acceptable then return an error.
 func (p *Peer) readRemoteVersionMsg() error {
+	log.Tracef("readRemoteVersionMsg %s", p)
 	// Read their version message.
 	msg, _, err := p.readMessage()
 	if err != nil {
