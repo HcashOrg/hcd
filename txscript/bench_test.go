@@ -3,8 +3,17 @@ package txscript
 import (
 	"bytes"
 	"testing"
+	"github.com/HcashOrg/hcd/wire"
 )
 
+var (
+	// manyInputsBenchTx is a transaction that contains a lot of inputs which is
+	// useful for benchmarking signature hash calculation.
+	manyInputsBenchTx wire.MsgTx
+
+	// A mock previous output script to use in the signing benchmark.
+	prevOutScript = []parsedOpcode{{&(opcodeArray[1]),hexToBytes("a914f5916158e3e2c4551c1796708db8367207ed13bb87")}}
+)
 
 func genComplexScript() ([]byte, error) {
 	var scriptLen int
@@ -32,3 +41,16 @@ func BenchmarkIsStakeGenerationScript(b *testing.B) {
 		_ = isStakeGen(pops)
 	}
 }
+
+func BenchmarkCalcSigHash(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < len(manyInputsBenchTx.TxIn); j++ {
+			_, err := CalcSignatureHash(prevOutScript, SigHashAll,
+				&manyInputsBenchTx, j, nil)
+			if err != nil {
+				b.Fatalf("failed to calc signature hash: %v", err)
+			}
+		}
+	}
+}
+
