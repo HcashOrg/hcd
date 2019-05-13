@@ -38,14 +38,13 @@ func ExampleCreate() {
 
 // This example demonstrates creating a new database and using a managed
 // read-write transaction to store and retrieve metadata.
-func Example_basicUsage() {
-	// This example assumes the ffldb driver is imported.
+// This example assumes the ffldb driver is imported.
 	//
 	// import (
 	// 	"github.com/HcashOrg/hcd/database2"
 	// 	_ "github.com/HcashOrg/hcd/database/ffldb"
 	// )
-
+func Example_basicUsage() {
 	// Create a database and schedule it to be closed and removed on exit.
 	// Typically you wouldn't want to remove the database right away like
 	// this, nor put it in the temp directory, but it's done here to ensure
