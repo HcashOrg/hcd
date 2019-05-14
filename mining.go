@@ -2158,6 +2158,30 @@ func UpdateBlockTime(msgBlock *wire.MsgBlock, bManager *blockManager) error {
 	return nil
 }
 
+// notifySubscribersHandler updates subscribers of newly created block
+// templates.  All subscribers are unsubscribed after being updated and required
+// to resubscribe after a template update.  It must be run as a goroutine.
+func (g *BgBlkTmplGenerator) notifySubscribersHandler(ctx context.Context) {
+	minrLog.Debug("Starting notify subscribers handler")
+	for {
+		select {
+		case t := <-g.notifyChan:
+			g.subscriptionMtx.Lock()
+			for c := range g.subscribers {
+				c <- t
+				close(c)
+
+				delete(g.subscribers, c)
+			}
+			g.subscriptionMtx.Unlock()
+		case <-ctx.Done():
+			minrLog.Debug("Notify subscribers handler done")
+			g.wg.Done()
+			return
+		}
+	}
+}
+
 // PreCalcCoinBaseSigNum pre calc
 func PreCalcCoinBaseSigNum(subsidyCache *blockchain.SubsidyCache, chainParams *chaincfg.Params, payToAddress hcutil.Address, nextBlockHeight int64) (int64, error) {
 	coinbaseScript := []byte{0x00, 0x00}
