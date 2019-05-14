@@ -66,6 +66,29 @@ func (g *chaingenHarness) AcceptTipBlock() {
 	g.AcceptBlock(g.TipName())
 }
 
+// chaingenHarness provides a test harness which encapsulates a test instance, a
+// chaingen generator instance, and a block chain instance to provide all of the
+// functionality of the aforementioned types as well as several convenience
+// functions such as block acceptance and rejection, expected tip checking, and
+// threshold state checking.
+//
+// The chaingen generator is embedded in the struct so callers can directly
+// access its method the same as if they were directly working with the
+// underlying generator.
+//
+// Since chaingen involves creating fully valid and solved blocks, which is
+// relatively expensive, only tests which actually require that functionality
+// should make use of this harness.  In many cases, a much faster synthetic
+// chain instance created by newFakeChain will suffice.
+type chaingenHarness struct {
+	*chaingen.Generator
+
+	t                  *testing.T
+	chain              *BlockChain
+	deploymentVersions map[string]uint32
+}
+
+
 // chainSetup is used to create a new db and chain instance with the genesis
 // block already inserted.  In addition to the new chain instance, it returns
 // a teardown function the caller should invoke when done testing to clean up.
