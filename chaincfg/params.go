@@ -1042,6 +1042,18 @@ func (p *Params) LatestCheckpointHeight() int64 {
 	return p.Checkpoints[len(p.Checkpoints)-1].Height
 }
 
+// XPrivKeyID returns the hierarchical deterministic extended private key magic
+// version bytes for the network the parameters define.
+func (p *Params) XPrivKeyID() [4]byte {
+	return p.HDPrivateKeyID
+}
+
+// XPubKeyID returns the hierarchical deterministic extended public key magic
+// version bytes for the network the parameters define.
+func (p *Params) XPubKeyID() [4]byte {
+	return p.HDPublicKeyID
+}
+
 func init() {
 	// Register all default networks when the package is initialized.
 	mustRegister(&MainNetParams)
