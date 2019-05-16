@@ -207,6 +207,7 @@ func TestBlockHeaderWire(t *testing.T) {
 				spew.Sdump(buf.Bytes()), spew.Sdump(test.buf))
 			continue
 		}
+		
 
 		buf.Reset()
 		err = test.in.BtcEncode(buf, pver)
@@ -267,6 +268,32 @@ func TestBlockHeaderWire(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(bh2, test.out) {
+			t.Errorf("FromBytes #%d\n got: %s want: %s", i,
+				spew.Sdump(bh2), spew.Sdump(test.out))
+			continue
+		}
+		// Ensure Bytes encodes block header correctly.
+		bts, err := test.out.Bytes()
+		if err != nil {
+			t.Errorf("Bytes #%d error %v", i, err)
+			continue
+		}
+
+ 		if !bytes.Equal(bts, test.buf) {
+			t.Errorf("Bytes #%d\n got: %s want: %s", i,
+				spew.Sdump(&bts), spew.Sdump(test.out))
+			continue
+		}
+
+ 		// Ensure FromBytes decodes encoded block header correctly.
+		bh2 := &BlockHeader{}
+		err = bh2.FromBytes(test.buf)
+		if err != nil {
+			t.Errorf("FromBytes #%d error %v", i, err)
+			continue
+		}
+
+ 		if !reflect.DeepEqual(bh2, test.out) {
 			t.Errorf("FromBytes #%d\n got: %s want: %s", i,
 				spew.Sdump(bh2), spew.Sdump(test.out))
 			continue
