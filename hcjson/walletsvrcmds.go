@@ -487,6 +487,28 @@ func NewSendToAddressCmd(address string, amount float64, comment, commentTo *str
 	}
 }
 
+// InstantSendToAddressCmd defines the instantsendtoaddress JSON-RPC command.
+type InstantSendToAddressCmd struct {
+	Address   string
+	Amount    float64
+	Comment   *string
+	CommentTo *string
+}
+
+// NewInstantSendToAddressCmd returns a new instance which can be used to issue a
+// instantsendtoaddress JSON-RPC command.
+//
+// The parameters which are pointers indicate they are optional.  Passing nil
+// for optional parameters will use the default value.
+func NewInstantSendToAddressCmd(address string, amount float64, comment, commentTo *string) *InstantSendToAddressCmd {
+	return &InstantSendToAddressCmd{
+		Address:   address,
+		Amount:    amount,
+		Comment:   comment,
+		CommentTo: commentTo,
+	}
+}
+
 // SendToAddressCmd defines the sendtoaddress JSON-RPC command.
 type SendFromAddressToAddressCmd struct {
 	FromAddress string
@@ -638,6 +660,7 @@ func init() {
 	MustRegisterCmd("sendmany", (*SendManyCmd)(nil), flags)
 	MustRegisterCmd("sendmanyv2", (*SendManyV2Cmd)(nil), flags)
 	MustRegisterCmd("sendtoaddress", (*SendToAddressCmd)(nil), flags)
+	MustRegisterCmd("instantsendtoaddress", (*InstantSendToAddressCmd)(nil), flags)
 	MustRegisterCmd("sendfromaddresstoaddress", (*SendFromAddressToAddressCmd)(nil), flags)
 	MustRegisterCmd("settxfee", (*SetTxFeeCmd)(nil), flags)
 	MustRegisterCmd("signmessage", (*SignMessageCmd)(nil), flags)
