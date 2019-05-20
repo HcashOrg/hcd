@@ -1407,7 +1407,7 @@ func (b *BlockChain) initChainState() error {
 		}
 
 		// The database bucket for the versioning information is missing.
-		if dbInfo == nil && err == nil {
+		if dbInfo == nil {
 			return nil
 		}
 
