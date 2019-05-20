@@ -855,39 +855,39 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
-	if template != nil {
-		templateBlock := hcutil.NewBlock(template.Block)
+	
+	templateBlock := hcutil.NewBlock(template.Block)
 
-		// Add all the votes found in our template. Keep their
-		// hashes in a map for easy lookup in the next loop.
-		for _, stx := range templateBlock.STransactions() {
-			mstx := stx.MsgTx()
-			txType := stake.DetermineTxType(mstx)
-			if txType == stake.TxTypeSSGen {
-				ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
-				oldVoteMap[ticketH] = struct{}{}
-				newVotes = append(newVotes, stx)
-			}
-
-			// Create a list of old tickets and revocations
-			// while we're in this loop.
-			if txType == stake.TxTypeSStx {
-				oldTickets = append(oldTickets, stx)
-			}
-			if txType == stake.TxTypeSSRtx {
-				oldRevocations = append(oldRevocations, stx)
-			}
+	// Add all the votes found in our template. Keep their
+	// hashes in a map for easy lookup in the next loop.
+	for _, stx := range templateBlock.STransactions() {
+		mstx := stx.MsgTx()
+		txType := stake.DetermineTxType(mstx)
+		if txType == stake.TxTypeSSGen {
+			ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
+			oldVoteMap[ticketH] = struct{}{}
+			newVotes = append(newVotes, stx)
 		}
 
-		// Check the votes seen in the block. If the votes
-		// are new, append them.
-		for _, vote := range votesFromBlock {
-			ticketH := vote.MsgTx().TxIn[1].PreviousOutPoint.Hash
-			if _, exists := oldVoteMap[ticketH]; !exists {
-				newVotes = append(newVotes, vote)
-			}
+		// Create a list of old tickets and revocations
+		// while we're in this loop.
+		if txType == stake.TxTypeSStx {
+			oldTickets = append(oldTickets, stx)
+		}
+		if txType == stake.TxTypeSSRtx {
+			oldRevocations = append(oldRevocations, stx)
 		}
 	}
+
+	// Check the votes seen in the block. If the votes
+	// are new, append them.
+	for _, vote := range votesFromBlock {
+		ticketH := vote.MsgTx().TxIn[1].PreviousOutPoint.Hash
+		if _, exists := oldVoteMap[ticketH]; !exists {
+			newVotes = append(newVotes, vote)
+		}
+	}
+
 
 	// Check the length of the reconstructed voter list for
 	// integrity.
