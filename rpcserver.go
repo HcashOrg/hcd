@@ -4241,12 +4241,6 @@ func handleGetWorkRequest(s *rpcServer) (interface{}, error) {
 			blockchain.CompactToBig(msgBlock.Header.Bits),
 			msgBlock.Header.MerkleRoot)
 	} else {
-		if msgBlock == nil {
-			context := "Failed to create new block template, " +
-				"no previous state"
-			return nil, rpcInternalError("internal error", context)
-		}
-
 		// At this point, there is a saved block template and a new
 		// request for work was made, but either the available
 		// transactions haven't change or it hasn't been long enough to
