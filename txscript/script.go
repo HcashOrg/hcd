@@ -326,6 +326,39 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 */
 }
 
+func IsLockTx(pkScript []byte) bool{
+	pops, err := parseScript(pkScript)
+	if err != nil || len(pops) != 2 {
+		return false
+	}
+	opCode := pops[0].opcode.value
+	data := pops[1].data
+
+	if len(data) != 16{
+		return false
+	}
+	//68636173  68496e73 74616e74 53656e64
+	if opCode == OP_RETURN &&
+		data[0] == 0x68 &&
+		data[1] == 0x63 &&
+		data[2] == 0x61 &&
+		data[3] == 0x73 &&
+		data[4] == 0x68 &&
+		data[5] == 0x49 &&
+		data[6] == 0x6e &&
+		data[7] == 0x73 &&
+		data[8] == 0x74 &&
+		data[9] == 0x61 &&
+		data[10] == 0x6e &&
+		data[11] == 0x74 &&
+		data[12] == 0x53 &&
+		data[13] == 0x65 &&
+		data[14] == 0x6e &&
+		data[15] == 0x64{
+		return true
+	}
+	return false
+}
 
 // unparseScript reversed the action of parseScript and returns the
 // parsedOpcodes as a list of bytes

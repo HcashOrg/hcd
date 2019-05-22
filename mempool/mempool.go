@@ -213,6 +213,7 @@ type TxPool struct {
 	orphansByPrev map[chainhash.Hash]map[chainhash.Hash]*hcutil.Tx
 	addrindex     map[string]map[chainhash.Hash]struct{} // maps address to txs
 	outpoints     map[wire.OutPoint]*hcutil.Tx
+	lockTxPool    map[int64]map[chainhash.Hash]*hcutil.Tx //for instantsend lock tx pool
 
 	// Votes on blocks.
 	votesMtx sync.RWMutex
@@ -576,6 +577,7 @@ func (mp *TxPool) removeTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 	}
 }
 
+
 // RemoveTransaction removes the passed transaction from the mempool. When the
 // removeRedeemers flag is set, any transactions that redeem outputs from the
 // removed transaction will also be removed recursively from the mempool, as
@@ -589,12 +591,92 @@ func (mp *TxPool) RemoveTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 	mp.mtx.Unlock()
 }
 
+func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
+	msgTx := tx.MsgTx()
+	isLockTx := false;
+	for _, txOut := range msgTx.TxOut{
+		if txscript.IsLockTx(txOut.PkScript){
+			isLockTx = true
+			break
+		}
+	}
+	if !isLockTx {
+		return
+	}
+
+	if txList, exists := mp.lockTxPool[int64(0)]; exists {
+		if _, ok:= txList[msgTx.TxHash()]; ok {
+			delete(txList, msgTx.TxHash())
+		}
+	}
+	if _, exists := mp.lockTxPool[height]; !exists {
+		mp.lockTxPool[height] = make(map[chainhash.Hash]*hcutil.Tx)
+	}
+	mp.lockTxPool[height][msgTx.TxHash()] = tx
+}
+
+
+func (mp *TxPool) ModifyLockTransaction(tx *hcutil.Tx, height int64) {
+	// Protect concurrent access.
+	mp.mtx.Lock()
+	mp.modifyLockTransaction(tx, height)
+	mp.mtx.Unlock()
+}
+
+func (mp *TxPool) RemoveTimeOutLockTransaction(height int64) {
+	mp.mtx.Lock()
+	for heightIndex, _ := range mp.lockTxPool{
+		if  heightIndex !=0 && heightIndex <  height - 24{
+			delete(mp.lockTxPool, heightIndex)
+		}
+	}
+	mp.mtx.Unlock()
+}
+
+//Is txVin  locked?
+func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool{
+	if txList, exists := mp.lockTxPool[int64(0)]; exists {
+		if _, ok := txList[*hash]; ok{
+			return true
+		}
+	}
+	return false
+}
+
+//Is txVin  locked?
+func (mp *TxPool) isTxInExist(hash *chainhash.Hash) bool{
+	if txList, exists := mp.lockTxPool[int64(0)]; exists {
+		for _, item := range txList{
+			for _, vIn := range item.MsgTx().TxIn{
+				if hash.IsEqual(&vIn.PreviousOutPoint.Hash) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+//check block transactions locked
+func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block)(bool, error) {
+	for _, tx := range block.Transactions() {
+		if !mp.isTxExist(tx.Hash()) {
+			for _, txIn := range tx.MsgTx().TxIn{
+				if mp.isTxInExist(&txIn.PreviousOutPoint.Hash){
+					return false, fmt.Errorf("lock transaction conflict")
+				}
+			}
+		}
+	}
+	return true, nil
+}
+
 // RemoveDoubleSpends removes all transactions which spend outputs spent by the
-// passed transaction from the memory pool.  Removing those transactions then
-// leads to removing all transactions which rely on them, recursively.  This is
-// necessary when a block is connected to the main chain because the block may
-// contain transactions which were previously unknown to the memory pool.
-//
+//// passed transaction from the memory pool.  Removing those transactions then
+//// leads to removing all transactions which rely on them, recursively.  This is
+//// necessary when a block is connected to the main chain because the block may
+//// contain transactions which were previously unknown to the memory pool.
+////
 // This function is safe for concurrent access.
 func (mp *TxPool) RemoveDoubleSpends(tx *hcutil.Tx) {
 	// Protect concurrent access.
@@ -609,6 +691,24 @@ func (mp *TxPool) RemoveDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Unlock()
 }
 
+func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
+	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
+
+	msgTx := tx.MsgTx()
+	isLockTx := false;
+	for _, txOut := range msgTx.TxOut{
+		if txscript.IsLockTx(txOut.PkScript){
+			isLockTx = true
+			break
+		}
+	}
+	if isLockTx {
+		if _, exists := mp.lockTxPool[int64(0)]; !exists {
+			mp.lockTxPool[int64(0)] = make(map[chainhash.Hash]*hcutil.Tx)
+		}
+		mp.lockTxPool[int64(0)][*tx.Hash()] = tx
+	}
+}
 // addTransaction adds the passed transaction to the memory pool.  It should
 // not be called directly as it doesn't perform any validation.  This is a
 // helper for maybeAcceptTransaction.
@@ -643,6 +743,8 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	if mp.cfg.ExistsAddrIndex != nil {
 		mp.cfg.ExistsAddrIndex.AddUnconfirmedTx(msgTx)
 	}
+
+	mp.maybeAddtoLockPool(utxoView, tx, txType, height, fee)
 }
 
 // checkPoolDoubleSpend checks whether or not the passed transaction is
@@ -1590,5 +1692,6 @@ func New(cfg *Config) *TxPool {
 		orphansByPrev: make(map[chainhash.Hash]map[chainhash.Hash]*hcutil.Tx),
 		outpoints:     make(map[wire.OutPoint]*hcutil.Tx),
 		votes:         make(map[chainhash.Hash][]VoteTx),
+		lockTxPool:    make(map[int64]map[chainhash.Hash]*hcutil.Tx),
 	}
 }

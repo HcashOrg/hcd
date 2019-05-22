@@ -1061,6 +1061,11 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 		return
 	}
 
+	_, err = b.server.txMemPool.CheckLockTransactionValidate(bmsg.block)
+	if err != nil{
+		return
+	}
+
 	// Meta-data about the new block this peer is reporting. We use this
 	// below to update this peer's lastest block height and the heights of
 	// other peers based on their last announced block hash. This allows us
@@ -2101,7 +2106,10 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.server.txMemPool.RemoveOrphan(tx.Hash())
 			acceptedTxs := b.server.txMemPool.ProcessOrphans(tx.Hash())
 			b.server.AnnounceNewTransactions(acceptedTxs)
+
+			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
 		}
+		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
 
 		for _, stx := range block.STransactions()[0:] {
 			b.server.txMemPool.RemoveTransaction(stx, false)
