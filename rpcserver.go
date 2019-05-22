@@ -3304,7 +3304,7 @@ func handleGetMiningInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	}
 	networkHashesPerSec, ok := networkHashesPerSecIface.(int64)
 	if !ok {
-		return nil, rpcInternalError(err.Error(),
+		return nil, rpcInternalError("invalid network hashes per sec",
 			fmt.Sprintf("Invalid type: %q",
 				networkHashesPerSecIface))
 	}
