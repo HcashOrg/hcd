@@ -635,7 +635,7 @@ func (mp *TxPool) RemoveTimeOutLockTransaction(height int64) {
 
 //Is txVin  locked?
 func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool{
-	if txList, exists := mp.lockTxPool[int64(0)]; exists {
+	for _, txList := range mp.lockTxPool {
 		if _, ok := txList[*hash]; ok{
 			return true
 		}
@@ -644,17 +644,17 @@ func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool{
 }
 
 //Is txVin  locked?
-func (mp *TxPool) isTxInExist(hash *chainhash.Hash) bool{
-	if txList, exists := mp.lockTxPool[int64(0)]; exists {
+func (mp *TxPool) isTxInExist(hash *chainhash.Hash) (bool, *hcutil.Tx) {
+	for _, txList := range mp.lockTxPool {
 		for _, item := range txList{
 			for _, vIn := range item.MsgTx().TxIn{
 				if hash.IsEqual(&vIn.PreviousOutPoint.Hash) {
-					return true
+					return true, item
 				}
 			}
 		}
 	}
-	return false
+	return false, nil
 }
 
 //check block transactions locked
@@ -662,7 +662,7 @@ func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block)(bool, error)
 	for _, tx := range block.Transactions() {
 		if !mp.isTxExist(tx.Hash()) {
 			for _, txIn := range tx.MsgTx().TxIn{
-				if mp.isTxInExist(&txIn.PreviousOutPoint.Hash){
+				if ok, _:= mp.isTxInExist(&txIn.PreviousOutPoint.Hash); ok{
 					return false, fmt.Errorf("lock transaction conflict")
 				}
 			}
@@ -709,6 +709,7 @@ func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
 		mp.lockTxPool[int64(0)][*tx.Hash()] = tx
 	}
 }
+
 // addTransaction adds the passed transaction to the memory pool.  It should
 // not be called directly as it doesn't perform any validation.  This is a
 // helper for maybeAcceptTransaction.
@@ -717,6 +718,15 @@ func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
 func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
 
+	if !mp.isTxExist(tx.Hash()){
+		for _, txIn := range tx.MsgTx().TxIn{
+			if ok, txLock := mp.isTxInExist(&txIn.PreviousOutPoint.Hash); ok {
+				if CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
+					return
+				}
+			}
+		}
+	}
 	// Add the transaction to the pool and mark the referenced outpoints
 	// as spent by the pool.
 	msgTx := tx.MsgTx()

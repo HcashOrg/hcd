@@ -1032,6 +1032,13 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 	delete(bmsg.peer.requestedBlocks, *blockHash)
 	delete(b.requestedBlocks, *blockHash)
 
+	/*
+	_, err := b.server.txMemPool.CheckLockTransactionValidate(bmsg.block)
+	if err != nil{
+		bmgrLog.Infof("%v",  err)
+		return
+	}
+*/
 	// Process the block to include validation, best chain selection, orphan
 	// handling, etc.
 	onMainChain, isOrphan, err := b.chain.ProcessBlock(bmsg.block,
@@ -1058,11 +1065,6 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 		code, reason := mempool.ErrToRejectErr(err)
 		bmsg.peer.PushRejectMsg(wire.CmdBlock, code, reason,
 			blockHash, false)
-		return
-	}
-
-	_, err = b.server.txMemPool.CheckLockTransactionValidate(bmsg.block)
-	if err != nil{
 		return
 	}
 
@@ -1139,11 +1141,15 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			b.lotteryDataBroadcastMutex.Lock()
 			_, beenNotified := b.lotteryDataBroadcast[*blockHash]
 			b.lotteryDataBroadcastMutex.Unlock()
+
+			ok, _ := b.server.txMemPool.CheckLockTransactionValidate(bmsg.block)
+
 			if !beenNotified && r != nil &&
 				int64(bmsg.block.MsgBlock().Header.Height) >
 					b.server.chainParams.LatestCheckpointHeight() {
-				r.ntfnMgr.NotifyWinningTickets(winningTicketsNtfn)
-
+				if ok {
+					r.ntfnMgr.NotifyWinningTickets(winningTicketsNtfn)
+				}
 				b.lotteryDataBroadcastMutex.Lock()
 				b.lotteryDataBroadcast[*blockHash] = struct{}{}
 				b.lotteryDataBroadcastMutex.Unlock()
@@ -1855,7 +1861,10 @@ out:
 							int64(msg.block.MsgBlock().Header.Height),
 							winningTickets}
 
-						r.ntfnMgr.NotifyWinningTickets(ntfnData)
+						ok, _ := b.server.txMemPool.CheckLockTransactionValidate(msg.block)
+						if ok {
+							r.ntfnMgr.NotifyWinningTickets(ntfnData)
+						}
 						b.lotteryDataBroadcastMutex.Lock()
 						b.lotteryDataBroadcast[*msg.block.Hash()] = struct{}{}
 						b.lotteryDataBroadcastMutex.Unlock()
@@ -2023,9 +2032,10 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			_, beenNotified := b.lotteryDataBroadcast[*hash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
+			ok, _ := b.server.txMemPool.CheckLockTransactionValidate(block)
 			// Obtain the winning tickets for this block.  handleNotifyMsg
 			// should be safe for concurrent access of things contained
-			// within blockchain.
+			//			// within blockchain.
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
 			if err != nil {
 				bmgrLog.Errorf("Couldn't calculate winning tickets for "+
@@ -2040,7 +2050,10 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 					// Notify registered websocket clients of newly
 					// eligible tickets to vote on.
-					r.ntfnMgr.NotifyWinningTickets(ntfnData)
+					if ok {
+						r.ntfnMgr.NotifyWinningTickets(ntfnData)
+					}
+
 					b.lotteryDataBroadcastMutex.Lock()
 					b.lotteryDataBroadcast[*hash] = struct{}{}
 					b.lotteryDataBroadcastMutex.Unlock()
@@ -2187,13 +2200,16 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			hcutil.BlockValid)
 
 		if !txTreeRegularValid {
-			for _, tx := range parentBlock.Transactions()[1:] {
-				b.server.txMemPool.RemoveTransaction(tx, false)
-				b.server.txMemPool.RemoveDoubleSpends(tx)
-				b.server.txMemPool.RemoveOrphan(tx.Hash())
-				b.server.txMemPool.ProcessOrphans(tx.Hash())
-			}
+		for _, tx := range parentBlock.Transactions()[1:] {
+			b.server.txMemPool.RemoveTransaction(tx, false)
+			b.server.txMemPool.RemoveDoubleSpends(tx)
+			b.server.txMemPool.RemoveOrphan(tx.Hash())
+			b.server.txMemPool.ProcessOrphans(tx.Hash())
+
+			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
 		}
+		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
+	}
 
 		// Reinsert all of the transactions (except the coinbase) from the parent
 		// tx tree regular into the transaction pool.
