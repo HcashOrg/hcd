@@ -466,6 +466,27 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
+
+func assertConnectedOut(t *testing.T, nodeA *Harness, nodeB *Harness) {
+	nodeAPeers, err := nodeA.Node.GetPeerInfo()
+	if err != nil {
+		t.Fatalf("unable to get node's peer info")
+	}
+
+	nodeAddr := nodeB.node.config.listen
+	addrFound := true
+	for _, peerInfo := range nodeAPeers {
+		if peerInfo.Addr == nodeAddr {
+			addrFound = false
+			break
+		}
+	}
+
+	if addrFound {
+		t.Fatal("nodeA not connected to node")
+	}
+}
+
 func TestHarness(t *testing.T) {
 	// We should have the expected amount of mature unspent outputs.
 	expectedBalance := hcutil.Amount(numMatureOutputs * 300 * hcutil.AtomsPerCoin)
