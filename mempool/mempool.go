@@ -644,11 +644,11 @@ func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool{
 }
 
 //Is txVin  locked?
-func (mp *TxPool) isTxInExist(hash *chainhash.Hash) (bool, *hcutil.Tx) {
+func (mp *TxPool) isTxInExist( outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
 	for _, txList := range mp.lockTxPool {
 		for _, item := range txList{
 			for _, vIn := range item.MsgTx().TxIn{
-				if hash.IsEqual(&vIn.PreviousOutPoint.Hash) {
+				if outPoint.String() == vIn.PreviousOutPoint.String() {
 					return true, item
 				}
 			}
@@ -662,7 +662,7 @@ func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block)(bool, error)
 	for _, tx := range block.Transactions() {
 		if !mp.isTxExist(tx.Hash()) {
 			for _, txIn := range tx.MsgTx().TxIn{
-				if ok, _:= mp.isTxInExist(&txIn.PreviousOutPoint.Hash); ok{
+				if ok, _:= mp.isTxInExist(&txIn.PreviousOutPoint); ok{
 					return false, fmt.Errorf("lock transaction conflict")
 				}
 			}
@@ -729,7 +729,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 
 	if !mp.isTxExist(tx.Hash()){
 		for _, txIn := range tx.MsgTx().TxIn{
-			if ok, txLock := mp.isTxInExist(&txIn.PreviousOutPoint.Hash); ok {
+			if ok, txLock := mp.isTxInExist(&txIn.PreviousOutPoint); ok {
 				if isLockTx{
 					if  CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
 						return
