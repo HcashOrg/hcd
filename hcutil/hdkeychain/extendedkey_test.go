@@ -981,3 +981,45 @@ func TestZero(t *testing.T) {
 		}
 	}
 }
+// mockNetParams implements the NetworkParams interface and is used throughout
+// the tests to mock multiple networks.
+type mockNetParams struct {
+	privKeyID [4]byte
+	pubKeyID  [4]byte
+}
+
+// HDPrivKeyVersion returns the extended private key version bytes associated
+// with the mock params.
+//
+// This is part of the NetworkParams interface.
+func (p *mockNetParams) HDPrivKeyVersion() [4]byte {
+	return p.privKeyID
+}
+
+// HDPubKeyVersion returns the extended public key version bytes associated with
+// the mock params.
+//
+// This is part of the NetworkParams interface.
+func (p *mockNetParams) HDPubKeyVersion() [4]byte {
+	return p.pubKeyID
+}
+
+// mockMainNetParams returns mock mainnet parameters to use throughout the
+// tests.  They match the Decred mainnet params as of the time this comment was
+// written.
+func mockMainNetParams() *mockNetParams {
+	return &mockNetParams{
+		privKeyID: [4]byte{0x02, 0xfd, 0xa4, 0xe8}, // starts with dprv
+		pubKeyID:  [4]byte{0x02, 0xfd, 0xa9, 0x26}, // starts with dpub
+	}
+}
+
+// mockTestNetParams returns mock testnet parameters to use throughout the
+// tests.  They match the Decred testnet version 3 params as of the time this
+// comment was written.
+func mockTestNetParams() *mockNetParams {
+	return &mockNetParams{
+		privKeyID: [4]byte{0x04, 0x35, 0x83, 0x97}, // starts with tprv
+		pubKeyID:  [4]byte{0x04, 0x35, 0x87, 0xd1}, // starts with tpub
+	}
+}
