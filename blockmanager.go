@@ -2207,7 +2207,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.server.txMemPool.RemoveOrphan(tx.Hash())
 			b.server.txMemPool.ProcessOrphans(tx.Hash())
 
-			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			b.server.txMemPool.ModifyLockTransaction(tx, 0)
 		}
 		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
 	}

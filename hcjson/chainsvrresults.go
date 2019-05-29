@@ -183,6 +183,11 @@ type GetMempoolInfoResult struct {
 	Bytes int64 `json:"bytes"`
 }
 
+type GetTxLockpoolInfoResult struct {
+	Info  *map[int64]int
+}
+
+
 // GetNetworkInfoResult models the data returned from the getnetworkinfo
 // command.
 type GetNetworkInfoResult struct {

@@ -213,6 +213,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getinfo":               handleGetInfo,
 	"getblockchaininfo":     handleGetBlockchainInfo,
 	"getmempoolinfo":        handleGetMempoolInfo,
+	"gettxlockpoolinfo":	 handleGetTxLockpoolInfo,
 	"getmininginfo":         handleGetMiningInfo,
 	"getnettotals":          handleGetNetTotals,
 	"getnetworkhashps":      handleGetNetworkHashPS,
@@ -3291,6 +3292,15 @@ func handleGetMempoolInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	return ret, nil
 }
 
+func handleGetTxLockpoolInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	info := s.server.txMemPool.TxLockPoolInfo()
+
+	ret := &hcjson.GetTxLockpoolInfoResult{
+		Info:  info,
+	}
+
+	return ret, nil
+}
 // handleGetMiningInfo implements the getmininginfo command. We only return the
 // fields that are not related to wallet functionality.
 func handleGetMiningInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {

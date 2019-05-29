@@ -592,7 +592,7 @@ func (mp *TxPool) RemoveTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 
 func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 	msgTx := tx.MsgTx()
-	isLockTx := false;
+	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
 		if txscript.IsLockTx(txOut.PkScript) {
 			isLockTx = true
@@ -623,7 +623,7 @@ func (mp *TxPool) ModifyLockTransaction(tx *hcutil.Tx, height int64) {
 
 func (mp *TxPool) RemoveTimeOutLockTransaction(height int64) {
 	mp.mtx.Lock()
-	for heightIndex, _ := range mp.lockTxPool {
+	for heightIndex,_ := range mp.lockTxPool {
 		if heightIndex != 0 && heightIndex < height-24 {
 			delete(mp.lockTxPool, heightIndex)
 		}
@@ -655,8 +655,24 @@ func (mp *TxPool) isTxInExist(outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
 	return false, nil
 }
 
+func (mp *TxPool) TxLockPoolInfo() *map[int64]int {
+	mp.mtx.RLock()
+	defer func() {
+		mp.mtx.RUnlock()
+	}()
+	ret := make(map[int64]int)
+	for i, txList := range mp.lockTxPool {
+		ret[i] = len(txList)
+	}
+	return &ret
+}
+
 //check block transactions locked
 func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block) (bool, error) {
+	mp.mtx.RLock()
+	defer func() {
+		mp.mtx.RUnlock()
+	}()
 	for _, tx := range block.Transactions() {
 		if !mp.isTxExist(tx.Hash()) {
 			for _, txIn := range tx.MsgTx().TxIn {
@@ -671,18 +687,31 @@ func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block) (bool, error
 
 func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Lock()
+	defer func() {
+		mp.mtx.Unlock()
+	}()
+	//exit in lockpool not conflict
+	for _, txList := range mp.lockTxPool {
+		_, exit := txList[*tx.Hash()]
+		if exit {
+			return
+		}
+	}
+
+	//conflict with txlock
 	for _, invalue := range tx.MsgTx().TxIn {
 		for _, txList := range mp.lockTxPool {
 			for j, item := range txList {
 				for _, vIn := range item.MsgTx().TxIn {
 					if invalue.PreviousOutPoint.String() == vIn.PreviousOutPoint.String() {
 						delete(txList, j)
+						break
 					}
 				}
 			}
 		}
 	}
-	mp.mtx.Unlock()
+
 }
 
 // RemoveDoubleSpends removes all transactions which spend outputs spent by the
@@ -709,7 +738,7 @@ func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
 	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
 
 	msgTx := tx.MsgTx()
-	isLockTx := false;
+	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
 		if txscript.IsLockTx(txOut.PkScript) {
 			isLockTx = true
