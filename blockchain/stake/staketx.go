@@ -28,6 +28,7 @@ import (
 type TxType int
 
 // Declare Possible TxTypes. 
+// Statically declare these so that they might be used in consensus code.
 const (
 	TxTypeRegular TxType = iota
 	TxTypeSStx
