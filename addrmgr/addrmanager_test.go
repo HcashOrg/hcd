@@ -476,3 +476,25 @@ func TestNetAddressKey(t *testing.T) {
 		}
 	}
 }
+func TestCorruptPeersFile(t *testing.T) {
+	dir, err := ioutil.TempDir("", "testcorruptpeersfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	peersFile := filepath.Join(dir, PeersFilename)
+	// create corrupt (empty) peers file
+	fp, err := os.Create(peersFile)
+	if err != nil {
+		t.Fatalf("Could not create empty peers file: %s", peersFile)
+	}
+	if err := fp.Close(); err != nil {
+		t.Fatalf("Could not write empty peers file: %s", peersFile)
+	}
+	amgr := New(dir, nil)
+	amgr.Start()
+	amgr.Stop()
+	if _, err := os.Stat(peersFile); err != nil {
+		t.Fatalf("Corrupt peers file has not been removed: %s", peersFile)
+	}
+}
