@@ -259,7 +259,7 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 		SstxHash:  *ticketHash,
 		Vote:      vote,
 	}
- 	// Append the new vote.
+	// Append the new vote.
 	mp.votes[blockHash] = append(vts, voteTx)
 	log.Debugf("Accepted vote %v for block hash %v (height %v), voting "+
 		"%v on the transaction tree", voteHash, blockHash, blockHeight,
@@ -577,7 +577,6 @@ func (mp *TxPool) removeTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 	}
 }
 
-
 // RemoveTransaction removes the passed transaction from the mempool. When the
 // removeRedeemers flag is set, any transactions that redeem outputs from the
 // removed transaction will also be removed recursively from the mempool, as
@@ -594,8 +593,8 @@ func (mp *TxPool) RemoveTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 	msgTx := tx.MsgTx()
 	isLockTx := false;
-	for _, txOut := range msgTx.TxOut{
-		if txscript.IsLockTx(txOut.PkScript){
+	for _, txOut := range msgTx.TxOut {
+		if txscript.IsLockTx(txOut.PkScript) {
 			isLockTx = true
 			break
 		}
@@ -605,7 +604,7 @@ func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 	}
 
 	if txList, exists := mp.lockTxPool[int64(0)]; exists {
-		if _, ok:= txList[msgTx.TxHash()]; ok {
+		if _, ok := txList[msgTx.TxHash()]; ok {
 			delete(txList, msgTx.TxHash())
 		}
 	}
@@ -614,7 +613,6 @@ func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 	}
 	mp.lockTxPool[height][msgTx.TxHash()] = tx
 }
-
 
 func (mp *TxPool) ModifyLockTransaction(tx *hcutil.Tx, height int64) {
 	// Protect concurrent access.
@@ -625,8 +623,8 @@ func (mp *TxPool) ModifyLockTransaction(tx *hcutil.Tx, height int64) {
 
 func (mp *TxPool) RemoveTimeOutLockTransaction(height int64) {
 	mp.mtx.Lock()
-	for heightIndex, _ := range mp.lockTxPool{
-		if  heightIndex !=0 && heightIndex <  height - 24{
+	for heightIndex, _ := range mp.lockTxPool {
+		if heightIndex != 0 && heightIndex < height-24 {
 			delete(mp.lockTxPool, heightIndex)
 		}
 	}
@@ -634,9 +632,9 @@ func (mp *TxPool) RemoveTimeOutLockTransaction(height int64) {
 }
 
 //Is txVin  locked?
-func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool{
+func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool {
 	for _, txList := range mp.lockTxPool {
-		if _, ok := txList[*hash]; ok{
+		if _, ok := txList[*hash]; ok {
 			return true
 		}
 	}
@@ -644,10 +642,10 @@ func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool{
 }
 
 //Is txVin  locked?
-func (mp *TxPool) isTxInExist( outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
+func (mp *TxPool) isTxInExist(outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
 	for _, txList := range mp.lockTxPool {
-		for _, item := range txList{
-			for _, vIn := range item.MsgTx().TxIn{
+		for _, item := range txList {
+			for _, vIn := range item.MsgTx().TxIn {
 				if outPoint.String() == vIn.PreviousOutPoint.String() {
 					return true, item
 				}
@@ -658,17 +656,33 @@ func (mp *TxPool) isTxInExist( outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
 }
 
 //check block transactions locked
-func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block)(bool, error) {
+func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block) (bool, error) {
 	for _, tx := range block.Transactions() {
 		if !mp.isTxExist(tx.Hash()) {
-			for _, txIn := range tx.MsgTx().TxIn{
-				if ok, _:= mp.isTxInExist(&txIn.PreviousOutPoint); ok{
+			for _, txIn := range tx.MsgTx().TxIn {
+				if ok, _ := mp.isTxInExist(&txIn.PreviousOutPoint); ok {
 					return false, fmt.Errorf("lock transaction conflict")
 				}
 			}
 		}
 	}
 	return true, nil
+}
+
+func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
+	mp.mtx.Lock()
+	for _, invalue := range tx.MsgTx().TxIn {
+		for _, txList := range mp.lockTxPool {
+			for j, item := range txList {
+				for _, vIn := range item.MsgTx().TxIn {
+					if invalue.PreviousOutPoint.String() == vIn.PreviousOutPoint.String() {
+						delete(txList, j)
+					}
+				}
+			}
+		}
+	}
+	mp.mtx.Unlock()
 }
 
 // RemoveDoubleSpends removes all transactions which spend outputs spent by the
@@ -696,8 +710,8 @@ func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
 
 	msgTx := tx.MsgTx()
 	isLockTx := false;
-	for _, txOut := range msgTx.TxOut{
-		if txscript.IsLockTx(txOut.PkScript){
+	for _, txOut := range msgTx.TxOut {
+		if txscript.IsLockTx(txOut.PkScript) {
 			isLockTx = true
 			break
 		}
@@ -720,18 +734,18 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 
 	msgTx := tx.MsgTx()
 	isLockTx := false;
-	for _, txOut := range msgTx.TxOut{
-		if txscript.IsLockTx(txOut.PkScript){
+	for _, txOut := range msgTx.TxOut {
+		if txscript.IsLockTx(txOut.PkScript) {
 			isLockTx = true
 			break
 		}
 	}
 
-	if !mp.isTxExist(tx.Hash()){
-		for _, txIn := range tx.MsgTx().TxIn{
+	if !mp.isTxExist(tx.Hash()) {
+		for _, txIn := range tx.MsgTx().TxIn {
 			if ok, txLock := mp.isTxInExist(&txIn.PreviousOutPoint); ok {
-				if isLockTx{
-					if  CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
+				if isLockTx {
+					if CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
 						return
 					}
 				} else {
@@ -742,7 +756,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	}
 	// Add the transaction to the pool and mark the referenced outpoints
 	// as spent by the pool.
-//	msgTx := tx.MsgTx()
+	//	msgTx := tx.MsgTx()
 	mp.pool[*tx.Hash()] = &TxDesc{
 		TxDesc: mining.TxDesc{
 			Tx:     tx,
@@ -779,7 +793,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 func (mp *TxPool) checkPoolDoubleSpend(tx *hcutil.Tx, txType stake.TxType) error {
 	for i, txIn := range tx.MsgTx().TxIn {
 		// We don't care about double spends of stake bases.
-		if  i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
 			continue
 		}
 
@@ -930,11 +944,11 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// value for now.  This is an artifact of older bitcoind clients which
 	// treated this field as an int32 and would treat anything larger
 	// incorrectly (as negative).
-// 	if msgTx.LockTime > math.MaxInt32 {
-// 		str := fmt.Sprintf("transaction %v has a lock time after "+
-// 			"2038 which is not accepted yet", txHash)
-// 		return nil, txRuleError(wire.RejectNonstandard, str)
-// 	}
+	// 	if msgTx.LockTime > math.MaxInt32 {
+	// 		str := fmt.Sprintf("transaction %v has a lock time after "+
+	// 			"2038 which is not accepted yet", txHash)
+	// 		return nil, txRuleError(wire.RejectNonstandard, str)
+	// 	}
 
 	// Get the current height of the main chain.  A standalone transaction
 	// will be mined into the next block at best, so its height is at least

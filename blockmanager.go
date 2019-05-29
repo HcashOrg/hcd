@@ -2121,6 +2121,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.server.AnnounceNewTransactions(acceptedTxs)
 
 			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
 		}
 		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
 
