@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
 	"github.com/HcashOrg/hcd/hcjson"
 )
 // TestChainSvrCmdErrors ensures any errors that occur in the command during
@@ -94,13 +93,13 @@ func TestChainSvrCmds(t *testing.T) {
 		{
 			name: "debuglevel",
 			newCmd: func() (interface{}, error) {
-				return dcrjson.NewCmd("debuglevel", "trace")
+				return hcjson.NewCmd("debuglevel", "trace")
 			},
 			staticCmd: func() interface{} {
-				return dcrjson.NewDebugLevelCmd("trace")
+				return hcjson.NewDebugLevelCmd("trace")
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"debuglevel","params":["trace"],"id":1}`,
-			unmarshalled: &dcrjson.DebugLevelCmd{
+			unmarshalled: &hcjson.DebugLevelCmd{
 				LevelSpec: "trace",
 			},
 		},
