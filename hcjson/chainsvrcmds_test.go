@@ -130,6 +130,20 @@ func TestChainSvrCmds(t *testing.T) {
 			},
 		},
 		{
+			name: "estimatesmartfee",
+			newCmd: func() (interface{}, error) {
+				return NewCmd("estimatesmartfee", 6),nil
+			},
+			staticCmd: func() interface{} {
+				return NewEstimateSmartFeeCmd(6, nil)
+			},
+			marshalled: `{"jsonrpc":"1.0","method":"estimatesmartfee","params":[6],"id":1}`,
+			unmarshalled: &EstimateSmartFeeCmd{
+				Confirmations: 6,
+				Mode:          EstimateSmartFeeModeAddr(EstimateSmartFeeConservative),
+			},
+		},
+		{
 			name: "createrawtransaction",
 			newCmd: func() (interface{}, error) {
 				return hcjson.NewCmd("createrawtransaction", `[{"txid":"123","vout":1}]`,
