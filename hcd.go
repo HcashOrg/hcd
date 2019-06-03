@@ -48,7 +48,7 @@ func hcdMain(serverChan chan<- *server) error {
 	// Get a channel that will be closed when a shutdown signal has been
 	// triggered either from an OS signal such as SIGINT (Ctrl+C) or from
 	// another subsystem such as the RPC server.
-	interruptedChan := interruptListener()
+	ctx := shutdownListener()
 	defer hcdLog.Info("Shutdown complete")
 
 	// Show version and home dir at startup.
@@ -113,7 +113,7 @@ func hcdMain(serverChan chan<- *server) error {
 	}
 
 	// Return now if an interrupt signal was triggered.
-	if interruptRequested(interruptedChan) {
+	if interruptRequested(ctx) {
 		return nil
 	}
 
@@ -132,7 +132,7 @@ func hcdMain(serverChan chan<- *server) error {
 	}()
 
 	// Return now if an interrupt signal was triggered.
-	if interruptRequested(interruptedChan) {
+	if interruptRequested(ctx) {
 		return nil
 	}
 
@@ -187,7 +187,7 @@ func hcdMain(serverChan chan<- *server) error {
 		serverChan <- server
 	}
 
-	if interruptRequested(interruptedChan) {
+	if interruptRequested(ctx) {
 		return nil
 	}
 
@@ -196,7 +196,7 @@ func hcdMain(serverChan chan<- *server) error {
 	// Wait until the interrupt signal is received from an OS signal or
 	// shutdown is requested through one of the subsystems such as the RPC
 	// server.
-	<-interruptedChan
+	<-ctx.Done()
 	return nil
 }
 

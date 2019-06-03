@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 )
@@ -19,11 +20,11 @@ var shutdownRequestChannel = make(chan struct{})
 // shutdown.  This may be modified during init depending on the platform.
 var interruptSignals = []os.Signal{os.Interrupt}
 
-// interruptListener listens for OS Signals such as SIGINT (Ctrl+C) and shutdown
+// shutdownListener listens for OS Signals such as SIGINT (Ctrl+C) and shutdown
 // requests from shutdownRequestChannel.  It returns a channel that is closed
 // when either signal is received.
-func interruptListener() <-chan struct{} {
-	c := make(chan struct{})
+func shutdownListener() context.Context {
+	ctx,cancel:=context.WithCancel(context.Background())
 	go func() {
 		interruptChannel := make(chan os.Signal, 1)
 		signal.Notify(interruptChannel, interruptSignals...)
@@ -32,13 +33,12 @@ func interruptListener() <-chan struct{} {
 		// channel to notify the caller.
 		select {
 		case sig := <-interruptChannel:
-			hcdLog.Infof("Received signal (%s).  Shutting down...",
-				sig)
+			hcdLog.Infof("Received signal (%s).  Shutting down...", sig)
 
 		case <-shutdownRequestChannel:
 			hcdLog.Infof("Shutdown requested.  Shutting down...")
 		}
-		close(c)
+		cancel()
 
 		// Listen for repeated signals and display a message so the user
 		// knows the shutdown is in progress and the process is not
@@ -56,15 +56,15 @@ func interruptListener() <-chan struct{} {
 		}
 	}()
 
-	return c
+	return ctx
 }
 
 // interruptRequested returns true when the channel returned by
-// interruptListener was closed.  This simplifies early shutdown slightly since
+// shutdownListener was closed.  This simplifies early shutdown slightly since
 // the caller can just use an if statement instead of a select.
-func interruptRequested(interrupted <-chan struct{}) bool {
+func interruptRequested(ctx context.Context) bool {
 	select {
-	case <-interrupted:
+	case <-ctx.Done():
 		return true
 	default:
 	}
