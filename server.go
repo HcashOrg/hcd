@@ -2118,45 +2118,7 @@ func (s *server) WaitForShutdown() {
 	s.wg.Wait()
 }
 
-// ScheduleShutdown schedules a server shutdown after the specified duration.
-// It also dynamically adjusts how often to warn the server is going down based
-// on remaining duration.
-func (s *server) ScheduleShutdown(duration time.Duration) {
-	// Don't schedule shutdown more than once.
-	if atomic.AddInt32(&s.shutdownSched, 1) != 1 {
-		return
-	}
-	srvrLog.Warnf("Server shutdown in %v", duration)
-	go func() {
-		remaining := duration
-		tickDuration := dynamicTickDuration(remaining)
-		done := time.After(remaining)
-		ticker := time.NewTicker(tickDuration)
-	out:
-		for {
-			select {
-			case <-done:
-				ticker.Stop()
-				s.Stop()
-				break out
-			case <-ticker.C:
-				remaining = remaining - tickDuration
-				if remaining < time.Second {
-					continue
-				}
 
-				// Change tick duration dynamically based on remaining time.
-				newDuration := dynamicTickDuration(remaining)
-				if tickDuration != newDuration {
-					tickDuration = newDuration
-					ticker.Stop()
-					ticker = time.NewTicker(tickDuration)
-				}
-				srvrLog.Warnf("Server shutdown in %v", remaining)
-			}
-		}
-	}()
-}
 
 // parseListeners splits the list of listen addresses passed in addrs into
 // IPv4 and IPv6 slices and returns them.  This allows easy creation of the
