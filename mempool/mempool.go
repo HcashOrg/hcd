@@ -586,8 +586,9 @@ func (mp *TxPool) removeTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 func (mp *TxPool) RemoveTransaction(tx *hcutil.Tx, removeRedeemers bool) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 	mp.removeTransaction(tx, removeRedeemers)
-	mp.mtx.Unlock()
+
 }
 
 func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
@@ -603,11 +604,12 @@ func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 		return
 	}
 
-	if txList, exists := mp.lockTxPool[int64(0)]; exists {
+	for _, txList := range mp.lockTxPool {
 		if _, ok := txList[msgTx.TxHash()]; ok {
 			delete(txList, msgTx.TxHash())
 		}
 	}
+
 	if _, exists := mp.lockTxPool[height]; !exists {
 		mp.lockTxPool[height] = make(map[chainhash.Hash]*hcutil.Tx)
 	}
@@ -617,22 +619,22 @@ func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 func (mp *TxPool) ModifyLockTransaction(tx *hcutil.Tx, height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 	mp.modifyLockTransaction(tx, height)
-	mp.mtx.Unlock()
 }
 
 func (mp *TxPool) RemoveTimeOutLockTransaction(height int64) {
 	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 	for heightIndex,_ := range mp.lockTxPool {
 		if heightIndex != 0 && heightIndex < height-24 {
 			delete(mp.lockTxPool, heightIndex)
 		}
 	}
-	mp.mtx.Unlock()
 }
 
 //Is txVin  locked?
-func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool {
+func (mp *TxPool) isTxLockExist(hash *chainhash.Hash) bool {
 	for _, txList := range mp.lockTxPool {
 		if _, ok := txList[*hash]; ok {
 			return true
@@ -641,8 +643,9 @@ func (mp *TxPool) isTxExist(hash *chainhash.Hash) bool {
 	return false
 }
 
+
 //Is txVin  locked?
-func (mp *TxPool) isTxInExist(outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
+func (mp *TxPool) isTxLockInExist(outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
 	for _, txList := range mp.lockTxPool {
 		for _, item := range txList {
 			for _, vIn := range item.MsgTx().TxIn {
@@ -655,14 +658,15 @@ func (mp *TxPool) isTxInExist(outPoint *wire.OutPoint) (bool, *hcutil.Tx) {
 	return false, nil
 }
 
-func (mp *TxPool) TxLockPoolInfo() *map[int64]int {
+func (mp *TxPool) TxLockPoolInfo() *map[int64][]string {
 	mp.mtx.RLock()
-	defer func() {
-		mp.mtx.RUnlock()
-	}()
-	ret := make(map[int64]int)
+	defer mp.mtx.RUnlock()
+
+	ret := make(map[int64][]string)
 	for i, txList := range mp.lockTxPool {
-		ret[i] = len(txList)
+		for txHash,_:=range txList{
+			ret[i] = append(ret[i],txHash.String())
+		}
 	}
 	return &ret
 }
@@ -674,9 +678,9 @@ func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block) (bool, error
 		mp.mtx.RUnlock()
 	}()
 	for _, tx := range block.Transactions() {
-		if !mp.isTxExist(tx.Hash()) {
+		if !mp.isTxLockExist(tx.Hash()) {
 			for _, txIn := range tx.MsgTx().TxIn {
-				if ok, _ := mp.isTxInExist(&txIn.PreviousOutPoint); ok {
+				if ok, _ := mp.isTxLockInExist(&txIn.PreviousOutPoint); ok {
 					return false, fmt.Errorf("lock transaction conflict")
 				}
 			}
@@ -770,9 +774,9 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 		}
 	}
 
-	if !mp.isTxExist(tx.Hash()) {
+	if !mp.isTxLockExist(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
-			if ok, txLock := mp.isTxInExist(&txIn.PreviousOutPoint); ok {
+			if ok, txLock := mp.isTxLockInExist(&txIn.PreviousOutPoint); ok {
 				if isLockTx {
 					if CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
 						return

@@ -10,6 +10,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
+	"go-common/library/log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -1993,6 +1994,7 @@ out:
 // handleNotifyMsg handles notifications from blockchain.  It does things such
 // as request orphan block parents and relay accepted blocks to connected peers.
 func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
+	//log.Info("handleNotifyMsg:", notification.Type)
 	switch notification.Type {
 	// A block has been accepted into the block chain.  Relay it to other
 	// peers.
@@ -2032,6 +2034,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			_, beenNotified := b.lotteryDataBroadcast[*hash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
+			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
 			ok, _ := b.server.txMemPool.CheckLockTransactionValidate(block)
 			// Obtain the winning tickets for this block.  handleNotifyMsg
 			// should be safe for concurrent access of things contained
@@ -2065,7 +2068,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		iv := wire.NewInvVect(wire.InvTypeBlock, block.Hash())
 		b.server.RelayInventory(iv, block.MsgBlock().Header)
 
-	// A block has been connected to the main block chain.
+		// A block has been connected to the main block chain.
 	case blockchain.NTBlockConnected:
 		blockSlice, ok := notification.Data.([]*hcutil.Block)
 		if !ok {
@@ -2080,6 +2083,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
+		log.Error("NTBlockConnected:",block.Height(),parentBlock.Height())
 
 		// Check and see if the regular tx tree of the previous block was
 		// invalid or not. If it wasn't, then we need to restore all the tx
@@ -2120,7 +2124,11 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			acceptedTxs := b.server.txMemPool.ProcessOrphans(tx.Hash())
 			b.server.AnnounceNewTransactions(acceptedTxs)
 
+			//block connect success,we can believe parent are voted successfully,
+			//now we update the locktx height in the lockpool
 			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			//parent block are voted successfully ,now we can remove doubleSpends tx
+			// conflict with parent block from lockPool
 			b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
 		}
 		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
@@ -2152,7 +2160,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyBlockConnected(block)
 		}
 
-	// Stake tickets are spent or missed from the most recently connected block.
+		// Stake tickets are spent or missed from the most recently connected block.
 	case blockchain.NTSpentAndMissedTickets:
 		tnd, ok := notification.Data.(*blockchain.TicketNotificationsData)
 		if !ok {
@@ -2165,7 +2173,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifySpentAndMissedTickets(tnd)
 		}
 
-	// Stake tickets are matured from the most recently connected block.
+		// Stake tickets are matured from the most recently connected block.
 	case blockchain.NTNewTickets:
 		tnd, ok := notification.Data.(*blockchain.TicketNotificationsData)
 		if !ok {
@@ -2178,7 +2186,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyNewTickets(tnd)
 		}
 
-	// A block has been disconnected from the main block chain.
+		// A block has been disconnected from the main block chain.
 	case blockchain.NTBlockDisconnected:
 		blockSlice, ok := notification.Data.([]*hcutil.Block)
 		if !ok {
@@ -2193,6 +2201,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
+		log.Error("blockchain: NTBlockDisconnected",block.Height(),parentBlock.Height())
 
 		// If the parent tx tree was invalidated, we need to remove these
 		// tx from the mempool as the next incoming block may alternatively
@@ -2200,21 +2209,23 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		txTreeRegularValid := hcutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
 			hcutil.BlockValid)
 
+		log.Error("NTBlockDisconnected NTBlockDisconnected:",txTreeRegularValid)
 		if !txTreeRegularValid {
-		for _, tx := range parentBlock.Transactions()[1:] {
-			b.server.txMemPool.RemoveTransaction(tx, false)
-			b.server.txMemPool.RemoveDoubleSpends(tx)
-			b.server.txMemPool.RemoveOrphan(tx.Hash())
-			b.server.txMemPool.ProcessOrphans(tx.Hash())
+			for _, tx := range parentBlock.Transactions()[1:] {
+				b.server.txMemPool.RemoveTransaction(tx, false)
+				b.server.txMemPool.RemoveDoubleSpends(tx)
+				b.server.txMemPool.RemoveOrphan(tx.Hash())
+				b.server.txMemPool.ProcessOrphans(tx.Hash())
 
-			b.server.txMemPool.ModifyLockTransaction(tx, 0)
+			}
 		}
-		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
-	}
 
 		// Reinsert all of the transactions (except the coinbase) from the parent
 		// tx tree regular into the transaction pool.
 		for _, tx := range parentBlock.Transactions()[1:] {
+			//reinsert tx from disconnected block, now we can update locktx height to 0 in the txlockpool
+			b.server.txMemPool.ModifyLockTransaction(tx, 0)
+
 			_, err := b.server.txMemPool.MaybeAcceptTransaction(tx, false, true)
 			if err != nil {
 				// Remove the transaction and all transactions
@@ -2239,7 +2250,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyBlockDisconnected(block)
 		}
 
-	// The blockchain is reorganizing.
+		// The blockchain is reorganizing.
 	case blockchain.NTReorganization:
 		rd, ok := notification.Data.(*blockchain.ReorganizationNtfnsData)
 		if !ok {

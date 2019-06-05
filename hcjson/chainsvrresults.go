@@ -6,7 +6,9 @@
 
 package hcjson
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // GetBlockHeaderVerboseResult models the data from the getblockheader command when
 // the verbose flag is set.  When the verbose flag is not set, getblockheader
@@ -184,7 +186,7 @@ type GetMempoolInfoResult struct {
 }
 
 type GetTxLockpoolInfoResult struct {
-	Info  *map[int64]int
+	Info  *map[int64][]string
 }
 
 
