@@ -54,3 +54,25 @@ func BenchmarkCalcSigHash(b *testing.B) {
 	}
 }
 
+
+// BenchmarkScriptParsing benchmarks how long it takes to parse a very large
+// script.
+func BenchmarkScriptParsing(b *testing.B) {
+	script, err := genComplexScript()
+	if err != nil {
+		b.Fatalf("failed to create benchmark script: %v", err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		pops, err := parseScript(script)
+		if err != nil {
+			b.Fatalf("failed to parse script: %v", err)
+		}
+
+		for _, pop := range pops {
+			_ = pop.opcode
+			_ = pop.data
+		}
+	}
+}
