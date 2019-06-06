@@ -10,7 +10,6 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
-	"go-common/library/log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -1034,7 +1033,7 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 	delete(b.requestedBlocks, *blockHash)
 
 	/*
-	_, err := b.server.txMemPool.CheckLockTransactionValidate(bmsg.block)
+	_, err := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
 	if err != nil{
 		bmgrLog.Infof("%v",  err)
 		return
@@ -1143,7 +1142,7 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			_, beenNotified := b.lotteryDataBroadcast[*blockHash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
-			ok, _ := b.server.txMemPool.CheckLockTransactionValidate(bmsg.block)
+			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
 
 			if !beenNotified && r != nil &&
 				int64(bmsg.block.MsgBlock().Header.Height) >
@@ -1862,7 +1861,7 @@ out:
 							int64(msg.block.MsgBlock().Header.Height),
 							winningTickets}
 
-						ok, _ := b.server.txMemPool.CheckLockTransactionValidate(msg.block)
+						ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(msg.block)
 						if ok {
 							r.ntfnMgr.NotifyWinningTickets(ntfnData)
 						}
@@ -2035,7 +2034,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.lotteryDataBroadcastMutex.Unlock()
 
 			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
-			ok, _ := b.server.txMemPool.CheckLockTransactionValidate(block)
+			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(block)
 			// Obtain the winning tickets for this block.  handleNotifyMsg
 			// should be safe for concurrent access of things contained
 			//			// within blockchain.
@@ -2083,7 +2082,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		log.Error("NTBlockConnected:",block.Height(),parentBlock.Height())
+		bmgrLog.Error("NTBlockConnected:",block.Height(),parentBlock.Height())
 
 		// Check and see if the regular tx tree of the previous block was
 		// invalid or not. If it wasn't, then we need to restore all the tx
@@ -2127,6 +2126,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
 			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
 			b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
@@ -2201,7 +2201,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		log.Error("blockchain: NTBlockDisconnected",block.Height(),parentBlock.Height())
+		bmgrLog.Error("blockchain: NTBlockDisconnected",block.Height(),parentBlock.Height())
 
 		// If the parent tx tree was invalidated, we need to remove these
 		// tx from the mempool as the next incoming block may alternatively
@@ -2209,7 +2209,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		txTreeRegularValid := hcutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
 			hcutil.BlockValid)
 
-		log.Error("NTBlockDisconnected NTBlockDisconnected:",txTreeRegularValid)
+		bmgrLog.Error("NTBlockDisconnected NTBlockDisconnected:",txTreeRegularValid)
 		if !txTreeRegularValid {
 			for _, tx := range parentBlock.Transactions()[1:] {
 				b.server.txMemPool.RemoveTransaction(tx, false)

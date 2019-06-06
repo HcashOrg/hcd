@@ -671,12 +671,12 @@ func (mp *TxPool) TxLockPoolInfo() *map[int64][]string {
 	return &ret
 }
 
-//check block transactions locked
-func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block) (bool, error) {
+//check block transactions is conflict with lockPool .we can reject the conflict block by not notify the winningTicket
+// to wallet
+func (mp *TxPool) CheckConflictWithTxLockPool(block *hcutil.Block) (bool, error) {
 	mp.mtx.RLock()
-	defer func() {
-		mp.mtx.RUnlock()
-	}()
+	defer mp.mtx.RUnlock()
+
 	for _, tx := range block.Transactions() {
 		if !mp.isTxLockExist(tx.Hash()) {
 			for _, txIn := range tx.MsgTx().TxIn {
@@ -691,9 +691,8 @@ func (mp *TxPool) CheckLockTransactionValidate(block *hcutil.Block) (bool, error
 
 func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Lock()
-	defer func() {
-		mp.mtx.Unlock()
-	}()
+	defer mp.mtx.Unlock()
+
 	//exit in lockpool not conflict
 	for _, txList := range mp.lockTxPool {
 		_, exit := txList[*tx.Hash()]
