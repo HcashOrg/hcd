@@ -37,8 +37,6 @@ type fakeChain struct {
 	scriptFlags   txscript.ScriptFlags
 }
 
-
-
 // SetNextStakeDifficulty sets the next stake difficulty associated with the
 // fake chain instance.
 func (s *fakeChain) SetNextStakeDifficulty(nextStakeDiff int64) {
@@ -75,8 +73,6 @@ func (s *fakeChain) FetchUtxoView(tx *hcutil.Tx, treeValid bool) (*blockchain.Ut
 	return viewpoint, nil
 }
 
-
-
 // AddBlock adds a block that will be available to the BlockByHash function to
 // the fake chain instance.
 func (s *fakeChain) AddBlock(block *hcutil.Block) {
@@ -85,22 +81,21 @@ func (s *fakeChain) AddBlock(block *hcutil.Block) {
 	s.Unlock()
 }
 
-
 // SetHash sets the current best hash associated with the fake chain instance.
 func (s *fakeChain) SetBestHash(hash *chainhash.Hash) {
 	s.Lock()
 	s.currentHash = *hash
 	s.Unlock()
 }
+
 // NextStakeDifficulty returns the next stake difficulty associated with the
 // fake chain instance.
 func (s *fakeChain) NextStakeDifficulty() (int64, error) {
-    s.RLock()
-    nextStakeDiff := s.nextStakeDiff
-    s.RUnlock()
-    return nextStakeDiff, nil
+	s.RLock()
+	nextStakeDiff := s.nextStakeDiff
+	s.RUnlock()
+	return nextStakeDiff, nil
 }
-
 
 // BestHeight returns the current height associated with the fake chain
 // instance.
@@ -121,12 +116,11 @@ func (s *fakeChain) SetHeight(height int64) {
 // BestHash returns the current best hash associated with the fake chain
 // instance.
 func (s *fakeChain) BestHash() *chainhash.Hash {
-    s.RLock()
-    hash := &s.currentHash
-    s.RUnlock()
-    return hash
+	s.RLock()
+	hash := &s.currentHash
+	s.RUnlock()
+	return hash
 }
-
 
 // PastMedianTime returns the current median time associated with the fake chain
 // instance.
@@ -144,6 +138,7 @@ func (s *fakeChain) SetPastMedianTime(medianTime time.Time) {
 	s.medianTime = medianTime
 	s.Unlock()
 }
+
 // BlockByHash returns the block with the given hash from the fake chain
 // instance.  Blocks can be added to the instance with the AddBlock function.
 func (s *fakeChain) BlockByHash(hash *chainhash.Hash) (*hcutil.Block, error) {
@@ -165,16 +160,6 @@ func (s *fakeChain) CalcSequenceLock(tx *hcutil.Tx, view *blockchain.UtxoViewpoi
 		MinTime:   -1,
 	}, nil
 }
-
-// BestHash returns the current best hash associated with the fake chain
-// instance.
-func (s *fakeChain) BestHash() *chainhash.Hash {
-	s.RLock()
-	hash := &s.currentHash
-	s.RUnlock()
-	return hash
-}
-
 
 // StandardVerifyFlags returns the standard verification script flags associated
 // with the fake chain instance.
@@ -340,6 +325,53 @@ func (p *poolHarness) CreateTxChain(firstOutput spendableOutput, numTxns uint32)
 			PkScript: p.payScript,
 			Value:    int64(spendableAmount),
 		})
+
+		// Sign the new transaction.
+		sigScript, err := txscript.SignatureScript(tx, 0, p.payScript,
+			txscript.SigHashAll, p.signKey, true)
+		if err != nil {
+			return nil, err
+		}
+		tx.TxIn[0].SignatureScript = sigScript
+
+		txChain = append(txChain, hcutil.NewTx(tx))
+
+		// Next transaction uses outputs from this one.
+		prevOutPoint = wire.OutPoint{Hash: tx.TxHash(), Index: 0}
+	}
+
+	return txChain, nil
+}
+
+// CreateTxChain creates a chain of zero-fee transactions (each subsequent
+// transaction spends the entire amount from the previous one) with the first
+// one spending the provided outpoint.  Each transaction spends the entire
+// amount of the previous one and as such does not include any fees.
+func (p *poolHarness) CreateLockTxChain(firstOutput spendableOutput, numTxns uint32) ([]*hcutil.Tx, error) {
+	txChain := make([]*hcutil.Tx, 0, numTxns)
+	prevOutPoint := firstOutput.outPoint
+	spendableAmount := firstOutput.amount
+	for i := uint32(0); i < numTxns; i++ {
+		// Create the transaction using the previous transaction output
+		// and paying the full amount to the payment address associated
+		// with the harness.
+		tx := wire.NewMsgTx()
+		tx.AddTxIn(&wire.TxIn{
+			PreviousOutPoint: prevOutPoint,
+			SignatureScript:  nil,
+			Sequence:         wire.MaxTxInSequenceNum,
+		})
+		tx.AddTxOut(&wire.TxOut{
+			PkScript: p.payScript,
+			Value:    int64(spendableAmount),
+		})
+
+		payLoadScript, err := txscript.GenerateProvablyPruneableOut([]byte("hcashInstantSend"))
+		payLoadTx := &wire.TxOut{
+			Value:    int64(0),
+			PkScript: payLoadScript,
+		}
+		tx.AddTxOut(payLoadTx)
 
 		// Sign the new transaction.
 		sigScript, err := txscript.SignatureScript(tx, 0, p.payScript,
@@ -532,6 +564,132 @@ func TestSimpleOrphanChain(t *testing.T) {
 		}
 		fmt.Println(tx)
 	}
+}
+
+func TestTxLockPool(t *testing.T) {
+	t.Parallel()
+	var txLen = 1000
+	harness, spendableOuts, err := newPoolHarness(&chaincfg.MainNetParams)
+	for _, v := range spendableOuts {
+		t.Log(v.outPoint.String())
+	}
+
+	if err != nil {
+		t.Fatalf("unable to create test pool: %v", err)
+	}
+
+	// Create a chain of transactions rooted with the first spendable output
+	// provided by the harness.
+	chainedTxns, err := harness.CreateLockTxChain(spendableOuts[0], uint32(txLen))
+	if err != nil {
+		t.Fatalf("unable to create transaction chain: %v", err)
+	}
+
+	// Ensure orphans are rejected when the allow orphans flag is not set.
+	for _, tx := range chainedTxns[:] {
+		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
+			0, 0)
+	}
+
+	if len(harness.txPool.lockTxPool[0])!= txLen{
+		t.Fatalf("maybeAddtoLockPool err")
+	}
+
+
+	t.Log(harness.txPool.TxLockPoolInfo())
+
+	for _, tx := range chainedTxns[:] {
+		harness.txPool.ModifyLockTransaction(tx, 45668)
+	}
+
+	if len(harness.txPool.lockTxPool[45668])!= txLen{
+		t.Fatalf("ModifyLockTransaction 45668 err")
+	}
+
+	t.Log(harness.txPool.TxLockPoolInfo())
+	for _, tx := range chainedTxns[:] {
+		harness.txPool.ModifyLockTransaction(tx, 0)
+
+	}
+
+	if len(harness.txPool.lockTxPool[0])!= txLen{
+		t.Fatalf("ModifyLockTransaction 0 err")
+	}
+	t.Log(harness.txPool.TxLockPoolInfo())
+
+	for _, tx := range chainedTxns[:] {
+		harness.txPool.ModifyLockTransaction(tx, 45668)
+	}
+	if len(harness.txPool.lockTxPool[45668])!= txLen{
+		t.Fatalf("ModifyLockTransaction 45668 err")
+	}
+	t.Log(harness.txPool.TxLockPoolInfo())
+
+
+	harness.txPool.RemoveTimeOutLockTransaction(45768)
+
+	if len(harness.txPool.lockTxPool[45668])!= 0{
+		t.Fatalf("RemoveTimeOutLockTransaction err")
+	}
+
+	//t.Log(harness.txPool.TxLockPoolInfo())
+
+	for _, tx := range chainedTxns[:] {
+		//t.Log(tx.MsgTx().TxIn[0].PreviousOutPoint.String())
+		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
+			0, 0)
+	}
+
+	if len(harness.txPool.lockTxPool[0])!= txLen{
+		t.Fatalf("maybeAddtoLockPool err")
+	}
+	t.Log(harness.txPool.TxLockPoolInfo())
+
+
+	for _, tx := range chainedTxns[:] {
+
+		chainedTxns2, _ := harness.CreateTxChain(spendableOutput{tx.MsgTx().TxIn[0].PreviousOutPoint, 0}, 1)
+
+		harness.txPool.RemoveTxLockDoubleSpends(chainedTxns2[0])
+		//t.Log(harness.txPool.TxLockPoolInfo())
+	}
+	if len(harness.txPool.lockTxPool[0])!= 0{
+		t.Fatalf("RemoveTxLockDoubleSpends err")
+	}
+
+	for _, tx := range chainedTxns[:] {
+		//t.Log(tx.MsgTx().TxIn[0].PreviousOutPoint.String())
+		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
+			0, 0)
+	}
+
+	if len(harness.txPool.lockTxPool[0])!= txLen{
+		t.Fatalf("maybeAddtoLockPool err")
+	}
+	t.Log(harness.txPool.TxLockPoolInfo())
+
+	for _, tx := range chainedTxns[:txLen/2] {
+		harness.txPool.ModifyLockTransaction(tx, 45668)
+	}
+	if len(harness.txPool.lockTxPool[45668])!= txLen/2{
+		t.Fatalf("ModifyLockTransaction 45668 err")
+	}
+
+	t.Log(harness.txPool.TxLockPoolInfo())
+	for _, tx := range chainedTxns[:] {
+
+		chainedTxns2, _ := harness.CreateTxChain(spendableOutput{tx.MsgTx().TxIn[0].PreviousOutPoint, 0}, 1)
+
+		harness.txPool.RemoveTxLockDoubleSpends(chainedTxns2[0])
+		//t.Log(harness.txPool.TxLockPoolInfo())
+	}
+
+	if len(harness.txPool.lockTxPool[0])!= 0||len(harness.txPool.lockTxPool[45668])!= 0{
+		t.Fatalf("RemoveTxLockDoubleSpends err")
+	}
+
+
+	t.Log(harness.txPool.TxLockPoolInfo())
 }
 
 // TestOrphanReject ensures that orphans are properly rejected when the allow
