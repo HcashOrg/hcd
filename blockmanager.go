@@ -2082,7 +2082,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		bmgrLog.Error("NTBlockConnected:",block.Height(),parentBlock.Height())
+		bmgrLog.Debug("NTBlockConnected:",block.Height(),parentBlock.Height())
 
 		// Check and see if the regular tx tree of the previous block was
 		// invalid or not. If it wasn't, then we need to restore all the tx
@@ -2131,7 +2131,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			// conflict with parent block from lockPool
 			b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
 		}
-		b.server.txMemPool.RemoveTimeOutLockTransaction(parentBlock.Height())
+		b.server.txMemPool.RemoveConfirmedLockTransaction(parentBlock.Height())
 
 		for _, stx := range block.STransactions()[0:] {
 			b.server.txMemPool.RemoveTransaction(stx, false)

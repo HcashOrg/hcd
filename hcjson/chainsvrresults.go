@@ -186,9 +186,13 @@ type GetMempoolInfoResult struct {
 }
 
 type GetTxLockpoolInfoResult struct {
-	Info  *map[int64][]string
+	Info  map[string]*TxLockInfo
 }
 
+type TxLockInfo struct {
+	AddHeight int64 `json:"add_height"`
+	MineHeight int64 `json:"mine_height"`
+}
 
 // GetNetworkInfoResult models the data returned from the getnetworkinfo
 // command.
