@@ -54,6 +54,29 @@ func GenerateKey(curve *TwistedEdwardsCurve, rand io.Reader) (priv []byte, x,
 	return
 }
 
+// GenerateKey generates a key using a random number generator, returning
+// the private scalar and the corresponding public key points from a
+// random secret.
+func GenerateKeyNew(rand io.Reader) (priv []byte, x, y *big.Int, err error) {
+	var pub *[PubKeyBytesLen]byte
+	var privArray *[PrivKeyBytesLen]byte
+	pub, privArray, err = ed25519.GenerateKey(rand)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	priv = privArray[:]
+
+	curve := new(TwistedEdwardsCurve)
+	curve.InitParam25519()
+
+	x, y, err = curve.EncodedBytesToBigIntPoint(pub)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return
+}
+
 // SignFromSecret signs a message 'hash' using the given private key priv. It doesn't
 // actually user the random reader (the lib is maybe deterministic???).
 func SignFromSecret(rand io.Reader, priv *PrivateKey, hash []byte) (r, s *big.Int,
