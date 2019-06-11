@@ -677,7 +677,7 @@ func TestOrphanEviction(t *testing.T) {
 // add test for tx lock 
 func TestTxLockPool(t *testing.T) {
 	t.Parallel()
-	var txLen = 10000
+	var txLen = 10
 	harness, spendableOuts, err := newPoolHarness(&chaincfg.MainNetParams)
 	for _, v := range spendableOuts {
 		t.Log(v.outPoint.String())
@@ -758,6 +758,9 @@ func TestTxLockPool(t *testing.T) {
 	if len(harness.txPool.txLockPool) != txLen {
 		t.Fatalf("maybeAddtoLockPool err")
 	}
+	harness.chain.currentHeight=45888
+	t.Log(harness.txPool.FetchPendingLockTx(1))
+	
 	t.Log(harness.txPool.TxLockPoolInfo())
 
 	for _, tx := range chainedTxns[:] {
