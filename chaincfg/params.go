@@ -308,6 +308,9 @@ type Params struct {
 	// Special case: disable taxes with a value of 0
 	BlockTaxProportion uint16
 
+	//for utxo used in instantsend tx
+	InstantSendConfirmationsRequired  int32
+
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints []Checkpoint
 
@@ -489,6 +492,7 @@ var MainNetParams = Params{
 	WorkRewardProportion:     6,
 	StakeRewardProportion:    3,
 	BlockTaxProportion:       1,
+	InstantSendConfirmationsRequired: 6,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -600,6 +604,7 @@ var TestNet2Params = Params{
 	WorkRewardProportion:     6,
 	StakeRewardProportion:    3,
 	BlockTaxProportion:       1,
+	InstantSendConfirmationsRequired: 2,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -742,6 +747,7 @@ var SimNetParams = Params{
 	WorkRewardProportion:     6,
 	StakeRewardProportion:    3,
 	BlockTaxProportion:       1,
+	InstantSendConfirmationsRequired: 2,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,
