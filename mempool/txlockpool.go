@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	defaultConfirmNum=24
+	defaultConfirmNum = 24
+	defaultBehindNums = 10
 )
+
 type TxLockDesc struct {
 	Tx *hcutil.Tx
 	// Height is the block height when the entry was added to the the source
@@ -88,13 +90,37 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 
-	ret:=make(map[string]*hcjson.TxLockInfo,len(mp.txLockPool))
+	ret := make(map[string]*hcjson.TxLockInfo, len(mp.txLockPool))
 
-	for hash,desc:=range mp.txLockPool{
-		ret[hash.String()]=&hcjson.TxLockInfo{AddHeight:desc.AddHeight,MineHeight:desc.MineHeight}
+	for hash, desc := range mp.txLockPool {
+		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight}
 	}
 
 	return ret
+}
+
+func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+
+	if behindNums <= 0 {
+		behindNums = defaultBehindNums
+	}
+	bestHeight := mp.cfg.BestHeight()
+	minHeight := bestHeight - behindNums
+
+	retMsgTx := make([][]byte, 0)
+	for _, desc := range mp.txLockPool {
+		if desc.MineHeight != 0 && desc.AddHeight < minHeight {
+			bts, err := desc.Tx.MsgTx().Bytes()
+			if err == nil {
+				retMsgTx = append(retMsgTx, bts)
+			}
+		}
+	}
+
+	return retMsgTx
+
 }
 
 //check block transactions is conflict with lockPool .we can reject the conflict block by not notify the winningTicket
@@ -114,7 +140,6 @@ func (mp *TxPool) CheckConflictWithTxLockPool(block *hcutil.Block) (bool, error)
 	}
 	return true, nil
 }
-
 
 //remove txlock which is conflict with tx
 func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
@@ -143,8 +168,8 @@ func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
 	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
 
-		//if exist just return ,or will rewrite the state of this txlock
-	if mp.isTxLockExist(tx.Hash()){
+	//if exist just return ,or will rewrite the state of this txlock
+	if mp.isTxLockExist(tx.Hash()) {
 		return
 	}
 

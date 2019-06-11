@@ -116,6 +116,7 @@ const (
 	// be relayed or mined and thus should only apply in the mempool and/or
 	// possibly the mining code.
 	maxSigOpsPerTx = blockchain.MaxSigOpsPerBlock / 5
+
 )
 
 var (
@@ -213,7 +214,8 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getinfo":               handleGetInfo,
 	"getblockchaininfo":     handleGetBlockchainInfo,
 	"getmempoolinfo":        handleGetMempoolInfo,
-	"gettxlockpoolinfo":	 handleGetTxLockpoolInfo,
+	"gettxlockpoolinfo":     handleGetTxLockpoolInfo,
+	"fetchpendinglocktx":    handleFetchPendingLockTx,
 	"getmininginfo":         handleGetMiningInfo,
 	"getnettotals":          handleGetNetTotals,
 	"getnetworkhashps":      handleGetNetworkHashPS,
@@ -3296,11 +3298,23 @@ func handleGetTxLockpoolInfo(s *rpcServer, cmd interface{}, closeChan <-chan str
 	info := s.server.txMemPool.TxLockPoolInfo()
 
 	ret := &hcjson.GetTxLockpoolInfoResult{
-		Info:  info,
+		Info: info,
 	}
 
 	return ret, nil
 }
+
+func handleFetchPendingLockTx(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.FetchPendingLockTxCmd)
+	msgtx := s.server.txMemPool.FetchPendingLockTx(c.BehindNums)
+
+	ret := &hcjson.FetchPendingLockTxResult{
+		MsgTx: msgtx,
+	}
+
+	return ret, nil
+}
+
 // handleGetMiningInfo implements the getmininginfo command. We only return the
 // fields that are not related to wallet functionality.
 func handleGetMiningInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {

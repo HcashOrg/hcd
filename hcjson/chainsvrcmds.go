@@ -395,6 +395,9 @@ func NewGetTxlockPoolInfoCmd()*GetTxlockPoolInfoCmd  {
 	return &GetTxlockPoolInfoCmd{}
 }
 
+type FetchPendingLockTxCmd struct {
+	BehindNums int64 `json:"behind_nums"`
+}
 
 
 // GetMiningInfoCmd defines the getmininginfo JSON-RPC command.
@@ -771,6 +774,7 @@ func init() {
 	MustRegisterCmd("getinfo", (*GetInfoCmd)(nil), flags)
 	MustRegisterCmd("getmempoolinfo", (*GetMempoolInfoCmd)(nil), flags)
 	MustRegisterCmd("gettxlockpoolinfo",(*GetTxlockPoolInfoCmd)(nil),flags)
+	MustRegisterCmd("fetchpendinglocktx",(*FetchPendingLockTxCmd)(nil),flags)
 	MustRegisterCmd("getmininginfo", (*GetMiningInfoCmd)(nil), flags)
 	MustRegisterCmd("getnetworkinfo", (*GetNetworkInfoCmd)(nil), flags)
 	MustRegisterCmd("getnettotals", (*GetNetTotalsCmd)(nil), flags)

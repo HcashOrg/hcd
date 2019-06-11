@@ -189,6 +189,12 @@ type GetTxLockpoolInfoResult struct {
 	Info  map[string]*TxLockInfo
 }
 
+type FetchPendingLockTxResult struct {
+	MsgTx [][]byte
+}
+
+
+
 type TxLockInfo struct {
 	AddHeight int64 `json:"add_height"`
 	MineHeight int64 `json:"mine_height"`
