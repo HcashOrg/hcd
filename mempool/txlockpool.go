@@ -109,9 +109,10 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	bestHeight := mp.cfg.BestHeight()
 	minHeight := bestHeight - behindNums
 
+	log.Error("bestHeight:",bestHeight,"minHeight:",minHeight,"behindNums",behindNums)
 	retMsgTx := make([][]byte, 0)
 	for _, desc := range mp.txLockPool {
-		if desc.MineHeight != 0 && desc.AddHeight < minHeight {
+		if desc.MineHeight == 0 && desc.AddHeight < minHeight {
 			bts, err := desc.Tx.MsgTx().Bytes()
 			if err == nil {
 				retMsgTx = append(retMsgTx, bts)

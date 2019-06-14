@@ -399,6 +399,12 @@ type FetchPendingLockTxCmd struct {
 	BehindNums int64 `json:"behind_nums"`
 }
 
+func NewFetchPendingLockTxCmd(behindNums int64)*FetchPendingLockTxCmd  {
+	return &FetchPendingLockTxCmd{
+		BehindNums:behindNums,
+	}
+}
+
 
 // GetMiningInfoCmd defines the getmininginfo JSON-RPC command.
 type GetMiningInfoCmd struct{}
