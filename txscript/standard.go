@@ -247,7 +247,7 @@ func isNullData(pops []parsedOpcode) bool {
 // false otherwise.
 func isStakeSubmission(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		pops[0].opcode.value == OP_SSTX &&
+		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -257,7 +257,7 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		pops[0].opcode.value == OP_SSTX &&
+		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -268,7 +268,7 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		pops[0].opcode.value == OP_SSTX &&
+		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -352,7 +352,7 @@ func isStakeRevocation(pops []parsedOpcode) bool {
 // change tx, false otherwise.
 func isSStxChange(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		pops[0].opcode.value == OP_SSTXCHANGE &&
+		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -362,7 +362,7 @@ func isSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		pops[0].opcode.value == OP_SSTXCHANGE &&
+		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -373,7 +373,7 @@ func isSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		pops[0].opcode.value == OP_SSTXCHANGE &&
+		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -541,7 +541,7 @@ func GetStakeOutSubclass(pkScript []byte) (ScriptClass, error) {
 	if isStake {
 		var stakeSubscript []parsedOpcode
 		for _, pop := range pkPops {
-			if pop.opcode.value >= 186 && pop.opcode.value <= 189 {
+			if (pop.opcode.value >= 186 && pop.opcode.value <= 189 ) || (pop.opcode.value >= 200 && pop.opcode.value <= 203 ){
 				continue
 			}
 			stakeSubscript = append(stakeSubscript, pop)
@@ -866,6 +866,60 @@ func PayToSStx(addr hcutil.Address) ([]byte, error) {
 		AddData(hash).AddOp(OP_EQUAL).Script()
 }
 
+// PayToSStx creates a new script to pay a transaction output to a script hash or
+// public key hash, but tags the output with OP_SSTX. For use in constructing
+// valid SStxs.
+func PayToAISStx(addr hcutil.Address) ([]byte, error) {
+	sigType := []byte{byte(bliss)}
+
+	if addr == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	// Only pay to pubkey hash and pay to script hash are
+	// supported.
+	scriptType := PubkeyHashAltTy
+	switch addr := addr.(type) {
+	case *hcutil.AddressPubKeyHash:
+		chainecType := addr.DSA(addr.Net())
+		if !(chainecType == chainec.ECTypeSecp256k1 || chainecType == bs.BSTypeBliss) {
+			return nil, ErrUnsupportedAddress
+		}
+		sigType = []byte{byte(chainecType)}
+	case *hcutil.AddressScriptHash:
+		scriptType = ScriptHashTy
+	default:
+		return nil, ErrUnsupportedAddress
+	}
+
+	hash := addr.ScriptAddress()
+
+	if scriptType == PubkeyHashAltTy {
+		/*
+		return NewScriptBuilder().AddOp(OP_SSTX).AddOp(OP_DUP).
+			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
+			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+		*/
+
+		return NewScriptBuilder().AddOp(OP_UNKNOWN200).AddOp(OP_DUP).
+			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
+			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+
+	}
+
+	var assert *int
+	*assert = 0
+/*
+	return NewScriptBuilder().AddOp(OP_SSTX).AddOp(OP_HASH160).
+		AddData(hash).AddOp(OP_EQUAL).Script()
+
+*/
+
+	return NewScriptBuilder().AddOp(OP_UNKNOWN200).AddOp(OP_HASH160).
+		AddData(hash).AddOp(OP_EQUAL).Script()
+}
+
+
 // PayToSStxChange creates a new script to pay a transaction output to a
 // public key hash, but tags the output with OP_SSTXCHANGE. For use in constructing
 // valid SStxs.
@@ -902,6 +956,57 @@ func PayToSStxChange(addr hcutil.Address) ([]byte, error) {
 	}
 	return NewScriptBuilder().AddOp(OP_SSTXCHANGE).AddOp(OP_HASH160).
 		AddData(hash).AddOp(OP_EQUAL).Script()
+}
+
+// PayToSStxChange creates a new script to pay a transaction output to a
+// public key hash, but tags the output with OP_SSTXCHANGE. For use in constructing
+// valid SStxs.
+func PayToAISStxChange(addr hcutil.Address) ([]byte, error) {
+	sigType := []byte{byte(chainec.ECTypeSecp256k1)}
+	if addr == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	// Only pay to pubkey hash and pay to script hash are
+	// supported.
+	scriptType := PubkeyHashAltTy
+	switch addr := addr.(type) {
+	case *hcutil.AddressPubKeyHash:
+		chainecType := addr.DSA(addr.Net())
+		if !(chainecType == chainec.ECTypeSecp256k1 || chainecType == bs.BSTypeBliss) {
+			return nil, ErrUnsupportedAddress
+		}
+		sigType = []byte{byte(chainecType)}
+		break
+	case *hcutil.AddressScriptHash:
+		scriptType = ScriptHashTy
+		break
+	default:
+		return nil, ErrUnsupportedAddress
+	}
+
+	hash := addr.ScriptAddress()
+
+	if scriptType == PubkeyHashAltTy {
+		/*
+		return NewScriptBuilder().AddOp(OP_SSTXCHANGE).AddOp(OP_DUP).
+			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
+			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+		*/
+
+		return NewScriptBuilder().AddOp(OP_UNKNOWN203).AddOp(OP_DUP).
+			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
+			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+
+	}
+	/*
+	return NewScriptBuilder().AddOp(OP_SSTXCHANGE).AddOp(OP_HASH160).
+		AddData(hash).AddOp(OP_EQUAL).Script()
+	*/
+
+	return NewScriptBuilder().AddOp(OP_UNKNOWN203).AddOp(OP_HASH160).
+		AddData(hash).AddOp(OP_EQUAL).Script()
+
 }
 
 // PayToSSGen creates a new script to pay a transaction output to a public key
@@ -1054,6 +1159,60 @@ func PayToSSRtxSHDirect(sh []byte, _ int) ([]byte, error) {
 // GenerateSStxAddrPush generates an OP_RETURN push for SSGen payment addresses in
 // an SStx.
 func GenerateSStxAddrPush(addr hcutil.Address, amount hcutil.Amount,
+	limits uint16) ([]byte, error) {
+	if addr == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	// Only pay to pubkey hash and pay to script hash are
+	// supported.
+	sigType := []byte{byte(0)}
+	scriptType := PubKeyHashTy
+	switch addr := addr.(type) {
+	case *hcutil.AddressPubKeyHash:
+		chainecType := addr.DSA(addr.Net())
+		sigType = []byte{byte(chainecType)}
+		if !(chainecType == chainec.ECTypeSecp256k1 || chainecType == bs.BSTypeBliss) {
+			return nil, ErrUnsupportedAddress
+		}
+		break
+	case *hcutil.AddressBlissPubKey:
+		if addr.DSA(addr.Net()) != bs.BSTypeBliss {
+			return nil, ErrUnsupportedAddress
+		}
+		scriptType = PubkeyHashAltTy
+		break
+	case *hcutil.AddressScriptHash:
+		scriptType = ScriptHashTy
+		break
+	default:
+		return nil, ErrUnsupportedAddress
+	}
+
+	hash := addr.ScriptAddress()
+
+	amountBuffer := make([]byte, 8)
+	binary.LittleEndian.PutUint64(amountBuffer, uint64(amount))
+
+	// Set the bit flag indicating pay to script hash.
+	if scriptType == ScriptHashTy {
+		amountBuffer[7] |= 1 << 7
+	}
+
+	limitsBuffer := make([]byte, 2)
+
+	binary.LittleEndian.PutUint16(limitsBuffer, limits)
+
+	// Concatenate the prefix, pubkeyhash, and amount.
+	addrOut := append(hash, sigType...)
+	addrOut = append(addrOut, amountBuffer...)
+	addrOut = append(addrOut, limitsBuffer...)
+	return NewScriptBuilder().AddOp(OP_RETURN).AddData(addrOut).Script()
+}
+
+// GenerateSStxAddrPush generates an OP_RETURN push for SSGen payment addresses in
+// an SStx.
+func GenerateAISStxAddrPush(addr hcutil.Address, amount hcutil.Amount,
 	limits uint16) ([]byte, error) {
 	if addr == nil {
 		return nil, ErrUnsupportedAddress
