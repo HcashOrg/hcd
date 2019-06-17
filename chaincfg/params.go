@@ -384,6 +384,19 @@ type Params struct {
 	// be >= (StakeEnabledHeight + StakeValidationHeight).
 	TicketExpiry uint32
 
+	// possible winner numbers there are.
+	AiTicketPoolSize uint16
+
+	// Average number of tickets per block for Hcd PoS.
+	AiTicketsPerBlock uint16
+
+	// Number of blocks for tickets to mature (spendable at TicketMaturity+1).
+	AiTicketMaturity uint16
+
+	// Number of blocks for tickets to expire after they have matured. This MUST
+	// be >= (StakeEnabledHeight + StakeValidationHeight).
+	AiTicketExpiry uint32
+
 	// CoinbaseMaturity is the number of blocks required before newly mined
 	// coins (coinbase transactions) can be spent.
 	CoinbaseMaturity uint16
@@ -735,7 +748,7 @@ var SimNetParams = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
-	TargetTimePerBlock:       time.Second * 60,
+	TargetTimePerBlock:       time.Second * 20,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
@@ -832,6 +845,12 @@ var SimNetParams = Params{
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
 	TicketExpiry:            384, // 6*TicketPoolSize
+	//ai PoS parameters
+	AiTicketPoolSize:          96,//64 + 32,
+	AiTicketsPerBlock:         10,//5 + 5,
+	AiTicketMaturity:          2,
+	AiTicketExpiry:            192, // 6*AiTicketPoolSize
+
 	CoinbaseMaturity:        16,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
