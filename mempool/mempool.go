@@ -240,7 +240,11 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 	// start a new buffered slice and store it.
 	vts, exists := mp.votes[blockHash]
 	if !exists {
-		vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)
+		if uint64(blockHeight) >= mp.cfg.ChainParams.AIEnableHeight{
+			vts = make([]VoteTx, 0, mp.cfg.ChainParams.AiTicketsPerBlock)
+		}else{
+			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)
+		}
 	}
 
 	// Nothing to do if a vote for the ticket is already known.

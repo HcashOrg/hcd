@@ -574,21 +574,40 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		return ruleError(ErrFreshStakeMismatch, errStr)
 	}
 
-	// Not enough voters on this block.
-	if block.Height() >= chainParams.StakeValidationHeight &&
-		totalVotes <= int(chainParams.TicketsPerBlock)/2 {
-		errStr := fmt.Sprintf("block contained too few votes! %v "+
-			"votes but %v or more required", totalVotes,
-			(int(chainParams.TicketsPerBlock)/2)+1)
-		return ruleError(ErrNotEnoughVotes, errStr)
-	}
 
-	if totalVotes > int(chainParams.TicketsPerBlock) {
-		errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
-			"was %v, overflowing the maximum allowed (%v)",
-			block.Hash(), totalVotes,
-			int(chainParams.TicketsPerBlock))
-		return ruleError(ErrTooManyVotes, errStr)
+
+	if uint64(block.Height()) >= chainParams.AIEnableHeight {
+		// Not enough voters on this block.
+		if block.Height() >= chainParams.StakeValidationHeight &&
+			totalVotes <= int(chainParams.AiTicketsPerBlock)/2 {
+			errStr := fmt.Sprintf("block contained too few votes! %v "+
+				"votes but %v or more required", totalVotes,
+				(int(chainParams.AiTicketsPerBlock)/2)+1)
+			return ruleError(ErrNotEnoughVotes, errStr)
+		}
+		if totalVotes > int(chainParams.AiTicketsPerBlock) {
+			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
+				"was %v, overflowing the maximum allowed (%v)",
+				block.Hash(), totalVotes,
+				int(chainParams.AiTicketsPerBlock))
+			return ruleError(ErrTooManyVotes, errStr)
+		}
+	}else{
+		// Not enough voters on this block.
+		if block.Height() >= chainParams.StakeValidationHeight &&
+			totalVotes <= int(chainParams.TicketsPerBlock)/2 {
+			errStr := fmt.Sprintf("block contained too few votes! %v "+
+				"votes but %v or more required", totalVotes,
+				(int(chainParams.TicketsPerBlock)/2)+1)
+			return ruleError(ErrNotEnoughVotes, errStr)
+		}
+		if totalVotes > int(chainParams.TicketsPerBlock) {
+			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
+				"was %v, overflowing the maximum allowed (%v)",
+				block.Hash(), totalVotes,
+				int(chainParams.TicketsPerBlock))
+			return ruleError(ErrTooManyVotes, errStr)
+		}
 	}
 
 	if totalVotes != int(block.MsgBlock().Header.Voters) {
@@ -929,7 +948,9 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	finalState := node.header.FinalState
 
 	ticketsPerBlock := int(b.chainParams.TicketsPerBlock)
-
+	if uint64(block.Height()) >= chainParams.AIEnableHeight {
+		ticketsPerBlock = int(b.chainParams.AiTicketsPerBlock)
+	}
 	txTreeRegularValid := hcutil.IsFlagSet16(msgBlock.Header.VoteBits,
 		hcutil.BlockValid)
 
@@ -1090,6 +1111,9 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	}
 
 	majority := (chainParams.TicketsPerBlock / 2) + 1
+	if uint64(block.Height()) >= chainParams.AIEnableHeight {
+		majority = (chainParams.AiTicketsPerBlock / 2) + 1
+	}
 	if msgBlock.Header.Voters < majority {
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+
 			"of voters is not in the majority as compared to "+
@@ -2302,7 +2326,12 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		// Apply penalty to fees if we're at stake validation height.
 		if node.height >= b.chainParams.StakeValidationHeight {
 			totalFees *= int64(node.header.Voters)
-			totalFees /= int64(b.chainParams.TicketsPerBlock)
+			if uint64(node.height) >= b.chainParams.AIEnableHeight {
+				totalFees /= int64(b.chainParams.AiTicketsPerBlock)
+			}else{
+				totalFees /= int64(b.chainParams.TicketsPerBlock)
+			}
+
 		}
 
 		var totalAtomOutRegular int64

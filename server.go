@@ -574,7 +574,7 @@ func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState
 	// limit the list to the maximum number of allowed eligible block hashes
 	// per mining state message.  There is nothing to send when there are no
 	// eligible blocks.
-	blockHashes := SortParentsByVotes(mp, *newest, children,
+	blockHashes := SortParentsByVotes(uint64(height), mp, *newest, children,
 		bm.server.chainParams)
 	numBlocks := len(blockHashes)
 	if numBlocks == 0 {

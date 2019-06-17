@@ -873,6 +873,9 @@ func (b *BlockChain) estimateNextStakeDifficultyV2(curNode *blockNode, newTicket
 			votingBlocks = nextRetargetHeight - stakeValidationHeight
 		}
 		votesPerBlock := int64(b.chainParams.TicketsPerBlock)
+		if curNode.height >= int64(b.chainParams.AIEnableHeight) {
+			votesPerBlock = int64(b.chainParams.AiTicketsPerBlock)
+		}
 		pendingVotes = votingBlocks * votesPerBlock
 	}
 

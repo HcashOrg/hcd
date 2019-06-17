@@ -305,7 +305,7 @@ func (b byNumberOfVotes) Less(i, j int) bool {
 // at least a majority number of votes) sorted by number of votes, descending.
 //
 // This function is safe for concurrent access.
-func SortParentsByVotes(mp *mempool.TxPool, currentTopBlock chainhash.Hash, blocks []chainhash.Hash, params *chaincfg.Params) []chainhash.Hash {
+func SortParentsByVotes(height uint64, mp *mempool.TxPool, currentTopBlock chainhash.Hash, blocks []chainhash.Hash, params *chaincfg.Params) []chainhash.Hash {
 	// Return now when no blocks were provided.
 	lenBlocks := len(blocks)
 	if lenBlocks == 0 {
@@ -316,6 +316,9 @@ func SortParentsByVotes(mp *mempool.TxPool, currentTopBlock chainhash.Hash, bloc
 	// mempool and filter out any blocks that do not have the minimum
 	// required number of votes.
 	minVotesRequired := (params.TicketsPerBlock / 2) + 1
+	if height >= params.AIEnableHeight {
+		minVotesRequired = (params.AiTicketsPerBlock / 2) + 1
+	}
 	voteMetadata := mp.VotesForBlocks(blocks)
 	filtered := make([]*blockWithNumVotes, 0, lenBlocks)
 	for i := range blocks {
@@ -1218,7 +1221,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 		// Get the list of blocks that we can actually build on top of. If we're
 		// not currently on the block that has the most votes, switch to that
 		// block.
-		eligibleParents := SortParentsByVotes(mp, *prevHash, children,
+		eligibleParents := SortParentsByVotes(uint64(nextBlockHeight), mp, *prevHash, children,
 			blockManager.server.chainParams)
 		if len(eligibleParents) == 0 {
 			minrLog.Debugf("Too few voters found on any HEAD block, " +
@@ -1471,7 +1474,7 @@ mempoolLoop:
 		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
 			// Skip if we already have too many SStx.
 			if isSStx && (numSStx >=
-				int(server.chainParams.MaxFreshStakePerBlock)) {
+				int(server.chainParams.AiMaxFreshStakePerBlock)) {
 				minrLog.Tracef("Skipping sstx %s because it would exceed "+
 					"the max number of sstx allowed in a block", tx.Hash())
 				logSkippedDeps(tx, deps)
@@ -1943,7 +1946,11 @@ mempoolLoop:
 	// If we're greater than or equal to stake validation height, scale the
 	// fees according to the number of voters.
 	totalFees *= int64(voters)
-	totalFees /= int64(server.chainParams.TicketsPerBlock)
+	if uint64(nextBlockHeight) >= server.chainParams.AIEnableHeight {
+		totalFees /= int64(server.chainParams.AiTicketsPerBlock)
+	}else{
+		totalFees /= int64(server.chainParams.TicketsPerBlock)
+	}
 
 	// Now that the actual transactions have been selected, update the
 	// block size for the real transaction count and coinbase value with
@@ -1973,6 +1980,9 @@ mempoolLoop:
 	// bit for the mempool to sync with the votes map and we end up down
 	// here despite having the relevant votes available in the votes map.
 	minimumVotesRequired := int((server.chainParams.TicketsPerBlock / 2) + 1)
+	if uint64(nextBlockHeight) >= server.chainParams.AIEnableHeight {
+		minimumVotesRequired = int((server.chainParams.AiTicketsPerBlock / 2) + 1)
+	}
 	if nextBlockHeight >= stakeValidationHeight &&
 		voters < minimumVotesRequired {
 		minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")

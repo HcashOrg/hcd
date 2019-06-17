@@ -328,7 +328,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 		}
 
 		// Calculate the final state from the block header.
-		if uint64(height)  > node.params.AIEnableHeight{
+		if uint64(height)  >= node.params.AIEnableHeight{
 			stateBuffer := make([]byte, 0,
 				(node.params.AiTicketsPerBlock+1)*chainhash.HashSize)
 			for _, ticketHash := range node.nextWinners {
@@ -630,7 +630,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 		}
 		prng := NewHash256PRNG(hB)
 
-		if uint64(connectedNode.height)  > node.params.AIEnableHeight{
+		if uint64(connectedNode.height)  >= node.params.AIEnableHeight{
 			idxs, err := findTicketIdxs(connectedNode.liveTickets.Len(),
 				connectedNode.params.AiTicketsPerBlock, prng)
 			if err != nil {
@@ -1084,23 +1084,44 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 		return err
 	}
 
-	// Write the new best state to the database.
-	nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
-	if node.height >= uint32(node.params.StakeValidationHeight-1) {
-		for i := range nextWinners {
-			nextWinners[i] = node.nextWinners[i]
+	if uint64(node.Height()) >= node.params.AIEnableHeight{
+		// Write the new best state to the database.
+		nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
+		if node.height >= uint32(node.params.StakeValidationHeight-1) {
+			for i := range nextWinners {
+				nextWinners[i] = node.nextWinners[i]
+			}
 		}
+
+		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
+			Hash:        hash,
+			Height:      node.height,
+			Live:        uint32(node.liveTickets.Len()),
+			Missed:      uint64(node.missedTickets.Len()),
+			Revoked:     uint64(node.revokedTickets.Len()),
+			PerBlock:    node.params.AiTicketsPerBlock,
+			NextWinners: nextWinners,
+		})
+	}else{
+		// Write the new best state to the database.
+		nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
+		if node.height >= uint32(node.params.StakeValidationHeight-1) {
+			for i := range nextWinners {
+				nextWinners[i] = node.nextWinners[i]
+			}
+		}
+
+		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
+			Hash:        hash,
+			Height:      node.height,
+			Live:        uint32(node.liveTickets.Len()),
+			Missed:      uint64(node.missedTickets.Len()),
+			Revoked:     uint64(node.revokedTickets.Len()),
+			PerBlock:    node.params.TicketsPerBlock,
+			NextWinners: nextWinners,
+		})
 	}
 
-	return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
-		Hash:        hash,
-		Height:      node.height,
-		Live:        uint32(node.liveTickets.Len()),
-		Missed:      uint64(node.missedTickets.Len()),
-		Revoked:     uint64(node.revokedTickets.Len()),
-		PerBlock:    node.params.TicketsPerBlock,
-		NextWinners: nextWinners,
-	})
 }
 
 // WriteDisconnectedBestNode writes the newly connected best node to the database
@@ -1215,21 +1236,42 @@ func WriteDisconnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash
 		return err
 	}
 
-	// Write the new best state to the database.
-	nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
-	if node.height >= uint32(node.params.StakeValidationHeight-1) {
-		for i := range nextWinners {
-			nextWinners[i] = node.nextWinners[i]
+	if uint64(node.Height()) >= node.params.AIEnableHeight{
+		// Write the new best state to the database.
+		nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
+		if node.height >= uint32(node.params.StakeValidationHeight-1) {
+			for i := range nextWinners {
+				nextWinners[i] = node.nextWinners[i]
+			}
 		}
+
+		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
+			Hash:        hash,
+			Height:      node.height,
+			Live:        uint32(node.liveTickets.Len()),
+			Missed:      uint64(node.missedTickets.Len()),
+			Revoked:     uint64(node.revokedTickets.Len()),
+			PerBlock:    node.params.AiTicketsPerBlock,
+			NextWinners: nextWinners,
+		})
+	}else {
+		// Write the new best state to the database.
+		nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
+		if node.height >= uint32(node.params.StakeValidationHeight-1) {
+			for i := range nextWinners {
+				nextWinners[i] = node.nextWinners[i]
+			}
+		}
+
+		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
+			Hash:        hash,
+			Height:      node.height,
+			Live:        uint32(node.liveTickets.Len()),
+			Missed:      uint64(node.missedTickets.Len()),
+			Revoked:     uint64(node.revokedTickets.Len()),
+			PerBlock:    node.params.TicketsPerBlock,
+			NextWinners: nextWinners,
+		})
 	}
 
-	return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
-		Hash:        hash,
-		Height:      node.height,
-		Live:        uint32(node.liveTickets.Len()),
-		Missed:      uint64(node.missedTickets.Len()),
-		Revoked:     uint64(node.revokedTickets.Len()),
-		PerBlock:    node.params.TicketsPerBlock,
-		NextWinners: nextWinners,
-	})
 }

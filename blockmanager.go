@@ -855,6 +855,10 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
+	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+		oldVoteMap = make(map[chainhash.Hash]struct{},
+			int(b.server.chainParams.AiTicketsPerBlock))
+	}
 	if template != nil {
 		templateBlock := hcutil.NewBlock(template.Block)
 
@@ -892,14 +896,26 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// Check the length of the reconstructed voter list for
 	// integrity.
 	votesTotal := len(newVotes)
-	if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
-		bmgrLog.Warnf("error found while adding hidden votes "+
-			"from block %v to the old block template: %v max "+
-			"votes expected but %v votes found", block.Hash(),
-			int(b.server.chainParams.TicketsPerBlock),
-			votesTotal)
-		return
+	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+		if votesTotal > int(b.server.chainParams.AiTicketsPerBlock) {
+			bmgrLog.Warnf("error found while adding hidden votes "+
+				"from block %v to the old block template: %v max "+
+				"votes expected but %v votes found", block.Hash(),
+				int(b.server.chainParams.AiTicketsPerBlock),
+				votesTotal)
+			return
+		}
+	}else{
+		if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
+			bmgrLog.Warnf("error found while adding hidden votes "+
+				"from block %v to the old block template: %v max "+
+				"votes expected but %v votes found", block.Hash(),
+				int(b.server.chainParams.TicketsPerBlock),
+				votesTotal)
+			return
+		}
 	}
+
 
 	// Clear the old stake transactions and begin inserting the
 	// new vote list along with all the old transactions. Do this
