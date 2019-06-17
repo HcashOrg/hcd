@@ -452,6 +452,7 @@ type Params struct {
 	// as one method to discover peers.
 	OmniMoneyReceive string
 	OmniStartHeight uint64
+	AIEnableHeight  uint64
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -564,6 +565,7 @@ var MainNetParams = Params{
 	BlockOneLedger:              BlockOneLedgerMainNet,
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
 	OmniStartHeight:			 46000,
+	AIEnableHeight:				363000,
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -707,6 +709,7 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
+	AIEnableHeight:				363000,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
@@ -732,7 +735,7 @@ var SimNetParams = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
-	TargetTimePerBlock:       time.Second,
+	TargetTimePerBlock:       time.Second * 60,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
@@ -877,6 +880,7 @@ var SimNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
+	AIEnableHeight:				0,
 }
 
 var (
