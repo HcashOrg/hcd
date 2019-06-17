@@ -1034,12 +1034,22 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check to make sure we haven't exceeded max number of new SStx.
 	// May not need this check, as the above one should fail if you
 	// overflow uint8.
-	if numSStxTx > int(chainParams.MaxFreshStakePerBlock) {
-		errStr := fmt.Sprintf("Error in stake consensus: the number "+
-			"of SStx tx "+"in block %v was %v, overflowing the "+
-			"maximum allowed (255)", blockHash, numSStxTx)
-		return ruleError(ErrTooManySStxs, errStr)
+	if block.Height() >= int64(chainParams.AIEnableHeight) {
+		if numSStxTx > int(chainParams.AiMaxFreshStakePerBlock) {
+			errStr := fmt.Sprintf("Error in stake consensus: the number "+
+				"of SStx tx "+"in block %v was %v, overflowing the "+
+				"maximum allowed (255)", blockHash, numSStxTx)
+			return ruleError(ErrTooManySStxs, errStr)
+		}
+	}else{
+		if numSStxTx > int(chainParams.MaxFreshStakePerBlock) {
+			errStr := fmt.Sprintf("Error in stake consensus: the number "+
+				"of SStx tx "+"in block %v was %v, overflowing the "+
+				"maximum allowed (255)", blockHash, numSStxTx)
+			return ruleError(ErrTooManySStxs, errStr)
+		}
 	}
+
 
 	// Break if the stake system is otherwise disabled.
 	if block.Height() < stakeValidationHeight {

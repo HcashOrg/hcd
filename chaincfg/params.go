@@ -429,6 +429,8 @@ type Params struct {
 	// submitted per block.
 	MaxFreshStakePerBlock uint8
 
+	AiMaxFreshStakePerBlock uint8
+
 	// StakeEnabledHeight is the height in which the first ticket could possibly
 	// mature.
 	StakeEnabledHeight int64
@@ -859,6 +861,7 @@ var SimNetParams = Params{
 	StakeDiffWindows:        8,
 	StakeVersionInterval:    8 * 2 * 7,
 	MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
+	AiMaxFreshStakePerBlock: 40,//20+20
 	StakeEnabledHeight:      16 + 16,       // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:      []byte{0xDE, 0xAD, 0xBE, 0xEF},
@@ -899,7 +902,7 @@ var SimNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
-	AIEnableHeight:				0,
+	AIEnableHeight:				146,
 }
 
 var (

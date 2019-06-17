@@ -780,7 +780,11 @@ func (b *BlockChain) estimateNextStakeDifficultyV2(curNode *blockNode, newTicket
 	// in the remainder of the interval and potentially override the number
 	// of new tickets to include in the estimate per the user-specified
 	// flag.
+
 	maxTicketsPerBlock := int64(b.chainParams.MaxFreshStakePerBlock)
+	if curHeight >= int64(b.chainParams.AIEnableHeight) {
+		maxTicketsPerBlock = int64(b.chainParams.AiMaxFreshStakePerBlock)
+	}
 	maxRemainingTickets := (blocksUntilRetarget - 1) * maxTicketsPerBlock
 	if useMaxTickets {
 		newTickets = maxRemainingTickets

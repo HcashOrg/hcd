@@ -1468,15 +1468,25 @@ mempoolLoop:
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
-		// Skip if we already have too many SStx.
-		if isSStx && (numSStx >=
-			int(server.chainParams.MaxFreshStakePerBlock)) {
-			minrLog.Tracef("Skipping sstx %s because it would exceed "+
-				"the max number of sstx allowed in a block", tx.Hash())
-			logSkippedDeps(tx, deps)
-			continue
+		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
+			// Skip if we already have too many SStx.
+			if isSStx && (numSStx >=
+				int(server.chainParams.MaxFreshStakePerBlock)) {
+				minrLog.Tracef("Skipping sstx %s because it would exceed "+
+					"the max number of sstx allowed in a block", tx.Hash())
+				logSkippedDeps(tx, deps)
+				continue
+			}
+		}else{
+			// Skip if we already have too many SStx.
+			if isSStx && (numSStx >=
+				int(server.chainParams.MaxFreshStakePerBlock)) {
+				minrLog.Tracef("Skipping sstx %s because it would exceed "+
+					"the max number of sstx allowed in a block", tx.Hash())
+				logSkippedDeps(tx, deps)
+				continue
+			}
 		}
-
 		// Skip if the SStx commit value is below the value required by the
 		// stake diff.
 		if isSStx && (tx.MsgTx().TxOut[0].Value < reqStakeDifficulty) {
@@ -1798,9 +1808,16 @@ mempoolLoop:
 			}
 		}
 
-		// Don't let this overflow.
-		if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
-			break
+		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
+			// Don't let this overflow.
+			if freshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
+				break
+			}
+		}else{
+			// Don't let this overflow.
+			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
+				break
+			}
 		}
 	}
 
