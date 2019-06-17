@@ -126,6 +126,8 @@ type MessageListeners struct {
 	// OnTx is invoked when a peer receives a tx wire message.
 	OnTx func(p *Peer, msg *wire.MsgTx)
 
+	OnInstantTx func(p *Peer, msg *wire.MsgInstantTx)
+
 	// OnBlock is invoked when a peer receives a block wire message.
 	OnBlock func(p *Peer, msg *wire.MsgBlock, buf []byte)
 
@@ -1474,6 +1476,10 @@ out:
 		case *wire.MsgTx:
 			if p.cfg.Listeners.OnTx != nil {
 				p.cfg.Listeners.OnTx(p, msg)
+			}
+		case *wire.MsgInstantTx:
+			if p.cfg.Listeners.OnInstantTx!=nil{
+				p.cfg.Listeners.OnInstantTx(p,msg)
 			}
 
 		case *wire.MsgBlock:

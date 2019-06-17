@@ -68,6 +68,19 @@ func (b *BlockChain) LotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 	return b.lotteryDataForBlock(hash)
 }
 
+
+
+func (b *BlockChain) LotteryAiTicketsForBlock(instantTx *hcutil.InstantTx) ([]chainhash.Hash, int, [6]byte, error) {
+	b.chainLock.Lock()
+	defer b.chainLock.Unlock()
+
+	//TODO implement
+	return nil,0,[6]byte{},nil
+}
+
+
+
+
 // LiveTickets returns all currently live tickets from the stake database.
 //
 // This function is NOT safe for concurrent access.

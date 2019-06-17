@@ -332,6 +332,14 @@ func (bf *Filter) matchTxAndUpdate(tx *hcutil.Tx) bool {
 	return false
 }
 
+
+
+
+func (bf *Filter) matchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
+	//TODO implement
+	return false
+}
+
 // MatchTxAndUpdate returns true if the bloom filter matches data within the
 // passed transaction, otherwise false is returned.  If the filter does match
 // the passed transaction, it will also update the filter depending on the bloom
@@ -344,6 +352,16 @@ func (bf *Filter) MatchTxAndUpdate(tx *hcutil.Tx) bool {
 	bf.mtx.Unlock()
 	return match
 }
+
+
+func (bf *Filter) MatchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
+	bf.mtx.Lock()
+	match := bf.matchInstantTxAndUpdate(tx)
+	bf.mtx.Unlock()
+	return match
+}
+
+
 
 // MsgFilterLoad returns the underlying wire.MsgFilterLoad for the bloom
 // filter.

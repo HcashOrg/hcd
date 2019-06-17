@@ -36,6 +36,7 @@ const (
 	// from the chain server that inform a client that a relevant
 	// transaction was accepted by the mempool.
 	RelevantTxAcceptedNtfnMethod = "relevanttxaccepted"
+	InstantTxNtfnMethod = "InstantTxNtfn"
 )
 
 // BlockConnectedNtfn defines the blockconnected JSON-RPC notification.
@@ -120,6 +121,15 @@ type RelevantTxAcceptedNtfn struct {
 	Transaction string `json:"transaction"`
 }
 
+type InstantTxNtfn struct {
+	InstantTxHash string
+	Tickets       map[string]string
+}
+
+func NewInstantTxNtfn(instantTxHash string,tickets map[string]string) *InstantTxNtfn {
+	return &InstantTxNtfn{InstantTxHash: instantTxHash, Tickets:tickets}
+}
+
 // NewRelevantTxAcceptedNtfn returns a new instance which can be used to issue a
 // relevantxaccepted JSON-RPC notification.
 func NewRelevantTxAcceptedNtfn(txHex string) *RelevantTxAcceptedNtfn {
@@ -137,4 +147,5 @@ func init() {
 	MustRegisterCmd(TxAcceptedNtfnMethod, (*TxAcceptedNtfn)(nil), flags)
 	MustRegisterCmd(TxAcceptedVerboseNtfnMethod, (*TxAcceptedVerboseNtfn)(nil), flags)
 	MustRegisterCmd(RelevantTxAcceptedNtfnMethod, (*RelevantTxAcceptedNtfn)(nil), flags)
+	MustRegisterCmd(InstantTxNtfnMethod, (*InstantTxNtfn)(nil), flags)
 }

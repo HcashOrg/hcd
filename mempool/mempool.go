@@ -620,7 +620,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
 
 	msgTx := tx.MsgTx()
-	isLockTx := false;
+	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
 		if txscript.IsLockTx(txOut.PkScript) {
 			isLockTx = true
@@ -645,7 +645,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	}
 	// Add the transaction to the pool and mark the referenced outpoints
 	// as spent by the pool.
-	//	msgTx := tx.MsgTx()
+	//	msgTx := tx.msgTx()
 	mp.pool[*tx.Hash()] = &TxDesc{
 		TxDesc: mining.TxDesc{
 			Tx:     tx,

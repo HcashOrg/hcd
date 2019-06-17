@@ -105,6 +105,13 @@ type txMsg struct {
 	peer *serverPeer
 }
 
+type instantTxMsg struct {
+	tx   *hcutil.InstantTx
+	peer *serverPeer
+}
+
+
+
 // getSyncPeerMsg is a message type to be sent across the message channel for
 // retrieving the current sync peer.
 type getSyncPeerMsg struct {
@@ -772,6 +779,18 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 	}
 
 	b.server.AnnounceNewTransactions(acceptedTxs)
+}
+
+
+
+func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
+	//TODO verify conflict with mempool
+	instantTx:=instantTxMsg.tx
+
+	instantTxs:=make([]*hcutil.InstantTx,0)
+
+	instantTxs=append(instantTxs, instantTx)
+	b.server.AnnounceNewInstantTx(instantTxs)
 }
 
 // current returns true if we believe we are synced with our peers, false if we
@@ -1688,7 +1707,9 @@ out:
 			case *txMsg:
 				b.handleTxMsg(msg)
 				msg.peer.txProcessed <- struct{}{}
-
+			case *instantTxMsg:
+				b.handleInstantTxMsg(msg)
+				msg.peer.instantTxProcessed <- struct{}{}
 			case *blockMsg:
 				b.handleBlockMsg(msg)
 				msg.peer.blockProcessed <- struct{}{}
@@ -2289,6 +2310,18 @@ func (b *blockManager) QueueTx(tx *hcutil.Tx, sp *serverPeer) {
 
 	b.msgChan <- &txMsg{tx: tx, peer: sp}
 }
+
+func (b *blockManager) QueueInstantTx(instantTx *hcutil.InstantTx, sp *serverPeer) {
+	// Don't accept more transactions if we're shutting down.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		sp.instantTxProcessed <- struct{}{}
+		return
+	}
+
+	b.msgChan <- &instantTxMsg{tx: instantTx, peer: sp}
+}
+
+
 
 // QueueBlock adds the passed block message and peer to the block handling queue.
 func (b *blockManager) QueueBlock(block *hcutil.Block, sp *serverPeer) {

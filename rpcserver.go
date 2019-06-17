@@ -238,6 +238,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"rebroadcastmissed":     handleRebroadcastMissed,
 	"rebroadcastwinners":    handleRebroadcastWinners,
 	"sendrawtransaction":    handleSendRawTransaction,
+	"sendinstantrawtransaction":    handleSendInstantRawTransaction,
 	"setgenerate":           handleSetGenerate,
 	"stop":                  handleStop,
 	"submitblock":           handleSubmitBlock,
@@ -947,7 +948,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later for
-	// the generation of the SSGen tx outputs.
+	// the generation of the SSGen instantTx outputs.
 	//
 	// Convert the provided transaction hash hex to a chainhash.Hash.
 	txHash, err := chainhash.NewHashFromStr(c.Inputs[0].Txid)
@@ -1047,7 +1048,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 		}
 
 		// Create a new script which pays to the provided address
-		// specified in the original ticket tx.
+		// specified in the original ticket instantTx.
 		var ssgenOut []byte
 		switch ssgenPayTypes[i] {
 		case false: // P2PKH
@@ -1066,7 +1067,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 			}
 		}
 
-		// Add the txout to our SSGen tx.
+		// Add the txout to our SSGen instantTx.
 		txOut := wire.NewTxOut(ssgenCalcAmts[i], ssgenOut)
 		mtx.AddTxOut(txOut)
 	}
@@ -1106,7 +1107,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later
-	// for the generation of the SSGen tx outputs.
+	// for the generation of the SSGen instantTx outputs.
 	//
 	// Convert the provided transaction hash hex to a chainhash.Hash.
 	txHash, err := chainhash.NewHashFromStr(c.Inputs[0].Txid)
@@ -1170,7 +1171,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		}
 
 		// Create a new script which pays to the provided address specified in
-		// the original ticket tx.
+		// the original ticket instantTx.
 		var ssrtxOutScript []byte
 		switch ssrtxPayTypes[i] {
 		case false: // P2PKH
@@ -1187,7 +1188,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 			}
 		}
 
-		// Add the txout to our SSGen tx.
+		// Add the txout to our SSGen instantTx.
 		amt := ssrtxCalcAmts[i]
 		if !feeApplied && int64(feeAmt) < amt {
 			amt -= int64(feeAmt)
@@ -1295,7 +1296,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 				chainParams)
 			if err != nil {
 				rpcsLog.Warnf("failed to decode ticket "+
-					"commitment addr output for tx hash "+
+					"commitment addr output for instantTx hash "+
 					"%v, output idx %v", mtx.TxHash(), i)
 			} else {
 				addrs = []hcutil.Address{addr}
@@ -1303,7 +1304,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 			amt, err := stake.AmountFromSStxPkScrCommitment(v.PkScript)
 			if err != nil {
 				rpcsLog.Warnf("failed to decode ticket "+
-					"commitment amt output for tx hash %v"+
+					"commitment amt output for instantTx hash %v"+
 					", output idx %v", mtx.TxHash(), i)
 			} else {
 				commitAmt = &amt
@@ -4082,7 +4083,7 @@ func handleGetTxOut(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		return nil, rpcDecodeHexError(c.Txid)
 	}
 
-	// If requested and the tx is available in the mempool try to fetch it
+	// If requested and the instantTx is available in the mempool try to fetch it
 	// from there, otherwise attempt to fetch from the block database.
 	var bestBlockHash string
 	var confirmations int64
@@ -4683,7 +4684,7 @@ func fetchInputTxos(s *rpcServer, tx *wire.MsgTx) (map[wire.OutPoint]wire.TxOut,
 	originOutputs := make(map[wire.OutPoint]wire.TxOut)
 	voteTx, _ := stake.IsSSGen(tx)
 	for txInIndex, txIn := range tx.TxIn {
-		// vote tx have null input for vin[0],
+		// vote instantTx have null input for vin[0],
 		// skip since it resolvces to an invalid transaction
 		if voteTx && txInIndex == 0 {
 			continue
@@ -5177,10 +5178,43 @@ func handleSearchRawTransactions(s *rpcServer, cmd interface{}, closeChan <-chan
 	return srtList, nil
 }
 
+func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c:=cmd.(*hcjson.SendInstantRawTransactionCmd)
+	//allowHighFees := *c.AllowHighFees
+	hexStr := c.HexTx
+	if len(hexStr)%2 != 0 {
+		hexStr = "0" + hexStr
+	}
+	serializedTx, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return nil, rpcDecodeHexError(hexStr)
+	}
+	msgtx := wire.NewMsgInstantTx()
+	err = msgtx.Deserialize(bytes.NewReader(serializedTx))
+	if err != nil {
+		return nil, rpcDeserializationError("Could not decode Tx: %v",
+			err)
+	}
+
+	//TODO check conflict with mempool
+	instantTx := hcutil.NewInstantTx(msgtx)
+	instantTxs:=make([]*hcutil.InstantTx,0)
+	instantTxs=append(instantTxs,instantTx)
+
+	s.server.AnnounceNewInstantTx(instantTxs)
+
+	// Keep track of all the sendrawtransaction request txns so that they
+	// can be rebroadcast if they don't make their way into a block.
+	iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+	s.server.AddRebroadcastInventory(iv, instantTx)
+
+	return instantTx.Hash().String(), nil
+}
+
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendRawTransactionCmd)
-	// Deserialize and send off to tx relay
+	// Deserialize and send off to instantTx relay
 
 	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
@@ -5380,7 +5414,7 @@ func stdDev(s []hcutil.Amount) hcutil.Amount {
 	return amt
 }
 
-// feeInfoForMempool returns the fee information for the passed tx type in the
+// feeInfoForMempool returns the fee information for the passed instantTx type in the
 // memory pool.
 func feeInfoForMempool(s *rpcServer, txType stake.TxType) *hcjson.FeeInfoMempool {
 	txDs := s.server.txMemPool.TxDescs()
@@ -5418,7 +5452,7 @@ func calcFeePerKb(tx *hcutil.Tx) hcutil.Amount {
 	return ((in - out) * 1000) / hcutil.Amount(tx.MsgTx().SerializeSize())
 }
 
-// feeInfoForBlock fetches the ticket fee information for a given tx type in a
+// feeInfoForBlock fetches the ticket fee information for a given instantTx type in a
 // block.
 func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*hcjson.FeeInfoBlock, error) {
 	bl, err := s.chain.BlockByHeight(height)
