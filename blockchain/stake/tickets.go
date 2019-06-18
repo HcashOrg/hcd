@@ -337,26 +337,6 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 		}
 
 		// Calculate the final state from the block header.
-		if uint64(height)  >= node.params.AIEnableHeight - 1{
-			stateBuffer := make([]byte, 0,
-				(node.params.AiTicketsPerBlock+1)*chainhash.HashSize)
-			for _, ticketHash := range node.nextWinners {
-				stateBuffer = append(stateBuffer, ticketHash[:]...)
-			}
-			hB, err := header.Bytes()
-			if err != nil {
-				return nil, err
-			}
-			prng := NewHash256PRNG(hB)
-			_, err = findTicketIdxs(node.liveTickets.Len(),
-				node.params.AiTicketsPerBlock, prng)
-			if err != nil {
-				return nil, err
-			}
-			lastHash := prng.StateHash()
-			stateBuffer = append(stateBuffer, lastHash[:]...)
-			copy(node.finalState[:], chainhash.HashB(stateBuffer)[0:6])
-		}else{
 			stateBuffer := make([]byte, 0,
 				(node.params.TicketsPerBlock+1)*chainhash.HashSize)
 			for _, ticketHash := range node.nextWinners {
@@ -375,7 +355,6 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 			lastHash := prng.StateHash()
 			stateBuffer = append(stateBuffer, lastHash[:]...)
 			copy(node.finalState[:], chainhash.HashB(stateBuffer)[0:6])
-		}
 	}
 
 	log.Infof("Stake database version %v loaded", info.Version)

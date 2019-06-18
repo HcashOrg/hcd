@@ -53,6 +53,26 @@ func (b *BlockChain) lotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 	return winningTickets, poolSize, finalState, nil
 }
 
+func (b *BlockChain) lotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
+	var node *blockNode
+	if n, exists := b.index[*hash]; exists {
+		node = n
+	} else {
+		var err error
+		node, err = b.findNode(hash, maxSearchDepth)
+		if err != nil {
+			return nil, 0, [6]byte{}, err
+		}
+	}
+
+	winningTickets, poolSize, finalState, err := b.lotteryAiDataForNode(node)
+	if err != nil {
+		return nil, 0, [6]byte{}, err
+	}
+
+	return winningTickets, poolSize, finalState, nil
+}
+
 // LotteryDataForBlock returns lottery data for a given block in the block
 // chain, including side chain blocks.
 //
@@ -67,6 +87,15 @@ func (b *BlockChain) LotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 
 	return b.lotteryDataForBlock(hash)
 }
+
+func (b *BlockChain) LotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
+	b.chainLock.Lock()
+	defer b.chainLock.Unlock()
+
+	return b.lotteryAiDataForBlock(hash)
+}
+
+
 
 // LiveTickets returns all currently live tickets from the stake database.
 //
@@ -85,6 +114,14 @@ func (b *BlockChain) LiveTickets() ([]chainhash.Hash, error) {
 func (b *BlockChain) MissedTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
+	b.chainLock.RUnlock()
+
+	return sn.MissedTickets(), nil
+}
+
+func (b *BlockChain) MissedAiTickets() ([]chainhash.Hash, error) {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
 
 	return sn.MissedTickets(), nil
@@ -201,6 +238,19 @@ func (b *BlockChain) lotteryDataForNode(node *blockNode) ([]chainhash.Hash, int,
 
 	return stakeNode.Winners(), b.bestNode.stakeNode.PoolSize(),
 		b.bestNode.stakeNode.FinalState(), nil
+}
+
+func (b *BlockChain) lotteryAiDataForNode(node *blockNode) ([]chainhash.Hash, int, [6]byte, error) {
+	if node.height < b.chainParams.StakeEnabledHeight {
+		return []chainhash.Hash{}, 0, [6]byte{}, nil
+	}
+	aiStakeNode, err := b.fetchAiStakeNode(node)
+	if err != nil {
+		return []chainhash.Hash{}, 0, [6]byte{}, err
+	}
+
+	return aiStakeNode.Winners(), b.bestNode.aistakeNode.PoolSize(),
+		b.bestNode.aistakeNode.FinalState(), nil
 }
 
 // CheckExpiredTickets returns whether or not a ticket in a slice of

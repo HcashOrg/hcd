@@ -281,7 +281,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
 	if node.parent != nil {
 		if node.aistakeNode == nil && node.parent.aistakeNode != nil {
 			var err error
-			if node.newTickets == nil {
+			if node.newAiTickets == nil {
 				node.newAiTickets, err = b.fetchNewAiTicketsForNode(node)
 				if err != nil {
 					return nil, err

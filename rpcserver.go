@@ -4671,6 +4671,14 @@ func handleRebroadcastWinners(s *rpcServer, cmd interface{}, closeChan <-chan st
 			return nil, rpcInternalError("Lottery data for block "+
 				"failed: "+err.Error(), "")
 		}
+
+		winningAiTickets, _, _, err :=
+			s.server.blockManager.chain.LotteryAiDataForBlock(&blocks[i])
+		if err != nil {
+			return nil, rpcInternalError("Lottery data for block "+
+				"failed: "+err.Error(), "")
+		}
+		winningTickets = append(winningTickets, winningAiTickets...)
 		ntfnData := &WinningTicketsNtfnData{
 			BlockHash:   *hash,
 			BlockHeight: height,

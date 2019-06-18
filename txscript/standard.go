@@ -63,6 +63,10 @@ var scriptClassToName = []string{
 	StakeGenTy:        "stakegen",
 	StakeRevocationTy: "stakerevoke",
 	StakeSubChangeTy:  "sstxchange",
+	AiStakeSubmissionTy: "aistakesubmission",
+	AiStakeGenTy:        "aistakegen",
+	AiStakeRevocationTy: "aistakerevoke",
+	AiStakeSubChangeTy:  "aisstxchange",
 }
 
 // String implements the Stringer interface by returning the name of
