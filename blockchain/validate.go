@@ -961,6 +961,11 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return err
 	}
 
+	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent)
+	if err != nil {
+		return err
+	}
+
 	// Do some preliminary checks on each stake transaction to ensure they
 	// are sane before continuing.
 	ssGens := 0 // Votes
@@ -1092,6 +1097,15 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 				"poolsize in block %v was %v, however we "+
 				"expected %v", node.hash, poolSize,
 				parentStakeNode.PoolSize())
+			return ruleError(ErrPoolSize, errStr)
+		}
+
+		// Check the ticket pool size.
+		if parentAiStakeNode.PoolSize() != poolSize {
+			errStr := fmt.Sprintf("Error in stake consensus: the "+
+				"poolsize in block %v was %v, however we "+
+				"expected %v", node.hash, poolSize,
+				parentAiStakeNode.PoolSize())
 			return ruleError(ErrPoolSize, errStr)
 		}
 
@@ -2709,10 +2723,13 @@ func (b *BlockChain) CheckConnectBlock(block *hcutil.Block) error {
 		return ruleError(ErrMissingParent, err.Error())
 	}
 
-	newNode := newBlockNode(&block.MsgBlock().Header,
-		ticketsSpentInBlock(block),
-		ticketsRevokedInBlock(block),
-		voteBitsInBlock(block))
+	ticket,aiT := ticketsSpentInBlock(block)
+	ticket_rv,aiRv := ticketsRevokedInBlock(block)
+	vote,aiV :=  voteBitsInBlock(block)
+
+	newNode := newBlockNodeAi(&block.MsgBlock().Header,
+		ticket,aiT, ticket_rv, aiRv,vote, aiV)
+
 	newNode.parent = prevNode
 	newNode.workSum.Add(prevNode.workSum, newNode.workSum)
 	if prevNode != nil {

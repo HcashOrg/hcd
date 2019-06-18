@@ -8,6 +8,7 @@ package blockchain
 
 import (
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
@@ -122,7 +123,6 @@ func (b *BlockChain) fetchStakeNode(node *blockNode) (*stake.Node, error) {
 			if err != nil {
 				return nil, err
 			}
-
 			return node.stakeNode, nil
 		}
 	}
@@ -219,4 +219,129 @@ func (b *BlockChain) fetchStakeNode(node *blockNode) (*stake.Node, error) {
 	}
 
 	return current.stakeNode, nil
+}
+
+func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
+	// If we already have the stake node fetched, returned the cached result.
+	// Stake nodes are immutable.
+	if node.aistakeNode != nil {
+		return node.aistakeNode, nil
+	}
+
+	// If the parent stake node is cached, connect the stake node
+	// from there.
+	if node.parent != nil {
+		if node.aistakeNode == nil && node.parent.aistakeNode != nil {
+			var err error
+			if node.newTickets == nil {
+				node.newTickets, err = b.fetchNewTicketsForNode(node)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			node.aistakeNode, err = node.parent.aistakeNode.ConnectNode(node.header,
+				node.aiTicketsSpent,
+				node.aiTicketsRevoked,
+				node.newAiTickets)
+			if err != nil {
+				return nil, err
+			}
+
+			return node.aistakeNode, nil
+		}
+	}
+
+	// We need to generate a path to the stake node and restore it
+	// it through the entire path.  The bestNode stake node must
+	// always be filled in, so assume it is safe to begin working
+	// backwards from there.
+	detachNodes, attachNodes, err := b.getReorganizeNodes(node)
+	if err != nil {
+		return nil, err
+	}
+	current := b.bestNode
+
+	// Move backwards through the main chain, undoing the ticket
+	// treaps for each block.  The database is passed because the
+	// undo data and new tickets data for each block may not yet
+	// be filled in and may require the database to look up.
+	err = b.db.View(func(dbTx database.Tx) error {
+		for e := detachNodes.Front(); e != nil; e = e.Next() {
+			n := e.Value.(*blockNode)
+			if n.aistakeNode == nil {
+				var errLocal error
+				n.aistakeNode, errLocal =
+					current.aistakeNode.DisconnectNode(n.header,
+						n.aistakeUndoData, n.newTickets, dbTx)
+				if errLocal != nil {
+					return errLocal
+				}
+			}
+			current = n
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Detach the final block and get the filled in node for the fork
+	// point.
+	err = b.db.View(func(dbTx database.Tx) error {
+		if current.parent.aistakeNode == nil {
+			var errLocal error
+			current.parent.aistakeNode, errLocal =
+				current.aistakeNode.DisconnectNode(current.parent.header,
+					current.parent.aistakeUndoData, current.parent.newTickets, dbTx)
+			if errLocal != nil {
+				return errLocal
+			}
+		}
+		current = current.parent
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// The node is at a fork point in the block chain, so just return
+	// this stake node.
+	if attachNodes.Len() == 0 {
+		if current.hash != node.hash ||
+			current.height != node.height {
+			return nil, AssertError("failed to restore stake node to " +
+				"fork point when fetching")
+		}
+
+		return current.aistakeNode, nil
+	}
+
+	// The requested node is on a side chain, so we need to apply the
+	// transactions and spend information from each of the nodes to attach.
+	// Not that side chain ticket data and undo data is always stored
+	// in memory, so there is not need to use the database here.
+	for e := attachNodes.Front(); e != nil; e = e.Next() {
+		n := e.Value.(*blockNode)
+
+		if n.stakeNode == nil {
+			if n.newTickets == nil {
+				n.newTickets, err = b.fetchNewTicketsForNode(n)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			n.stakeNode, err = current.stakeNode.ConnectNode(n.header,
+				n.ticketsSpent, n.ticketsRevoked, n.newTickets)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		current = n
+	}
+
+	return current.aistakeNode, nil
 }

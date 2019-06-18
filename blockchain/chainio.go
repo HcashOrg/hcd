@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"math/big"
 	"reflect"
 	"sort"
@@ -1387,6 +1388,11 @@ func (b *BlockChain) createChainState() error {
 			return err
 		}
 
+		b.bestNode.aistakeNode, err = aistake.InitDatabaseState(dbTx, b.chainParams)
+		if err != nil {
+			return err
+		}
+
 		// Store the genesis block into the database.
 		return dbTx.StoreBlock(genesisBlock)
 	})
@@ -1466,8 +1472,12 @@ func (b *BlockChain) initChainState() error {
 		// nodes will be loaded on demand as needed.
 		blk := hcutil.NewBlock(&block)
 		header := &block.Header
-		node := newBlockNode(header, ticketsSpentInBlock(blk),
-			ticketsRevokedInBlock(blk), voteBitsInBlock(blk))
+		tickets, aiTickets := ticketsSpentInBlock(blk)
+		ticketsRv, aiTicketsRv := ticketsRevokedInBlock(blk)
+		vote, aiVote := voteBitsInBlock(blk)
+		node := newBlockNodeAi(header, tickets, aiTickets,
+			ticketsRv, aiTicketsRv, vote, aiVote)
+
 		node.inMainChain = true
 		node.workSum = state.workSum
 

@@ -6,7 +6,7 @@
 // Contains a collection of functions that determine what type of stake tx a
 // given tx is and does a cursory check for sanity.
 
-package stake
+package aistake
 
 import (
 	"bytes"

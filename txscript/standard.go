@@ -41,6 +41,11 @@ const (
 	StakeSubChangeTy                     // Change for stake submission tx.
 	PubkeyAltTy                          // Alternative signature pubkey.
 	PubkeyHashAltTy                      // Alternative signature pubkey hash.
+
+	AiStakeSubmissionTy                    // Stake submission.
+	AiStakeGenTy                           // Stake generation
+	AiStakeRevocationTy                    // Stake revocation.
+	AiStakeSubChangeTy                     // Change for stake submission tx.
 )
 
 // scriptClassToName houses the human-readable strings which describe each
@@ -247,7 +252,7 @@ func isNullData(pops []parsedOpcode) bool {
 // false otherwise.
 func isStakeSubmission(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_SSTX) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -257,7 +262,7 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_SSTX) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -268,13 +273,47 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_SSTX) &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
 		return true
 	}
 
+	return false
+}
+
+// isStakeSubmission returns true if the script passed is a stake submission tx,
+// false otherwise.
+func isAiStakeSubmission(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		(pops[0].opcode.value == OP_UNKNOWN200) &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		(pops[0].opcode.value == OP_UNKNOWN200) &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		(pops[0].opcode.value == OP_UNKNOWN200) &&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
 	return false
 }
 
@@ -304,6 +343,39 @@ func isStakeGen(pops []parsedOpcode) bool {
 
 	if len(pops) == 4 &&
 		pops[0].opcode.value == OP_SSGEN &&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
+
+	return false
+}
+
+func isAiStakeGen(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		pops[0].opcode.value == OP_UNKNOWN201 &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		pops[0].opcode.value == OP_UNKNOWN201 &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		pops[0].opcode.value == OP_UNKNOWN201 &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -348,11 +420,9 @@ func isStakeRevocation(pops []parsedOpcode) bool {
 	return false
 }
 
-// isSStxChange returns true if the script passed is a stake submission
-// change tx, false otherwise.
-func isSStxChange(pops []parsedOpcode) bool {
+func isAiStakeRevocation(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[0].opcode.value == OP_UNKNOWN202 &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -362,7 +432,7 @@ func isSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[0].opcode.value == OP_UNKNOWN202 &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -373,7 +443,75 @@ func isSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[0].opcode.value == OP_UNKNOWN202 &&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
+
+	return false
+}
+
+// isSStxChange returns true if the script passed is a stake submission
+// change tx, false otherwise.
+func isSStxChange(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		(pops[0].opcode.value == OP_SSTXCHANGE)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		(pops[0].opcode.value == OP_SSTXCHANGE)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		(pops[0].opcode.value == OP_SSTXCHANGE)&&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
+
+	return false
+}
+
+func isAiSStxChange(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		(pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		(pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		(pops[0].opcode.value == OP_UNKNOWN203)&&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -402,12 +540,20 @@ func typeOfScript(pops []parsedOpcode) ScriptClass {
 		return NullDataTy
 	} else if isStakeSubmission(pops) {
 		return StakeSubmissionTy
+	}else if isAiStakeSubmission(pops) {
+		return AiStakeSubmissionTy
 	} else if isStakeGen(pops) {
 		return StakeGenTy
+	} else if isAiStakeGen(pops) {
+		return AiStakeGenTy
 	} else if isStakeRevocation(pops) {
 		return StakeRevocationTy
+	} else if isAiStakeRevocation(pops) {
+		return AiStakeRevocationTy
 	} else if isSStxChange(pops) {
 		return StakeSubChangeTy
+	}else if isAiSStxChange(pops) {
+		return AiStakeSubChangeTy
 	}
 
 	return NonStandardTy

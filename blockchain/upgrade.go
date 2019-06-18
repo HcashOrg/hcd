@@ -43,6 +43,7 @@ func (b *BlockChain) upgradeToVersion2() error {
 
 			// If we need the tickets, fetch them too.
 			var newTickets []chainhash.Hash
+			var newAiTickets []chainhash.Hash
 			if i >= b.chainParams.StakeEnabledHeight {
 				matureHeight := i - int64(b.chainParams.TicketMaturity)
 				matureBlock, errLocal := dbFetchBlockByHeight(dbTx, matureHeight)
@@ -53,15 +54,21 @@ func (b *BlockChain) upgradeToVersion2() error {
 					if is, _ := stake.IsSStx(stx); is {
 						h := stx.TxHash()
 						newTickets = append(newTickets, h)
+					}else if is, _ := stake.IsAiSStx(stx); is {
+						h := stx.TxHash()
+						newAiTickets = append(newAiTickets, h)
 					}
 				}
 			}
 
 			// Iteratively connect the stake nodes in memory.
 			header := block.MsgBlock().Header
+			tickets, _ := ticketsSpentInBlock(block)
+			ticketsRv, _ := ticketsRevokedInBlock(block)
+
 			bestStakeNode, errLocal = bestStakeNode.ConnectNode(header,
-				ticketsSpentInBlock(block), ticketsRevokedInBlock(block),
-				newTickets)
+				tickets, ticketsRv, newTickets)
+
 			if errLocal != nil {
 				return errLocal
 			}
@@ -78,8 +85,8 @@ func (b *BlockChain) upgradeToVersion2() error {
 				b.bestNode.stakeNode = bestStakeNode
 				b.bestNode.stakeUndoData = bestStakeNode.UndoData()
 				b.bestNode.newTickets = newTickets
-				b.bestNode.ticketsSpent = ticketsSpentInBlock(block)
-				b.bestNode.ticketsRevoked = ticketsRevokedInBlock(block)
+				b.bestNode.ticketsSpent,_ = ticketsSpentInBlock(block)
+				b.bestNode.ticketsRevoked,_ = ticketsRevokedInBlock(block)
 			}
 
 			progressLogger.LogBlockHeight(block.MsgBlock(), parent.MsgBlock())

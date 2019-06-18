@@ -186,45 +186,54 @@ func (b *BlockChain) checkBlockContext(block *hcutil.Block, prevNode *blockNode,
 
 // ticketsSpentInBlock fetches a list of tickets that were spent in the
 // block.
-func ticketsSpentInBlock(bl *hcutil.Block) []chainhash.Hash {
+func ticketsSpentInBlock(bl *hcutil.Block) ([]chainhash.Hash, []chainhash.Hash) {
 	var tickets []chainhash.Hash
+	var aiTickets []chainhash.Hash
 	for _, stx := range bl.MsgBlock().STransactions {
 		if stake.DetermineTxType(stx) == stake.TxTypeSSGen {
 			tickets = append(tickets, stx.TxIn[1].PreviousOutPoint.Hash)
+		}else if stake.DetermineTxType(stx) == stake.TxTypeAiSStx {
+			aiTickets = append(tickets, stx.TxIn[1].PreviousOutPoint.Hash)
 		}
 	}
-
-	return tickets
+	return tickets, aiTickets
 }
 
 // ticketsRevokedInBlock fetches a list of tickets that were revoked in the
 // block.
-func ticketsRevokedInBlock(bl *hcutil.Block) []chainhash.Hash {
+func ticketsRevokedInBlock(bl *hcutil.Block) ([]chainhash.Hash, []chainhash.Hash) {
 	var tickets []chainhash.Hash
+	var aiTickets []chainhash.Hash
 	for _, stx := range bl.MsgBlock().STransactions {
 		if stake.DetermineTxType(stx) == stake.TxTypeSSRtx {
 			tickets = append(tickets, stx.TxIn[0].PreviousOutPoint.Hash)
+		}else if stake.DetermineTxType(stx) == stake.TxTypeAiSSRtx {
+			aiTickets = append(tickets, stx.TxIn[0].PreviousOutPoint.Hash)
 		}
 	}
 
-	return tickets
+	return tickets, aiTickets
 }
 
 // voteBitsInBlock returns a list of vote bits for the voters in this block.
-func voteBitsInBlock(bl *hcutil.Block) []VoteVersionTuple {
+func voteBitsInBlock(bl *hcutil.Block) ([]VoteVersionTuple, []VoteVersionTuple ){
 	var voteBits []VoteVersionTuple
+	var aiVoteBits []VoteVersionTuple
 	for _, stx := range bl.MsgBlock().STransactions {
-		if is, _ := stake.IsSSGen(stx); !is {
-			continue
+		if is, _ := stake.IsSSGen(stx); is {
+			voteBits = append(voteBits, VoteVersionTuple{
+				Version: stake.SSGenVersion(stx),
+				Bits:    stake.SSGenVoteBits(stx),
+			})
+		} else if is, _ := stake.IsAiSSGen(stx); is {
+			aiVoteBits = append(aiVoteBits, VoteVersionTuple{
+				Version: stake.SSGenVersion(stx),
+				Bits:    stake.SSGenVoteBits(stx),
+			})
 		}
-
-		voteBits = append(voteBits, VoteVersionTuple{
-			Version: stake.SSGenVersion(stx),
-			Bits:    stake.SSGenVoteBits(stx),
-		})
 	}
 
-	return voteBits
+	return voteBits, aiVoteBits
 }
 
 // maybeAcceptBlock potentially accepts a block into the block chain and, if
@@ -267,8 +276,11 @@ func (b *BlockChain) maybeAcceptBlock(block *hcutil.Block, flags BehaviorFlags) 
 	// Create a new block node for the block and add it to the in-memory
 	// block chain (could be either a side chain or the main chain).
 	blockHeader := &block.MsgBlock().Header
-	newNode := newBlockNode(blockHeader, ticketsSpentInBlock(block),
-		ticketsRevokedInBlock(block), voteBitsInBlock(block))
+	tickets, aiTickets := ticketsSpentInBlock(block)
+	ticketsRv, aiTicketsRv := ticketsRevokedInBlock(block)
+	vote, aiVote := voteBitsInBlock(block)
+	newNode := newBlockNodeAi(blockHeader, tickets, aiTickets,
+		ticketsRv, aiTicketsRv, vote, aiVote)
 	if prevNode != nil {
 		newNode.parent = prevNode
 		newNode.height = blockHeight

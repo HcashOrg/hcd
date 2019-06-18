@@ -3,14 +3,14 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package stake
+package aistake
 
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/dbnamespace"
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/ticketdb"
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/tickettreap"
+	"github.com/HcashOrg/hcd/blockchain/aistake/internal/dbnamespace"
+	"github.com/HcashOrg/hcd/blockchain/aistake/internal/ticketdb"
+	"github.com/HcashOrg/hcd/blockchain/aistake/internal/tickettreap"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
@@ -42,15 +42,6 @@ type Node struct {
 
 	// revokedTickets is the treap of revoked tickets for this node.
 	revokedTickets *tickettreap.Immutable
-
-	// liveTickets is the treap of the live tickets for this node.
-	aiLiveTickets *tickettreap.Immutable
-
-	// missedTickets is the treap of missed tickets for this node.
-	aiMissedTickets *tickettreap.Immutable
-
-	// revokedTickets is the treap of revoked tickets for this node.
-	aiRevokedTickets *tickettreap.Immutable
 
 	// databaseUndoUpdate is the cache of the database used to undo
 	// the current node's addition to the blockchain.
@@ -694,7 +685,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 // ConnectNode connects a stake node to the node and returns a pointer
 // to the stake node of the child.
 func (sn *Node) ConnectNode(header wire.BlockHeader, ticketsSpentInBlock, revokedTickets,newTickets []chainhash.Hash) (*Node, error) {
-	return connectNode(sn, header, ticketsSpentInBlock, revokedTickets,newTickets)
+	return connectNode(sn, header, ticketsSpentInBlock, revokedTickets, newTickets)
 }
 
 // disconnectNode disconnects a stake node from itself and returns the state of
