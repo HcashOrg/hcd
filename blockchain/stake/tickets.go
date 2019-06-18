@@ -1176,43 +1176,21 @@ func WriteDisconnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash
 	if err != nil {
 		return err
 	}
-
-	if uint64(node.Height()) >= node.params.AIEnableHeight{
-		// Write the new best state to the database.
-		nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
-		if node.height >= uint32(node.params.StakeValidationHeight-1) {
-			for i := range nextWinners {
-				nextWinners[i] = node.nextWinners[i]
-			}
+	// Write the new best state to the database.
+	nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
+	if node.height >= uint32(node.params.StakeValidationHeight-1) {
+		for i := range nextWinners {
+			nextWinners[i] = node.nextWinners[i]
 		}
-
-		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
-			Hash:        hash,
-			Height:      node.height,
-			Live:        uint32(node.liveTickets.Len()),
-			Missed:      uint64(node.missedTickets.Len()),
-			Revoked:     uint64(node.revokedTickets.Len()),
-			PerBlock:    node.params.AiTicketsPerBlock,
-			NextWinners: nextWinners,
-		})
-	}else {
-		// Write the new best state to the database.
-		nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
-		if node.height >= uint32(node.params.StakeValidationHeight-1) {
-			for i := range nextWinners {
-				nextWinners[i] = node.nextWinners[i]
-			}
-		}
-
-		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
-			Hash:        hash,
-			Height:      node.height,
-			Live:        uint32(node.liveTickets.Len()),
-			Missed:      uint64(node.missedTickets.Len()),
-			Revoked:     uint64(node.revokedTickets.Len()),
-			PerBlock:    node.params.TicketsPerBlock,
-			NextWinners: nextWinners,
-		})
 	}
 
+	return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
+		Hash:        hash,
+		Height:      node.height,
+		Live:        uint32(node.liveTickets.Len()),
+		Missed:      uint64(node.missedTickets.Len()),
+		Revoked:     uint64(node.revokedTickets.Len()),
+		PerBlock:    node.params.TicketsPerBlock,
+		NextWinners: nextWinners,
+	})
 }
