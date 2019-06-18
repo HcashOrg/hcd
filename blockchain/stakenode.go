@@ -9,7 +9,6 @@ package blockchain
 import (
 	"fmt"
 	"github.com/HcashOrg/hcd/blockchain/aistake"
-
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
@@ -74,6 +73,7 @@ func (b *BlockChain) fetchNewTicketsForNode(node *blockNode) ([]chainhash.Hash, 
 	}
 
 	tickets := []chainhash.Hash{}
+
 	for _, stx := range matureBlock.MsgBlock().STransactions {
 		if is, _ := stake.IsSStx(stx); is {
 			h := stx.TxHash()
@@ -84,9 +84,57 @@ func (b *BlockChain) fetchNewTicketsForNode(node *blockNode) ([]chainhash.Hash, 
 	// Set the new tickets in memory so that they exist for future
 	// reference in the node.
 	node.newTickets = tickets
-
 	return tickets, nil
 }
+
+// fetchNewTicketsForNode fetches the list of newly maturing tickets for a
+// given node by traversing backwards through its parents until it finds the
+// block that contains the original tickets to mature.
+//
+// This function is NOT safe for concurrent access and must be called with
+// the chainLock held for writes.
+func (b *BlockChain) fetchNewAiTicketsForNode(node *blockNode) ([]chainhash.Hash, error) {
+	// If we're before the stake enabled height, there can be no
+	// tickets in the live ticket pool.
+	if node.height < b.chainParams.StakeEnabledHeight {
+		return []chainhash.Hash{}, nil
+	}
+
+	// If we already cached the tickets, simply return the cached list.
+	// It's important to make the distinction here that nil means the
+	// value was never looked up, while an empty slice of pointers means
+	// that there were no new tickets at this height.
+	if node.newTickets != nil {
+		return node.newTickets, nil
+	}
+
+	// Calculate block number for where new tickets matured from and retrieve
+	// this block from DB or in memory if it's a sidechain.
+	matureNode, err := b.nodeAtHeightFromTopNode(node,
+		int64(b.chainParams.TicketMaturity))
+	if err != nil {
+		return nil, err
+	}
+
+	matureBlock, errBlock := b.fetchBlockByHash(&matureNode.hash)
+	if errBlock != nil {
+		return nil, errBlock
+	}
+
+	aiTickets := []chainhash.Hash{}
+	for _, stx := range matureBlock.MsgBlock().STransactions {
+		if is, _ := stake.IsAiSStx(stx); is {
+			h := stx.TxHash()
+			aiTickets = append(aiTickets, h)
+		}
+	}
+
+
+	node.newAiTickets = aiTickets
+
+	return aiTickets, nil
+}
+
 
 // fetchStakeNode will scour the blockchain from the best block, for which we
 // know that there is valid stake node.  The first step is finding a path to the
@@ -234,7 +282,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
 		if node.aistakeNode == nil && node.parent.aistakeNode != nil {
 			var err error
 			if node.newTickets == nil {
-				node.newTickets, err = b.fetchNewTicketsForNode(node)
+				node.newAiTickets, err = b.fetchNewAiTicketsForNode(node)
 				if err != nil {
 					return nil, err
 				}
@@ -273,7 +321,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
 				var errLocal error
 				n.aistakeNode, errLocal =
 					current.aistakeNode.DisconnectNode(n.header,
-						n.aistakeUndoData, n.newTickets, dbTx)
+						n.aistakeUndoData, n.newAiTickets, dbTx)
 				if errLocal != nil {
 					return errLocal
 				}
@@ -294,7 +342,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
 			var errLocal error
 			current.parent.aistakeNode, errLocal =
 				current.aistakeNode.DisconnectNode(current.parent.header,
-					current.parent.aistakeUndoData, current.parent.newTickets, dbTx)
+					current.parent.aistakeUndoData, current.parent.newAiTickets, dbTx)
 			if errLocal != nil {
 				return errLocal
 			}
@@ -325,16 +373,16 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
 	for e := attachNodes.Front(); e != nil; e = e.Next() {
 		n := e.Value.(*blockNode)
 
-		if n.stakeNode == nil {
-			if n.newTickets == nil {
-				n.newTickets, err = b.fetchNewTicketsForNode(n)
+		if n.aistakeNode == nil {
+			if n.newAiTickets == nil {
+				n.newAiTickets, err = b.fetchNewAiTicketsForNode(n)
 				if err != nil {
 					return nil, err
 				}
 			}
 
-			n.stakeNode, err = current.stakeNode.ConnectNode(n.header,
-				n.ticketsSpent, n.ticketsRevoked, n.newTickets)
+			n.aistakeNode, err = current.aistakeNode.ConnectNode(n.header,
+				n.aiTicketsSpent, n.aiTicketsRevoked, n.newAiTickets)
 			if err != nil {
 				return nil, err
 			}

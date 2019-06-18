@@ -7,6 +7,7 @@
 package blockchain
 
 import (
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/blockchain/internal/progresslog"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
@@ -26,6 +27,11 @@ func (b *BlockChain) upgradeToVersion2() error {
 	// incrementally.
 	err := b.db.Update(func(dbTx database.Tx) error {
 		bestStakeNode, errLocal := stake.InitDatabaseState(dbTx, b.chainParams)
+		if errLocal != nil {
+			return errLocal
+		}
+
+		bestAiStakeNode, errLocal := aistake.InitDatabaseState(dbTx, b.chainParams)
 		if errLocal != nil {
 			return errLocal
 		}
@@ -63,16 +69,14 @@ func (b *BlockChain) upgradeToVersion2() error {
 
 			// Iteratively connect the stake nodes in memory.
 			header := block.MsgBlock().Header
-			tickets, _ := ticketsSpentInBlock(block)
-			ticketsRv, _ := ticketsRevokedInBlock(block)
+			tickets, aiT := ticketsSpentInBlock(block)
+			ticketsRv, aiRv := ticketsRevokedInBlock(block)
 
 			bestStakeNode, errLocal = bestStakeNode.ConnectNode(header,
 				tickets, ticketsRv, newTickets)
-
 			if errLocal != nil {
 				return errLocal
 			}
-
 			// Write the top block stake node to the database.
 			errLocal = stake.WriteConnectedBestNode(dbTx, bestStakeNode,
 				*best.Hash)
@@ -80,13 +84,35 @@ func (b *BlockChain) upgradeToVersion2() error {
 				return errLocal
 			}
 
+			bestAiStakeNode, errLocal = bestAiStakeNode.ConnectNode(header,
+				aiT, aiRv, newAiTickets)
+			if errLocal != nil {
+				return errLocal
+			}
+			// Write the top block stake node to the database.
+			errLocal = aistake.WriteConnectedBestNode(dbTx, bestAiStakeNode,
+				*best.Hash)
+			if errLocal != nil {
+				return errLocal
+			}
+
 			// Write the best block node when we reach it.
 			if i == best.Height {
+				tickets, aiTickets := ticketsSpentInBlock(block)
+				ticketsRv, aiTicketsRv := ticketsRevokedInBlock(block)
+
 				b.bestNode.stakeNode = bestStakeNode
 				b.bestNode.stakeUndoData = bestStakeNode.UndoData()
 				b.bestNode.newTickets = newTickets
-				b.bestNode.ticketsSpent,_ = ticketsSpentInBlock(block)
-				b.bestNode.ticketsRevoked,_ = ticketsRevokedInBlock(block)
+				b.bestNode.ticketsSpent = tickets
+				b.bestNode.ticketsRevoked = ticketsRv
+
+				b.bestNode.aistakeNode = bestAiStakeNode
+				b.bestNode.aistakeUndoData = bestAiStakeNode.UndoData()
+				b.bestNode.newAiTickets = newAiTickets
+				b.bestNode.aiTicketsSpent = aiTickets
+				b.bestNode.aiTicketsRevoked = aiTicketsRv
+
 			}
 
 			progressLogger.LogBlockHeight(block.MsgBlock(), parent.MsgBlock())

@@ -1495,6 +1495,16 @@ func (b *BlockChain) disconnectBlock(node *blockNode, block *hcutil.Block, view 
 		return err
 	}
 
+	childAiStakeNode, err := b.fetchAiStakeNode(node)
+	if err != nil {
+		return err
+	}
+
+	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent)
+	if err != nil {
+		return err
+	}
+
 	err = b.db.Update(func(dbTx database.Tx) error {
 		// Update best block state.
 		err := dbPutBestState(dbTx, state, node.workSum)
@@ -1526,6 +1536,12 @@ func (b *BlockChain) disconnectBlock(node *blockNode, block *hcutil.Block, view 
 
 		err = stake.WriteDisconnectedBestNode(dbTx, parentStakeNode,
 			node.parent.hash, childStakeNode.UndoData())
+		if err != nil {
+			return err
+		}
+
+		err = aistake.WriteDisconnectedBestNode(dbTx, parentAiStakeNode,
+			node.parent.hash, childAiStakeNode.UndoData())
 		if err != nil {
 			return err
 		}
@@ -1598,7 +1614,8 @@ func countSpentOutputs(block *hcutil.Block, parent *hcutil.Block) int {
 	}
 	for _, stx := range block.MsgBlock().STransactions {
 		txType := stake.DetermineTxType(stx)
-		if txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx {
+		if txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx ||
+		txType == stake.TxTypeAiSSGen || txType == stake.TxTypeAiSSRtx {
 			numSpent++
 			continue
 		}

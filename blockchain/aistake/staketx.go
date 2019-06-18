@@ -412,7 +412,7 @@ func TxSSGenStakeOutputInfo(tx *wire.MsgTx, params *chaincfg.Params) ([]bool,
 			if err != nil {
 				return nil, nil, nil, err
 			}
-			if class != txscript.StakeGenTy {
+			if class != txscript.StakeGenTy && class != txscript.AiStakeGenTy {
 				return nil, nil, nil, fmt.Errorf("ssgen output included non "+
 					"ssgen tagged output in idx %v", idx)
 			}
@@ -500,7 +500,7 @@ func TxSSRtxStakeOutputInfo(tx *wire.MsgTx, params *chaincfg.Params) ([]bool,
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		if class != txscript.StakeRevocationTy {
+		if class != txscript.StakeRevocationTy && class != txscript.AiStakeRevocationTy {
 			return nil, nil, nil, fmt.Errorf("ssrtx output included non "+
 				"ssrtx tagged output in idx %v", idx)
 		}

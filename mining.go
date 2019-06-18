@@ -163,7 +163,11 @@ func txStakePriority(txType stake.TxType) stakePriority {
 	switch txType {
 	case stake.TxTypeSSGen:
 		prio = votePriority
+	case stake.TxTypeAiSSGen:
+		prio = votePriority
 	case stake.TxTypeSStx:
+		prio = ticketPriority
+	case stake.TxTypeAiSStx:
 		prio = ticketPriority
 	}
 
@@ -727,11 +731,12 @@ func maybeInsertStakeTx(bm *blockManager, stx *hcutil.Tx, treeValid bool) bool {
 	}
 	mstx := stx.MsgTx()
 	isSSGen, _ := stake.IsSSGen(mstx)
+	isAiSSGen, _ := stake.IsAiSSGen(mstx)
 	for i, txIn := range mstx.TxIn {
 		// Evaluate if this is a stakebase input or not. If it
 		// is, continue without evaluation of the input.
 		// if isStakeBase
-		if isSSGen && (i == 0) {
+		if (isSSGen || isAiSSGen) && (i == 0) {
 			txIn.BlockHeight = wire.NullBlockHeight
 			txIn.BlockIndex = wire.NullBlockIndex
 
@@ -1326,7 +1331,8 @@ mempoolLoop:
 		// Need this for a check below for stake base input, and to check
 		// the ticket number.
 		isSSGen := txDesc.Type == stake.TxTypeSSGen
-		if isSSGen {
+		isAiSSGen := txDesc.Type == stake.TxTypeAiSSGen
+		if isSSGen || isAiSSGen {
 			blockHash, blockHeight, err := stake.SSGenBlockVotedOn(msgTx)
 			if err != nil { // Should theoretically never fail.
 				minrLog.Tracef("Skipping ssgen tx %s because of failure "+
@@ -1460,13 +1466,13 @@ mempoolLoop:
 		tx := prioItem.tx
 
 		// Store if this is an SStx or not.
-		isSStx := prioItem.txType == stake.TxTypeSStx
+		isSStx := prioItem.txType == stake.TxTypeSStx || prioItem.txType == stake.TxTypeAiSStx
 
 		// Store if this is an SSGen or not.
-		isSSGen := prioItem.txType == stake.TxTypeSSGen
+		isSSGen := prioItem.txType == stake.TxTypeSSGen || prioItem.txType == stake.TxTypeAiSSGen
 
 		// Store if this is an SSRtx or not.
-		isSSRtx := prioItem.txType == stake.TxTypeSSRtx
+		isSSRtx := prioItem.txType == stake.TxTypeSSRtx || prioItem.txType == stake.TxTypeAiSSRtx
 
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
@@ -1697,7 +1703,8 @@ mempoolLoop:
 			break // No SSGen should be present before this height.
 		}
 
-		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen {
+		isAiSSGen, _ := stake.IsAiSSGen(msgTx)
+		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen{
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				vb := stake.SSGenVoteBits(txCopy.MsgTx())
@@ -1794,7 +1801,8 @@ mempoolLoop:
 	for _, tx := range blockTxns {
 		msgTx := tx.MsgTx()
 		isSStx, _ := stake.IsSStx(msgTx)
-		if tx.Tree() == wire.TxTreeStake && isSStx {
+		isAiSStx, _ := stake.IsAiSStx(msgTx)
+		if tx.Tree() == wire.TxTreeStake && (isSStx || isAiSStx) {
 			// A ticket can not spend an input from TxTreeRegular, since it
 			// has not yet been validated.
 			if containsTxIns(blockTxns, tx) {
@@ -1833,7 +1841,8 @@ mempoolLoop:
 
 		msgTx := tx.MsgTx()
 		isSSRtx, _ := stake.IsSSRtx(msgTx)
-		if tx.Tree() == wire.TxTreeStake && isSSRtx {
+		isAiSSRtx, _ := stake.IsAiSSRtx(msgTx)
+		if tx.Tree() == wire.TxTreeStake && (isSSRtx ||isAiSSRtx) {
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				blockTxnsStake = append(blockTxnsStake, txCopy)

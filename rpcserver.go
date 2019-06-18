@@ -1289,7 +1289,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 		var scriptClass string
 		var reqSigs int
 		var commitAmt *hcutil.Amount
-		if txType == stake.TxTypeSStx && (i%2 != 0) {
+		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx) && (i%2 != 0) {
 			scriptClass = sstxCommitmentString
 			addr, err := stake.AddrFromSStxPkScrCommitment(v.PkScript,
 				chainParams)
@@ -2548,9 +2548,15 @@ func (state *gbtWorkState) blockTemplateResult(bm *blockManager, useCoinbaseValu
 			txTypeStr = "regular"
 		case stake.TxTypeSStx:
 			txTypeStr = "error"
+		case stake.TxTypeAiSStx:
+			txTypeStr = "error"
 		case stake.TxTypeSSGen:
 			txTypeStr = "error"
+		case stake.TxTypeAiSSGen:
+			txTypeStr = "error"
 		case stake.TxTypeSSRtx:
+			txTypeStr = "error"
+		case stake.TxTypeAiSSRtx:
 			txTypeStr = "error"
 		}
 
@@ -2655,10 +2661,16 @@ func (state *gbtWorkState) blockTemplateResult(bm *blockManager, useCoinbaseValu
 			txTypeStr = "error"
 		case stake.TxTypeSStx:
 			txTypeStr = "ticket"
+		case stake.TxTypeAiSStx:
+			txTypeStr = "aiticket"
 		case stake.TxTypeSSGen:
 			txTypeStr = "vote"
+		case stake.TxTypeAiSSGen:
+			txTypeStr = "aivote"
 		case stake.TxTypeSSRtx:
 			txTypeStr = "revocation"
+		case stake.TxTypeAiSSRtx:
+			txTypeStr = "airevocation"
 		}
 
 		fee := int64(0)
@@ -2703,7 +2715,7 @@ func (state *gbtWorkState) blockTemplateResult(bm *blockManager, useCoinbaseValu
 					context)
 			}
 
-			isSSGen := txType == stake.TxTypeSSGen
+			isSSGen := txType == stake.TxTypeSSGen || txType == stake.TxTypeAiSSGen
 			numSigOps, err := blockchain.CountP2SHSigOps(txU,
 				false, isSSGen,
 				view)
@@ -3527,12 +3539,21 @@ func handleGetRawMempool(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		case hcjson.GRMTickets:
 			filterType = new(stake.TxType)
 			*filterType = stake.TxTypeSStx
+		case hcjson.GRMAiTickets:
+			filterType = new(stake.TxType)
+			*filterType = stake.TxTypeAiSStx
 		case hcjson.GRMVotes:
 			filterType = new(stake.TxType)
 			*filterType = stake.TxTypeSSGen
+		case hcjson.GRMAiVotes:
+			filterType = new(stake.TxType)
+			*filterType = stake.TxTypeAiSSGen
 		case hcjson.GRMRevocations:
 			filterType = new(stake.TxType)
 			*filterType = stake.TxTypeSSRtx
+		case hcjson.GRMAiRevocations:
+			filterType = new(stake.TxType)
+			*filterType = stake.TxTypeAiSSRtx
 		case hcjson.GRMAll:
 			// Nothing to do
 		default:
@@ -4682,10 +4703,11 @@ func fetchInputTxos(s *rpcServer, tx *wire.MsgTx) (map[wire.OutPoint]wire.TxOut,
 	mp := s.server.txMemPool
 	originOutputs := make(map[wire.OutPoint]wire.TxOut)
 	voteTx, _ := stake.IsSSGen(tx)
+	aiVoteTx, _ := stake.IsAiSSGen(tx)
 	for txInIndex, txIn := range tx.TxIn {
 		// vote tx have null input for vin[0],
 		// skip since it resolvces to an invalid transaction
-		if voteTx && txInIndex == 0 {
+		if (voteTx || aiVoteTx) && txInIndex == 0 {
 			continue
 		}
 		// Attempt to fetch and use the referenced transaction from the
@@ -4785,10 +4807,11 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 	// Stakebase transactions (votes) have two inputs: a null stake base
 	// followed by an input consuming a ticket's stakesubmission.
 	isSSGen, _ := stake.IsSSGen(mtx)
+	isAiSSGen, _ := stake.IsAiSSGen(mtx)
 
 	for i, txIn := range mtx.TxIn {
 		// Handle only the null input of a stakebase differently.
-		if isSSGen && i == 0 {
+		if (isSSGen || isAiSSGen) && i == 0 {
 			amountIn := hcutil.Amount(txIn.ValueIn).ToCoin()
 			vinEntry := hcjson.VinPrevOut{
 				Stakebase: hex.EncodeToString(txIn.SignatureScript),
@@ -5432,9 +5455,15 @@ func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*hc
 		txNum = len(bl.MsgBlock().Transactions) - 1
 	case stake.TxTypeSStx:
 		txNum = int(bl.MsgBlock().Header.FreshStake)
+	case stake.TxTypeAiSStx:
+		txNum = int(bl.MsgBlock().Header.FreshStake)
 	case stake.TxTypeSSGen:
 		txNum = int(bl.MsgBlock().Header.Voters)
+	case stake.TxTypeAiSSGen:
+		txNum = int(bl.MsgBlock().Header.Voters)
 	case stake.TxTypeSSRtx:
+		txNum = int(bl.MsgBlock().Header.Revocations)
+	case stake.TxTypeAiSSRtx:
 		txNum = int(bl.MsgBlock().Header.Revocations)
 	}
 

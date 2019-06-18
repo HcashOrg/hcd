@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"math/big"
 	"reflect"
 	"sort"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/HcashOrg/hcd/blockchain/internal/dbnamespace"
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
@@ -322,7 +322,7 @@ func putSpentTxOut(target []byte, stxo *spentTxOut) int {
 	// data for UTX resurrection.
 	if stxo.txFullySpent {
 		offset += putVLQ(target[offset:], uint64(stxo.txVersion))
-		if stxo.txType == stake.TxTypeSStx {
+		if stxo.txType == stake.TxTypeSStx || stxo.txType == stake.TxTypeAiSStx {
 			copy(target[offset:], stxo.stakeExtra)
 			offset += len(stxo.stakeExtra)
 		}
@@ -397,7 +397,7 @@ func decodeSpentTxOut(serialized []byte, stxo *spentTxOut, amount int64,
 
 		stxo.txVersion = uint16(txVersion)
 
-		if stxo.txType == stake.TxTypeSStx {
+		if stxo.txType == stake.TxTypeSStx ||  stxo.txType == stake.TxTypeAiSStx {
 			sz := readDeserializeSizeOfMinimalOutputs(serialized[offset:])
 			if sz == 0 || sz > len(serialized[offset:]) {
 				return offset, errDeserialize("corrupt data for ticket " +
@@ -427,7 +427,7 @@ func deserializeSpendJournalEntry(serialized []byte, txns []*wire.MsgTx) ([]spen
 	for _, tx := range txns {
 		txType := stake.DetermineTxType(tx)
 
-		if txType == stake.TxTypeSSGen {
+		if txType == stake.TxTypeSSGen || txType == stake.TxTypeAiSSGen {
 			numStxos++
 			continue
 		}
@@ -461,7 +461,7 @@ func deserializeSpendJournalEntry(serialized []byte, txns []*wire.MsgTx) ([]spen
 		// the associated stxo.
 		for txInIdx := len(tx.TxIn) - 1; txInIdx > -1; txInIdx-- {
 			// Skip stakebase.
-			if txType == stake.TxTypeSSGen && txInIdx == 0  {
+			if( txType == stake.TxTypeSSGen ||txType == stake.TxTypeAiSSGen ) && txInIdx == 0  {
 				continue
 			}
 
@@ -729,7 +729,7 @@ func serializeUtxoEntry(entry *UtxoEntry) ([]byte, error) {
 		size += compressedTxOutSize(uint64(out.amount), out.scriptVersion,
 			out.pkScript, currentCompressionVersion, out.compressed, true)
 	}
-	if entry.txType == stake.TxTypeSStx {
+	if entry.txType == stake.TxTypeSStx || entry.txType == stake.TxTypeAiSStx {
 		size += len(entry.stakeExtra)
 	}
 
@@ -770,7 +770,7 @@ func serializeUtxoEntry(entry *UtxoEntry) ([]byte, error) {
 			currentCompressionVersion, out.compressed, true)
 	}
 
-	if entry.txType == stake.TxTypeSStx {
+	if entry.txType == stake.TxTypeSStx || entry.txType == stake.TxTypeAiSStx {
 		copy(serialized[offset:], entry.stakeExtra)
 	}
 
@@ -898,7 +898,7 @@ func deserializeUtxoEntry(serialized []byte) (*UtxoEntry, error) {
 	}
 
 	// Copy the stake extra data if this was a ticket.
-	if entry.txType == stake.TxTypeSStx {
+	if entry.txType == stake.TxTypeSStx || entry.txType == stake.TxTypeAiSStx{
 		stakeExtra := make([]byte, len(serialized[offset:]))
 		copy(stakeExtra, serialized[offset:])
 		entry.stakeExtra = stakeExtra
@@ -1490,8 +1490,18 @@ func (b *BlockChain) initChainState() error {
 			if err != nil {
 				return err
 			}
+
 			node.stakeUndoData = node.stakeNode.UndoData()
 			node.newTickets = node.stakeNode.NewTickets()
+
+			node.aistakeNode, err = aistake.LoadBestNode(dbTx, uint32(node.height),
+				node.hash, node.header, b.chainParams)
+			if err != nil {
+				return err
+			}
+
+			node.aistakeUndoData = node.aistakeNode.UndoData()
+			node.newAiTickets = node.aistakeNode.NewTickets()
 		}
 
 		b.bestNode = node

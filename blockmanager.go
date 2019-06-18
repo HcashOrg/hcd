@@ -807,7 +807,8 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var votesFromBlock []*hcutil.Tx
 	for _, stx := range block.STransactions() {
 		isSSGen, _ := stake.IsSSGen(stx.MsgTx())
-		if isSSGen {
+		isAiSSGen, _ := stake.IsAiSSGen(stx.MsgTx())
+		if isSSGen || isAiSSGen {
 			votesFromBlock = append(votesFromBlock, stx)
 		}
 	}
@@ -867,7 +868,8 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 		for _, stx := range templateBlock.STransactions() {
 			mstx := stx.MsgTx()
 			txType := stake.DetermineTxType(mstx)
-			if txType == stake.TxTypeSSGen {
+			if txType == stake.TxTypeSSGen ||
+			txType == stake.TxTypeAiSSGen {
 				ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
 				oldVoteMap[ticketH] = struct{}{}
 				newVotes = append(newVotes, stx)
@@ -875,10 +877,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 
 			// Create a list of old tickets and revocations
 			// while we're in this loop.
-			if txType == stake.TxTypeSStx {
+			if txType == stake.TxTypeSStx||
+			txType == stake.TxTypeAiSStx {
 				oldTickets = append(oldTickets, stx)
 			}
-			if txType == stake.TxTypeSSRtx {
+			if txType == stake.TxTypeSSRtx ||
+			txType == stake.TxTypeAiSSRtx {
 				oldRevocations = append(oldRevocations, stx)
 			}
 		}

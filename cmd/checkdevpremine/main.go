@@ -124,7 +124,8 @@ func traceDevPremineOuts(client *hcrpcclient.Client, txHash *chainhash.Hash) ([]
 		// they represent the coins that purchased the ticket.
 		txIns := tx.MsgTx().TxIn
 		isSSGen, _ := stake.IsSSGen(tx.MsgTx())
-		if isSSGen {
+		isAiSSGen, _ := stake.IsAiSSGen(tx.MsgTx())
+		if isSSGen || isAiSSGen {
 			txIns = txIns[1:]
 		}
 		for _, txIn := range txIns {

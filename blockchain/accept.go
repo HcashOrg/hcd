@@ -294,7 +294,12 @@ func (b *BlockChain) maybeAcceptBlock(block *hcutil.Block, flags BehaviorFlags) 
 		if err != nil {
 			return false, err
 		}
+		newNode.aistakeNode, err = b.fetchAiStakeNode(newNode)
+		if err != nil {
+			return false, err
+		}
 		newNode.stakeUndoData = newNode.stakeNode.UndoData()
+		newNode.aistakeUndoData = newNode.aistakeNode.UndoData()
 	}
 
 	// Connect the passed block to the chain while respecting proper chain

@@ -1887,7 +1887,8 @@ func rescanBlock(filter *wsClientFilter, enableOmni bool, block *hcutil.Block) [
 				goto LoopOutputs
 			}
 		} else {
-			if stake.DetermineTxType(tx) == stake.TxTypeSSGen {
+			if stake.DetermineTxType(tx) == stake.TxTypeSSGen ||
+			stake.DetermineTxType(tx) == stake.TxTypeAiSSGen {
 				// Skip the first stakebase input.  These do not
 				// reference a previous output.
 				inputs = inputs[1:]

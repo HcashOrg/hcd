@@ -13,11 +13,12 @@ import (
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/internal/progresslog"
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/wire"
 )
 
 var (
@@ -545,12 +546,13 @@ func makeUtxoView(dbTx database.Tx, block, parent *hcutil.Block) (*blockchain.Ut
 	for _, tx := range block.STransactions() {
 		msgTx := tx.MsgTx()
 		isSSGen, _ := stake.IsSSGen(msgTx)
+		isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
 
 		// Use the transaction index to load all of the referenced
 		// inputs and add their outputs to the view.
 		for i, txIn := range msgTx.TxIn {
 			// Skip stakebases.
-			if isSSGen && i == 0 {
+			if (isSSGen || isAiSSGen) && i == 0 {
 				continue
 			}
 

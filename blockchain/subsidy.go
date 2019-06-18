@@ -9,6 +9,7 @@ package blockchain
 import (
 	"bytes"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"sync"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
@@ -343,6 +344,8 @@ func CalculateAddedSubsidy(block, parent *hcutil.Block) int64 {
 
 	for _, stx := range block.MsgBlock().STransactions {
 		if isSSGen, _ := stake.IsSSGen(stx); isSSGen {
+			subsidy += stx.TxIn[0].ValueIn
+		}else if isAiSSGen, _ := aistake.IsAiSSGen(stx); isAiSSGen {
 			subsidy += stx.TxIn[0].ValueIn
 		}
 	}
