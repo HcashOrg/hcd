@@ -955,6 +955,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	blockHash := block.Hash()
 	prevBlockHash := &msgBlock.Header.PrevBlock
 	poolSize := int(msgBlock.Header.PoolSize)
+	aiPoolSize := int(msgBlock.Header.AiPoolSize)
 	finalState := node.header.FinalState
 
 	ticketsPerBlock := int(b.chainParams.TicketsPerBlock)
@@ -1114,10 +1115,10 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		}
 
 		// Check the ticket pool size.
-		if parentAiStakeNode.PoolSize() != poolSize {
+		if parentAiStakeNode.PoolSize() != aiPoolSize {
 			errStr := fmt.Sprintf("Error in stake consensus: the "+
 				"poolsize in block %v was %v, however we "+
-				"expected %v", node.hash, poolSize,
+				"expected %v", node.hash, aiPoolSize,
 				parentAiStakeNode.PoolSize())
 			return ruleError(ErrPoolSize, errStr)
 		}

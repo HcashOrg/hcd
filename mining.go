@@ -1198,6 +1198,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	prevHash := chainState.newestHash
 	nextBlockHeight := chainState.newestHeight + 1
 	poolSize := chainState.nextPoolSize
+	aiPoolSize := chainState.nextAiPoolSize
 	reqStakeDifficulty := chainState.nextStakeDifficulty
 	finalState := chainState.nextFinalState
 	winningTickets := make([]chainhash.Hash, len(chainState.winningTickets))
@@ -2101,6 +2102,7 @@ mempoolLoop:
 		FreshStake:   uint8(freshStake),
 		Revocations:  uint8(revocations),
 		PoolSize:     poolSize,
+		AiPoolSize:   aiPoolSize,
 		Timestamp:    ts,
 		SBits:        reqStakeDifficulty,
 		Bits:         reqDifficulty,

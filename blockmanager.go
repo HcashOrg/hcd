@@ -340,6 +340,7 @@ type chainState struct {
 	newestHeight        int64
 	nextFinalState      [6]byte
 	nextPoolSize        uint32
+	nextAiPoolSize        uint32
 	nextStakeDifficulty int64
 	winningTickets      []chainhash.Hash
 	missedTickets       []chainhash.Hash
