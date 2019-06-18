@@ -192,8 +192,8 @@ func ticketsSpentInBlock(bl *hcutil.Block) ([]chainhash.Hash, []chainhash.Hash) 
 	for _, stx := range bl.MsgBlock().STransactions {
 		if stake.DetermineTxType(stx) == stake.TxTypeSSGen {
 			tickets = append(tickets, stx.TxIn[1].PreviousOutPoint.Hash)
-		}else if stake.DetermineTxType(stx) == stake.TxTypeAiSStx {
-			aiTickets = append(tickets, stx.TxIn[1].PreviousOutPoint.Hash)
+		}else if stake.DetermineTxType(stx) == stake.TxTypeAiSSGen {
+			aiTickets = append(aiTickets, stx.TxIn[1].PreviousOutPoint.Hash)
 		}
 	}
 	return tickets, aiTickets
@@ -208,7 +208,7 @@ func ticketsRevokedInBlock(bl *hcutil.Block) ([]chainhash.Hash, []chainhash.Hash
 		if stake.DetermineTxType(stx) == stake.TxTypeSSRtx {
 			tickets = append(tickets, stx.TxIn[0].PreviousOutPoint.Hash)
 		}else if stake.DetermineTxType(stx) == stake.TxTypeAiSSRtx {
-			aiTickets = append(tickets, stx.TxIn[0].PreviousOutPoint.Hash)
+			aiTickets = append(aiTickets, stx.TxIn[0].PreviousOutPoint.Hash)
 		}
 	}
 
