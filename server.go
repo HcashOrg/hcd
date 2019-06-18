@@ -209,9 +209,10 @@ type serverPeer struct {
 	// than one response per connection.
 	getMiningStateSent bool
 	// The following chans are used to sync blockmanager and server.
-	txProcessed        chan struct{}
-	instantTxProcessed chan struct{}
-	blockProcessed     chan struct{}
+	txProcessed            chan struct{}
+	instantTxProcessed     chan struct{}
+	instantTxVoteProcessed chan struct{}
+	blockProcessed         chan struct{}
 }
 
 // Only respond with addresses once per connection
@@ -666,6 +667,31 @@ func (sp *serverPeer) OnInstantTx(p *peer.Peer, msg *wire.MsgInstantTx) {
 	// being disconnected) and wasting memory.
 	sp.server.blockManager.QueueInstantTx(instantTx, sp)
 	<-sp.instantTxProcessed
+}
+
+//deal with instanttxvote from peers
+func (sp *serverPeer) OnInstantTxVote(p *peer.Peer, msg *wire.MsgInstantTxVote) {
+	if cfg.BlocksOnly {
+		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
+			msg.Hash(), p)
+		return
+	}
+
+	// Add the instant transaction to the known inventory for the peer.
+	// Convert the raw msgTx to a hcutil.InstantTx which provides some convenience
+	// methods and things such as hash caching.
+	//TODO check this instant instantTxvote inventory implement
+	instantTxVote := hcutil.NewInstantTxVote(msg)
+	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
+	p.AddKnownInventory(iv)
+
+	// Queue the transaction up to be handled by the block manager and
+	// intentionally block further receives until the transaction is fully
+	// processed and known good or bad.  This helps prevent a malicious peer
+	// from queuing up a bunch of bad transactions before disconnecting (or
+	// being disconnected) and wasting memory.
+	sp.server.blockManager.QueueInstantTxVote(instantTxVote, sp)
+	<-sp.instantTxVoteProcessed
 }
 
 // OnBlock is invoked when a peer receives a block wire message.  It blocks
@@ -1233,12 +1259,32 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 		if s.rpcServer != nil {
 			//deal with instant instantTx,
 			// just send to wallet to sign
-			tickets,_,_,err:=s.rpcServer.chain.LotteryAiTicketsForBlock(instantTx)
-			if err!=nil{
+			tickets, _, _, err := s.rpcServer.chain.LotteryAiTicketsForBlock(instantTx)
+			if err != nil {
 				return
 			}
 
-			s.rpcServer.ntfnMgr.NotifyInstantTx(tickets,instantTx, true)
+			s.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+		}
+	}
+}
+
+//after accept this vote ,notify wallet and relay to otherpeers
+func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxVote) {
+	// Generate and relay inventory vectors for all newly accepted
+	// transactions into the memory pool due to the original being
+	// accepted.
+
+	for _, instantTxVote := range newInstantTxVotes {
+		// Generate the inventory vector and relay it.
+		//TODO check instant instantTx invvect
+		//relay instantvote
+		iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
+		s.RelayInventory(iv, instantTxVote)
+
+		if s.rpcServer != nil {
+			//todo notify wallet
+			//s.rpcServer.ntfnMgr.NotifyInstantTx(tickets,instantTx, true)
 		}
 	}
 }
@@ -1735,6 +1781,7 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 			OnMiningState:    sp.OnMiningState,
 			OnTx:             sp.OnTx,
 			OnInstantTx:      sp.OnInstantTx,
+			OnInstantTxVote:  sp.OnInstantTxVote,
 			OnBlock:          sp.OnBlock,
 			OnInv:            sp.OnInv,
 			OnHeaders:        sp.OnHeaders,

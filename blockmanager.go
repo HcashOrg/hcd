@@ -110,6 +110,10 @@ type instantTxMsg struct {
 	peer *serverPeer
 }
 
+type instantTxVoteMsg struct {
+	instantTxVote *hcutil.InstantTxVote
+	peer *serverPeer
+}
 
 
 // getSyncPeerMsg is a message type to be sent across the message channel for
@@ -792,6 +796,22 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	instantTxs=append(instantTxs, instantTx)
 	b.server.AnnounceNewInstantTx(instantTxs)
 }
+
+
+
+//deal instantxvote from peers
+func (b *blockManager)handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
+
+	//TODO dealwith vote in mempool
+
+
+	instantTxVote:=msg.instantTxVote
+	instantTxVotes:=make([]*hcutil.InstantTxVote,0)
+	instantTxVotes=append(instantTxVotes, instantTxVote)
+	//notify wallet and rely
+	b.server.AnnounceNewInstantTxVote(instantTxVotes)
+}
+
 
 // current returns true if we believe we are synced with our peers, false if we
 // still have blocks to check
@@ -1710,6 +1730,9 @@ out:
 			case *instantTxMsg:
 				b.handleInstantTxMsg(msg)
 				msg.peer.instantTxProcessed <- struct{}{}
+			case *instantTxVoteMsg:
+				b.handleInstantTxVoteMsg(msg)
+				msg.peer.instantTxVoteProcessed<- struct{}{}
 			case *blockMsg:
 				b.handleBlockMsg(msg)
 				msg.peer.blockProcessed <- struct{}{}
@@ -2321,6 +2344,15 @@ func (b *blockManager) QueueInstantTx(instantTx *hcutil.InstantTx, sp *serverPee
 	b.msgChan <- &instantTxMsg{tx: instantTx, peer: sp}
 }
 
+func (b *blockManager) QueueInstantTxVote(instantTxVote *hcutil.InstantTxVote, sp *serverPeer) {
+	// Don't accept more transactions if we're shutting down.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		sp.instantTxVoteProcessed <- struct{}{}
+		return
+	}
+
+	b.msgChan <- &instantTxVoteMsg{instantTxVote: instantTxVote, peer: sp}
+}
 
 
 // QueueBlock adds the passed block message and peer to the block handling queue.

@@ -32,6 +32,7 @@ const (
 	InvTypeBlock         InvType = 2
 	InvTypeFilteredBlock InvType = 3
 	InvTypeInstantTx     InvType = 4
+	InvTypeInstantTxVote InvType = 5
 )
 
 // Map of service flags back to their constant names for pretty printing.
