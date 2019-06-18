@@ -653,29 +653,6 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 			lastHash := prng.StateHash()
 			stateBuffer = append(stateBuffer, lastHash[:]...)
 			copy(connectedNode.finalState[:], chainhash.HashB(stateBuffer)[0:6])
-		}else{
-			idxs, err := findTicketIdxs(connectedNode.liveTickets.Len(),
-				connectedNode.params.TicketsPerBlock, prng)
-			if err != nil {
-				return nil, err
-			}
-
-			stateBuffer := make([]byte, 0,
-				(connectedNode.params.TicketsPerBlock+1)*chainhash.HashSize)
-			nextWinnersKeys, err := fetchWinners(idxs, connectedNode.liveTickets)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, treapKey := range nextWinnersKeys {
-				ticketHash := chainhash.Hash(*treapKey)
-				connectedNode.nextWinners = append(connectedNode.nextWinners,
-					ticketHash)
-				stateBuffer = append(stateBuffer, ticketHash[:]...)
-			}
-			lastHash := prng.StateHash()
-			stateBuffer = append(stateBuffer, lastHash[:]...)
-			copy(connectedNode.finalState[:], chainhash.HashB(stateBuffer)[0:6])
 		}
 	}
 
@@ -1101,27 +1078,9 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 			PerBlock:    node.params.AiTicketsPerBlock,
 			NextWinners: nextWinners,
 		})
-	}else{
-		// Write the new best state to the database.
-		nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
-		if node.height >= uint32(node.params.StakeValidationHeight-1) {
-			for i := range nextWinners {
-				nextWinners[i] = node.nextWinners[i]
-			}
-		}
-
-		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
-			Hash:        hash,
-			Height:      node.height,
-			Live:        uint32(node.liveTickets.Len()),
-			Missed:      uint64(node.missedTickets.Len()),
-			Revoked:     uint64(node.revokedTickets.Len()),
-			PerBlock:    node.params.TicketsPerBlock,
-			NextWinners: nextWinners,
-		})
 	}
-
-}
+	return nil
+	}
 
 // WriteDisconnectedBestNode writes the newly connected best node to the database
 // under an atomic database transaction, performing all the necessary writes to
