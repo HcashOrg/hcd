@@ -35,7 +35,7 @@ var (
 
 	// simNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
+	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 240), bigOne)
 
 	VoteBitsNotFound = fmt.Errorf("vote bits not found")
 )
