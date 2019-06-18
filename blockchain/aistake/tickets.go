@@ -1039,7 +1039,7 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 		return err
 	}
 
-	if uint64(node.Height()) >= node.params.AIEnableHeight{
+	//if uint64(node.Height()) >= node.params.AIEnableHeight{
 		// Write the new best state to the database.
 		nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
 		if node.height >= uint32(node.params.StakeValidationHeight-1) {
@@ -1057,8 +1057,8 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 			PerBlock:    node.params.AiTicketsPerBlock,
 			NextWinners: nextWinners,
 		})
-	}
-	return nil
+	//}
+	//return nil
 	}
 
 // WriteDisconnectedBestNode writes the newly connected best node to the database
