@@ -588,17 +588,17 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 	if uint64(block.Height()) >= chainParams.AIEnableHeight {
 		// Not enough voters on this block.
 		if block.Height() >= chainParams.StakeValidationHeight &&
-			totalVotes <= int(chainParams.AiTicketsPerBlock)/2 {
+			totalVotes <= int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock)/2 {
 			errStr := fmt.Sprintf("block contained too few votes! %v "+
 				"votes but %v or more required", totalVotes,
-				(int(chainParams.AiTicketsPerBlock)/2)+1)
+				(int(chainParams.AiTicketsPerBlock + chainParams.AiTicketsPerBlock)/2)+1)
 			return ruleError(ErrNotEnoughVotes, errStr)
 		}
-		if totalVotes > int(chainParams.AiTicketsPerBlock) {
+		if totalVotes > int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock ) {
 			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
 				"was %v, overflowing the maximum allowed (%v)",
 				block.Hash(), totalVotes,
-				int(chainParams.AiTicketsPerBlock))
+				int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock))
 			return ruleError(ErrTooManyVotes, errStr)
 		}
 	}else{
@@ -957,10 +957,11 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	poolSize := int(msgBlock.Header.PoolSize)
 	aiPoolSize := int(msgBlock.Header.AiPoolSize)
 	finalState := node.header.FinalState
+	aiFinalState := node.header.AiFinalState
 
 	ticketsPerBlock := int(b.chainParams.TicketsPerBlock)
 	if uint64(block.Height()) >= chainParams.AIEnableHeight {
-		ticketsPerBlock = int(b.chainParams.AiTicketsPerBlock)
+		ticketsPerBlock = int(b.chainParams.AiTicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 	}
 	txTreeRegularValid := hcutil.IsFlagSet16(msgBlock.Header.VoteBits,
 		hcutil.BlockValid)
@@ -1192,6 +1193,17 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		// the transactions.
 	}
 
+	aiTicketSlice := parentAiStakeNode.Winners()
+	calcAiPoolSize := parentAiStakeNode.PoolSize()
+	aiFinalStateCalc := parentAiStakeNode.FinalState()
+
+	for _, ticketHash := range aiTicketSlice {
+		ticketsWhichCouldBeUsed[ticketHash] = struct{}{}
+		// Fetch utxo details for all of the transactions in this
+		// block.  Typically, there will not be any utxos for any of
+		// the transactions.
+	}
+
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
 		isSSGen, _ := aistake.IsAiSSGen(msgTx);
@@ -1278,6 +1290,14 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return ruleError(ErrInvalidFinalState, errStr)
 	}
 
+	if aiFinalStateCalc != aiFinalState {
+		errStr := fmt.Sprintf("Error in ai stake consensus: the final "+
+			"state of the lottery PRNG was calculated to be %x, "+
+			"but %x was found in the block", aiFinalStateCalc,
+			aiFinalState)
+		return ruleError(ErrInvalidFinalState, errStr)
+	}
+
 	// -------------------------------------------------------------------
 	// SSRtx Tx Handling
 	// -------------------------------------------------------------------
@@ -1348,6 +1368,13 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		errStr := fmt.Sprintf("Error in stake consensus: the poolsize "+
 			"in block %v was %v, however we expected %v", node.hash,
 			poolSize, calcPoolSize)
+		return ruleError(ErrPoolSize, errStr)
+	}
+
+	if calcAiPoolSize != aiPoolSize {
+		errStr := fmt.Sprintf("Error in stake consensus: the ai poolsize "+
+			"in block %v was %v, however we expected %v", node.hash,
+			aiPoolSize, calcAiPoolSize)
 		return ruleError(ErrPoolSize, errStr)
 	}
 

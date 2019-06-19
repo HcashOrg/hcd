@@ -44,6 +44,7 @@ type BlockHeader struct {
 	// Final state of the PRNG used for ticket selection in the lottery.
 	FinalState [6]byte
 
+	AiFinalState [6]byte
 	// Number of participating voters for this block.
 	Voters uint16
 

@@ -104,8 +104,8 @@ func (b *BlockChain) fetchNewAiTicketsForNode(node *blockNode) ([]chainhash.Hash
 	// It's important to make the distinction here that nil means the
 	// value was never looked up, while an empty slice of pointers means
 	// that there were no new tickets at this height.
-	if node.newTickets != nil {
-		return node.newTickets, nil
+	if node.newAiTickets != nil {
+		return node.newAiTickets, nil
 	}
 
 	// Calculate block number for where new tickets matured from and retrieve

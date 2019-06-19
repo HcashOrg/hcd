@@ -1197,14 +1197,21 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	chainState.Lock()
 	prevHash := chainState.newestHash
 	nextBlockHeight := chainState.newestHeight + 1
+	if nextBlockHeight == 146 {
+		fmt.Println("test ")
+	}
+
 	poolSize := chainState.nextPoolSize
 	aiPoolSize := chainState.nextAiPoolSize
 	reqStakeDifficulty := chainState.nextStakeDifficulty
 	finalState := chainState.nextFinalState
-	winningTickets := make([]chainhash.Hash, len(chainState.winningTickets))
-	copy(winningTickets, chainState.winningTickets)
+	aiFinalState := chainState.nextAiFinalState
+	var winningTickets []chainhash.Hash
+	winningTickets = append(winningTickets, chainState.winningTickets...)
+	winningTickets = append(winningTickets, chainState.winningAiTickets...)
 	missedTickets := make([]chainhash.Hash, len(chainState.missedTickets))
 	copy(missedTickets, chainState.missedTickets)
+	missedTickets = append(missedTickets, chainState.missedAiTickets...)
 	chainState.Unlock()
 
 	chainBest := blockManager.chain.BestSnapshot()
@@ -1705,6 +1712,10 @@ mempoolLoop:
 		}
 
 		isAiSSGen, _ := stake.IsAiSSGen(msgTx)
+		if isAiSSGen{
+			fmt.Println("test")
+		}
+
 		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen{
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
@@ -2098,6 +2109,7 @@ mempoolLoop:
 		StakeRoot:    *merklesStake[len(merklesStake)-1],
 		VoteBits:     votebits,
 		FinalState:   finalState,
+		AiFinalState:   aiFinalState,
 		Voters:       uint16(voters),
 		FreshStake:   uint8(freshStake),
 		Revocations:  uint8(revocations),

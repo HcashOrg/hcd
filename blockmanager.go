@@ -22,9 +22,9 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/mempool"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -2123,9 +2123,12 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			// Obtain the winning tickets for this block.  handleNotifyMsg
 			// should be safe for concurrent access of things contained
 			//			// within blockchain.
+			if block.Height() == 145 {
+				fmt.Println("test 145")
+			}
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
 
-			aiwt, _, _, err2 := b.chain.LotteryDataForBlock(hash)
+			aiwt, _, _, err2 := b.chain.LotteryAiDataForBlock(hash)
 			if err != nil {
 				bmgrLog.Errorf("Couldn't calculate winning tickets for "+
 					"accepted block %v: %v", block.Hash(), err.Error())

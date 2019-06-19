@@ -4664,6 +4664,10 @@ func handleRebroadcastWinners(s *rpcServer, cmd interface{}, closeChan <-chan st
 			err.Error(), "")
 	}
 
+	if height >= 142{
+		fmt.Println("145145")
+	}
+
 	for i := range blocks {
 		winningTickets, _, _, err :=
 			s.server.blockManager.chain.LotteryDataForBlock(&blocks[i])
