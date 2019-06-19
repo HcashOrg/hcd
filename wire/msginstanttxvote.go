@@ -18,8 +18,8 @@ func NewMsgInstantTxVote() *MsgInstantTxVote {
 	return &MsgInstantTxVote{}
 }
 
-func (instantTxVote *MsgInstantTxVote)Hash() *chainhash.Hash {
-	ret:=chainhash.HashH(instantTxVote.MustSerialize())
+func (msg *MsgInstantTxVote)Hash() *chainhash.Hash {
+	ret:=chainhash.HashH(msg.MustSerialize())
 	return &ret
 }
 

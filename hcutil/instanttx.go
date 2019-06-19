@@ -5,9 +5,11 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 )
 
-type InstantTx struct {
-	msgTx *wire.MsgInstantTx // Underlying MsgInstantTx
-}
+
+//
+//type InstantTx struct {
+//	msgTx *wire.MsgInstantTx // Underlying MsgInstantTx
+//}
 
 type InstantTxVote struct {
 	msgInstantTxVote *wire.MsgInstantTxVote
@@ -28,16 +30,27 @@ func (instantTxVote *InstantTxVote)MsgInstantTxVote()*wire.MsgInstantTxVote  {
 }
 
 
-func NewInstantTx(msgTx *wire.MsgInstantTx) *InstantTx {
+
+type InstantTx struct {
+	Tx
+}
+
+
+func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 	return &InstantTx{
-		msgTx: msgTx,
+		Tx:Tx{
+			hash:    msgInstantTx.TxHash(),
+			msgTx:   &msgInstantTx.MsgTx,
+			txTree:  wire.TxTreeUnknown,
+			txIndex: TxIndexUnknown,
+		},
 	}
 }
-func (instantTx *InstantTx) Hash() *chainhash.Hash {
-	ret:=instantTx.msgTx.TxHash()
-	return &ret
-}
-func (instantTx *InstantTx) MsgTx() *wire.MsgInstantTx {
-	// Return the cached transaction.
-	return instantTx.msgTx
-}
+//func (instantTx *InstantTx) Hash() *chainhash.Hash {
+//	ret:=instantTx.msgTx.TxHash()
+//	return &ret
+//}
+//func (instantTx *InstantTx) MsgTx() *wire.MsgInstantTx {
+//	// Return the cached transaction.
+//	return instantTx.msgTx
+//}
