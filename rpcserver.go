@@ -1201,7 +1201,8 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 
 	// Check to make sure our SSRtx was created correctly.
 	_, err = stake.IsSSRtx(mtx)
-	if err != nil {
+	_, errAi := stake.IsAiSSRtx(mtx)
+	if err != nil  && errAi != nil{
 		return nil, rpcInternalError(err.Error(), "Invalid SSRtx")
 	}
 
