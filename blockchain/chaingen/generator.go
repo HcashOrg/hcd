@@ -506,7 +506,7 @@ func isTicketPurchaseTx(tx *wire.MsgTx) bool {
 	}
 	txOut := tx.TxOut[0]
 	scriptClass := txscript.GetScriptClass(txOut.Version, txOut.PkScript)
-	return scriptClass == txscript.StakeSubmissionTy
+	return scriptClass == txscript.StakeSubmissionTy || scriptClass == txscript.AiStakeSubmissionTy
 }
 
 // isVoteTx returns whether or not the passed tx is a stake vote (ssgen).

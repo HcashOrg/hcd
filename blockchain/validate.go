@@ -1626,7 +1626,10 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		//    tagged output from the referenced SStx.
 		if txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
 			utxoEntrySstx.PkScriptByIndex(0)) !=
-			txscript.StakeSubmissionTy {
+			txscript.StakeSubmissionTy  ||
+			txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
+				utxoEntrySstx.PkScriptByIndex(0)) !=
+				txscript.AiStakeSubmissionTy{
 			errStr := fmt.Sprintf("First SStx output in SStx %v "+
 				"referenced by SSGen %v should have been "+
 				"OP_SSTX tagged, but it was not", sstxHash,
@@ -1753,7 +1756,10 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		//    tagged output from the referenced SStx.
 		if txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
 			utxoEntrySstx.PkScriptByIndex(0)) !=
-			txscript.StakeSubmissionTy {
+			txscript.StakeSubmissionTy ||
+			txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
+				utxoEntrySstx.PkScriptByIndex(0)) !=
+				txscript.AiStakeSubmissionTy{
 			errStr := fmt.Sprintf("First SStx output in SStx %v "+
 				"referenced by SSGen %v should have been "+
 				"OP_SSTX tagged, but it was not", sstxHash,

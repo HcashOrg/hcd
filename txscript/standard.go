@@ -595,25 +595,25 @@ func expectedInputs(pops []parsedOpcode, class ScriptClass,
 	case PubKeyHashTy:
 		return 2
 
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
 		return 1 // P2SH
 
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
 		return 1 // P2SH
 
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
 		return 1 // P2SH
 
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
@@ -670,7 +670,11 @@ func IsStakeOutput(pkScript []byte) bool {
 	return class == StakeSubmissionTy ||
 		class == StakeGenTy ||
 		class == StakeRevocationTy ||
-		class == StakeSubChangeTy
+		class == StakeSubChangeTy ||
+		class == AiStakeSubmissionTy ||
+		class == AiStakeGenTy ||
+		class == AiStakeRevocationTy ||
+		class == AiStakeSubChangeTy
 }
 
 // GetStakeOutSubclass extracts the subclass (P2PKH or P2SH)
@@ -685,7 +689,11 @@ func GetStakeOutSubclass(pkScript []byte) (ScriptClass, error) {
 	isStake := class == StakeSubmissionTy ||
 		class == StakeGenTy ||
 		class == StakeRevocationTy ||
-		class == StakeSubChangeTy
+		class == StakeSubChangeTy ||
+		class == AiStakeSubmissionTy ||
+		class == AiStakeGenTy ||
+		class == AiStakeRevocationTy ||
+		class == AiStakeSubChangeTy
 
 	subClass := ScriptClass(0)
 	if isStake {
@@ -756,7 +764,11 @@ func CalcScriptInfo(sigScript, pkScript []byte, bip16 bool) (*ScriptInfo, error)
 	if si.PkScriptClass == StakeSubmissionTy ||
 		si.PkScriptClass == StakeGenTy ||
 		si.PkScriptClass == StakeRevocationTy ||
-		si.PkScriptClass == StakeSubChangeTy {
+		si.PkScriptClass == StakeSubChangeTy ||
+		si.PkScriptClass == AiStakeSubmissionTy ||
+		si.PkScriptClass == AiStakeGenTy ||
+		si.PkScriptClass == AiStakeRevocationTy ||
+		si.PkScriptClass == AiStakeSubChangeTy {
 		subClass, err = GetStakeOutSubclass(pkScript)
 		if err != nil {
 			return nil, err
@@ -1216,6 +1228,19 @@ func PayToSSGenPKHDirect(pkh []byte, alType int) ([]byte, error) {
 		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 }
 
+func PayToAiSSGenPKHDirect(pkh []byte, alType int) ([]byte, error) {
+	if pkh == nil {
+		return nil, ErrUnsupportedAddress
+	}
+	if !(alType == chainec.ECTypeSecp256k1 || alType == bs.BSTypeBliss) {
+		return nil, ErrUnsupportedAddress
+	}
+	sigType := []byte{byte(alType)}
+	return NewScriptBuilder().AddOp(OP_UNKNOWN201).AddOp(OP_DUP).
+		AddOp(OP_HASH160).AddData(pkh).AddOp(OP_EQUALVERIFY).
+		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+}
+
 // PayToSSGenSHDirect creates a new script to pay a transaction output to a
 // script hash, but tags the output with OP_SSGEN. For use in constructing
 // valid SSGen txs. Unlike PayToSSGen, this function directly uses the HASH160
@@ -1228,6 +1253,16 @@ func PayToSSGenSHDirect(sh []byte, _ int) ([]byte, error) {
 	return NewScriptBuilder().AddOp(OP_SSGEN).AddOp(OP_HASH160).
 		AddData(sh).AddOp(OP_EQUAL).Script()
 }
+
+func PayToAiSSGenSHDirect(sh []byte, _ int) ([]byte, error) {
+	if sh == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	return NewScriptBuilder().AddOp(OP_UNKNOWN201).AddOp(OP_HASH160).
+		AddData(sh).AddOp(OP_EQUAL).Script()
+}
+
 
 // PayToSSRtx creates a new script to pay a transaction output to a
 // public key hash, but tags the output with OP_SSRTX. For use in constructing
@@ -1652,7 +1687,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, addr)
 		}
 
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		// A pay-to-stake-submission-hash script is of the form:
 		//  OP_SSTX ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1663,7 +1698,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, localAddrs...)
 		}
 
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		// A pay-to-stake-generation-hash script is of the form:
 		//  OP_SSGEN  ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1673,7 +1708,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, localAddrs...)
 		}
 
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		// A pay-to-stake-revocation-hash script is of the form:
 		//  OP_SSRTX  ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1684,7 +1719,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, localAddrs...)
 		}
 
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		// A pay-to-stake-submission-change-hash script is of the form:
 		// OP_SSTXCHANGE ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1796,16 +1831,16 @@ func ExtractP2XScriptSigType(sdb ScriptDB, chainParams *chaincfg.Params, pkScrip
 			}
 		}
 		return sigTypes, required, nil
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
 	case NullDataTy:
 		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
