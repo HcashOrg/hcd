@@ -7,6 +7,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/hcutil"
@@ -70,14 +71,29 @@ func (b *BlockChain) LotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 
 
 
-func (b *BlockChain) LotteryAiTicketsForBlock(instantTx *hcutil.InstantTx) ([]chainhash.Hash, int, [6]byte, error) {
+//TODO implement
+func (b *BlockChain) LotteryAiTicketsForInstantTx(instantTxHash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
 
-	//TODO implement
-	return nil,0,[6]byte{},nil
+	test1,err:=chainhash.NewHashFromStr("fc4f102f24a9e14d7d13c4c15ff2abbdc3d82685f2a6458c229ef3b14d3478ff")
+	test2,err:=chainhash.NewHashFromStr("104b5095e4ba88166716498986ee7534e89156bed887c832872c71cb9abb94ff")
+	test3,err:=chainhash.NewHashFromStr("6382a6fbf40dad4c92a450b79c40ee78528c4f4b16365b67e4960ba5f1369cff")
+	test4,err:=chainhash.NewHashFromStr("96ffdcd405057d128f02ba223de88c3c77d10a85273fb4e9a59ec3ffad6e9cff")
+	test5,err:=chainhash.NewHashFromStr("33b8d99629a3729d1cb124ec837104883da814b605a992c21e6c4a87b7d79dff")
+
+	fmt.Println(err)
+	test:=[]chainhash.Hash{*test1,*test2,*test3,*test4,*test5}
+	return test,0,[6]byte{},nil
 }
 
+//TODO implement
+func (b *BlockChain)PubkeyFromTicketHash(ticketHash *chainhash.Hash) ([]byte, error) {
+	b.chainLock.Lock()
+	defer b.chainLock.Unlock()
+	b.bestNode.stakeNode.LiveTickets()
+	return nil,nil
+}
 
 
 

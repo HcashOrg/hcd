@@ -10,18 +10,23 @@ type InstantTx struct {
 }
 
 type InstantTxVote struct {
-	msgInstantTxVote wire.MsgInstantTxVote
+	msgInstantTxVote *wire.MsgInstantTxVote
 }
 
 func NewInstantTxVote(vote *wire.MsgInstantTxVote) *InstantTxVote {
 	return &InstantTxVote{
-		msgInstantTxVote:*vote,
+		msgInstantTxVote:vote,
 	}
 }
 
 func (instantTxVote *InstantTxVote)Hash() *chainhash.Hash {
 	return instantTxVote.msgInstantTxVote.Hash()
 }
+
+func (instantTxVote *InstantTxVote)MsgInstantTxVote()*wire.MsgInstantTxVote  {
+	return instantTxVote.msgInstantTxVote
+}
+
 
 func NewInstantTx(msgTx *wire.MsgInstantTx) *InstantTx {
 	return &InstantTx{

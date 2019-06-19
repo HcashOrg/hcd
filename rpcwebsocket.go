@@ -327,7 +327,7 @@ func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instan
 		tickets:   tickets,
 	}
 
-	rpcsLog.Error("notificationInstantTx:", n.isNew, n.instantTx.Hash())
+	rpcsLog.Debug("notificationInstantTx:", n.isNew, n.instantTx.Hash())
 
 	// As notificationInstantTx will be called by mempool and the RPC server
 	// may no longer be running, use a select statement to unblock
@@ -335,6 +335,16 @@ func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instan
 	// shutting down.
 	select {
 	case m.queueNotification <- n:
+	case <-m.quit:
+	}
+}
+
+func (m *wsNotificationManager) NotifyInstantTxVote(vote *hcutil.InstantTxVote) {
+
+	n := notificationInstantTxVote(*vote)
+
+	select {
+	case m.queueNotification <- &n:
 	case <-m.quit:
 	}
 }
@@ -534,6 +544,7 @@ type notificationTxAcceptedByMempool struct {
 	tx    *hcutil.Tx
 }
 type notificationInstantTx InstantTxNtfnData
+type notificationInstantTxVote hcutil.InstantTxVote
 
 // Notification control requests
 type notificationRegisterClient wsClient
@@ -627,6 +638,8 @@ out:
 				m.notifyRelevantTxAccepted(n.tx, clients)
 			case *notificationInstantTx:
 				m.notifyForNewInstantTx(instantTxNotifications, (*InstantTxNtfnData)(n))
+			case *notificationInstantTxVote:
+				m.notifyForInstantTxVote(instantTxNotifications,(*hcutil.InstantTxVote)(n))
 			case *notificationRegisterBlocks:
 				wsc := (*wsClient)(n)
 				blockNotifications[wsc.quit] = wsc
@@ -1156,6 +1169,26 @@ func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]
 		wsc.QueueNotification(marshalledJSON)
 	}
 }
+
+
+func (m *wsNotificationManager) notifyForInstantTxVote(clients map[chan struct{}]*wsClient, instantTxVote *hcutil.InstantTxVote) {
+
+	ntfn := hcjson.NewInstantTxVoteNtfn(instantTxVote.Hash().String(),instantTxVote.MsgInstantTxVote().InstanTxHash.String(),
+		instantTxVote.MsgInstantTxVote().TicketHash.String(),instantTxVote.MsgInstantTxVote().Vote,hex.EncodeToString(instantTxVote.MsgInstantTxVote().Sig))
+
+	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
+	if err != nil {
+		rpcsLog.Errorf("Failed to marshal instantTxVote notification: %s",
+			err.Error())
+		return
+	}
+
+	for _, wsc := range clients {
+		//TODO  verboseTxUpdates
+		wsc.QueueNotification(marshalledJSON)
+	}
+}
+
 
 // txHexString returns the serialized transaction encoded in hexadecimal.
 func txHexString(tx *wire.MsgTx) string {

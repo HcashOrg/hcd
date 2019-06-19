@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/hcec/secp256k1"
 	"io"
 	"io/ioutil"
 	"math"
@@ -5231,9 +5232,56 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
+	instantTxHash:=msgInstantTxVote.InstanTxHash
+	ticketHash:=msgInstantTxVote.TicketHash
+	//todo check tickets
+	tickets,_,_,err:=s.chain.LotteryAiTicketsForInstantTx(&instantTxHash)
+	ticketExist:=false
+	for _,t:= range tickets{
+		if t.IsEqual(&ticketHash) {
+			ticketExist=true
+			break
+		}
+	}
+	if !ticketExist{
+		return nil,fmt.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxvote.Hash(),
+			err)
+	}
+
+	//todo check signature
+	pubKeyBytes,err:=s.chain.PubkeyFromTicketHash(&ticketHash)
+	if err != nil {
+		return nil,err
+	}
+
+	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes, secp256k1.S256())
+	if err != nil {
+		return nil,err
+	}
+
+	signature, err := secp256k1.ParseSignature(instantTxvote.MsgInstantTxVote().Sig, secp256k1.S256())
+	if err != nil {
+		return nil,err
+	}
+
+	sigMsg:= instantTxHash.String() + ticketHash.String()
+	var buf bytes.Buffer
+	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
+	wire.WriteVarString(&buf, 0, sigMsg)
+	sigMsgHash := chainhash.HashB(buf.Bytes())
+
+	verified := signature.Verify(sigMsgHash, pubKey)
+
+	if !verified{
+		return nil,fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
+			err)
+	}
+
+
 	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
 	instantTxvotes = append(instantTxvotes, instantTxvote)
 
+	//notice wallet and rely
 	s.server.AnnounceNewInstantTxVote(instantTxvotes)
 
 	// Keep track of all the sendrawtransaction request txns so that they

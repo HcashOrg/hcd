@@ -670,7 +670,6 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 		mp.cfg.ExistsAddrIndex.AddUnconfirmedTx(msgTx)
 	}
 
-	mp.maybeAddtoLockPool(utxoView, tx, txType, height, fee)
 }
 
 // checkPoolDoubleSpend checks whether or not the passed transaction is

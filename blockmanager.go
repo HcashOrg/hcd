@@ -10,21 +10,22 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain"
+	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/chaincfg"
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/hcec/secp256k1"
+	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/mempool"
+	"github.com/HcashOrg/hcd/wire"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/mempool"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"bytes"
 )
 
 const (
@@ -112,9 +113,8 @@ type instantTxMsg struct {
 
 type instantTxVoteMsg struct {
 	instantTxVote *hcutil.InstantTxVote
-	peer *serverPeer
+	peer          *serverPeer
 }
-
 
 // getSyncPeerMsg is a message type to be sent across the message channel for
 // retrieving the current sync peer.
@@ -785,33 +785,80 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 	b.server.AnnounceNewTransactions(acceptedTxs)
 }
 
-
-
 func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
-	instantTx:=instantTxMsg.tx
+	instantTx := instantTxMsg.tx
 
-	instantTxs:=make([]*hcutil.InstantTx,0)
+	instantTxs := make([]*hcutil.InstantTx, 0)
 
-	instantTxs=append(instantTxs, instantTx)
+	instantTxs = append(instantTxs, instantTx)
+
+	//notify wallet and peers
 	b.server.AnnounceNewInstantTx(instantTxs)
 }
 
-
-
 //deal instantxvote from peers
-func (b *blockManager)handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
+func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
+
+	instantTxVote := msg.instantTxVote
+	instantTxHash := instantTxVote.MsgInstantTxVote().InstanTxHash
+	ticketHash := instantTxVote.MsgInstantTxVote().TicketHash
 
 	//TODO dealwith vote in mempool
 
+	//check ticket selected
+	tickets, _, _, err := b.chain.LotteryAiTicketsForInstantTx(&instantTxHash)
+	ticketExist := false
+	for _, t := range tickets {
+		if t.IsEqual(&ticketHash) {
+			ticketExist = true
+			break
+		}
+	}
+	if !ticketExist {
+		bmgrLog.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxVote.Hash(),
+			err)
+		return
+	}
 
-	instantTxVote:=msg.instantTxVote
-	instantTxVotes:=make([]*hcutil.InstantTxVote,0)
-	instantTxVotes=append(instantTxVotes, instantTxVote)
+	// check signature
+	pubKeyBytes, err := b.chain.PubkeyFromTicketHash(&ticketHash)
+	if err != nil {
+		bmgrLog.Error(err)
+		return
+	}
+
+	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes, secp256k1.S256())
+	if err != nil {
+		bmgrLog.Error(err)
+		return
+	}
+
+	signature, err := secp256k1.ParseSignature(instantTxVote.MsgInstantTxVote().Sig, secp256k1.S256())
+	if err != nil {
+		bmgrLog.Error(err)
+		return
+	}
+
+	sigMsg := instantTxHash.String() + ticketHash.String()
+	var buf bytes.Buffer
+	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
+	wire.WriteVarString(&buf, 0, sigMsg)
+	sigMsgHash := chainhash.HashB(buf.Bytes())
+
+	verified := signature.Verify(sigMsgHash, pubKey)
+
+	if !verified {
+		bmgrLog.Errorf("failed  verify signature ,instantvote %v: %v", instantTxVote.Hash(),
+			err)
+		return
+	}
+
+	instantTxVotes := make([]*hcutil.InstantTxVote, 0)
+	instantTxVotes = append(instantTxVotes, instantTxVote)
 	//notify wallet and rely
 	b.server.AnnounceNewInstantTxVote(instantTxVotes)
 }
-
 
 // current returns true if we believe we are synced with our peers, false if we
 // still have blocks to check
@@ -1732,7 +1779,7 @@ out:
 				msg.peer.instantTxProcessed <- struct{}{}
 			case *instantTxVoteMsg:
 				b.handleInstantTxVoteMsg(msg)
-				msg.peer.instantTxVoteProcessed<- struct{}{}
+				msg.peer.instantTxVoteProcessed <- struct{}{}
 			case *blockMsg:
 				b.handleBlockMsg(msg)
 				msg.peer.blockProcessed <- struct{}{}
@@ -1985,7 +2032,7 @@ out:
 					err:      nil,
 				}
 
-			case processTransactionMsg:
+			case processTransactionMsg: //handle rpc tx
 				acceptedTxs, err := b.server.txMemPool.ProcessTransaction(msg.tx,
 					msg.allowOrphans, msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processTransactionResponse{
@@ -2126,7 +2173,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		bmgrLog.Debug("NTBlockConnected:",block.Height(),parentBlock.Height())
+		bmgrLog.Debug("NTBlockConnected:", block.Height(), parentBlock.Height())
 
 		// Check and see if the regular tx tree of the previous block was
 		// invalid or not. If it wasn't, then we need to restore all the tx
@@ -2245,7 +2292,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		bmgrLog.Error("blockchain: NTBlockDisconnected",block.Height(),parentBlock.Height())
+		bmgrLog.Error("blockchain: NTBlockDisconnected", block.Height(), parentBlock.Height())
 
 		// If the parent tx tree was invalidated, we need to remove these
 		// tx from the mempool as the next incoming block may alternatively
@@ -2253,7 +2300,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		txTreeRegularValid := hcutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
 			hcutil.BlockValid)
 
-		bmgrLog.Error("NTBlockDisconnected NTBlockDisconnected:",txTreeRegularValid)
+		bmgrLog.Error("NTBlockDisconnected NTBlockDisconnected:", txTreeRegularValid)
 		if !txTreeRegularValid {
 			for _, tx := range parentBlock.Transactions()[1:] {
 				b.server.txMemPool.RemoveTransaction(tx, false)
@@ -2353,7 +2400,6 @@ func (b *blockManager) QueueInstantTxVote(instantTxVote *hcutil.InstantTxVote, s
 
 	b.msgChan <- &instantTxVoteMsg{instantTxVote: instantTxVote, peer: sp}
 }
-
 
 // QueueBlock adds the passed block message and peer to the block handling queue.
 func (b *blockManager) QueueBlock(block *hcutil.Block, sp *serverPeer) {

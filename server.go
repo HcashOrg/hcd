@@ -1259,7 +1259,7 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 		if s.rpcServer != nil {
 			//deal with instant instantTx,
 			// just send to wallet to sign
-			tickets, _, _, err := s.rpcServer.chain.LotteryAiTicketsForBlock(instantTx)
+			tickets, _, _, err := s.rpcServer.chain.LotteryAiTicketsForInstantTx(instantTx.Hash())
 			if err != nil {
 				return
 			}
@@ -1277,14 +1277,14 @@ func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxV
 
 	for _, instantTxVote := range newInstantTxVotes {
 		// Generate the inventory vector and relay it.
-		//TODO check instant instantTx invvect
+		//TODO check instant instantTxvote invvect
 		//relay instantvote
 		iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
 		s.RelayInventory(iv, instantTxVote)
 
 		if s.rpcServer != nil {
 			//todo notify wallet
-			//s.rpcServer.ntfnMgr.NotifyInstantTx(tickets,instantTx, true)
+			s.rpcServer.ntfnMgr.NotifyInstantTxVote(instantTxVote)
 		}
 	}
 }
