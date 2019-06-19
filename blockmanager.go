@@ -801,7 +801,7 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 
 	instantTxVote := msg.instantTxVote
-	instantTxHash := instantTxVote.MsgInstantTxVote().InstanTxHash
+	instantTxHash := instantTxVote.MsgInstantTxVote().InstantTxHash
 	ticketHash := instantTxVote.MsgInstantTxVote().TicketHash
 
 	//TODO dealwith vote in mempool

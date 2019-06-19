@@ -8,10 +8,10 @@ import (
 )
 
 type MsgInstantTxVote struct {
-	InstanTxHash chainhash.Hash
-	TicketHash chainhash.Hash
-	Vote bool
-	Sig []byte
+	InstantTxHash chainhash.Hash
+	TicketHash    chainhash.Hash
+	Vote          bool
+	Sig           []byte
 }
 
 func NewMsgInstantTxVote() *MsgInstantTxVote {
@@ -24,7 +24,7 @@ func (msg *MsgInstantTxVote)Hash() *chainhash.Hash {
 }
 
 func (msg *MsgInstantTxVote)BtcDecode(r io.Reader, pver uint32) error{
-	err:=readElements(r,&msg.InstanTxHash,&msg.TicketHash,&msg.Vote)
+	err:=readElements(r,&msg.InstantTxHash,&msg.TicketHash,&msg.Vote)
 	if err!=nil{
 		return err
 	}
@@ -36,7 +36,7 @@ func (msg *MsgInstantTxVote)BtcDecode(r io.Reader, pver uint32) error{
 }
 
 func (msg *MsgInstantTxVote)BtcEncode(w io.Writer,pver uint32) error{
-	err:= writeElements(w,&msg.InstanTxHash,&msg.TicketHash,msg.Vote)
+	err:= writeElements(w,&msg.InstantTxHash,&msg.TicketHash,msg.Vote)
 	if err!=nil{
 		return err
 	}

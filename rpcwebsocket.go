@@ -1173,7 +1173,7 @@ func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]
 
 func (m *wsNotificationManager) notifyForInstantTxVote(clients map[chan struct{}]*wsClient, instantTxVote *hcutil.InstantTxVote) {
 
-	ntfn := hcjson.NewInstantTxVoteNtfn(instantTxVote.Hash().String(),instantTxVote.MsgInstantTxVote().InstanTxHash.String(),
+	ntfn := hcjson.NewInstantTxVoteNtfn(instantTxVote.Hash().String(),instantTxVote.MsgInstantTxVote().InstantTxHash.String(),
 		instantTxVote.MsgInstantTxVote().TicketHash.String(),instantTxVote.MsgInstantTxVote().Vote,hex.EncodeToString(instantTxVote.MsgInstantTxVote().Sig))
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)

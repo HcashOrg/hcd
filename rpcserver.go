@@ -5232,7 +5232,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
-	instantTxHash:=msgInstantTxVote.InstanTxHash
+	instantTxHash:=msgInstantTxVote.InstantTxHash
 	ticketHash:=msgInstantTxVote.TicketHash
 	//todo check tickets
 	tickets,_,_,err:=s.chain.LotteryAiTicketsForInstantTx(&instantTxHash)
