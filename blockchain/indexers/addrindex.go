@@ -1033,7 +1033,7 @@ func (idx *AddrIndex) AddUnconfirmedTx(tx *hcutil.Tx, utxoView *blockchain.UtxoV
 		pkScript := entry.PkScriptByIndex(txIn.PreviousOutPoint.Index)
 		txType := entry.TransactionType()
 		idx.indexUnconfirmedAddresses(version, pkScript, tx,
-			(txType == stake.TxTypeSStx )|| (txType == stake.TxTypeSStx ))
+			(txType == stake.TxTypeSStx )|| (txType == stake.TxTypeAiSStx ))
 	}
 
 	// Index addresses of all created outputs.

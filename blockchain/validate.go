@@ -1001,7 +1001,9 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		// If we haven't reached the point in which staking is enabled,
 		// there should be absolutely no SSGen or SSRtx transactions.
 		if (isSSGen && (block.Height() < stakeEnabledHeight)) ||
-			(isSSRtx && (block.Height() < stakeEnabledHeight)) {
+			(isSSRtx && (block.Height() < stakeEnabledHeight)) ||
+			(isAiSSGen && (block.Height() < stakeEnabledHeight)) ||
+			(isAiSSRtx && (block.Height() < stakeEnabledHeight)){
 			errStr := fmt.Sprintf("block contained SSGen or SSRtx "+
 				"transaction at idx %v, which was before stake"+
 				" voting was enabled; block height %v, stake "+
@@ -1206,8 +1208,8 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
-		isSSGen, _ := aistake.IsAiSSGen(msgTx);
-		if is, _ := stake.IsSSGen(msgTx); is || isSSGen{
+		isAiSSGen, _ := aistake.IsAiSSGen(msgTx);
+		if is, _ := stake.IsSSGen(msgTx); is || isAiSSGen{
 			numSSGenTx++
 
 			// Check and store the vote for TxTreeRegular.
@@ -2196,7 +2198,7 @@ func checkNumSigOps(tx *hcutil.Tx, utxoView *UtxoViewpoint, index int, txTree bo
 	msgTx := tx.MsgTx()
 	isSSGen, _ := stake.IsSSGen(msgTx)
 	isAiSSGen, _ := stake.IsAiSSGen(msgTx)
-	numsigOps := CountSigOps(tx, (index == 0) && txTree, isSSGen)
+	numsigOps := CountSigOps(tx, (index == 0) && txTree, isSSGen || isAiSSGen)
 
 	// Since the first (and only the first) transaction has already been
 	// verified to be a coinbase transaction, use (i == 0) && TxTree as an
@@ -2233,7 +2235,8 @@ func checkNumSigOps(tx *hcutil.Tx, utxoView *UtxoViewpoint, index int, txTree bo
 func checkStakeBaseAmounts(subsidyCache *SubsidyCache, height int64, params *chaincfg.Params, txs []*hcutil.Tx, utxoView *UtxoViewpoint) error {
 	for _, tx := range txs {
 		msgTx := tx.MsgTx()
-		if is, _ := stake.IsSSGen(msgTx); is {
+		isAi, _ := stake.IsAiSSGen(msgTx)
+		if is, _ := stake.IsSSGen(msgTx); is || isAi{
 			// Ensure the input is available.
 			txInHash := &msgTx.TxIn[1].PreviousOutPoint.Hash
 			utxoEntry, exists := utxoView.entries[*txInHash]
@@ -2279,7 +2282,8 @@ func getStakeBaseAmounts(txs []*hcutil.Tx, utxoView *UtxoViewpoint) (int64, erro
 	totalOutputs := int64(0)
 	for _, tx := range txs {
 		msgTx := tx.MsgTx()
-		if is, _ := stake.IsSSGen(msgTx); is {
+		isAi, _ := stake.IsAiSSGen(msgTx)
+		if is, _ := stake.IsSSGen(msgTx); is || isAi{
 			// Ensure the input is available.
 			txInHash := &msgTx.TxIn[1].PreviousOutPoint.Hash
 			utxoEntry, exists := utxoView.entries[*txInHash]

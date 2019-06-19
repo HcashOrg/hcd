@@ -925,7 +925,8 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	}
 
 	// Make sure we generated a valid SStx.
-	if _, err := stake.IsSStx(mtx); err != nil {
+	_, errAi := stake.IsAiSStx(mtx)
+	if _, err := stake.IsSStx(mtx); err != nil && errAi != nil {
 		return nil, rpcInternalError(err.Error(),
 			"Invalid SStx")
 	}
@@ -1073,7 +1074,8 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 
 	// Check to make sure our SSGen was created correctly.
 	_, err = stake.IsSSGen(mtx)
-	if err != nil {
+	_, errAi := stake.IsAiSSGen(mtx)
+	if err != nil  && errAi != nil{
 		return nil, rpcInternalError(err.Error(), "Invalid SSGen")
 	}
 
