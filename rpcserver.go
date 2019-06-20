@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
 	"io"
 	"io/ioutil"
 	"math"
@@ -5248,30 +5247,32 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 			err)
 	}
 
-	//todo check signature
-	pubKeyBytes,err:=s.chain.PubkeyFromTicketHash(&ticketHash)
-	if err != nil {
-		return nil,err
+
+
+	//get address
+	entry, err := s.chain.FetchUtxoEntry(&ticketHash)
+
+	if err!=nil{
+		return nil,fmt.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
+			err)
 	}
 
-	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes, secp256k1.S256())
-	if err != nil {
-		return nil,err
-	}
+	scriptVersion := entry.ScriptVersionByIndex(0)
+	pkScript := entry.PkScriptByIndex(0)
+	script := pkScript
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
+		script, s.server.chainParams)
 
-	signature, err := secp256k1.ParseSignature(instantTxvote.MsgInstantTxVote().Sig, secp256k1.S256())
-	if err != nil {
-		return nil,err
+	if err!=nil{
+		return nil,fmt.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
+			err)
 	}
 
 	sigMsg:= instantTxHash.String() + ticketHash.String()
-	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
-	wire.WriteVarString(&buf, 0, sigMsg)
-	sigMsgHash := chainhash.HashB(buf.Bytes())
 
-	verified := signature.Verify(sigMsgHash, pubKey)
 
+	//verifymessage
+	verified,err:=VerifyMessage(sigMsg,addrs[0],instantTxvote.MsgInstantTxVote().Sig)
 	if !verified{
 		return nil,fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
 			err)
@@ -5292,6 +5293,37 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	return nil, nil
 
 }
+
+
+func VerifyMessage(msg string, addr hcutil.Address, sig []byte) (bool, error) {
+	// Validate the signature - this just shows that it was valid for any pubkey
+	// at all. Whether the pubkey matches is checked below.
+	var buf bytes.Buffer
+	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
+	wire.WriteVarString(&buf, 0, msg)
+	expectedMessageHash := chainhash.HashB(buf.Bytes())
+	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,
+		expectedMessageHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Reconstruct the address from the recovered pubkey.
+	var serializedPK []byte
+	if wasCompressed {
+		serializedPK = pk.SerializeCompressed()
+	} else {
+		serializedPK = pk.SerializeUncompressed()
+	}
+	recoveredAddr, err := hcutil.NewAddressSecpPubKey(serializedPK, addr.Net())
+	if err != nil {
+		return false, err
+	}
+
+	// Return whether addresses match.
+	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
+}
+
 
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
