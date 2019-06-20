@@ -7,7 +7,6 @@
 package blockchain
 
 import (
-	"fmt"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/hcutil"
@@ -54,6 +53,26 @@ func (b *BlockChain) lotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 	return winningTickets, poolSize, finalState, nil
 }
 
+func (b *BlockChain) lotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
+	var node *blockNode
+	if n, exists := b.index[*hash]; exists {
+		node = n
+	} else {
+		var err error
+		node, err = b.findNode(hash, maxSearchDepth)
+		if err != nil {
+			return nil, 0, [6]byte{}, err
+		}
+	}
+
+	winningTickets, poolSize, finalState, err := b.lotteryAiDataForNode(node)
+	if err != nil {
+		return nil, 0, [6]byte{}, err
+	}
+
+	return winningTickets, poolSize, finalState, nil
+}
+
 // LotteryDataForBlock returns lottery data for a given block in the block
 // chain, including side chain blocks.
 //
@@ -69,30 +88,11 @@ func (b *BlockChain) LotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 	return b.lotteryDataForBlock(hash)
 }
 
-
-
-//TODO implement
-func (b *BlockChain) LotteryAiTicketsForInstantTx(instantTxHash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
+func (b *BlockChain) LotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
 
-	test1,err:=chainhash.NewHashFromStr("fc4f102f24a9e14d7d13c4c15ff2abbdc3d82685f2a6458c229ef3b14d3478ff")
-	//test2,err:=chainhash.NewHashFromStr("104b5095e4ba88166716498986ee7534e89156bed887c832872c71cb9abb94ff")
-	//test3,err:=chainhash.NewHashFromStr("6382a6fbf40dad4c92a450b79c40ee78528c4f4b16365b67e4960ba5f1369cff")
-	//test4,err:=chainhash.NewHashFromStr("96ffdcd405057d128f02ba223de88c3c77d10a85273fb4e9a59ec3ffad6e9cff")
-	//test5,err:=chainhash.NewHashFromStr("33b8d99629a3729d1cb124ec837104883da814b605a992c21e6c4a87b7d79dff")
-
-	fmt.Println(err)
-	test:=[]chainhash.Hash{*test1}
-	return test,0,[6]byte{},nil
-}
-
-//TODO implement
-func (b *BlockChain)PubkeyFromTicketHash(ticketHash *chainhash.Hash) ([]byte, error) {
-	b.chainLock.Lock()
-	defer b.chainLock.Unlock()
-	b.bestNode.stakeNode.LiveTickets()
-	return nil,nil
+	return b.lotteryAiDataForBlock(hash)
 }
 
 
@@ -114,6 +114,14 @@ func (b *BlockChain) LiveTickets() ([]chainhash.Hash, error) {
 func (b *BlockChain) MissedTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
+	b.chainLock.RUnlock()
+
+	return sn.MissedTickets(), nil
+}
+
+func (b *BlockChain) MissedAiTickets() ([]chainhash.Hash, error) {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
 
 	return sn.MissedTickets(), nil
@@ -230,6 +238,19 @@ func (b *BlockChain) lotteryDataForNode(node *blockNode) ([]chainhash.Hash, int,
 
 	return stakeNode.Winners(), b.bestNode.stakeNode.PoolSize(),
 		b.bestNode.stakeNode.FinalState(), nil
+}
+
+func (b *BlockChain) lotteryAiDataForNode(node *blockNode) ([]chainhash.Hash, int, [6]byte, error) {
+	if node.height < b.chainParams.StakeEnabledHeight {
+		return []chainhash.Hash{}, 0, [6]byte{}, nil
+	}
+	aiStakeNode, err := b.fetchAiStakeNode(node)
+	if err != nil {
+		return []chainhash.Hash{}, 0, [6]byte{}, err
+	}
+
+	return aiStakeNode.Winners(), b.bestNode.aistakeNode.PoolSize(),
+		b.bestNode.aistakeNode.FinalState(), nil
 }
 
 // CheckExpiredTickets returns whether or not a ticket in a slice of

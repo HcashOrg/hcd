@@ -99,11 +99,17 @@ const (
 	// LTTTTicket indicates a ticket.
 	LTTTTicket ListTransactionsTxType = "ticket"
 
+	LTTTAiTicket ListTransactionsTxType = "aiticket"
+
 	// LTTTVote indicates a vote.
 	LTTTVote ListTransactionsTxType = "vote"
 
+	LTTTAiVote ListTransactionsTxType = "aivote"
+
 	// LTTTRevocation indicates a revocation.
 	LTTTRevocation ListTransactionsTxType = "revocation"
+
+	LTTTAiRevocation ListTransactionsTxType = "airevocation"
 )
 
 // ListTransactionsResult models the data from the listtransactions command.

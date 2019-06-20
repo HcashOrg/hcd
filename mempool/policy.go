@@ -194,7 +194,7 @@ func checkInputsStandard(tx *hcutil.Tx, txType stake.TxType, utxoView *blockchai
 	// function so no need to recheck.
 
 	for i, txIn := range tx.MsgTx().TxIn {
-		if i == 0 && txType == stake.TxTypeSSGen {
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeAiSSGen) {
 			continue
 		}
 

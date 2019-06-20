@@ -9,6 +9,7 @@ package blockchain
 import (
 	"bytes"
 	"fmt"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"sync"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
@@ -134,6 +135,9 @@ func CalcBlockWorkSubsidy(subsidyCache *SubsidyCache, height int64,
 	// Adjust for the number of voters. This shouldn't ever overflow if you start
 	// with 50 * 10^8 Atoms and voters and potentialVoters are uint16.
 	potentialVoters := params.TicketsPerBlock
+	if height >= int64(params.AIEnableHeight) {
+		potentialVoters = params.AiTicketsPerBlock
+	}
 	actual := (int64(voters) * subsidy) / int64(potentialVoters)
 
 	return actual
@@ -154,8 +158,12 @@ func CalcStakeVoteSubsidy(subsidyCache *SubsidyCache, height int64,
 	proportionStake := int64(params.StakeRewardProportion)
 	proportions := int64(params.TotalSubsidyProportions())
 	subsidy *= proportionStake
-	subsidy /= (proportions * int64(params.TicketsPerBlock))
 
+	if height >= int64(params.AIEnableHeight) {
+		subsidy /= (proportions * int64(params.AiTicketsPerBlock))
+	}else{
+		subsidy /= (proportions * int64(params.TicketsPerBlock))
+	}
 	return subsidy
 }
 
@@ -189,6 +197,9 @@ func CalcBlockTaxSubsidy(subsidyCache *SubsidyCache, height int64, voters uint16
 	// Adjust for the number of voters. This shouldn't ever overflow if you start
 	// with 50 * 10^8 Atoms and voters and potentialVoters are uint16.
 	potentialVoters := params.TicketsPerBlock
+	if height >= int64(params.AIEnableHeight) {
+		potentialVoters = params.AiTicketsPerBlock
+	}
 	adjusted := (int64(voters) * subsidy) / int64(potentialVoters)
 
 	return adjusted
@@ -333,6 +344,8 @@ func CalculateAddedSubsidy(block, parent *hcutil.Block) int64 {
 
 	for _, stx := range block.MsgBlock().STransactions {
 		if isSSGen, _ := stake.IsSSGen(stx); isSSGen {
+			subsidy += stx.TxIn[0].ValueIn
+		}else if isAiSSGen, _ := aistake.IsAiSSGen(stx); isAiSSGen {
 			subsidy += stx.TxIn[0].ValueIn
 		}
 	}

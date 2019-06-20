@@ -240,7 +240,11 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 	// start a new buffered slice and store it.
 	vts, exists := mp.votes[blockHash]
 	if !exists {
-		vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)
+		if uint64(blockHeight) >= mp.cfg.ChainParams.AIEnableHeight{
+			vts = make([]VoteTx, 0, mp.cfg.ChainParams.AiTicketsPerBlock)
+		}else{
+			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)
+		}
 	}
 
 	// Nothing to do if a vote for the ticket is already known.
@@ -681,7 +685,8 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 func (mp *TxPool) checkPoolDoubleSpend(tx *hcutil.Tx, txType stake.TxType) error {
 	for i, txIn := range tx.MsgTx().TxIn {
 		// We don't care about double spends of stake bases.
-		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx || 
+			txType == stake.TxTypeAiSSGen || txType == stake.TxTypeAiSSRtx) {
 			continue
 		}
 
@@ -877,7 +882,8 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 
 	// If the transaction is a ticket, ensure that it meets the next
 	// stake difficulty.
-	if txType == stake.TxTypeSStx {
+	if txType == stake.TxTypeSStx ||
+	txType == stake.TxTypeAiSStx{
 		sDiff, err := mp.cfg.NextStakeDifficulty()
 		if err != nil {
 			// This is an unexpected error so don't turn it into a
@@ -894,11 +900,14 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	}
 
 	// Handle stake transaction double spending exceptions.
-	if (txType == stake.TxTypeSSGen) || (txType == stake.TxTypeSSRtx) {
-		if txType == stake.TxTypeSSGen {
+	if (txType == stake.TxTypeSSGen) || (txType == stake.TxTypeSSRtx) ||
+	(txType == stake.TxTypeAiSSGen) || (txType == stake.TxTypeAiSSRtx) {
+		if txType == stake.TxTypeSSGen ||
+		txType == stake.TxTypeAiSSGen{
 			ssGenAlreadyFound := 0
 			for _, mpTx := range mp.pool {
-				if mpTx.Type == stake.TxTypeSSGen {
+				if mpTx.Type == stake.TxTypeSSGen ||
+				mpTx.Type == stake.TxTypeAiSSGen{
 					if mpTx.Tx.MsgTx().TxIn[1].PreviousOutPoint ==
 						msgTx.TxIn[1].PreviousOutPoint {
 						ssGenAlreadyFound++
@@ -914,9 +923,11 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 			}
 		}
 
-		if txType == stake.TxTypeSSRtx {
+		if txType == stake.TxTypeSSRtx ||
+		txType == stake.TxTypeAiSSRtx {
 			for _, mpTx := range mp.pool {
-				if mpTx.Type == stake.TxTypeSSRtx {
+				if mpTx.Type == stake.TxTypeSSRtx ||
+				mpTx.Type == stake.TxTypeAiSSRtx {
 					if mpTx.Tx.MsgTx().TxIn[0].PreviousOutPoint ==
 						msgTx.TxIn[0].PreviousOutPoint {
 						str := fmt.Sprintf("transaction %v in the pool "+
@@ -943,7 +954,8 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	}
 
 	// Votes that are on too old of blocks are rejected.
-	if txType == stake.TxTypeSSGen {
+	if txType == stake.TxTypeSSGen ||
+	txType == stake.TxTypeAiSSGen {
 		_, voteHeight, err := stake.SSGenBlockVotedOn(msgTx)
 		if err != nil {
 			return nil, err
@@ -983,7 +995,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// Transaction is an orphan if any of the inputs don't exist.
 	var missingParents []*chainhash.Hash
 	for i, txIn := range msgTx.TxIn {
-		if i == 0 && txType == stake.TxTypeSSGen {
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeAiSSGen) {
 			continue
 		}
 
@@ -1073,7 +1085,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// maximum allowed signature operations per transaction is less than
 	// the maximum allowed signature operations per block.
 	numSigOps, err := blockchain.CountP2SHSigOps(tx, false,
-		(txType == stake.TxTypeSSGen), utxoView)
+		(txType == stake.TxTypeSSGen || txType == stake.TxTypeAiSSGen), utxoView)
 	if err != nil {
 		if cerr, ok := err.(blockchain.RuleError); ok {
 			return nil, chainRuleError(cerr)
@@ -1081,7 +1093,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 		return nil, err
 	}
 
-	numSigOps += blockchain.CountSigOps(tx, false, (txType == stake.TxTypeSSGen))
+	numSigOps += blockchain.CountSigOps(tx, false, (txType == stake.TxTypeSSGen || txType == stake.TxTypeAiSSGen))
 	if numSigOps > mp.cfg.Policy.MaxSigOpsPerTx {
 		str := fmt.Sprintf("transaction %v has too many sigops: %d > %d",
 			txHash, numSigOps, mp.cfg.Policy.MaxSigOpsPerTx)
@@ -1161,7 +1173,8 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// also performed on regular transactions above, but fees lower than the
 	// miniumum may be allowed when there is sufficient priority, and these
 	// checks aren't desired for ticket purchases.
-	if txType == stake.TxTypeSStx {
+	if txType == stake.TxTypeSStx ||
+	txType == stake.TxTypeAiSStx {
 		minTicketFee := calcMinRequiredTxRelayFee(serializedSize,
 			mp.cfg.Policy.MinRelayTxFee)
 		if txFee < minTicketFee {
@@ -1206,7 +1219,8 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 
 	// If it's an SSGen (vote), insert it into the list of
 	// votes.
-	if txType == stake.TxTypeSSGen {
+	if txType == stake.TxTypeSSGen ||
+	txType == stake.TxTypeAiSSGen {
 		mp.votesMtx.Lock()
 		err := mp.insertVote(tx)
 		mp.votesMtx.Unlock()
@@ -1339,15 +1353,16 @@ func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, height int64) {
 func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, height int64) {
 	for _, tx := range mp.pool {
 		txType := stake.DetermineTxType(tx.Tx.MsgTx())
-		if txType == stake.TxTypeSStx &&
+		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx )&&
 			tx.Height+int64(heightDiffToPruneTicket) < height {
 			mp.removeTransaction(tx.Tx, true)
 		}
-		if txType == stake.TxTypeSStx &&
+		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx)&&
 			tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty {
 			mp.removeTransaction(tx.Tx, true)
 		}
-		if (txType == stake.TxTypeSSRtx || txType == stake.TxTypeSSGen) &&
+		if (txType == stake.TxTypeSSRtx || txType == stake.TxTypeSSGen ||
+			txType == stake.TxTypeAiSSRtx || txType == stake.TxTypeAiSSGen) &&
 			tx.Height+int64(heightDiffToPruneVotes) < height {
 			mp.removeTransaction(tx.Tx, true)
 		}

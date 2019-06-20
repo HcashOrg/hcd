@@ -13,14 +13,15 @@ import (
 
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/crypto/bliss"
 	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -765,7 +766,7 @@ func (idx *AddrIndex) indexBlock(data writeIndexData, block, parent *hcutil.Bloc
 				pkScript := entry.PkScriptByIndex(origin.Index)
 				txType := entry.TransactionType()
 				idx.indexPkScript(data, version, pkScript, txIdx,
-					txType == stake.TxTypeSStx)
+					(txType == stake.TxTypeSStx) || (txType == stake.TxTypeAiSStx))
 			}
 		}
 
@@ -780,9 +781,10 @@ func (idx *AddrIndex) indexBlock(data writeIndexData, block, parent *hcutil.Bloc
 		thisTxOffset := txIdx + len(parentRegularTxs)
 
 		isSSGen, _ := stake.IsSSGen(msgTx)
+		isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
 		for i, txIn := range msgTx.TxIn {
 			// Skip stakebases.
-			if isSSGen && i == 0 {
+			if (isSSGen || isAiSSGen) && i == 0 {
 				continue
 			}
 
@@ -802,13 +804,14 @@ func (idx *AddrIndex) indexBlock(data writeIndexData, block, parent *hcutil.Bloc
 			pkScript := entry.PkScriptByIndex(origin.Index)
 			txType := entry.TransactionType()
 			idx.indexPkScript(data, version, pkScript, thisTxOffset,
-				txType == stake.TxTypeSStx)
+				(txType == stake.TxTypeSStx) || (txType == stake.TxTypeAiSStx) )
 		}
 
 		isSStx, _ := stake.IsSStx(msgTx)
+		isAiSStx, _ := aistake.IsAiSStx(msgTx)
 		for _, txOut := range msgTx.TxOut {
 			idx.indexPkScript(data, txOut.Version, txOut.PkScript,
-				thisTxOffset, isSStx)
+				thisTxOffset, isSStx || isAiSStx)
 		}
 	}
 }
@@ -1012,9 +1015,10 @@ func (idx *AddrIndex) AddUnconfirmedTx(tx *hcutil.Tx, utxoView *blockchain.UtxoV
 	// already known to exist.
 	msgTx := tx.MsgTx()
 	isSSGen, _ := stake.IsSSGen(msgTx)
+	isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
 	for i, txIn := range msgTx.TxIn {
 		// Skip stakebase.
-		if i == 0 && isSSGen {
+		if i == 0 && (isSSGen ||isAiSSGen){
 			continue
 		}
 
@@ -1029,14 +1033,15 @@ func (idx *AddrIndex) AddUnconfirmedTx(tx *hcutil.Tx, utxoView *blockchain.UtxoV
 		pkScript := entry.PkScriptByIndex(txIn.PreviousOutPoint.Index)
 		txType := entry.TransactionType()
 		idx.indexUnconfirmedAddresses(version, pkScript, tx,
-			txType == stake.TxTypeSStx)
+			(txType == stake.TxTypeSStx )|| (txType == stake.TxTypeAiSStx ))
 	}
 
 	// Index addresses of all created outputs.
 	isSStx, _ := stake.IsSStx(msgTx)
+	isAiSStx, _ := aistake.IsAiSStx(msgTx)
 	for _, txOut := range msgTx.TxOut {
 		idx.indexUnconfirmedAddresses(txOut.Version, txOut.PkScript, tx,
-			isSStx)
+			isSStx || isAiSStx)
 	}
 }
 

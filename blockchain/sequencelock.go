@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/wire"
 )
@@ -33,7 +34,8 @@ type SequenceLock struct {
 // stakebase, rather only if it is one or not.
 func isStakeBaseTx(tx *wire.MsgTx) bool {
 	isStakeBase, _ := stake.IsSSGen(tx)
-	return isStakeBase
+	isAiStakeBase, _ := aistake.IsAiSSGen(tx)
+	return isStakeBase || isAiStakeBase
 }
 
 // calcSequenceLock computes the relative lock times for the passed transaction

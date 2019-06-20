@@ -576,7 +576,7 @@ func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState
 	// limit the list to the maximum number of allowed eligible block hashes
 	// per mining state message.  There is nothing to send when there are no
 	// eligible blocks.
-	blockHashes := SortParentsByVotes(mp, *newest, children,
+	blockHashes := SortParentsByVotes(uint64(height), mp, *newest, children,
 		bm.server.chainParams)
 	numBlocks := len(blockHashes)
 	if numBlocks == 0 {
@@ -1259,7 +1259,7 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 		if s.rpcServer != nil {
 			//deal with instant instantTx,
 			// just send to wallet to sign
-			tickets, _, _, err := s.rpcServer.chain.LotteryAiTicketsForInstantTx(instantTx.Hash())
+			tickets, _, _, err := s.rpcServer.chain.LotteryAiDataForBlock(instantTx.Hash())
 			if err != nil {
 				return
 			}

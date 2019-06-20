@@ -279,14 +279,26 @@ func (b *BlockChain) calcVoterVersionInterval(prevNode *blockNode) (uint32, erro
 		}
 	}
 
-	// Assert that we have enough votes in case this function is called at
-	// an invalid interval.
-	if int64(totalVotesFound) < b.chainParams.StakeVersionInterval*
-		(int64(b.chainParams.TicketsPerBlock/2)+1) {
-		return 0, AssertError(fmt.Sprintf("Not enough "+
-			"votes: %v expected: %v ", totalVotesFound,
-			b.chainParams.StakeVersionInterval*
-				(int64(b.chainParams.TicketsPerBlock/2)+1)))
+	if uint64(prevNode.height) >= b.chainParams.AIEnableHeight {
+		// Assert that we have enough votes in case this function is called at
+		// an invalid interval.
+		if int64(totalVotesFound) < b.chainParams.StakeVersionInterval*
+			(int64(b.chainParams.AiTicketsPerBlock/2)+1) {
+			return 0, AssertError(fmt.Sprintf("Not enough "+
+				"votes: %v expected: %v ", totalVotesFound,
+				b.chainParams.StakeVersionInterval*
+					(int64(b.chainParams.AiTicketsPerBlock/2)+1)))
+		}
+	}else {
+		// Assert that we have enough votes in case this function is called at
+		// an invalid interval.
+		if int64(totalVotesFound) < b.chainParams.StakeVersionInterval*
+			(int64(b.chainParams.TicketsPerBlock/2)+1) {
+			return 0, AssertError(fmt.Sprintf("Not enough "+
+				"votes: %v expected: %v ", totalVotesFound,
+				b.chainParams.StakeVersionInterval*
+					(int64(b.chainParams.TicketsPerBlock/2)+1)))
+		}
 	}
 
 	// Determine the required amount of votes to reach supermajority.

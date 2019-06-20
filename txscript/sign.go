@@ -278,7 +278,11 @@ func sign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 	isStakeType := class == StakeSubmissionTy ||
 		class == StakeSubChangeTy ||
 		class == StakeGenTy ||
-		class == StakeRevocationTy
+		class == StakeRevocationTy ||
+		class == AiStakeSubmissionTy ||
+		class == AiStakeSubChangeTy ||
+		class == AiStakeGenTy ||
+		class == AiStakeRevocationTy
 	if isStakeType {
 		subClass, err = GetStakeOutSubclass(subScript)
 		if err != nil {
@@ -361,19 +365,19 @@ func sign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 			addresses, nrequired, kdb)
 		return script, class, addresses, nrequired, nil
 
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		return handleStakeOutSign(chainParams, tx, idx, subScript, hashType, kdb,
 			sdb, addresses, class, subClass, nrequired)
 
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		return handleStakeOutSign(chainParams, tx, idx, subScript, hashType, kdb,
 			sdb, addresses, class, subClass, nrequired)
 
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		return handleStakeOutSign(chainParams, tx, idx, subScript, hashType, kdb,
 			sdb, addresses, class, subClass, nrequired)
 
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		return handleStakeOutSign(chainParams, tx, idx, subScript, hashType, kdb,
 			sdb, addresses, class, subClass, nrequired)
 
@@ -654,7 +658,11 @@ func SignTxOutput(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 	isStakeType := class == StakeSubmissionTy ||
 		class == StakeSubChangeTy ||
 		class == StakeGenTy ||
-		class == StakeRevocationTy
+		class == StakeRevocationTy ||
+		class == AiStakeSubmissionTy ||
+		class == AiStakeSubChangeTy ||
+		class == AiStakeGenTy ||
+		class == AiStakeRevocationTy
 	if isStakeType {
 		class, err = GetStakeOutSubclass(pkScript)
 		if err != nil {

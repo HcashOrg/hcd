@@ -44,6 +44,7 @@ type BlockHeader struct {
 	// Final state of the PRNG used for ticket selection in the lottery.
 	FinalState [6]byte
 
+	AiFinalState [6]byte
 	// Number of participating voters for this block.
 	Voters uint16
 
@@ -56,6 +57,8 @@ type BlockHeader struct {
 	// Size of the ticket pool.
 	PoolSize uint32
 
+	// Size of the ticket pool.
+	AiPoolSize uint32
 	// Difficulty target for the block.
 	Bits uint32
 
@@ -175,6 +178,7 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 		FreshStake:   freshStake,
 		Revocations:  revocations,
 		PoolSize:     poolsize,
+		AiPoolSize:   0,
 		Bits:         bits,
 		SBits:        sbits,
 		Height:       height,

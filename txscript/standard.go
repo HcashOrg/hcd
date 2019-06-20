@@ -41,6 +41,11 @@ const (
 	StakeSubChangeTy                     // Change for stake submission tx.
 	PubkeyAltTy                          // Alternative signature pubkey.
 	PubkeyHashAltTy                      // Alternative signature pubkey hash.
+
+	AiStakeSubmissionTy                    // Stake submission.
+	AiStakeGenTy                           // Stake generation
+	AiStakeRevocationTy                    // Stake revocation.
+	AiStakeSubChangeTy                     // Change for stake submission tx.
 )
 
 // scriptClassToName houses the human-readable strings which describe each
@@ -58,6 +63,10 @@ var scriptClassToName = []string{
 	StakeGenTy:        "stakegen",
 	StakeRevocationTy: "stakerevoke",
 	StakeSubChangeTy:  "sstxchange",
+	AiStakeSubmissionTy: "aistakesubmission",
+	AiStakeGenTy:        "aistakegen",
+	AiStakeRevocationTy: "aistakerevoke",
+	AiStakeSubChangeTy:  "aisstxchange",
 }
 
 // String implements the Stringer interface by returning the name of
@@ -247,7 +256,7 @@ func isNullData(pops []parsedOpcode) bool {
 // false otherwise.
 func isStakeSubmission(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_SSTX) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -257,7 +266,7 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_SSTX) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -268,13 +277,47 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		(pops[0].opcode.value == OP_SSTX || pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_SSTX) &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
 		return true
 	}
 
+	return false
+}
+
+// isStakeSubmission returns true if the script passed is a stake submission tx,
+// false otherwise.
+func isAiStakeSubmission(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		(pops[0].opcode.value == OP_AISSTX) &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		(pops[0].opcode.value == OP_AISSTX) &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		(pops[0].opcode.value == OP_AISSTX) &&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
 	return false
 }
 
@@ -304,6 +347,39 @@ func isStakeGen(pops []parsedOpcode) bool {
 
 	if len(pops) == 4 &&
 		pops[0].opcode.value == OP_SSGEN &&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
+
+	return false
+}
+
+func isAiStakeGen(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		pops[0].opcode.value == OP_AISSGEN &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		pops[0].opcode.value == OP_AISSGEN &&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		pops[0].opcode.value == OP_AISSGEN &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -348,11 +424,9 @@ func isStakeRevocation(pops []parsedOpcode) bool {
 	return false
 }
 
-// isSStxChange returns true if the script passed is a stake submission
-// change tx, false otherwise.
-func isSStxChange(pops []parsedOpcode) bool {
+func isAiStakeRevocation(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[0].opcode.value == OP_AISSRTX &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -362,7 +436,7 @@ func isSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[0].opcode.value == OP_AISSRTX &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -373,7 +447,75 @@ func isSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		(pops[0].opcode.value == OP_SSTXCHANGE || pops[0].opcode.value == OP_UNKNOWN203)&&
+		pops[0].opcode.value == OP_AISSRTX &&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
+
+	return false
+}
+
+// isSStxChange returns true if the script passed is a stake submission
+// change tx, false otherwise.
+func isSStxChange(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		(pops[0].opcode.value == OP_SSTXCHANGE)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		(pops[0].opcode.value == OP_SSTXCHANGE)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		(pops[0].opcode.value == OP_SSTXCHANGE)&&
+		pops[1].opcode.value == OP_HASH160 &&
+		pops[2].opcode.value == OP_DATA_20 &&
+		pops[3].opcode.value == OP_EQUAL {
+		return true
+	}
+
+	return false
+}
+
+func isAiSStxChange(pops []parsedOpcode) bool {
+	if len(pops) == 6 &&
+		(pops[0].opcode.value == OP_AISSTXCHANGE)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		pops[5].opcode.value == OP_CHECKSIG {
+		return true
+	}
+
+	if len(pops) == 7 &&
+		(pops[0].opcode.value == OP_AISSTXCHANGE)&&
+		pops[1].opcode.value == OP_DUP &&
+		pops[2].opcode.value == OP_HASH160 &&
+		pops[3].opcode.value == OP_DATA_20 &&
+		pops[4].opcode.value == OP_EQUALVERIFY &&
+		(pops[5].opcode.value == OP_4 || pops[5].opcode.value == OP_0) && //for bliss and default
+		pops[6].opcode.value == OP_CHECKSIGALT {
+		return true
+	}
+
+	if len(pops) == 4 &&
+		(pops[0].opcode.value == OP_AISSTXCHANGE)&&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -402,12 +544,20 @@ func typeOfScript(pops []parsedOpcode) ScriptClass {
 		return NullDataTy
 	} else if isStakeSubmission(pops) {
 		return StakeSubmissionTy
+	}else if isAiStakeSubmission(pops) {
+		return AiStakeSubmissionTy
 	} else if isStakeGen(pops) {
 		return StakeGenTy
+	} else if isAiStakeGen(pops) {
+		return AiStakeGenTy
 	} else if isStakeRevocation(pops) {
 		return StakeRevocationTy
+	} else if isAiStakeRevocation(pops) {
+		return AiStakeRevocationTy
 	} else if isSStxChange(pops) {
 		return StakeSubChangeTy
+	}else if isAiSStxChange(pops) {
+		return AiStakeSubChangeTy
 	}
 
 	return NonStandardTy
@@ -445,25 +595,25 @@ func expectedInputs(pops []parsedOpcode, class ScriptClass,
 	case PubKeyHashTy:
 		return 2
 
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
 		return 1 // P2SH
 
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
 		return 1 // P2SH
 
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
 		return 1 // P2SH
 
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		if subclass == PubKeyHashTy {
 			return 2
 		}
@@ -520,7 +670,11 @@ func IsStakeOutput(pkScript []byte) bool {
 	return class == StakeSubmissionTy ||
 		class == StakeGenTy ||
 		class == StakeRevocationTy ||
-		class == StakeSubChangeTy
+		class == StakeSubChangeTy ||
+		class == AiStakeSubmissionTy ||
+		class == AiStakeGenTy ||
+		class == AiStakeRevocationTy ||
+		class == AiStakeSubChangeTy
 }
 
 // GetStakeOutSubclass extracts the subclass (P2PKH or P2SH)
@@ -535,13 +689,17 @@ func GetStakeOutSubclass(pkScript []byte) (ScriptClass, error) {
 	isStake := class == StakeSubmissionTy ||
 		class == StakeGenTy ||
 		class == StakeRevocationTy ||
-		class == StakeSubChangeTy
+		class == StakeSubChangeTy ||
+		class == AiStakeSubmissionTy ||
+		class == AiStakeGenTy ||
+		class == AiStakeRevocationTy ||
+		class == AiStakeSubChangeTy
 
 	subClass := ScriptClass(0)
 	if isStake {
 		var stakeSubscript []parsedOpcode
 		for _, pop := range pkPops {
-			if (pop.opcode.value >= 186 && pop.opcode.value <= 189 ) || (pop.opcode.value >= 200 && pop.opcode.value <= 203 ){
+			if (pop.opcode.value >= OP_SSTX && pop.opcode.value <= OP_SSTXCHANGE ) || (pop.opcode.value >= OP_AISSTX && pop.opcode.value <= OP_AISSTXCHANGE ){
 				continue
 			}
 			stakeSubscript = append(stakeSubscript, pop)
@@ -606,7 +764,11 @@ func CalcScriptInfo(sigScript, pkScript []byte, bip16 bool) (*ScriptInfo, error)
 	if si.PkScriptClass == StakeSubmissionTy ||
 		si.PkScriptClass == StakeGenTy ||
 		si.PkScriptClass == StakeRevocationTy ||
-		si.PkScriptClass == StakeSubChangeTy {
+		si.PkScriptClass == StakeSubChangeTy ||
+		si.PkScriptClass == AiStakeSubmissionTy ||
+		si.PkScriptClass == AiStakeGenTy ||
+		si.PkScriptClass == AiStakeRevocationTy ||
+		si.PkScriptClass == AiStakeSubChangeTy {
 		subClass, err = GetStakeOutSubclass(pkScript)
 		if err != nil {
 			return nil, err
@@ -901,7 +1063,7 @@ func PayToAISStx(addr hcutil.Address) ([]byte, error) {
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 		*/
 
-		return NewScriptBuilder().AddOp(OP_UNKNOWN200).AddOp(OP_DUP).
+		return NewScriptBuilder().AddOp(OP_AISSTX).AddOp(OP_DUP).
 			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 
@@ -915,7 +1077,7 @@ func PayToAISStx(addr hcutil.Address) ([]byte, error) {
 
 */
 
-	return NewScriptBuilder().AddOp(OP_UNKNOWN200).AddOp(OP_HASH160).
+	return NewScriptBuilder().AddOp(OP_AISSTX).AddOp(OP_HASH160).
 		AddData(hash).AddOp(OP_EQUAL).Script()
 }
 
@@ -994,7 +1156,7 @@ func PayToAISStxChange(addr hcutil.Address) ([]byte, error) {
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 		*/
 
-		return NewScriptBuilder().AddOp(OP_UNKNOWN203).AddOp(OP_DUP).
+		return NewScriptBuilder().AddOp(OP_AISSTXCHANGE).AddOp(OP_DUP).
 			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 
@@ -1004,7 +1166,7 @@ func PayToAISStxChange(addr hcutil.Address) ([]byte, error) {
 		AddData(hash).AddOp(OP_EQUAL).Script()
 	*/
 
-	return NewScriptBuilder().AddOp(OP_UNKNOWN203).AddOp(OP_HASH160).
+	return NewScriptBuilder().AddOp(OP_AISSTXCHANGE).AddOp(OP_HASH160).
 		AddData(hash).AddOp(OP_EQUAL).Script()
 
 }
@@ -1066,6 +1228,19 @@ func PayToSSGenPKHDirect(pkh []byte, alType int) ([]byte, error) {
 		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 }
 
+func PayToAiSSGenPKHDirect(pkh []byte, alType int) ([]byte, error) {
+	if pkh == nil {
+		return nil, ErrUnsupportedAddress
+	}
+	if !(alType == chainec.ECTypeSecp256k1 || alType == bs.BSTypeBliss) {
+		return nil, ErrUnsupportedAddress
+	}
+	sigType := []byte{byte(alType)}
+	return NewScriptBuilder().AddOp(OP_AISSGEN).AddOp(OP_DUP).
+		AddOp(OP_HASH160).AddData(pkh).AddOp(OP_EQUALVERIFY).
+		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+}
+
 // PayToSSGenSHDirect creates a new script to pay a transaction output to a
 // script hash, but tags the output with OP_SSGEN. For use in constructing
 // valid SSGen txs. Unlike PayToSSGen, this function directly uses the HASH160
@@ -1078,6 +1253,16 @@ func PayToSSGenSHDirect(sh []byte, _ int) ([]byte, error) {
 	return NewScriptBuilder().AddOp(OP_SSGEN).AddOp(OP_HASH160).
 		AddData(sh).AddOp(OP_EQUAL).Script()
 }
+
+func PayToAiSSGenSHDirect(sh []byte, _ int) ([]byte, error) {
+	if sh == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	return NewScriptBuilder().AddOp(OP_AISSGEN).AddOp(OP_HASH160).
+		AddData(sh).AddOp(OP_EQUAL).Script()
+}
+
 
 // PayToSSRtx creates a new script to pay a transaction output to a
 // public key hash, but tags the output with OP_SSRTX. For use in constructing
@@ -1502,7 +1687,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, addr)
 		}
 
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		// A pay-to-stake-submission-hash script is of the form:
 		//  OP_SSTX ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1513,7 +1698,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, localAddrs...)
 		}
 
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		// A pay-to-stake-generation-hash script is of the form:
 		//  OP_SSGEN  ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1523,7 +1708,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, localAddrs...)
 		}
 
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		// A pay-to-stake-revocation-hash script is of the form:
 		//  OP_SSRTX  ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1534,7 +1719,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 			addrs = append(addrs, localAddrs...)
 		}
 
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		// A pay-to-stake-submission-change-hash script is of the form:
 		// OP_SSTXCHANGE ... P2PKH or P2SH
 		var localAddrs []hcutil.Address
@@ -1646,16 +1831,16 @@ func ExtractP2XScriptSigType(sdb ScriptDB, chainParams *chaincfg.Params, pkScrip
 			}
 		}
 		return sigTypes, required, nil
-	case StakeSubmissionTy:
+	case StakeSubmissionTy, AiStakeSubmissionTy:
 		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
-	case StakeGenTy:
+	case StakeGenTy, AiStakeGenTy:
 		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
-	case StakeRevocationTy:
+	case StakeRevocationTy, AiStakeRevocationTy:
 		sigType, err := ExtractStakePkScriptAltSigType(pkScript)
 		return []uint8{sigType}, required, err
-	case StakeSubChangeTy:
+	case StakeSubChangeTy, AiStakeSubChangeTy:
 		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil
 	case NullDataTy:
 		return []uint8{uint8(chainec.ECTypeSecp256k1)}, required, nil

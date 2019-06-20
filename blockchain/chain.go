@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
@@ -96,13 +97,21 @@ type blockNode struct {
 	// evaluation of sidechains.
 	stakeDataLock  sync.Mutex
 	stakeNode      *stake.Node
+	aistakeNode    *aistake.Node
 	newTickets     []chainhash.Hash
 	stakeUndoData  stake.UndoTicketDataSlice
+	aistakeUndoData  aistake.UndoTicketDataSlice
 	ticketsSpent   []chainhash.Hash
 	ticketsRevoked []chainhash.Hash
-
 	// Keep track of all vote version and bits in this block.
 	votes []VoteVersionTuple
+
+	newAiTickets     []chainhash.Hash
+	aiTicketsSpent   []chainhash.Hash
+	aiTicketsRevoked []chainhash.Hash
+	// Keep track of all aivote version and bits in this block.
+	aiVotes []VoteVersionTuple
+
 }
 
 // newBlockNode returns a new block node for the given block header.  It is
@@ -121,6 +130,25 @@ func newBlockNode(blockHeader *wire.BlockHeader, ticketsSpent []chainhash.Hash, 
 		ticketsSpent:   ticketsSpent,
 		ticketsRevoked: ticketsRevoked,
 		votes:          votes,
+	}
+	return &node
+}
+
+func newBlockNodeAi(blockHeader *wire.BlockHeader, ticketsSpent, aiTicketsSpent []chainhash.Hash, ticketsRevoked, aiTicketsRevoked  []chainhash.Hash, votes, aiVotes []VoteVersionTuple) *blockNode {
+	// Make a copy of the hash so the node doesn't keep a reference to part
+	// of the full block/block header preventing it from being garbage
+	// collected.
+	node := blockNode{
+		hash:           blockHeader.BlockHash(),
+		workSum:        CalcWork(blockHeader.Bits),
+		height:         int64(blockHeader.Height),
+		header:         *blockHeader,
+		ticketsSpent:   ticketsSpent,
+		ticketsRevoked: ticketsRevoked,
+		votes:          votes,
+		aiTicketsSpent:   aiTicketsSpent,
+		aiTicketsRevoked: aiTicketsRevoked,
+		aiVotes:          aiVotes,
 	}
 	return &node
 }
@@ -662,8 +690,11 @@ func (b *BlockChain) loadBlockNode(dbTx database.Tx, hash *chainhash.Hash) (*blo
 	}
 
 	blockHeader := block.MsgBlock().Header
-	node := newBlockNode(&blockHeader, ticketsSpentInBlock(block),
-		ticketsRevokedInBlock(block), voteBitsInBlock(block))
+	tickets, aiTickets := ticketsSpentInBlock(block)
+	ticketsRv, aiTicketsRv := ticketsRevokedInBlock(block)
+	vote, aiVote := voteBitsInBlock(block)
+	node := newBlockNodeAi(&blockHeader, tickets, aiTickets,
+		ticketsRv, aiTicketsRv, vote, aiVote)
 	node.inMainChain = true
 	prevHash := &blockHeader.PrevBlock
 
@@ -1249,6 +1280,11 @@ func (b *BlockChain) connectBlock(node *blockNode, block *hcutil.Block, view *Ut
 		return err
 	}
 
+	aistakeNode, err := b.fetchAiStakeNode(node)
+	if err != nil {
+		return err
+	}
+
 	// Atomically insert info into the database.
 	err = b.db.Update(func(dbTx database.Tx) error {
 		// Update best block state.
@@ -1287,6 +1323,11 @@ func (b *BlockChain) connectBlock(node *blockNode, block *hcutil.Block, view *Ut
 
 		// Insert the block into the stake database.
 		err = stake.WriteConnectedBestNode(dbTx, stakeNode, node.hash)
+		if err != nil {
+			return err
+		}
+
+		err = aistake.WriteConnectedBestNode(dbTx, aistakeNode, node.hash)
 		if err != nil {
 			return err
 		}
@@ -1454,6 +1495,16 @@ func (b *BlockChain) disconnectBlock(node *blockNode, block *hcutil.Block, view 
 		return err
 	}
 
+	childAiStakeNode, err := b.fetchAiStakeNode(node)
+	if err != nil {
+		return err
+	}
+
+	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent)
+	if err != nil {
+		return err
+	}
+
 	err = b.db.Update(func(dbTx database.Tx) error {
 		// Update best block state.
 		err := dbPutBestState(dbTx, state, node.workSum)
@@ -1485,6 +1536,12 @@ func (b *BlockChain) disconnectBlock(node *blockNode, block *hcutil.Block, view 
 
 		err = stake.WriteDisconnectedBestNode(dbTx, parentStakeNode,
 			node.parent.hash, childStakeNode.UndoData())
+		if err != nil {
+			return err
+		}
+
+		err = aistake.WriteDisconnectedBestNode(dbTx, parentAiStakeNode,
+			node.parent.hash, childAiStakeNode.UndoData())
 		if err != nil {
 			return err
 		}
@@ -1557,7 +1614,8 @@ func countSpentOutputs(block *hcutil.Block, parent *hcutil.Block) int {
 	}
 	for _, stx := range block.MsgBlock().STransactions {
 		txType := stake.DetermineTxType(stx)
-		if txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx {
+		if txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx ||
+		txType == stake.TxTypeAiSSGen || txType == stake.TxTypeAiSSRtx {
 			numSpent++
 			continue
 		}

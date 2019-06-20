@@ -349,10 +349,14 @@ type chainState struct {
 	newestHash          *chainhash.Hash
 	newestHeight        int64
 	nextFinalState      [6]byte
+	nextAiFinalState      [6]byte
 	nextPoolSize        uint32
+	nextAiPoolSize        uint32
 	nextStakeDifficulty int64
 	winningTickets      []chainhash.Hash
+	winningAiTickets      []chainhash.Hash
 	missedTickets       []chainhash.Hash
+	missedAiTickets       []chainhash.Hash
 	curPrevHash         chainhash.Hash
 	pastMedianTime      time.Time
 	stakeVersion        uint32
@@ -476,9 +480,9 @@ func (b *blockManager) resetHeaderState(newestHash *chainhash.Hash, newestHeight
 // safe for concurrent access and the block manager is typically quite busy
 // processing block and inventory.
 func (b *blockManager) updateChainState(newestHash *chainhash.Hash,
-	newestHeight int64, finalState [6]byte, poolSize uint32,
-	nextStakeDiff int64, winningTickets []chainhash.Hash,
-	missedTickets []chainhash.Hash, curPrevHash chainhash.Hash) {
+	newestHeight int64, finalState, aiFinalState [6]byte, poolSize, aiPoolSize uint32,
+	nextStakeDiff int64, winningTickets, winningAiTickets []chainhash.Hash,
+	missedTickets, missedAiTickets []chainhash.Hash, curPrevHash chainhash.Hash) {
 
 	b.chainState.Lock()
 	defer b.chainState.Unlock()
@@ -487,10 +491,14 @@ func (b *blockManager) updateChainState(newestHash *chainhash.Hash,
 	b.chainState.newestHeight = newestHeight
 	b.chainState.pastMedianTime = b.chain.BestSnapshot().MedianTime
 	b.chainState.nextFinalState = finalState
+	b.chainState.nextAiFinalState = aiFinalState
 	b.chainState.nextPoolSize = poolSize
+	b.chainState.nextAiPoolSize = aiPoolSize
 	b.chainState.nextStakeDifficulty = nextStakeDiff
 	b.chainState.winningTickets = winningTickets
+	b.chainState.winningAiTickets = winningAiTickets
 	b.chainState.missedTickets = missedTickets
+	b.chainState.missedAiTickets = missedAiTickets
 	b.chainState.curPrevHash = curPrevHash
 }
 
@@ -806,7 +814,7 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	//TODO dealwith vote in mempool
 
 	//check ticket selected
-	tickets, _, _, err := b.chain.LotteryAiTicketsForInstantTx(&instantTxHash)
+	tickets, _, _, err := b.chain.LotteryAiDataForBlock(&instantTxHash)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
@@ -890,7 +898,8 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var votesFromBlock []*hcutil.Tx
 	for _, stx := range block.STransactions() {
 		isSSGen, _ := stake.IsSSGen(stx.MsgTx())
-		if isSSGen {
+		isAiSSGen, _ := stake.IsAiSSGen(stx.MsgTx())
+		if isSSGen || isAiSSGen {
 			votesFromBlock = append(votesFromBlock, stx)
 		}
 	}
@@ -938,6 +947,10 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
+	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+		oldVoteMap = make(map[chainhash.Hash]struct{},
+			int(b.server.chainParams.AiTicketsPerBlock))
+	}
 	if template != nil {
 		templateBlock := hcutil.NewBlock(template.Block)
 
@@ -946,7 +959,8 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 		for _, stx := range templateBlock.STransactions() {
 			mstx := stx.MsgTx()
 			txType := stake.DetermineTxType(mstx)
-			if txType == stake.TxTypeSSGen {
+			if txType == stake.TxTypeSSGen ||
+			txType == stake.TxTypeAiSSGen {
 				ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
 				oldVoteMap[ticketH] = struct{}{}
 				newVotes = append(newVotes, stx)
@@ -954,10 +968,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 
 			// Create a list of old tickets and revocations
 			// while we're in this loop.
-			if txType == stake.TxTypeSStx {
+			if txType == stake.TxTypeSStx||
+			txType == stake.TxTypeAiSStx {
 				oldTickets = append(oldTickets, stx)
 			}
-			if txType == stake.TxTypeSSRtx {
+			if txType == stake.TxTypeSSRtx ||
+			txType == stake.TxTypeAiSSRtx {
 				oldRevocations = append(oldRevocations, stx)
 			}
 		}
@@ -975,14 +991,26 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// Check the length of the reconstructed voter list for
 	// integrity.
 	votesTotal := len(newVotes)
-	if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
-		bmgrLog.Warnf("error found while adding hidden votes "+
-			"from block %v to the old block template: %v max "+
-			"votes expected but %v votes found", block.Hash(),
-			int(b.server.chainParams.TicketsPerBlock),
-			votesTotal)
-		return
+	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+		if votesTotal > int(b.server.chainParams.AiTicketsPerBlock) {
+			bmgrLog.Warnf("error found while adding hidden votes "+
+				"from block %v to the old block template: %v max "+
+				"votes expected but %v votes found", block.Hash(),
+				int(b.server.chainParams.AiTicketsPerBlock),
+				votesTotal)
+			return
+		}
+	}else{
+		if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
+			bmgrLog.Warnf("error found while adding hidden votes "+
+				"from block %v to the old block template: %v max "+
+				"votes expected but %v votes found", block.Hash(),
+				int(b.server.chainParams.TicketsPerBlock),
+				votesTotal)
+			return
+		}
 	}
+
 
 	// Clear the old stake transactions and begin inserting the
 	// new vote list along with all the old transactions. Do this
@@ -1216,6 +1244,18 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 				return
 			}
 
+			winningAiTickets, _, _, err :=
+				b.chain.LotteryAiDataForBlock(blockHash)
+			if err != nil && int64(bmsg.block.MsgBlock().Header.Height) >=
+				b.server.chainParams.StakeValidationHeight-1 {
+				bmgrLog.Errorf("Failed to get next winning tickets: %v", err)
+
+				code, reason := mempool.ErrToRejectErr(err)
+				bmsg.peer.PushRejectMsg(wire.CmdBlock, code, reason,
+					blockHash, false)
+				return
+			}
+			winningTickets = append(winningTickets, winningAiTickets...)
 			// Push winning tickets notifications if we need to.
 			winningTicketsNtfn := &WinningTicketsNtfnData{
 				BlockHash:   *blockHash,
@@ -1260,7 +1300,11 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 				bmgrLog.Warnf("Failed to get missed tickets "+
 					"for best block %v: %v", best.Hash, err)
 			}
-
+			missedAiTickets, err := b.chain.MissedAiTickets()
+			if err != nil {
+				bmgrLog.Warnf("Failed to get missed ai tickets "+
+					"for best block %v: %v", best.Hash, err)
+			}
 			// Retrieve the current previous block hash.
 			curPrevHash := b.chain.BestPrevHash()
 
@@ -1291,9 +1335,16 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 					"data for new best block: %v", err)
 			}
 
-			b.updateChainState(best.Hash, best.Height, finalState,
-				uint32(poolSize), nextStakeDiff, winningTickets,
-				missedTickets, curPrevHash)
+			winningAiTickets, aiPoolSize, aiFinalState, err :=
+				b.chain.LotteryAiDataForBlock(blockHash)
+			if err != nil {
+				bmgrLog.Warnf("Failed to get determine lottery "+
+					"data for new best block: %v", err)
+			}
+
+			b.updateChainState(best.Hash, best.Height, finalState,aiFinalState,
+				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, winningTickets,winningAiTickets,
+				missedTickets, missedAiTickets, curPrevHash)
 
 			// Update this peer's latest block height, for future
 			// potential sync node candidancy.
@@ -1831,6 +1882,9 @@ out:
 					winningTickets, poolSize, finalState, err :=
 						b.chain.LotteryDataForBlock(best.Hash)
 
+					winningAiTickets, aiPoolSize, aiFinalState, err :=
+						b.chain.LotteryAiDataForBlock(best.Hash)
+
 					// Update registered websocket clients on the
 					// current stake difficulty.
 					nextStakeDiff, errSDiff :=
@@ -1857,6 +1911,11 @@ out:
 						bmgrLog.Warnf("Failed to get missed tickets"+
 							": %v", err)
 					}
+					missedAiTickets, err := b.chain.MissedAiTickets()
+					if err != nil {
+						bmgrLog.Warnf("Failed to get missed ai tickets"+
+							": %v", err)
+					}
 
 					// The blockchain should be updated, so fetch the
 					// latest snapshot.
@@ -1865,11 +1924,11 @@ out:
 
 					b.updateChainState(best.Hash,
 						best.Height,
-						finalState,
-						uint32(poolSize),
+						finalState, aiFinalState,
+						uint32(poolSize),uint32(aiPoolSize),
 						nextStakeDiff,
-						winningTickets,
-						missedTickets,
+						winningTickets,winningAiTickets,
+						missedTickets, missedAiTickets,
 						curPrevHash)
 				}
 
@@ -1934,6 +1993,19 @@ out:
 						continue
 					}
 
+					winningAiTickets, _, _, err :=
+						b.chain.LotteryAiDataForBlock(msg.block.Hash())
+					if err != nil && int64(msg.block.MsgBlock().Header.Height) >=
+						b.server.chainParams.StakeValidationHeight-1 {
+						bmgrLog.Warnf("Stake failure in lottery tickets "+
+							"calculation: %v", err)
+						msg.reply <- processBlockResponse{
+							isOrphan: false,
+							err:      err,
+						}
+						continue
+					}
+					winningTickets = append(winningTickets, winningAiTickets...)
 					// Notify registered websocket clients of newly
 					// eligible tickets to vote on if needed. Only
 					// do this if we're above the latest checkpoint
@@ -1996,6 +2068,11 @@ out:
 						bmgrLog.Warnf("Failed to get missing tickets for "+
 							"incoming block %v: %v", best.Hash, err)
 					}
+					missedAiTickets, err := b.chain.MissedAiTickets()
+					if err != nil {
+						bmgrLog.Warnf("Failed to get missing tickets for "+
+							"incoming block %v: %v", best.Hash, err)
+					}
 					curPrevHash := b.chain.BestPrevHash()
 
 					winningTickets, poolSize, finalState, err :=
@@ -2006,13 +2083,21 @@ out:
 							best.Hash, err)
 					}
 
+					winningAiTickets, aiPoolSize, aiFinalState, err :=
+						b.chain.LotteryAiDataForBlock(msg.block.Hash())
+					if err != nil {
+						bmgrLog.Warnf("Failed to determine block "+
+							"lottery data for incoming best block %v: %v",
+							best.Hash, err)
+					}
+
 					b.updateChainState(best.Hash,
 						best.Height,
-						finalState,
-						uint32(poolSize),
+						finalState,aiFinalState,
+						uint32(poolSize), uint32(aiPoolSize),
 						nextStakeDiff,
-						winningTickets,
-						missedTickets,
+						winningTickets,winningAiTickets,
+						missedTickets,missedAiTickets,
 						curPrevHash)
 				}
 
@@ -2126,11 +2211,19 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			// Obtain the winning tickets for this block.  handleNotifyMsg
 			// should be safe for concurrent access of things contained
 			//			// within blockchain.
+			if block.Height() == 145 {
+				fmt.Println("test 145")
+			}
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
+
+			aiwt, _, _, err2 := b.chain.LotteryAiDataForBlock(hash)
 			if err != nil {
 				bmgrLog.Errorf("Couldn't calculate winning tickets for "+
 					"accepted block %v: %v", block.Hash(), err.Error())
 			} else {
+				if err2 == nil{
+					wt = append(wt, aiwt...)
+				}
 				if !beenNotified {
 					ntfnData := &WinningTicketsNtfnData{
 						BlockHash:   *hash,
@@ -2785,9 +2878,17 @@ func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockMan
 	if err != nil {
 		return nil, err
 	}
+	aiwt, aips, aifs, err := bm.chain.LotteryAiDataForBlock(best.Hash)
+	if err != nil {
+		return nil, err
+	}
 
 	// Query the DB for the currently missed tickets.
 	missedTickets, err := bm.chain.MissedTickets()
+	if err != nil {
+		return nil, err
+	}
+	missedAiTickets, err := bm.chain.MissedAiTickets()
 	if err != nil {
 		return nil, err
 	}
@@ -2801,11 +2902,11 @@ func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockMan
 
 	bm.updateChainState(best.Hash,
 		best.Height,
-		fs,
-		uint32(ps),
+		fs, aifs,
+		uint32(ps),uint32(aips),
 		nextStakeDiff,
-		wt,
-		missedTickets,
+		wt,aiwt,
+		missedTickets,missedAiTickets,
 		curPrevHash)
 	bm.lotteryDataBroadcast = make(map[chainhash.Hash]struct{})
 

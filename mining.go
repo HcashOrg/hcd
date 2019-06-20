@@ -163,7 +163,11 @@ func txStakePriority(txType stake.TxType) stakePriority {
 	switch txType {
 	case stake.TxTypeSSGen:
 		prio = votePriority
+	case stake.TxTypeAiSSGen:
+		prio = votePriority
 	case stake.TxTypeSStx:
+		prio = ticketPriority
+	case stake.TxTypeAiSStx:
 		prio = ticketPriority
 	}
 
@@ -305,7 +309,7 @@ func (b byNumberOfVotes) Less(i, j int) bool {
 // at least a majority number of votes) sorted by number of votes, descending.
 //
 // This function is safe for concurrent access.
-func SortParentsByVotes(mp *mempool.TxPool, currentTopBlock chainhash.Hash, blocks []chainhash.Hash, params *chaincfg.Params) []chainhash.Hash {
+func SortParentsByVotes(height uint64, mp *mempool.TxPool, currentTopBlock chainhash.Hash, blocks []chainhash.Hash, params *chaincfg.Params) []chainhash.Hash {
 	// Return now when no blocks were provided.
 	lenBlocks := len(blocks)
 	if lenBlocks == 0 {
@@ -316,6 +320,9 @@ func SortParentsByVotes(mp *mempool.TxPool, currentTopBlock chainhash.Hash, bloc
 	// mempool and filter out any blocks that do not have the minimum
 	// required number of votes.
 	minVotesRequired := (params.TicketsPerBlock / 2) + 1
+	if height >= params.AIEnableHeight {
+		minVotesRequired = (params.AiTicketsPerBlock / 2) + 1
+	}
 	voteMetadata := mp.VotesForBlocks(blocks)
 	filtered := make([]*blockWithNumVotes, 0, lenBlocks)
 	for i := range blocks {
@@ -724,11 +731,12 @@ func maybeInsertStakeTx(bm *blockManager, stx *hcutil.Tx, treeValid bool) bool {
 	}
 	mstx := stx.MsgTx()
 	isSSGen, _ := stake.IsSSGen(mstx)
+	isAiSSGen, _ := stake.IsAiSSGen(mstx)
 	for i, txIn := range mstx.TxIn {
 		// Evaluate if this is a stakebase input or not. If it
 		// is, continue without evaluation of the input.
 		// if isStakeBase
-		if isSSGen && (i == 0) {
+		if (isSSGen || isAiSSGen) && (i == 0) {
 			txIn.BlockHeight = wire.NullBlockHeight
 			txIn.BlockIndex = wire.NullBlockIndex
 
@@ -1189,13 +1197,21 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	chainState.Lock()
 	prevHash := chainState.newestHash
 	nextBlockHeight := chainState.newestHeight + 1
+	if nextBlockHeight == 146 {
+		fmt.Println("test ")
+	}
+
 	poolSize := chainState.nextPoolSize
+	aiPoolSize := chainState.nextAiPoolSize
 	reqStakeDifficulty := chainState.nextStakeDifficulty
 	finalState := chainState.nextFinalState
-	winningTickets := make([]chainhash.Hash, len(chainState.winningTickets))
-	copy(winningTickets, chainState.winningTickets)
+	aiFinalState := chainState.nextAiFinalState
+	var winningTickets []chainhash.Hash
+	winningTickets = append(winningTickets, chainState.winningTickets...)
+	winningTickets = append(winningTickets, chainState.winningAiTickets...)
 	missedTickets := make([]chainhash.Hash, len(chainState.missedTickets))
 	copy(missedTickets, chainState.missedTickets)
+	missedTickets = append(missedTickets, chainState.missedAiTickets...)
 	chainState.Unlock()
 
 	chainBest := blockManager.chain.BestSnapshot()
@@ -1218,7 +1234,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 		// Get the list of blocks that we can actually build on top of. If we're
 		// not currently on the block that has the most votes, switch to that
 		// block.
-		eligibleParents := SortParentsByVotes(mp, *prevHash, children,
+		eligibleParents := SortParentsByVotes(uint64(nextBlockHeight), mp, *prevHash, children,
 			blockManager.server.chainParams)
 		if len(eligibleParents) == 0 {
 			minrLog.Debugf("Too few voters found on any HEAD block, " +
@@ -1323,7 +1339,8 @@ mempoolLoop:
 		// Need this for a check below for stake base input, and to check
 		// the ticket number.
 		isSSGen := txDesc.Type == stake.TxTypeSSGen
-		if isSSGen {
+		isAiSSGen := txDesc.Type == stake.TxTypeAiSSGen
+		if isSSGen || isAiSSGen {
 			blockHash, blockHeight, err := stake.SSGenBlockVotedOn(msgTx)
 			if err != nil { // Should theoretically never fail.
 				minrLog.Tracef("Skipping ssgen tx %s because of failure "+
@@ -1457,26 +1474,36 @@ mempoolLoop:
 		tx := prioItem.tx
 
 		// Store if this is an SStx or not.
-		isSStx := prioItem.txType == stake.TxTypeSStx
+		isSStx := prioItem.txType == stake.TxTypeSStx || prioItem.txType == stake.TxTypeAiSStx
 
 		// Store if this is an SSGen or not.
-		isSSGen := prioItem.txType == stake.TxTypeSSGen
+		isSSGen := prioItem.txType == stake.TxTypeSSGen || prioItem.txType == stake.TxTypeAiSSGen
 
 		// Store if this is an SSRtx or not.
-		isSSRtx := prioItem.txType == stake.TxTypeSSRtx
+		isSSRtx := prioItem.txType == stake.TxTypeSSRtx || prioItem.txType == stake.TxTypeAiSSRtx
 
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
-		// Skip if we already have too many SStx.
-		if isSStx && (numSStx >=
-			int(server.chainParams.MaxFreshStakePerBlock)) {
-			minrLog.Tracef("Skipping sstx %s because it would exceed "+
-				"the max number of sstx allowed in a block", tx.Hash())
-			logSkippedDeps(tx, deps)
-			continue
+		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
+			// Skip if we already have too many SStx.
+			if isSStx && (numSStx >=
+				int(server.chainParams.AiMaxFreshStakePerBlock)) {
+				minrLog.Tracef("Skipping sstx %s because it would exceed "+
+					"the max number of sstx allowed in a block", tx.Hash())
+				logSkippedDeps(tx, deps)
+				continue
+			}
+		}else{
+			// Skip if we already have too many SStx.
+			if isSStx && (numSStx >=
+				int(server.chainParams.MaxFreshStakePerBlock)) {
+				minrLog.Tracef("Skipping sstx %s because it would exceed "+
+					"the max number of sstx allowed in a block", tx.Hash())
+				logSkippedDeps(tx, deps)
+				continue
+			}
 		}
-
 		// Skip if the SStx commit value is below the value required by the
 		// stake diff.
 		if isSStx && (tx.MsgTx().TxOut[0].Value < reqStakeDifficulty) {
@@ -1684,7 +1711,12 @@ mempoolLoop:
 			break // No SSGen should be present before this height.
 		}
 
-		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen {
+		isAiSSGen, _ := stake.IsAiSSGen(msgTx)
+		if isAiSSGen{
+			fmt.Println("test")
+		}
+
+		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen{
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				vb := stake.SSGenVoteBits(txCopy.MsgTx())
@@ -1781,7 +1813,8 @@ mempoolLoop:
 	for _, tx := range blockTxns {
 		msgTx := tx.MsgTx()
 		isSStx, _ := stake.IsSStx(msgTx)
-		if tx.Tree() == wire.TxTreeStake && isSStx {
+		isAiSStx, _ := stake.IsAiSStx(msgTx)
+		if tx.Tree() == wire.TxTreeStake && (isSStx || isAiSStx) {
 			// A ticket can not spend an input from TxTreeRegular, since it
 			// has not yet been validated.
 			if containsTxIns(blockTxns, tx) {
@@ -1798,9 +1831,16 @@ mempoolLoop:
 			}
 		}
 
-		// Don't let this overflow.
-		if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
-			break
+		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
+			// Don't let this overflow.
+			if freshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
+				break
+			}
+		}else{
+			// Don't let this overflow.
+			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
+				break
+			}
 		}
 	}
 
@@ -1813,7 +1853,8 @@ mempoolLoop:
 
 		msgTx := tx.MsgTx()
 		isSSRtx, _ := stake.IsSSRtx(msgTx)
-		if tx.Tree() == wire.TxTreeStake && isSSRtx {
+		isAiSSRtx, _ := stake.IsAiSSRtx(msgTx)
+		if tx.Tree() == wire.TxTreeStake && (isSSRtx ||isAiSSRtx) {
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				blockTxnsStake = append(blockTxnsStake, txCopy)
@@ -1926,7 +1967,11 @@ mempoolLoop:
 	// If we're greater than or equal to stake validation height, scale the
 	// fees according to the number of voters.
 	totalFees *= int64(voters)
-	totalFees /= int64(server.chainParams.TicketsPerBlock)
+	if uint64(nextBlockHeight) >= server.chainParams.AIEnableHeight {
+		totalFees /= int64(server.chainParams.AiTicketsPerBlock)
+	}else{
+		totalFees /= int64(server.chainParams.TicketsPerBlock)
+	}
 
 	// Now that the actual transactions have been selected, update the
 	// block size for the real transaction count and coinbase value with
@@ -1956,6 +2001,9 @@ mempoolLoop:
 	// bit for the mempool to sync with the votes map and we end up down
 	// here despite having the relevant votes available in the votes map.
 	minimumVotesRequired := int((server.chainParams.TicketsPerBlock / 2) + 1)
+	if uint64(nextBlockHeight) >= server.chainParams.AIEnableHeight {
+		minimumVotesRequired = int((server.chainParams.AiTicketsPerBlock / 2) + 1)
+	}
 	if nextBlockHeight >= stakeValidationHeight &&
 		voters < minimumVotesRequired {
 		minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")
@@ -2061,10 +2109,12 @@ mempoolLoop:
 		StakeRoot:    *merklesStake[len(merklesStake)-1],
 		VoteBits:     votebits,
 		FinalState:   finalState,
+		AiFinalState:   aiFinalState,
 		Voters:       uint16(voters),
 		FreshStake:   uint8(freshStake),
 		Revocations:  uint8(revocations),
 		PoolSize:     poolSize,
+		AiPoolSize:   aiPoolSize,
 		Timestamp:    ts,
 		SBits:        reqStakeDifficulty,
 		Bits:         reqDifficulty,

@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/txscript"
@@ -337,7 +338,7 @@ func (view *UtxoViewpoint) AddTxOuts(tx *hcutil.Tx, blockHeight int64,
 		txType := stake.DetermineTxType(msgTx)
 		entry = newUtxoEntry(msgTx.Version, uint32(blockHeight),
 			blockIndex, IsCoinBaseTx(msgTx), msgTx.Expiry != 0, txType)
-		if txType == stake.TxTypeSStx {
+		if txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx {
 			stakeExtra := make([]byte, serializeSizeForMinimalOutputs(tx))
 			putTxToMinimalOutputs(stakeExtra, tx)
 			entry.stakeExtra = stakeExtra
@@ -403,7 +404,7 @@ func (view *UtxoViewpoint) connectTransaction(tx *hcutil.Tx, blockHeight int64,
 	// to it.
 	txType := stake.DetermineTxType(msgTx)
 	for i, txIn := range msgTx.TxIn {
-		if i == 0 && (txType == stake.TxTypeSSGen) {
+		if i == 0 && (txType == stake.TxTypeSSGen ||txType == stake.TxTypeAiSSGen) {
 			continue
 		}
 
@@ -442,7 +443,7 @@ func (view *UtxoViewpoint) connectTransaction(tx *hcutil.Tx, blockHeight int64,
 			stxo.txType = entry.txType
 			stxo.txFullySpent = true
 
-			if entry.txType == stake.TxTypeSStx {
+			if entry.txType == stake.TxTypeSStx || entry.txType == stake.TxTypeAiSStx  {
 				stxo.stakeExtra = entry.stakeExtra
 			}
 		}
@@ -555,7 +556,7 @@ func (b *BlockChain) disconnectTransactions(view *UtxoViewpoint,
 		if entry == nil {
 			entry = newUtxoEntry(msgTx.Version, uint32(block.Height()),
 				uint32(txIdx), IsCoinBaseTx(msgTx), msgTx.Expiry != 0, tt)
-			if tt == stake.TxTypeSStx {
+			if tt == stake.TxTypeSStx || tt == stake.TxTypeAiSStx {
 				stakeExtra := make([]byte, serializeSizeForMinimalOutputs(tx))
 				putTxToMinimalOutputs(stakeExtra, tx)
 				entry.stakeExtra = stakeExtra
@@ -571,7 +572,7 @@ func (b *BlockChain) disconnectTransactions(view *UtxoViewpoint,
 		// spent txout entries.
 		for txInIdx := len(tx.MsgTx().TxIn) - 1; txInIdx > -1; txInIdx-- {
 			// Skip empty vote stakebases.
-			if txInIdx == 0 && (tt == stake.TxTypeSSGen) {
+			if txInIdx == 0 && (tt == stake.TxTypeSSGen || tt == stake.TxTypeAiSSGen) {
 				continue
 			}
 
@@ -596,7 +597,7 @@ func (b *BlockChain) disconnectTransactions(view *UtxoViewpoint,
 				entry = newUtxoEntry(tx.MsgTx().Version, stxo.height,
 					stxo.index, stxo.isCoinBase, stxo.hasExpiry,
 					stxo.txType)
-				if stxo.txType == stake.TxTypeSStx {
+				if stxo.txType == stake.TxTypeSStx || stxo.txType == stake.TxTypeAiSStx{
 					entry.stakeExtra = stxo.stakeExtra
 				}
 				view.entries[*originHash] = entry
@@ -689,7 +690,7 @@ func (b *BlockChain) disconnectTransactions(view *UtxoViewpoint,
 						entry = newUtxoEntry(tx.MsgTx().Version,
 							stxo.height, stxo.index, stxo.isCoinBase,
 							stxo.hasExpiry, stxo.txType)
-						if stxo.txType == stake.TxTypeSStx {
+						if stxo.txType == stake.TxTypeSStx || stxo.txType == stake.TxTypeAiSStx {
 							entry.stakeExtra = stxo.stakeExtra
 						}
 						view.entries[*originHash] = entry
@@ -758,7 +759,7 @@ func (view *UtxoViewpoint) disconnectTransactionSlice(transactions []*hcutil.Tx,
 		if entry == nil {
 			entry = newUtxoEntry(msgTx.Version, uint32(height),
 				uint32(txIdx), IsCoinBaseTx(msgTx), msgTx.Expiry != 0, txType)
-			if txType == stake.TxTypeSStx {
+			if txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx{
 				stakeExtra := make([]byte, serializeSizeForMinimalOutputs(tx))
 				putTxToMinimalOutputs(stakeExtra, tx)
 				entry.stakeExtra = stakeExtra
@@ -794,7 +795,7 @@ func (view *UtxoViewpoint) disconnectTransactionSlice(transactions []*hcutil.Tx,
 				entry = newUtxoEntry(stxo.txVersion, stxo.height,
 					stxo.index, stxo.isCoinBase, stxo.hasExpiry,
 					stxo.txType)
-				if txType == stake.TxTypeSStx {
+				if txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx {
 					//stakeExtra := make([]byte,
 					//	serializeSizeForMinimalOutputs(tx))
 					// putTxToMinimalOutputs(stakeExtra, tx)
@@ -992,10 +993,11 @@ func (view *UtxoViewpoint) fetchInputUtxos(db database.DB,
 		// just append it to the tx slice.
 		for _, tx := range block.MsgBlock().STransactions {
 			isSSGen, _ := stake.IsSSGen(tx)
+			isAiSSGen, _ := aistake.IsAiSSGen(tx)
 
 			for i, txIn := range tx.TxIn {
 				// Ignore stakebases.
-				if isSSGen && i == 0 {
+				if( isSSGen || isAiSSGen) && i == 0 {
 					continue
 				}
 
@@ -1131,9 +1133,10 @@ func (b *BlockChain) FetchUtxoView(tx *hcutil.Tx, treeValid bool) (*UtxoViewpoin
 	txNeededSet[*tx.Hash()] = struct{}{}
 	msgTx := tx.MsgTx()
 	isSSGen, _ := stake.IsSSGen(msgTx)
+	isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
 	if !IsCoinBaseTx(msgTx) {
 		for i, txIn := range msgTx.TxIn {
-			if isSSGen && i == 0 {
+			if (isSSGen || isAiSSGen)&& i == 0 {
 				continue
 			}
 			txNeededSet[txIn.PreviousOutPoint.Hash] = struct{}{}

@@ -34,6 +34,9 @@ const (
 	TxTypeSStx
 	TxTypeSSGen
 	TxTypeSSRtx
+	TxTypeAiSStx
+	TxTypeAiSSGen
+	TxTypeAiSSRtx
 )
 
 const (
@@ -409,7 +412,7 @@ func TxSSGenStakeOutputInfo(tx *wire.MsgTx, params *chaincfg.Params) ([]bool,
 			if err != nil {
 				return nil, nil, nil, err
 			}
-			if class != txscript.StakeGenTy {
+			if class != txscript.StakeGenTy && class != txscript.AiStakeGenTy {
 				return nil, nil, nil, fmt.Errorf("ssgen output included non "+
 					"ssgen tagged output in idx %v", idx)
 			}
@@ -497,7 +500,7 @@ func TxSSRtxStakeOutputInfo(tx *wire.MsgTx, params *chaincfg.Params) ([]bool,
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		if class != txscript.StakeRevocationTy {
+		if class != txscript.StakeRevocationTy && class != txscript.AiStakeRevocationTy {
 			return nil, nil, nil, fmt.Errorf("ssrtx output included non "+
 				"ssrtx tagged output in idx %v", idx)
 		}
@@ -902,6 +905,106 @@ func IsSStx(tx *wire.MsgTx) (bool, error) {
 	return true, nil
 }
 
+func IsAiSStx(tx *wire.MsgTx) (bool, error) {
+	// Check to make sure there aren't too many inputs.
+	// CheckTransactionSanity already makes sure that number of inputs is
+	// greater than 0, so no need to check that.
+	if len(tx.TxIn) > MaxInputsPerSStx {
+		return false, stakeRuleError(ErrSStxTooManyInputs, "SStx has too many "+
+			"inputs")
+	}
+
+	// Check to make sure there aren't too many outputs.
+	if len(tx.TxOut) > MaxOutputsPerSStx {
+		return false, stakeRuleError(ErrSStxTooManyOutputs, "SStx has too many "+
+			"outputs")
+	}
+
+	// Check to make sure there are some outputs.
+	if len(tx.TxOut) == 0 {
+		return false, stakeRuleError(ErrSStxNoOutputs, "SStx has no "+
+			"outputs")
+	}
+
+	// Check to make sure that all output scripts are the default version.
+	for idx, txOut := range tx.TxOut {
+		if txOut.Version != txscript.DefaultScriptVersion {
+			errStr := fmt.Sprintf("invalid script version found in "+
+				"txOut idx %v", idx)
+			return false, stakeRuleError(ErrSStxInvalidOutputs, errStr)
+		}
+	}
+
+	// Ensure that the first output is tagged OP_SSTX.
+	if txscript.GetScriptClass(tx.TxOut[0].Version, tx.TxOut[0].PkScript) !=
+		txscript.AiStakeSubmissionTy {
+		return false, stakeRuleError(ErrSStxInvalidOutputs, "First AiSStx output "+
+			"should have been OP_SSTX tagged, but it was not")
+	}
+
+	// Ensure that the number of outputs is equal to the number of inputs
+	// + 1.
+	if (len(tx.TxIn)*2 + 1) != len(tx.TxOut) {
+		return false, stakeRuleError(ErrSStxInOutProportions, "The number of "+
+			"inputs in the AiSStx tx was not the number of outputs/2 - 1")
+	}
+
+	// Ensure that the rest of the odd outputs are 28-byte OP_RETURN pushes that
+	// contain putative pubkeyhashes, and that the rest of the odd outputs are
+	// OP_SSTXCHANGE tagged.
+	for outTxIndex := 1; outTxIndex < len(tx.TxOut); outTxIndex++ {
+		scrVersion := tx.TxOut[outTxIndex].Version
+		rawScript := tx.TxOut[outTxIndex].PkScript
+
+		// Check change outputs.
+		if outTxIndex%2 == 0 {
+			if txscript.GetScriptClass(scrVersion, rawScript) !=
+				txscript.AiStakeSubChangeTy {
+				str := fmt.Sprintf("SStx output at output index %d was not an sstx change output", outTxIndex)
+				return false, stakeRuleError(ErrSStxInvalidOutputs, str)
+			}
+			continue
+		}
+
+		// Else (odd) check commitment outputs.  The script should be a
+		// NullDataTy output.
+		if txscript.GetScriptClass(scrVersion, rawScript) !=
+			txscript.NullDataTy {
+			str := fmt.Sprintf("AiSStx output at output index %d was not a NullData (OP_RETURN) push", outTxIndex)
+			return false, stakeRuleError(ErrSStxInvalidOutputs, str)
+		}
+
+		// The length of the output script should be between 32 and 77 bytes long.
+		if len(rawScript) < SStxPKHMinOutSize ||
+			len(rawScript) > SStxPKHMaxOutSize {
+			str := fmt.Sprintf("SStx output at output index %d was a "+
+				"NullData (OP_RETURN) push of the wrong size", outTxIndex)
+			return false, stakeRuleError(ErrSStxInvalidOutputs, str)
+		}
+
+		// The OP_RETURN output script prefix should conform to the standard.
+		outputScriptBuffer := bytes.NewBuffer(rawScript)
+		outputScriptPrefix := outputScriptBuffer.Next(2)
+
+		minPush := validSStxAddressOutMinPrefix[1]
+		maxPush := validSStxAddressOutMinPrefix[1] +
+			(MaxSingleBytePushLength - minPush)
+		pushLen := outputScriptPrefix[1]
+		pushLengthValid := (pushLen >= minPush) && (pushLen <= maxPush)
+		// The first byte should be OP_RETURN, while the second byte should be a
+		// valid push length.
+		if !(outputScriptPrefix[0] == validSStxAddressOutMinPrefix[0]) ||
+			!pushLengthValid {
+			errStr := fmt.Sprintf("sstx commitment at output idx %v had "+
+				"an invalid prefix", outTxIndex)
+			return false, stakeRuleError(ErrSStxInvalidOutputs,
+				errStr)
+		}
+	}
+
+	return true, nil
+}
+
 // IsSSGen returns whether or not a transaction is an SSGen tx.  It does some
 // simple validation steps to make sure the number of inputs, number of
 // outputs, and the input/output scripts are valid.
@@ -1079,6 +1182,156 @@ func IsSSGen(tx *wire.MsgTx) (bool, error) {
 	return true, nil
 }
 
+func IsAiSSGen(tx *wire.MsgTx) (bool, error) {
+	// Check to make sure there aren't too many inputs.
+	// CheckTransactionSanity already makes sure that number of inputs is
+	// greater than 0, so no need to check that.
+	if len(tx.TxIn) != NumInputsPerSSGen {
+		return false, stakeRuleError(ErrSSGenWrongNumInputs, "SSgen tx has an "+
+			"invalid number of inputs")
+	}
+
+	// Check to make sure there aren't too many outputs.
+	if len(tx.TxOut) > MaxOutputsPerSSGen {
+		return false, stakeRuleError(ErrSSGenTooManyOutputs, "SSgen tx has too "+
+			"many outputs")
+	}
+
+	// Check to make sure there are some outputs.
+	if len(tx.TxOut) == 0 {
+		return false, stakeRuleError(ErrSSGenNoOutputs, "SSgen tx no "+
+			"many outputs")
+	}
+
+	// Ensure that the first input is a stake base null input.
+	// Also checks to make sure that there aren't too many or too few inputs.
+	if !IsStakeBase(tx) {
+		return false, stakeRuleError(ErrSSGenNoStakebase, "SSGen tx did not "+
+			"include a stakebase in the zeroeth input position")
+	}
+
+	// Check to make sure that the output used as input came from TxTreeStake.
+	for i, txin := range tx.TxIn {
+		// Skip the stakebase
+		if i == 0 {
+			continue
+		}
+
+		if txin.PreviousOutPoint.Index != 0 {
+			errStr := fmt.Sprintf("AiSSGen used an invalid input idx (got %v, "+
+				"want 0)", txin.PreviousOutPoint.Index)
+			return false, stakeRuleError(ErrSSGenWrongIndex, errStr)
+		}
+
+		if txin.PreviousOutPoint.Tree != wire.TxTreeStake {
+			return false, stakeRuleError(ErrSSGenWrongTxTree, "SSGen used "+
+				"a non-stake input")
+		}
+	}
+
+	// Check to make sure that all output scripts are the default version.
+	for _, txOut := range tx.TxOut {
+		if txOut.Version != txscript.DefaultScriptVersion {
+			return false, stakeRuleError(ErrSSGenBadGenOuts, "invalid "+
+				"script version found in txOut")
+		}
+	}
+
+	// Ensure the number of outputs is equal to the number of inputs found in
+	// the original SStx + 2.
+	// TODO: Do this in validate, requires DB and valid chain.
+
+	// Ensure that the second input is an SStx tagged output.
+	// TODO: Do this in validate, as we don't want to actually lookup
+	// old tx here.  This function is for more general sorting.
+
+	// Ensure that the first output is an OP_RETURN push.
+	zeroethOutputVersion := tx.TxOut[0].Version
+	zeroethOutputScript := tx.TxOut[0].PkScript
+	if txscript.GetScriptClass(zeroethOutputVersion, zeroethOutputScript) !=
+		txscript.NullDataTy {
+		return false, stakeRuleError(ErrSSGenNoReference, "First AiSSGen output "+
+			"should have been an OP_RETURN data push, but was not")
+	}
+
+	// Ensure that the first output is the correct size.
+	if len(zeroethOutputScript) != SSGenBlockReferenceOutSize {
+		return false, stakeRuleError(ErrSSGenBadReference, "First AiSSGen output "+
+			"should have been 43 bytes long, but was not")
+	}
+
+	// The OP_RETURN output script prefix for block referencing should
+	// conform to the standard.
+	zeroethOutputScriptBuffer := bytes.NewBuffer(zeroethOutputScript)
+
+	zeroethOutputScriptPrefix := zeroethOutputScriptBuffer.Next(2)
+	if !bytes.Equal(zeroethOutputScriptPrefix,
+		validSSGenReferenceOutPrefix) {
+		return false, stakeRuleError(ErrSSGenBadReference, "First AiSSGen output "+
+			"had an invalid prefix")
+	}
+
+	// Ensure that the block header hash given in the first 32 bytes of the
+	// OP_RETURN push is a valid block header and found in the main chain.
+	// TODO: This is validate level stuff, do this there.
+
+	// Ensure that the second output is an OP_RETURN push.
+	firstOutputVersion := tx.TxOut[1].Version
+	firstOutputScript := tx.TxOut[1].PkScript
+	if txscript.GetScriptClass(firstOutputVersion, firstOutputScript) !=
+		txscript.NullDataTy {
+		return false, stakeRuleError(ErrSSGenNoVotePush, "Second AiSSGen output "+
+			"should have been an OP_RETURN data push, but was not")
+	}
+
+	// The length of the output script should be between 4 and 77 bytes long.
+	if len(firstOutputScript) < SSGenVoteBitsOutputMinSize ||
+		len(firstOutputScript) > SSGenVoteBitsOutputMaxSize {
+		str := fmt.Sprintf("SSGen votebits output at output index 1 was a " +
+			"NullData (OP_RETURN) push of the wrong size")
+		return false, stakeRuleError(ErrSSGenBadVotePush, str)
+	}
+
+	// The OP_RETURN output script prefix for voting should conform to the
+	// standard.
+	firstOutputScriptBuffer := bytes.NewBuffer(firstOutputScript)
+	firstOutputScriptPrefix := firstOutputScriptBuffer.Next(2)
+
+	minPush := validSSGenVoteOutMinPrefix[1]
+	maxPush := validSSGenVoteOutMinPrefix[1] +
+		(MaxSingleBytePushLength - minPush)
+	pushLen := firstOutputScriptPrefix[1]
+	pushLengthValid := (pushLen >= minPush) && (pushLen <= maxPush)
+	// The first byte should be OP_RETURN, while the second byte should be a
+	// valid push length.
+	if !(firstOutputScriptPrefix[0] == validSSGenVoteOutMinPrefix[0]) ||
+		!pushLengthValid {
+		return false, stakeRuleError(ErrSSGenBadVotePush, "Second SSGen output "+
+			"had an invalid prefix")
+	}
+
+	// Ensure that the tx height given in the last 8 bytes is StakeMaturity
+	// many blocks ahead of the block in which that SStx appears, otherwise
+	// this ticket has failed to mature and the SStx must be invalid.
+	// TODO: This is validate level stuff, do this there.
+
+	// Ensure that the remaining outputs are OP_SSGEN tagged.
+	for outTxIndex := 2; outTxIndex < len(tx.TxOut); outTxIndex++ {
+		scrVersion := tx.TxOut[outTxIndex].Version
+		rawScript := tx.TxOut[outTxIndex].PkScript
+
+		// The script should be a OP_SSGEN tagged output.
+		if txscript.GetScriptClass(scrVersion, rawScript) !=
+			txscript.AiStakeGenTy {
+			str := fmt.Sprintf("AiSSGen tx output at output index %d was not "+
+				"an OP_SSGEN tagged output", outTxIndex)
+			return false, stakeRuleError(ErrSSGenBadGenOuts, str)
+		}
+	}
+
+	return true, nil
+}
+
 // IsSSRtx returns whether or not a transaction is an SSRtx.  It does some
 // simple validation steps to make sure the number of inputs, number of
 // outputs, and the input/output scripts are valid.
@@ -1170,17 +1423,98 @@ func IsSSRtx(tx *wire.MsgTx) (bool, error) {
 	return true, nil
 }
 
+func IsAiSSRtx(tx *wire.MsgTx) (bool, error) {
+	// Check to make sure there is the correct number of inputs.
+	// CheckTransactionSanity already makes sure that number of inputs is
+	// greater than 0, so no need to check that.
+	if len(tx.TxIn) != NumInputsPerSSRtx {
+		return false, stakeRuleError(ErrSSRtxWrongNumInputs, "SSRtx has an "+
+			" invalid number of inputs")
+	}
+
+	// Check to make sure there aren't too many outputs.
+	if len(tx.TxOut) > MaxOutputsPerSSRtx {
+		return false, stakeRuleError(ErrSSRtxTooManyOutputs, "SSRtx has too "+
+			"many outputs")
+	}
+
+	// Check to make sure there are some outputs.
+	if len(tx.TxOut) == 0 {
+		return false, stakeRuleError(ErrSSRtxNoOutputs, "SSRtx has no "+
+			"outputs")
+	}
+
+	// Check to make sure that all output scripts are the default version.
+	for _, txOut := range tx.TxOut {
+		if txOut.Version != txscript.DefaultScriptVersion {
+			return false, stakeRuleError(ErrSSRtxBadOuts, "invalid "+
+				"script version found in txOut")
+		}
+	}
+
+	// Check to make sure that the output used as input came from TxTreeStake.
+	for _, txin := range tx.TxIn {
+		if txin.PreviousOutPoint.Tree != wire.TxTreeStake {
+			return false, stakeRuleError(ErrSSRtxWrongTxTree, "SSRtx used "+
+				"a non-stake input")
+		}
+	}
+
+	// Ensure that the first input is an SStx tagged output.
+	// TODO: Do this in validate, needs a DB and chain.
+
+	// Ensure that the tx height given in the last 8 bytes is StakeMaturity
+	// many blocks ahead of the block in which that SStx appear, otherwise
+	// this ticket has failed to mature and the SStx must be invalid.
+	// TODO: Do this in validate, needs a DB and chain.
+
+	// Ensure that the outputs are OP_SSRTX tagged.
+	// Ensure that the tx height given in the last 8 bytes is StakeMaturity
+	// many blocks ahead of the block in which that SStx appear, otherwise
+	// this ticket has failed to mature and the SStx must be invalid.
+	// TODO: This is validate level stuff, do this there.
+
+	// Ensure that the outputs are OP_SSRTX tagged.
+	for outTxIndex := 0; outTxIndex < len(tx.TxOut); outTxIndex++ {
+		scrVersion := tx.TxOut[outTxIndex].Version
+		rawScript := tx.TxOut[outTxIndex].PkScript
+
+		// The script should be a OP_SSRTX tagged output.
+		if txscript.GetScriptClass(scrVersion, rawScript) !=
+			txscript.AiStakeRevocationTy {
+			str := fmt.Sprintf("SSRtx output at output index %d was not "+
+				"an OP_SSRTX tagged output", outTxIndex)
+			return false, stakeRuleError(ErrSSRtxBadOuts, str)
+		}
+	}
+
+	// Ensure the number of outputs is equal to the number of inputs found in
+	// the original SStx.
+	// TODO: Do this in validate, needs a DB and chain.
+
+	return true, nil
+}
+
 // DetermineTxType determines the type of stake transaction a transaction is; if
 // none, it returns that it is an assumed regular tx.
 func DetermineTxType(tx *wire.MsgTx) TxType {
 	if is, _ := IsSStx(tx); is {
 		return TxTypeSStx
 	}
+	if is, _ := IsAiSStx(tx); is {
+		return TxTypeAiSStx
+	}
 	if is, _ := IsSSGen(tx); is {
 		return TxTypeSSGen
 	}
+	if is, _ := IsAiSSGen(tx); is {
+		return TxTypeAiSSGen
+	}
 	if is, _ := IsSSRtx(tx); is {
 		return TxTypeSSRtx
+	}
+	if is, _ := IsAiSSRtx(tx); is {
+		return TxTypeAiSSRtx
 	}
 	return TxTypeRegular
 }

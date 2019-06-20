@@ -28,7 +28,7 @@ var BlockOneLedgerTestNet2 = []*TokenPayout{
 // network. See under "Hcd organization related parameters" in params.go
 // for information on how to spend these outputs.
 var BlockOneLedgerSimNet = []*TokenPayout{
-	{"Sshw6S86G2bV6W32cbc7EhtFy8f93rU6pae", 100000 * 1e8},
-	{"SsjXRK6Xz6CFuBt6PugBvrkdAa4xGbcZ18w", 100000 * 1e8},
-	{"SsfXiYkYkCoo31CuVQw428N6wWKus2ZEw5X", 100000 * 1e8},
+	{"SsbQiVBFLP79dC7gZT5PWH7gEfMhUkExPTv", 100000 * 1e8},
+	{"Ssf3CjCEU28p8BNm2k53DqC2FZDJ6PdEHe8", 100000 * 1e8},
+	{"SsW6wQWN8wiVY4eqQY3sQi4Eu6kjTqmCH1q", 100000 * 1e8},
 }

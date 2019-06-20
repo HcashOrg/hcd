@@ -6,15 +6,16 @@
 package indexers
 
 import (
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"sync"
 
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 var (
@@ -227,6 +228,7 @@ func (idx *ExistsAddrIndex) ConnectBlock(dbTx database.Tx, block, parent *hcutil
 	for _, tx := range allTxns {
 		msgTx := tx.MsgTx()
 		isSStx, _ := stake.IsSStx(msgTx)
+		isAiSStx, _ := aistake.IsAiSStx(msgTx)
 		for _, txIn := range msgTx.TxIn {
 			if txscript.IsMultisigSigScript(txIn.SignatureScript) {
 				rs, err :=
@@ -266,7 +268,7 @@ func (idx *ExistsAddrIndex) ConnectBlock(dbTx database.Tx, block, parent *hcutil
 				continue
 			}
 
-			if isSStx && class == txscript.NullDataTy {
+			if (isSStx || isAiSStx) && class == txscript.NullDataTy {
 				addr, err := stake.AddrFromSStxPkScrCommitment(txOut.PkScript,
 					idx.chainParams)
 				if err != nil {
@@ -333,6 +335,7 @@ func (idx *ExistsAddrIndex) DisconnectBlock(dbTx database.Tx, block, parent *hcu
 // unconfirmed (memory-only) exists address index.
 func (idx *ExistsAddrIndex) addUnconfirmedTx(tx *wire.MsgTx) {
 	isSStx, _ := stake.IsSStx(tx)
+	isAiSStx, _ := aistake.IsAiSStx(tx)
 	for _, txIn := range tx.TxIn {
 		if txscript.IsMultisigSigScript(txIn.SignatureScript) {
 			rs, err :=
@@ -374,7 +377,7 @@ func (idx *ExistsAddrIndex) addUnconfirmedTx(tx *wire.MsgTx) {
 			continue
 		}
 
-		if isSStx && class == txscript.NullDataTy {
+		if (isSStx || isAiSStx) && class == txscript.NullDataTy {
 			addr, err := stake.AddrFromSStxPkScrCommitment(txOut.PkScript,
 				idx.chainParams)
 			if err != nil {

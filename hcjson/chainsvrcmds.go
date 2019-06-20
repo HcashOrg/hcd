@@ -479,6 +479,15 @@ const (
 
 	// GRMRevocations indicates that only revocations should be returned.
 	GRMRevocations GetRawMempoolTxTypeCmd = "revocations"
+
+	// GRMTickets indicates that only ai tickets should be returned.
+	GRMAiTickets GetRawMempoolTxTypeCmd = "aitickets"
+
+	// GRMVotes indicates that only ai votes should be returned.
+	GRMAiVotes GetRawMempoolTxTypeCmd = "aivotes"
+
+	// GRMRevocations indicates that only ai revocations should be returned.
+	GRMAiRevocations GetRawMempoolTxTypeCmd = "airevocations"
 )
 
 // GetRawMempoolCmd defines the getmempool JSON-RPC command.

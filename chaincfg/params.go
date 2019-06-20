@@ -35,7 +35,7 @@ var (
 
 	// simNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
+	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 240), bigOne)
 
 	VoteBitsNotFound = fmt.Errorf("vote bits not found")
 )
@@ -384,6 +384,19 @@ type Params struct {
 	// be >= (StakeEnabledHeight + StakeValidationHeight).
 	TicketExpiry uint32
 
+	// possible winner numbers there are.
+	AiTicketPoolSize uint16
+
+	// Average number of tickets per block for Hcd PoS.
+	AiTicketsPerBlock uint16
+
+	// Number of blocks for tickets to mature (spendable at TicketMaturity+1).
+	AiTicketMaturity uint16
+
+	// Number of blocks for tickets to expire after they have matured. This MUST
+	// be >= (StakeEnabledHeight + StakeValidationHeight).
+	AiTicketExpiry uint32
+
 	// CoinbaseMaturity is the number of blocks required before newly mined
 	// coins (coinbase transactions) can be spent.
 	CoinbaseMaturity uint16
@@ -415,6 +428,8 @@ type Params struct {
 	// MaxFreshStakePerBlock is the maximum number of new tickets that may be
 	// submitted per block.
 	MaxFreshStakePerBlock uint8
+
+	AiMaxFreshStakePerBlock uint8
 
 	// StakeEnabledHeight is the height in which the first ticket could possibly
 	// mature.
@@ -452,6 +467,7 @@ type Params struct {
 	// as one method to discover peers.
 	OmniMoneyReceive string
 	OmniStartHeight uint64
+	AIEnableHeight  uint64
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -564,6 +580,7 @@ var MainNetParams = Params{
 	BlockOneLedger:              BlockOneLedgerMainNet,
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
 	OmniStartHeight:			 46000,
+	AIEnableHeight:				363000,
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -707,6 +724,7 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
+	AIEnableHeight:				363000,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
@@ -732,11 +750,11 @@ var SimNetParams = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
-	TargetTimePerBlock:       time.Second,
+	TargetTimePerBlock:       time.Second * 10,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
-	TargetTimespan:           time.Second * 8, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -829,6 +847,12 @@ var SimNetParams = Params{
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
 	TicketExpiry:            384, // 6*TicketPoolSize
+	//ai PoS parameters
+	AiTicketPoolSize:          64,//64 + 32,
+	AiTicketsPerBlock:         5,//5 + 5,
+	AiTicketMaturity:          16,
+	AiTicketExpiry:            384, // 6*AiTicketPoolSize
+
 	CoinbaseMaturity:        16,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
@@ -837,6 +861,7 @@ var SimNetParams = Params{
 	StakeDiffWindows:        8,
 	StakeVersionInterval:    8 * 2 * 7,
 	MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
+	AiMaxFreshStakePerBlock: 40,//20+20
 	StakeEnabledHeight:      16 + 16,       // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:      []byte{0xDE, 0xAD, 0xBE, 0xEF},
@@ -877,6 +902,7 @@ var SimNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
+	AIEnableHeight:				146,
 }
 
 var (
