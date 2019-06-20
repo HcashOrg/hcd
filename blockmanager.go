@@ -15,9 +15,9 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/mempool"
+	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
 	"math/rand"
 	"os"
@@ -25,7 +25,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"bytes"
 )
 
 const (
@@ -822,31 +821,29 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	}
 
 	// check signature
-	pubKeyBytes, err := b.chain.PubkeyFromTicketHash(&ticketHash)
+	//get addr
+	entry, err := b.chain.FetchUtxoEntry(&ticketHash)
 	if err != nil {
-		bmgrLog.Error(err)
+		bmgrLog.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
+			err)
 		return
 	}
+	scriptVersion := entry.ScriptVersionByIndex(0)
+	pkScript := entry.PkScriptByIndex(0)
+	script := pkScript
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
+		script, b.server.chainParams)
 
-	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes, secp256k1.S256())
 	if err != nil {
-		bmgrLog.Error(err)
-		return
-	}
-
-	signature, err := secp256k1.ParseSignature(instantTxVote.MsgInstantTxVote().Sig, secp256k1.S256())
-	if err != nil {
-		bmgrLog.Error(err)
+		bmgrLog.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
+			err)
 		return
 	}
 
 	sigMsg := instantTxHash.String() + ticketHash.String()
-	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
-	wire.WriteVarString(&buf, 0, sigMsg)
-	sigMsgHash := chainhash.HashB(buf.Bytes())
 
-	verified := signature.Verify(sigMsgHash, pubKey)
+	//verifymessage
+	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
 
 	if !verified {
 		bmgrLog.Errorf("failed  verify signature ,instantvote %v: %v", instantTxVote.Hash(),

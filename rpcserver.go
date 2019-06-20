@@ -5231,29 +5231,28 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
-	instantTxHash:=msgInstantTxVote.InstantTxHash
-	ticketHash:=msgInstantTxVote.TicketHash
+	instantTxHash := msgInstantTxVote.InstantTxHash
+	ticketHash := msgInstantTxVote.TicketHash
 	//todo check tickets
-	tickets,_,_,err:=s.chain.LotteryAiTicketsForInstantTx(&instantTxHash)
-	ticketExist:=false
-	for _,t:= range tickets{
+	tickets, _, _, err := s.chain.LotteryAiTicketsForInstantTx(&instantTxHash)
+	ticketExist := false
+	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
-			ticketExist=true
+			ticketExist = true
 			break
 		}
 	}
-	if !ticketExist{
-		return nil,fmt.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxvote.Hash(),
+	if !ticketExist {
+		return nil, fmt.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxvote.Hash(),
 			err)
 	}
 
-
-
+	//check signature
 	//get address
 	entry, err := s.chain.FetchUtxoEntry(&ticketHash)
 
-	if err!=nil{
-		return nil,fmt.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
+	if err != nil {
+		return nil, fmt.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
 			err)
 	}
 
@@ -5263,21 +5262,19 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
 		script, s.server.chainParams)
 
-	if err!=nil{
-		return nil,fmt.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
+	if err != nil {
+		return nil, fmt.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
 			err)
 	}
 
-	sigMsg:= instantTxHash.String() + ticketHash.String()
-
+	sigMsg := instantTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified,err:=VerifyMessage(sigMsg,addrs[0],instantTxvote.MsgInstantTxVote().Sig)
-	if !verified{
-		return nil,fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
+	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
+	if !verified {
+		return nil, fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
 			err)
 	}
-
 
 	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
 	instantTxvotes = append(instantTxvotes, instantTxvote)
@@ -5293,7 +5290,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	return nil, nil
 
 }
-
 
 func VerifyMessage(msg string, addr hcutil.Address, sig []byte) (bool, error) {
 	// Validate the signature - this just shows that it was valid for any pubkey
@@ -5323,7 +5319,6 @@ func VerifyMessage(msg string, addr hcutil.Address, sig []byte) (bool, error) {
 	// Return whether addresses match.
 	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
 }
-
 
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
