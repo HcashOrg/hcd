@@ -301,10 +301,13 @@ const (
 	OP_PUBKEYHASH          = 0xfd // 253 - bitcoin core internal
 	OP_PUBKEY              = 0xfe // 254 - bitcoin core internal
 	OP_INVALIDOPCODE       = 0xff // 255 - bitcoin core internal
-	OP_AISSTX                = OP_UNKNOWN200 // 186 HC
-	OP_AISSGEN               = OP_UNKNOWN201 // 187 HC
-	OP_AISSRTX               = OP_UNKNOWN202 // 188 HC
-	OP_AISSTXCHANGE          = OP_UNKNOWN203 // 189 HC
+
+	OP_AISSTX                = OP_UNKNOWN193
+	OP_AISSGEN               = OP_UNKNOWN194
+	OP_AISSRTX               = OP_UNKNOWN195
+	OP_AISSTXCHANGE         = OP_UNKNOWN196
+	//OP_AIBASE                = OP_UNKNOWN193
+	//OP_AITOP			      = OP_UNKNOWN196
 )
 
 // Conditional execution constants.

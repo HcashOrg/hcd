@@ -291,7 +291,7 @@ func isStakeSubmission(pops []parsedOpcode) bool {
 // false otherwise.
 func isAiStakeSubmission(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		(pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_AISSTX) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -301,7 +301,7 @@ func isAiStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		(pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_AISSTX) &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -312,7 +312,7 @@ func isAiStakeSubmission(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		(pops[0].opcode.value == OP_UNKNOWN200) &&
+		(pops[0].opcode.value == OP_AISSTX) &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -358,7 +358,7 @@ func isStakeGen(pops []parsedOpcode) bool {
 
 func isAiStakeGen(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		pops[0].opcode.value == OP_UNKNOWN201 &&
+		pops[0].opcode.value == OP_AISSGEN &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -368,7 +368,7 @@ func isAiStakeGen(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		pops[0].opcode.value == OP_UNKNOWN201 &&
+		pops[0].opcode.value == OP_AISSGEN &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -379,7 +379,7 @@ func isAiStakeGen(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		pops[0].opcode.value == OP_UNKNOWN201 &&
+		pops[0].opcode.value == OP_AISSGEN &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -426,7 +426,7 @@ func isStakeRevocation(pops []parsedOpcode) bool {
 
 func isAiStakeRevocation(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		pops[0].opcode.value == OP_UNKNOWN202 &&
+		pops[0].opcode.value == OP_AISSRTX &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -436,7 +436,7 @@ func isAiStakeRevocation(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		pops[0].opcode.value == OP_UNKNOWN202 &&
+		pops[0].opcode.value == OP_AISSRTX &&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -447,7 +447,7 @@ func isAiStakeRevocation(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		pops[0].opcode.value == OP_UNKNOWN202 &&
+		pops[0].opcode.value == OP_AISSRTX &&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -494,7 +494,7 @@ func isSStxChange(pops []parsedOpcode) bool {
 
 func isAiSStxChange(pops []parsedOpcode) bool {
 	if len(pops) == 6 &&
-		(pops[0].opcode.value == OP_UNKNOWN203)&&
+		(pops[0].opcode.value == OP_AISSTXCHANGE)&&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -504,7 +504,7 @@ func isAiSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 7 &&
-		(pops[0].opcode.value == OP_UNKNOWN203)&&
+		(pops[0].opcode.value == OP_AISSTXCHANGE)&&
 		pops[1].opcode.value == OP_DUP &&
 		pops[2].opcode.value == OP_HASH160 &&
 		pops[3].opcode.value == OP_DATA_20 &&
@@ -515,7 +515,7 @@ func isAiSStxChange(pops []parsedOpcode) bool {
 	}
 
 	if len(pops) == 4 &&
-		(pops[0].opcode.value == OP_UNKNOWN203)&&
+		(pops[0].opcode.value == OP_AISSTXCHANGE)&&
 		pops[1].opcode.value == OP_HASH160 &&
 		pops[2].opcode.value == OP_DATA_20 &&
 		pops[3].opcode.value == OP_EQUAL {
@@ -699,7 +699,7 @@ func GetStakeOutSubclass(pkScript []byte) (ScriptClass, error) {
 	if isStake {
 		var stakeSubscript []parsedOpcode
 		for _, pop := range pkPops {
-			if (pop.opcode.value >= 186 && pop.opcode.value <= 189 ) || (pop.opcode.value >= 200 && pop.opcode.value <= 203 ){
+			if (pop.opcode.value >= OP_SSTX && pop.opcode.value <= OP_SSTXCHANGE ) || (pop.opcode.value >= OP_AISSTX && pop.opcode.value <= OP_AISSTXCHANGE ){
 				continue
 			}
 			stakeSubscript = append(stakeSubscript, pop)
@@ -1063,7 +1063,7 @@ func PayToAISStx(addr hcutil.Address) ([]byte, error) {
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 		*/
 
-		return NewScriptBuilder().AddOp(OP_UNKNOWN200).AddOp(OP_DUP).
+		return NewScriptBuilder().AddOp(OP_AISSTX).AddOp(OP_DUP).
 			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 
@@ -1077,7 +1077,7 @@ func PayToAISStx(addr hcutil.Address) ([]byte, error) {
 
 */
 
-	return NewScriptBuilder().AddOp(OP_UNKNOWN200).AddOp(OP_HASH160).
+	return NewScriptBuilder().AddOp(OP_AISSTX).AddOp(OP_HASH160).
 		AddData(hash).AddOp(OP_EQUAL).Script()
 }
 
@@ -1156,7 +1156,7 @@ func PayToAISStxChange(addr hcutil.Address) ([]byte, error) {
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 		*/
 
-		return NewScriptBuilder().AddOp(OP_UNKNOWN203).AddOp(OP_DUP).
+		return NewScriptBuilder().AddOp(OP_AISSTXCHANGE).AddOp(OP_DUP).
 			AddOp(OP_HASH160).AddData(hash).AddOp(OP_EQUALVERIFY).
 			AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 
@@ -1166,7 +1166,7 @@ func PayToAISStxChange(addr hcutil.Address) ([]byte, error) {
 		AddData(hash).AddOp(OP_EQUAL).Script()
 	*/
 
-	return NewScriptBuilder().AddOp(OP_UNKNOWN203).AddOp(OP_HASH160).
+	return NewScriptBuilder().AddOp(OP_AISSTXCHANGE).AddOp(OP_HASH160).
 		AddData(hash).AddOp(OP_EQUAL).Script()
 
 }
@@ -1236,7 +1236,7 @@ func PayToAiSSGenPKHDirect(pkh []byte, alType int) ([]byte, error) {
 		return nil, ErrUnsupportedAddress
 	}
 	sigType := []byte{byte(alType)}
-	return NewScriptBuilder().AddOp(OP_UNKNOWN201).AddOp(OP_DUP).
+	return NewScriptBuilder().AddOp(OP_AISSGEN).AddOp(OP_DUP).
 		AddOp(OP_HASH160).AddData(pkh).AddOp(OP_EQUALVERIFY).
 		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 }
@@ -1259,7 +1259,7 @@ func PayToAiSSGenSHDirect(sh []byte, _ int) ([]byte, error) {
 		return nil, ErrUnsupportedAddress
 	}
 
-	return NewScriptBuilder().AddOp(OP_UNKNOWN201).AddOp(OP_HASH160).
+	return NewScriptBuilder().AddOp(OP_AISSGEN).AddOp(OP_HASH160).
 		AddData(sh).AddOp(OP_EQUAL).Script()
 }
 
