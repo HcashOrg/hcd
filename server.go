@@ -209,9 +209,12 @@ type serverPeer struct {
 	// than one response per connection.
 	getMiningStateSent bool
 	// The following chans are used to sync blockmanager and server.
-	txProcessed    chan struct{}
-	blockProcessed chan struct{}
+	txProcessed            chan struct{}
+	instantTxProcessed     chan struct{}
+	instantTxVoteProcessed chan struct{}
+	blockProcessed         chan struct{}
 }
+
 // Only respond with addresses once per connection
 //if sp.addrsSent {
 //	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
@@ -224,15 +227,16 @@ type serverPeer struct {
 // the caller.
 func newServerPeer(s *server, isPersistent bool) *serverPeer {
 	return &serverPeer{
-		server:          s,
-		persistent:      isPersistent,
-		requestedTxns:   make(map[chainhash.Hash]struct{}),
-		requestedBlocks: make(map[chainhash.Hash]struct{}),
-		filter:          bloom.LoadFilter(nil),
-		knownAddresses:  make(map[string]struct{}),
-		quit:            make(chan struct{}),
-		txProcessed:     make(chan struct{}, 1),
-		blockProcessed:  make(chan struct{}, 1),
+		server:             s,
+		persistent:         isPersistent,
+		requestedTxns:      make(map[chainhash.Hash]struct{}),
+		requestedBlocks:    make(map[chainhash.Hash]struct{}),
+		filter:             bloom.LoadFilter(nil),
+		knownAddresses:     make(map[string]struct{}),
+		quit:               make(chan struct{}),
+		txProcessed:        make(chan struct{}, 1),
+		instantTxProcessed: make(chan struct{}, 1),
+		blockProcessed:     make(chan struct{}, 1),
 	}
 }
 
@@ -334,13 +338,11 @@ func (sp *serverPeer) addBanScore(persistent, transient uint32, reason string) {
 	}
 }
 
-
 // hasServices returns whether or not the provided advertised service flags have
 // all of the provided desired service flags set.
 func hasServices(advertised, desired wire.ServiceFlag) bool {
 	return advertised&desired == desired
 }
-
 
 // OnVersion is invoked when a peer receives a version wire message and is used
 // to negotiate the protocol version details as well as kick start the
@@ -357,7 +359,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// it is updated regardless in the case a new minimum protocol version is
 	// enforced and the remote node has not upgraded yet.
 	addrManager := sp.server.addrManager
-	isInbound:=sp.Inbound()
+	isInbound := sp.Inbound()
 	remoteAddr := sp.NA()
 	if !cfg.SimNet && !isInbound {
 		addrManager.SetServices(remoteAddr, msg.Services)
@@ -365,7 +367,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// Ignore peers that have a protcol version that is too old.  The peer
 	// negotiation logic will disconnect it after this callback returns.
 	if msg.ProtocolVersion < int32(wire.InitialProcotolVersion) {
-		return 
+		return
 	}
 	// Add the remote peer time as a sample for creating an offset against
 	// the local clock to keep the network time in sync.
@@ -616,19 +618,19 @@ func (sp *serverPeer) OnMiningState(p *peer.Peer, msg *wire.MsgMiningState) {
 	}
 }
 
-// OnTx is invoked when a peer receives a tx wire message.  It blocks until the
+// OnTx is invoked when a peer receives a instantTx wire message.  It blocks until the
 // transaction has been fully processed.  Unlock the block handler this does not
 // serialize all transactions through a single thread transactions don't rely on
 // the previous one in a linear fashion like blocks.
 func (sp *serverPeer) OnTx(p *peer.Peer, msg *wire.MsgTx) {
 	if cfg.BlocksOnly {
-		peerLog.Tracef("Ignoring tx %v from %v - blocksonly enabled",
+		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
 			msg.TxHash(), p)
 		return
 	}
 
 	// Add the transaction to the known inventory for the peer.
-	// Convert the raw MsgTx to a hcutil.Tx which provides some convenience
+	// Convert the raw msgTx to a hcutil.Tx which provides some convenience
 	// methods and things such as hash caching.
 	tx := hcutil.NewTx(msg)
 	iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
@@ -641,6 +643,55 @@ func (sp *serverPeer) OnTx(p *peer.Peer, msg *wire.MsgTx) {
 	// being disconnected) and wasting memory.
 	sp.server.blockManager.QueueTx(tx, sp)
 	<-sp.txProcessed
+}
+
+func (sp *serverPeer) OnInstantTx(p *peer.Peer, msg *wire.MsgInstantTx) {
+	if cfg.BlocksOnly {
+		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
+			msg.TxHash(), p)
+		return
+	}
+
+	// Add the instant transaction to the known inventory for the peer.
+	// Convert the raw msgTx to a hcutil.InstantTx which provides some convenience
+	// methods and things such as hash caching.
+	//TODO check this instant instantTx inventory implement
+	instantTx := hcutil.NewInstantTx(msg)
+	iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+	p.AddKnownInventory(iv)
+
+	// Queue the transaction up to be handled by the block manager and
+	// intentionally block further receives until the transaction is fully
+	// processed and known good or bad.  This helps prevent a malicious peer
+	// from queuing up a bunch of bad transactions before disconnecting (or
+	// being disconnected) and wasting memory.
+	sp.server.blockManager.QueueInstantTx(instantTx, sp)
+	<-sp.instantTxProcessed
+}
+
+//deal with instanttxvote from peers
+func (sp *serverPeer) OnInstantTxVote(p *peer.Peer, msg *wire.MsgInstantTxVote) {
+	if cfg.BlocksOnly {
+		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
+			msg.Hash(), p)
+		return
+	}
+
+	// Add the instant transaction to the known inventory for the peer.
+	// Convert the raw msgTx to a hcutil.InstantTx which provides some convenience
+	// methods and things such as hash caching.
+	//TODO check this instant instantTxvote inventory implement
+	instantTxVote := hcutil.NewInstantTxVote(msg)
+	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
+	p.AddKnownInventory(iv)
+
+	// Queue the transaction up to be handled by the block manager and
+	// intentionally block further receives until the transaction is fully
+	// processed and known good or bad.  This helps prevent a malicious peer
+	// from queuing up a bunch of bad transactions before disconnecting (or
+	// being disconnected) and wasting memory.
+	sp.server.blockManager.QueueInstantTxVote(instantTxVote, sp)
+	<-sp.instantTxVoteProcessed
 }
 
 // OnBlock is invoked when a peer receives a block wire message.  It blocks
@@ -796,7 +847,6 @@ func (sp *serverPeer) OnGetBlocks(p *peer.Peer, msg *wire.MsgGetBlocks) {
 		}
 	}
 
-	
 	// Use the block after the genesis block if no other blocks in the
 	// provided locator are known.  This does mean the client will start
 	// over with the genesis block if unknown block locators are provided.
@@ -1102,7 +1152,7 @@ func (sp *serverPeer) OnAddr(p *peer.Peer, msg *wire.MsgAddr) {
 		// Set the timestamp to 5 days ago if it's more than 24 hours
 		// in the future so this address is one of the first to be
 		// removed when space is needed.
-		
+
 		if na.Timestamp.After(now.Add(time.Minute * 10)) {
 			na.Timestamp = now.Add(-1 * time.Hour * 24 * 5)
 		}
@@ -1196,7 +1246,50 @@ func (s *server) AnnounceNewTransactions(newTxs []*hcutil.Tx) {
 	}
 }
 
-// pushTxMsg sends a tx message for the provided transaction hash to the
+func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
+	// Generate and relay inventory vectors for all newly accepted
+	// transactions into the memory pool due to the original being
+	// accepted.
+	for _, instantTx := range newInstantTxs {
+		// Generate the inventory vector and relay it.
+		//TODO check instant instantTx invvect
+		iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+		s.RelayInventory(iv, instantTx)
+
+		if s.rpcServer != nil {
+			//deal with instant instantTx,
+			// just send to wallet to sign
+			tickets, _, _, err := s.rpcServer.chain.LotteryAiDataForBlock(instantTx.Hash())
+			if err != nil {
+				return
+			}
+
+			s.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+		}
+	}
+}
+
+//after accept this vote ,notify wallet and relay to otherpeers
+func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxVote) {
+	// Generate and relay inventory vectors for all newly accepted
+	// transactions into the memory pool due to the original being
+	// accepted.
+
+	for _, instantTxVote := range newInstantTxVotes {
+		// Generate the inventory vector and relay it.
+		//TODO check instant instantTxvote invvect
+		//relay instantvote
+		iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
+		s.RelayInventory(iv, instantTxVote)
+
+		if s.rpcServer != nil {
+			//todo notify wallet
+			s.rpcServer.ntfnMgr.NotifyInstantTxVote(instantTxVote)
+		}
+	}
+}
+
+// pushTxMsg sends a instantTx message for the provided transaction hash to the
 // connected peer.  An error is returned if the transaction hash is not known.
 func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
@@ -1207,7 +1300,7 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 	// to the authenticated RPC only.
 	tx, err := s.txMemPool.FetchTransaction(hash, false)
 	if err != nil {
-		peerLog.Tracef("Unable to fetch tx %v from transaction "+
+		peerLog.Tracef("Unable to fetch instantTx %v from transaction "+
 			"pool: %v", hash, err)
 
 		if doneChan != nil {
@@ -1451,12 +1544,34 @@ func (s *server) handleRelayInvMsg(state *peerState, msg relayMsg) {
 			if sp.filter.IsLoaded() {
 				tx, ok := msg.data.(*hcutil.Tx)
 				if !ok {
-					peerLog.Warnf("Underlying data for tx" +
+					peerLog.Warnf("Underlying data for instantTx" +
 						" inv relay is not a transaction")
 					return
 				}
 
 				if !sp.filter.MatchTxAndUpdate(tx) {
+					return
+				}
+			}
+		}
+
+		if msg.invVect.Type == wire.InvTypeInstantTx {
+			// Don't relay the instant instantTx to the peer when it has
+			// transaction relaying disabled.
+			if sp.relayTxDisabled() {
+				return
+			}
+			// Don't relay the transaction if there is a bloom
+			// filter loaded and the transaction doesn't match it.
+			if sp.filter.IsLoaded() {
+				instantTx, ok := msg.data.(*hcutil.InstantTx)
+				if !ok {
+					peerLog.Warnf("Underlying data for instantTx" +
+						" inv relay is not a transaction")
+					return
+				}
+
+				if !sp.filter.MatchInstantTxAndUpdate(instantTx) {
 					return
 				}
 			}
@@ -1592,7 +1707,7 @@ func (s *server) handleQuery(state *peerState, querymsg interface{}) {
 		} else {
 			msg.reply <- 0
 		}
-	// Request a list of the persistent (added) peers.
+		// Request a list of the persistent (added) peers.
 	case getAddedNodesMsg:
 		// Respond with a slice of the relavent peers.
 		peers := make([]*serverPeer, 0, len(state.persistentPeers))
@@ -1665,6 +1780,8 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 			OnGetMiningState: sp.OnGetMiningState,
 			OnMiningState:    sp.OnMiningState,
 			OnTx:             sp.OnTx,
+			OnInstantTx:      sp.OnInstantTx,
+			OnInstantTxVote:  sp.OnInstantTxVote,
 			OnBlock:          sp.OnBlock,
 			OnInv:            sp.OnInv,
 			OnHeaders:        sp.OnHeaders,
@@ -1779,24 +1896,24 @@ out:
 		case p := <-s.newPeers:
 			s.handleAddPeerMsg(state, p)
 
-		// Disconnected peers.
+			// Disconnected peers.
 		case p := <-s.donePeers:
 			s.handleDonePeerMsg(state, p)
 
-		// Block accepted in mainchain or orphan, update peer height.
+			// Block accepted in mainchain or orphan, update peer height.
 		case umsg := <-s.peerHeightsUpdate:
 			s.handleUpdatePeerHeights(state, umsg)
 
-		// Peer to ban.
+			// Peer to ban.
 		case p := <-s.banPeers:
 			s.handleBanPeerMsg(state, p)
 
-		// New inventory to potentially be relayed to other peers.
+			// New inventory to potentially be relayed to other peers.
 		case invMsg := <-s.relayInv:
 			s.handleRelayInvMsg(state, invMsg)
 
-		// Message to broadcast to all connected peers except those
-		// which are excluded by the message.
+			// Message to broadcast to all connected peers except those
+			// which are excluded by the message.
 		case bmsg := <-s.broadcast:
 			s.handleBroadcastMsg(state, &bmsg)
 
@@ -1995,7 +2112,7 @@ func (s *server) UpdatePeerHeights(latestBlkHash *chainhash.Hash, latestHeight i
 // sent out but have not yet made it into a block. We periodically rebroadcast
 // them in case our peers restarted or otherwise lost track of them.
 func (s *server) rebroadcastHandler() {
-	// Wait 5 min before first tx rebroadcast.
+	// Wait 5 min before first instantTx rebroadcast.
 	timer := time.NewTimer(5 * time.Minute)
 	pendingInvs := make(map[wire.InvVect]interface{})
 
@@ -2009,8 +2126,8 @@ out:
 				srvrLog.Debugf("Add inventory : %v", msg.invVect)
 				pendingInvs[*msg.invVect] = msg.data
 
-			// When an InvVect has been added to a block, we can
-			// now remove it, if it was present.
+				// When an InvVect has been added to a block, we can
+				// now remove it, if it was present.
 			case broadcastInventoryDel:
 				if _, ok := pendingInvs[*msg]; ok {
 					srvrLog.Debugf("Remove inventory : %v", msg)
@@ -2074,7 +2191,7 @@ func (s *server) Start() {
 	if !cfg.DisableRPC {
 		s.wg.Add(1)
 
-		// Start the rebroadcastHandler, which ensures user tx received by
+		// Start the rebroadcastHandler, which ensures user instantTx received by
 		// the RPC server are rebroadcast until being included in a block.
 		go s.rebroadcastHandler()
 

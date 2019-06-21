@@ -633,6 +633,15 @@ type SendRawTransactionCmd struct {
 	AllowHighFees *bool `jsonrpcdefault:"false"`
 }
 
+
+type SendInstantRawTransactionCmd struct {
+	HexTx         string
+	AllowHighFees *bool `jsonrpcdefault:"false"`
+}
+
+type SendInstantTxVoteCmd struct {
+	HexTxVote string
+}
 // NewSendRawTransactionCmd returns a new instance which can be used to issue a
 // sendrawtransaction JSON-RPC command.
 //
@@ -644,6 +653,22 @@ func NewSendRawTransactionCmd(hexTx string, allowHighFees *bool) *SendRawTransac
 		AllowHighFees: allowHighFees,
 	}
 }
+
+
+func NewSendInstantRawTransactionCmd(hexTx string, allowHighFees *bool) *SendInstantRawTransactionCmd{
+	return &SendInstantRawTransactionCmd{
+		HexTx:         hexTx,
+		AllowHighFees: allowHighFees,
+	}
+}
+
+
+func NewSendInstantTxVoteCmd(hexTx string) *SendInstantTxVoteCmd{
+	return &SendInstantTxVoteCmd{
+		HexTxVote:         hexTx,
+	}
+}
+
 
 // SetGenerateCmd defines the setgenerate JSON-RPC command.
 type SetGenerateCmd struct {
@@ -804,6 +829,8 @@ func init() {
 	MustRegisterCmd("ping", (*PingCmd)(nil), flags)
 	MustRegisterCmd("searchrawtransactions", (*SearchRawTransactionsCmd)(nil), flags)
 	MustRegisterCmd("sendrawtransaction", (*SendRawTransactionCmd)(nil), flags)
+	MustRegisterCmd("sendinstantrawtransaction", (*SendInstantRawTransactionCmd)(nil), flags)
+	MustRegisterCmd("sendinstanttxvote", (*SendInstantTxVoteCmd)(nil), flags)
 	MustRegisterCmd("setgenerate", (*SetGenerateCmd)(nil), flags)
 	MustRegisterCmd("stop", (*StopCmd)(nil), flags)
 	MustRegisterCmd("submitblock", (*SubmitBlockCmd)(nil), flags)

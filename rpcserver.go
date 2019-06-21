@@ -116,7 +116,6 @@ const (
 	// be relayed or mined and thus should only apply in the mempool and/or
 	// possibly the mining code.
 	maxSigOpsPerTx = blockchain.MaxSigOpsPerBlock / 5
-
 )
 
 var (
@@ -178,78 +177,80 @@ type commandHandler func(*rpcServer, interface{}, <-chan struct{}) (interface{},
 // a dependency loop.
 var rpcHandlers map[string]commandHandler
 var rpcHandlersBeforeInit = map[string]commandHandler{
-	"addnode":               handleAddNode,
-	"createrawsstx":         handleCreateRawSStx,
-	"createrawssgentx":      handleCreateRawSSGenTx,
-	"createrawssrtx":        handleCreateRawSSRtx,
-	"createrawtransaction":  handleCreateRawTransaction,
-	"debuglevel":            handleDebugLevel,
-	"decoderawtransaction":  handleDecodeRawTransaction,
-	"decodescript":          handleDecodeScript,
-	"estimatefee":           handleEstimateFee,
-	"estimatestakediff":     handleEstimateStakeDiff,
-	"existsaddress":         handleExistsAddress,
-	"existsaddresses":       handleExistsAddresses,
-	"existsmissedtickets":   handleExistsMissedTickets,
-	"existsexpiredtickets":  handleExistsExpiredTickets,
-	"existsliveticket":      handleExistsLiveTicket,
-	"existslivetickets":     handleExistsLiveTickets,
-	"existsmempooltxs":      handleExistsMempoolTxs,
-	"generate":              handleGenerate,
-	"getaddednodeinfo":      handleGetAddedNodeInfo,
-	"getbestblock":          handleGetBestBlock,
-	"getbestblockhash":      handleGetBestBlockHash,
-	"getblock":              handleGetBlock,
-	"getblockcount":         handleGetBlockCount,
-	"getblockhash":          handleGetBlockHash,
-	"getblockheader":        handleGetBlockHeader,
-	"getblocksubsidy":       handleGetBlockSubsidy,
-	"getcoinsupply":         handleGetCoinSupply,
-	"getconnectioncount":    handleGetConnectionCount,
-	"getcurrentnet":         handleGetCurrentNet,
-	"getdifficulty":         handleGetDifficulty,
-	"getgenerate":           handleGetGenerate,
-	"gethashespersec":       handleGetHashesPerSec,
-	"getheaders":            handleGetHeaders,
-	"getinfo":               handleGetInfo,
-	"getblockchaininfo":     handleGetBlockchainInfo,
-	"getmempoolinfo":        handleGetMempoolInfo,
-	"gettxlockpoolinfo":     handleGetTxLockpoolInfo,
-	"fetchpendinglocktx":    handleFetchPendingLockTx,
-	"getmininginfo":         handleGetMiningInfo,
-	"getnettotals":          handleGetNetTotals,
-	"getnetworkhashps":      handleGetNetworkHashPS,
-	"getpeerinfo":           handleGetPeerInfo,
-	"getrawmempool":         handleGetRawMempool,
-	"getrawtransaction":     handleGetRawTransaction,
-	"getstakedifficulty":    handleGetStakeDifficulty,
-	"getstakeversioninfo":   handleGetStakeVersionInfo,
-	"getstakeversions":      handleGetStakeVersions,
-	"getticketpoolvalue":    handleGetTicketPoolValue,
-	"getvoteinfo":           handleGetVoteInfo,
-	"gettxout":              handleGetTxOut,
-	"getwork":               handleGetWork,
-	"help":                  handleHelp,
-	"livetickets":           handleLiveTickets,
-	"missedtickets":         handleMissedTickets,
-	"node":                  handleNode,
-	"ping":                  handlePing,
-	"searchrawtransactions": handleSearchRawTransactions,
-	"rebroadcastmissed":     handleRebroadcastMissed,
-	"rebroadcastwinners":    handleRebroadcastWinners,
-	"sendrawtransaction":    handleSendRawTransaction,
-	"setgenerate":           handleSetGenerate,
-	"stop":                  handleStop,
-	"submitblock":           handleSubmitBlock,
-	"ticketfeeinfo":         handleTicketFeeInfo,
-	"ticketsforaddress":     handleTicketsForAddress,
-	"ticketvwap":            handleTicketVWAP,
-	"txfeeinfo":             handleTxFeeInfo,
-	"validateaddress":       handleValidateAddress,
-	"verifychain":           handleVerifyChain,
-	"verifymessage":         handleVerifyMessage,
-	"verifyblissmessage":    handleVerifyBlissMessage,
-	"version":               handleVersion,
+	"addnode":                   handleAddNode,
+	"createrawsstx":             handleCreateRawSStx,
+	"createrawssgentx":          handleCreateRawSSGenTx,
+	"createrawssrtx":            handleCreateRawSSRtx,
+	"createrawtransaction":      handleCreateRawTransaction,
+	"debuglevel":                handleDebugLevel,
+	"decoderawtransaction":      handleDecodeRawTransaction,
+	"decodescript":              handleDecodeScript,
+	"estimatefee":               handleEstimateFee,
+	"estimatestakediff":         handleEstimateStakeDiff,
+	"existsaddress":             handleExistsAddress,
+	"existsaddresses":           handleExistsAddresses,
+	"existsmissedtickets":       handleExistsMissedTickets,
+	"existsexpiredtickets":      handleExistsExpiredTickets,
+	"existsliveticket":          handleExistsLiveTicket,
+	"existslivetickets":         handleExistsLiveTickets,
+	"existsmempooltxs":          handleExistsMempoolTxs,
+	"generate":                  handleGenerate,
+	"getaddednodeinfo":          handleGetAddedNodeInfo,
+	"getbestblock":              handleGetBestBlock,
+	"getbestblockhash":          handleGetBestBlockHash,
+	"getblock":                  handleGetBlock,
+	"getblockcount":             handleGetBlockCount,
+	"getblockhash":              handleGetBlockHash,
+	"getblockheader":            handleGetBlockHeader,
+	"getblocksubsidy":           handleGetBlockSubsidy,
+	"getcoinsupply":             handleGetCoinSupply,
+	"getconnectioncount":        handleGetConnectionCount,
+	"getcurrentnet":             handleGetCurrentNet,
+	"getdifficulty":             handleGetDifficulty,
+	"getgenerate":               handleGetGenerate,
+	"gethashespersec":           handleGetHashesPerSec,
+	"getheaders":                handleGetHeaders,
+	"getinfo":                   handleGetInfo,
+	"getblockchaininfo":         handleGetBlockchainInfo,
+	"getmempoolinfo":            handleGetMempoolInfo,
+	"gettxlockpoolinfo":         handleGetTxLockpoolInfo,
+	"fetchpendinglocktx":        handleFetchPendingLockTx,
+	"getmininginfo":             handleGetMiningInfo,
+	"getnettotals":              handleGetNetTotals,
+	"getnetworkhashps":          handleGetNetworkHashPS,
+	"getpeerinfo":               handleGetPeerInfo,
+	"getrawmempool":             handleGetRawMempool,
+	"getrawtransaction":         handleGetRawTransaction,
+	"getstakedifficulty":        handleGetStakeDifficulty,
+	"getstakeversioninfo":       handleGetStakeVersionInfo,
+	"getstakeversions":          handleGetStakeVersions,
+	"getticketpoolvalue":        handleGetTicketPoolValue,
+	"getvoteinfo":               handleGetVoteInfo,
+	"gettxout":                  handleGetTxOut,
+	"getwork":                   handleGetWork,
+	"help":                      handleHelp,
+	"livetickets":               handleLiveTickets,
+	"missedtickets":             handleMissedTickets,
+	"node":                      handleNode,
+	"ping":                      handlePing,
+	"searchrawtransactions":     handleSearchRawTransactions,
+	"rebroadcastmissed":         handleRebroadcastMissed,
+	"rebroadcastwinners":        handleRebroadcastWinners,
+	"sendrawtransaction":        handleSendRawTransaction,
+	"sendinstantrawtransaction": handleSendInstantRawTransaction,
+	"sendinstanttxvote":         handleSendInstantTxVote,
+	"setgenerate":               handleSetGenerate,
+	"stop":                      handleStop,
+	"submitblock":               handleSubmitBlock,
+	"ticketfeeinfo":             handleTicketFeeInfo,
+	"ticketsforaddress":         handleTicketsForAddress,
+	"ticketvwap":                handleTicketVWAP,
+	"txfeeinfo":                 handleTxFeeInfo,
+	"validateaddress":           handleValidateAddress,
+	"verifychain":               handleVerifyChain,
+	"verifymessage":             handleVerifyMessage,
+	"verifyblissmessage":        handleVerifyBlissMessage,
+	"version":                   handleVersion,
 }
 
 // list of commands that we recognize, but for which hcd has no support because
@@ -948,7 +949,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later for
-	// the generation of the SSGen tx outputs.
+	// the generation of the SSGen instantTx outputs.
 	//
 	// Convert the provided transaction hash hex to a chainhash.Hash.
 	txHash, err := chainhash.NewHashFromStr(c.Inputs[0].Txid)
@@ -1048,7 +1049,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 		}
 
 		// Create a new script which pays to the provided address
-		// specified in the original ticket tx.
+		// specified in the original ticket instantTx.
 		var ssgenOut []byte
 		switch ssgenPayTypes[i] {
 		case false: // P2PKH
@@ -1067,7 +1068,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 			}
 		}
 
-		// Add the txout to our SSGen tx.
+		// Add the txout to our SSGen instantTx.
 		txOut := wire.NewTxOut(ssgenCalcAmts[i], ssgenOut)
 		mtx.AddTxOut(txOut)
 	}
@@ -1108,7 +1109,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later
-	// for the generation of the SSGen tx outputs.
+	// for the generation of the SSGen instantTx outputs.
 	//
 	// Convert the provided transaction hash hex to a chainhash.Hash.
 	txHash, err := chainhash.NewHashFromStr(c.Inputs[0].Txid)
@@ -1172,7 +1173,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		}
 
 		// Create a new script which pays to the provided address specified in
-		// the original ticket tx.
+		// the original ticket instantTx.
 		var ssrtxOutScript []byte
 		switch ssrtxPayTypes[i] {
 		case false: // P2PKH
@@ -1189,7 +1190,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 			}
 		}
 
-		// Add the txout to our SSGen tx.
+		// Add the txout to our SSGen instantTx.
 		amt := ssrtxCalcAmts[i]
 		if !feeApplied && int64(feeAmt) < amt {
 			amt -= int64(feeAmt)
@@ -1298,7 +1299,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 				chainParams)
 			if err != nil {
 				rpcsLog.Warnf("failed to decode ticket "+
-					"commitment addr output for tx hash "+
+					"commitment addr output for instantTx hash "+
 					"%v, output idx %v", mtx.TxHash(), i)
 			} else {
 				addrs = []hcutil.Address{addr}
@@ -1306,7 +1307,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 			amt, err := stake.AmountFromSStxPkScrCommitment(v.PkScript)
 			if err != nil {
 				rpcsLog.Warnf("failed to decode ticket "+
-					"commitment amt output for tx hash %v"+
+					"commitment amt output for instantTx hash %v"+
 					", output idx %v", mtx.TxHash(), i)
 			} else {
 				commitAmt = &amt
@@ -4106,7 +4107,7 @@ func handleGetTxOut(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		return nil, rpcDecodeHexError(c.Txid)
 	}
 
-	// If requested and the tx is available in the mempool try to fetch it
+	// If requested and the instantTx is available in the mempool try to fetch it
 	// from there, otherwise attempt to fetch from the block database.
 	var bestBlockHash string
 	var confirmations int64
@@ -4720,7 +4721,7 @@ func fetchInputTxos(s *rpcServer, tx *wire.MsgTx) (map[wire.OutPoint]wire.TxOut,
 	voteTx, _ := stake.IsSSGen(tx)
 	aiVoteTx, _ := stake.IsAiSSGen(tx)
 	for txInIndex, txIn := range tx.TxIn {
-		// vote tx have null input for vin[0],
+		// vote instantTx have null input for vin[0],
 		// skip since it resolvces to an invalid transaction
 		if (voteTx || aiVoteTx) && txInIndex == 0 {
 			continue
@@ -5215,10 +5216,152 @@ func handleSearchRawTransactions(s *rpcServer, cmd interface{}, closeChan <-chan
 	return srtList, nil
 }
 
+func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.SendInstantRawTransactionCmd)
+	//allowHighFees := *c.AllowHighFees
+	hexStr := c.HexTx
+	if len(hexStr)%2 != 0 {
+		hexStr = "0" + hexStr
+	}
+	serializedTx, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return nil, rpcDecodeHexError(hexStr)
+	}
+	msgtx := wire.NewMsgInstantTx()
+	err = msgtx.Deserialize(bytes.NewReader(serializedTx))
+	if err != nil {
+		return nil, rpcDeserializationError("Could not decode instant Tx: %v",
+			err)
+	}
+
+	//TODO check conflict with mempool
+	instantTx := hcutil.NewInstantTx(msgtx)
+	instantTxs := make([]*hcutil.InstantTx, 0)
+	instantTxs = append(instantTxs, instantTx)
+
+	s.server.AnnounceNewInstantTx(instantTxs)
+
+	// Keep track of all the sendrawtransaction request txns so that they
+	// can be rebroadcast if they don't make their way into a block.
+	iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+	s.server.AddRebroadcastInventory(iv, instantTx)
+
+	return instantTx.Hash().String(), nil
+}
+
+func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.SendInstantTxVoteCmd)
+
+	hexTxVote := c.HexTxVote
+	if len(hexTxVote)%2 != 0 {
+		hexTxVote = "0" + hexTxVote
+	}
+	serializedTx, err := hex.DecodeString(hexTxVote)
+	if err != nil {
+		return nil, rpcDecodeHexError(hexTxVote)
+	}
+
+	msgInstantTxVote := wire.NewMsgInstantTxVote()
+	err = msgInstantTxVote.Deserialize(bytes.NewReader(serializedTx))
+	if err != nil {
+		return nil, rpcDeserializationError("Could not decode instanttx vote: %v",
+			err)
+	}
+
+	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
+	instantTxHash := msgInstantTxVote.InstantTxHash
+	ticketHash := msgInstantTxVote.TicketHash
+	//todo check tickets
+	tickets, _, _, err := s.chain.LotteryAiDataForBlock(&instantTxHash)
+	ticketExist := false
+	for _, t := range tickets {
+		if t.IsEqual(&ticketHash) {
+			ticketExist = true
+			break
+		}
+	}
+	if !ticketExist {
+		return nil, fmt.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxvote.Hash(),
+			err)
+	}
+
+	//check signature
+	//get address
+	entry, err := s.chain.FetchUtxoEntry(&ticketHash)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
+			err)
+	}
+
+	scriptVersion := entry.ScriptVersionByIndex(0)
+	pkScript := entry.PkScriptByIndex(0)
+	script := pkScript
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
+		script, s.server.chainParams)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
+			err)
+	}
+
+	sigMsg := instantTxHash.String() + ticketHash.String()
+
+	//verifymessage
+	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
+	if !verified {
+		return nil, fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
+			err)
+	}
+
+	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
+	instantTxvotes = append(instantTxvotes, instantTxvote)
+
+	//notice wallet and rely
+	s.server.AnnounceNewInstantTxVote(instantTxvotes)
+
+	// Keep track of all the sendrawtransaction request txns so that they
+	// can be rebroadcast if they don't make their way into a block.
+	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxvote.Hash())
+	s.server.AddRebroadcastInventory(iv, instantTxvote)
+
+	return nil, nil
+
+}
+
+func VerifyMessage(msg string, addr hcutil.Address, sig []byte) (bool, error) {
+	// Validate the signature - this just shows that it was valid for any pubkey
+	// at all. Whether the pubkey matches is checked below.
+	var buf bytes.Buffer
+	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
+	wire.WriteVarString(&buf, 0, msg)
+	expectedMessageHash := chainhash.HashB(buf.Bytes())
+	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,
+		expectedMessageHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Reconstruct the address from the recovered pubkey.
+	var serializedPK []byte
+	if wasCompressed {
+		serializedPK = pk.SerializeCompressed()
+	} else {
+		serializedPK = pk.SerializeUncompressed()
+	}
+	recoveredAddr, err := hcutil.NewAddressSecpPubKey(serializedPK, addr.Net())
+	if err != nil {
+		return false, err
+	}
+
+	// Return whether addresses match.
+	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
+}
+
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendRawTransactionCmd)
-	// Deserialize and send off to tx relay
+	// Deserialize and send off to instantTx relay
 
 	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
@@ -5418,7 +5561,7 @@ func stdDev(s []hcutil.Amount) hcutil.Amount {
 	return amt
 }
 
-// feeInfoForMempool returns the fee information for the passed tx type in the
+// feeInfoForMempool returns the fee information for the passed instantTx type in the
 // memory pool.
 func feeInfoForMempool(s *rpcServer, txType stake.TxType) *hcjson.FeeInfoMempool {
 	txDs := s.server.txMemPool.TxDescs()
@@ -5456,7 +5599,7 @@ func calcFeePerKb(tx *hcutil.Tx) hcutil.Amount {
 	return ((in - out) * 1000) / hcutil.Amount(tx.MsgTx().SerializeSize())
 }
 
-// feeInfoForBlock fetches the ticket fee information for a given tx type in a
+// feeInfoForBlock fetches the ticket fee information for a given instantTx type in a
 // block.
 func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*hcjson.FeeInfoBlock, error) {
 	bl, err := s.chain.BlockByHeight(height)

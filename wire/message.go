@@ -40,6 +40,8 @@ const (
 	CmdNotFound       = "notfound"
 	CmdBlock          = "block"
 	CmdTx             = "tx"
+	CmdInstantTx      = "instanttx"
+	CmdInstantTxVote  = "instanttxvote"
 	CmdGetHeaders     = "getheaders"
 	CmdHeaders        = "headers"
 	CmdPing           = "ping"

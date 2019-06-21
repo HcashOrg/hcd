@@ -10,13 +10,6 @@ import (
 	"container/list"
 	"encoding/binary"
 	"fmt"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"sync"
-	"sync/atomic"
-	"time"
-
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg"
@@ -24,7 +17,14 @@ import (
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/mempool"
+	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
 const (
@@ -103,6 +103,16 @@ type donePeerMsg struct {
 type txMsg struct {
 	tx   *hcutil.Tx
 	peer *serverPeer
+}
+
+type instantTxMsg struct {
+	tx   *hcutil.InstantTx
+	peer *serverPeer
+}
+
+type instantTxVoteMsg struct {
+	instantTxVote *hcutil.InstantTxVote
+	peer          *serverPeer
 }
 
 // getSyncPeerMsg is a message type to be sent across the message channel for
@@ -780,6 +790,79 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 	}
 
 	b.server.AnnounceNewTransactions(acceptedTxs)
+}
+
+func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
+	//TODO verify conflict with mempool
+	instantTx := instantTxMsg.tx
+
+	instantTxs := make([]*hcutil.InstantTx, 0)
+
+	instantTxs = append(instantTxs, instantTx)
+
+	//notify wallet and peers
+	b.server.AnnounceNewInstantTx(instantTxs)
+}
+
+//deal instantxvote from peers
+func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
+
+	instantTxVote := msg.instantTxVote
+	instantTxHash := instantTxVote.MsgInstantTxVote().InstantTxHash
+	ticketHash := instantTxVote.MsgInstantTxVote().TicketHash
+
+	//TODO dealwith vote in mempool
+
+	//check ticket selected
+	tickets, _, _, err := b.chain.LotteryAiDataForBlock(&instantTxHash)
+	ticketExist := false
+	for _, t := range tickets {
+		if t.IsEqual(&ticketHash) {
+			ticketExist = true
+			break
+		}
+	}
+	if !ticketExist {
+		bmgrLog.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxVote.Hash(),
+			err)
+		return
+	}
+
+	// check signature
+	//get addr
+	entry, err := b.chain.FetchUtxoEntry(&ticketHash)
+	if err != nil {
+		bmgrLog.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
+			err)
+		return
+	}
+	scriptVersion := entry.ScriptVersionByIndex(0)
+	pkScript := entry.PkScriptByIndex(0)
+	script := pkScript
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
+		script, b.server.chainParams)
+
+	if err != nil {
+		bmgrLog.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
+			err)
+		return
+	}
+
+	sigMsg := instantTxHash.String() + ticketHash.String()
+
+	//verifymessage
+	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
+
+	if !verified {
+		bmgrLog.Errorf("failed  verify signature ,instantvote %v: %v", instantTxVote.Hash(),
+			err)
+		return
+	}
+
+	instantTxVotes := make([]*hcutil.InstantTxVote, 0)
+	instantTxVotes = append(instantTxVotes, instantTxVote)
+	//notify wallet and rely
+	b.server.AnnounceNewInstantTxVote(instantTxVotes)
 }
 
 // current returns true if we believe we are synced with our peers, false if we
@@ -1739,7 +1822,12 @@ out:
 			case *txMsg:
 				b.handleTxMsg(msg)
 				msg.peer.txProcessed <- struct{}{}
-
+			case *instantTxMsg:
+				b.handleInstantTxMsg(msg)
+				msg.peer.instantTxProcessed <- struct{}{}
+			case *instantTxVoteMsg:
+				b.handleInstantTxVoteMsg(msg)
+				msg.peer.instantTxVoteProcessed <- struct{}{}
 			case *blockMsg:
 				b.handleBlockMsg(msg)
 				msg.peer.blockProcessed <- struct{}{}
@@ -2026,7 +2114,7 @@ out:
 					err:      nil,
 				}
 
-			case processTransactionMsg:
+			case processTransactionMsg: //handle rpc tx
 				acceptedTxs, err := b.server.txMemPool.ProcessTransaction(msg.tx,
 					msg.allowOrphans, msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processTransactionResponse{
@@ -2175,7 +2263,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		bmgrLog.Debug("NTBlockConnected:",block.Height(),parentBlock.Height())
+		bmgrLog.Debug("NTBlockConnected:", block.Height(), parentBlock.Height())
 
 		// Check and see if the regular tx tree of the previous block was
 		// invalid or not. If it wasn't, then we need to restore all the tx
@@ -2294,7 +2382,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		bmgrLog.Error("blockchain: NTBlockDisconnected",block.Height(),parentBlock.Height())
+		bmgrLog.Error("blockchain: NTBlockDisconnected", block.Height(), parentBlock.Height())
 
 		// If the parent tx tree was invalidated, we need to remove these
 		// tx from the mempool as the next incoming block may alternatively
@@ -2302,7 +2390,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		txTreeRegularValid := hcutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
 			hcutil.BlockValid)
 
-		bmgrLog.Error("NTBlockDisconnected NTBlockDisconnected:",txTreeRegularValid)
+		bmgrLog.Error("NTBlockDisconnected NTBlockDisconnected:", txTreeRegularValid)
 		if !txTreeRegularValid {
 			for _, tx := range parentBlock.Transactions()[1:] {
 				b.server.txMemPool.RemoveTransaction(tx, false)
@@ -2381,6 +2469,26 @@ func (b *blockManager) QueueTx(tx *hcutil.Tx, sp *serverPeer) {
 	}
 
 	b.msgChan <- &txMsg{tx: tx, peer: sp}
+}
+
+func (b *blockManager) QueueInstantTx(instantTx *hcutil.InstantTx, sp *serverPeer) {
+	// Don't accept more transactions if we're shutting down.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		sp.instantTxProcessed <- struct{}{}
+		return
+	}
+
+	b.msgChan <- &instantTxMsg{tx: instantTx, peer: sp}
+}
+
+func (b *blockManager) QueueInstantTxVote(instantTxVote *hcutil.InstantTxVote, sp *serverPeer) {
+	// Don't accept more transactions if we're shutting down.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		sp.instantTxVoteProcessed <- struct{}{}
+		return
+	}
+
+	b.msgChan <- &instantTxVoteMsg{instantTxVote: instantTxVote, peer: sp}
 }
 
 // QueueBlock adds the passed block message and peer to the block handling queue.
