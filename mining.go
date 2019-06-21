@@ -1197,9 +1197,6 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	chainState.Lock()
 	prevHash := chainState.newestHash
 	nextBlockHeight := chainState.newestHeight + 1
-	if nextBlockHeight == 146 {
-		fmt.Println("test ")
-	}
 
 	poolSize := chainState.nextPoolSize
 	aiPoolSize := chainState.nextAiPoolSize
@@ -1325,6 +1322,7 @@ mempoolLoop:
 		// non-finalized transactions.
 		tx := txDesc.Tx
 		msgTx := tx.MsgTx()
+
 		if blockchain.IsCoinBaseTx(msgTx) {
 			minrLog.Tracef("Skipping coinbase tx %s", tx.Hash())
 			continue
@@ -1375,7 +1373,7 @@ mempoolLoop:
 			// Evaluate if this is a stakebase input or not. If it is, continue
 			// without evaluation of the input.
 			// if isStakeBase
-			if isSSGen && (i == 0) {
+			if (isSSGen || isAiSSGen) && (i == 0) {
 				continue
 			}
 
@@ -1712,10 +1710,6 @@ mempoolLoop:
 		}
 
 		isAiSSGen, _ := stake.IsAiSSGen(msgTx)
-		if isAiSSGen{
-			fmt.Println("test")
-		}
-
 		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen{
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
