@@ -778,7 +778,8 @@ func decodeCompressedTxOut(serialized []byte, compressionVersion uint32,
 const (
 	// txTypeBitmask describes the bitmask that yields the 3rd and 4th bits
 	// from the flags byte.
-	txTypeBitmask = 0x0c
+//	txTypeBitmask = 0x0c
+	txTypeBitmask = 0x1c
 
 	// txTypeShift is the number of bits to shift falgs to the right to yield the
 	// correct integer value after applying the bitmask with AND.
@@ -798,7 +799,8 @@ func encodeFlags(isCoinBase bool, hasExpiry bool, txType stake.TxType,
 		b |= 0x02 // Set bit 1
 	}
 	if fullySpent {
-		b |= 0x10 // Set bit 4
+		//b |= 0x10 // Set bit 4
+		b |= 0x20 // Set bit 5
 	}
 
 	return b
@@ -809,7 +811,7 @@ func encodeFlags(isCoinBase bool, hasExpiry bool, txType stake.TxType,
 func decodeFlags(b byte) (bool, bool, stake.TxType, bool) {
 	isCoinBase := b&0x01 != 0
 	hasExpiry := b&(1<<1) != 0
-	fullySpent := b&(1<<4) != 0
+	fullySpent := b&(1<<5) != 0
 	txType := stake.TxType((b & txTypeBitmask) >> txTypeShift)
 
 	return isCoinBase, hasExpiry, txType, fullySpent
