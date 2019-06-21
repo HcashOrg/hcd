@@ -1795,7 +1795,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 	// -------------------------------------------------------------------
 	for idx, txIn := range msgTx.TxIn {
 		// Inputs won't exist for stakebase tx, so ignore them.
-		if isSSGen && idx == 0 {
+		if (isSSGen || isAiSSGen )&& idx == 0 {
 			// However, do add the reward amount.
 			_, heightVotingOn, err := stake.SSGenBlockVotedOn(msgTx)
 			if err != nil {
