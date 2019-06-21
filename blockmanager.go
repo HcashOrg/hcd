@@ -258,6 +258,12 @@ type processTransactionResponse struct {
 	err         error
 }
 
+type processInstantTxResponse struct {
+	missedParent []*chainhash.Hash
+	err         error
+}
+
+
 // processTransactionMsg is a message type to be sent across the message
 // channel for requesting a transaction to be processed through the block
 // manager.
@@ -268,6 +274,16 @@ type processTransactionMsg struct {
 	allowHighFees bool
 	reply         chan processTransactionResponse
 }
+
+type processInstantTxMsg struct {
+	tx            *hcutil.InstantTx
+	allowOrphans  bool
+	rateLimit     bool
+	allowHighFees bool
+	reply         chan processInstantTxResponse
+}
+
+
 
 // isCurrentMsg is a message type to be sent across the message channel for
 // requesting whether or not the block manager believes it is synced with
@@ -795,6 +811,13 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
+
+	missedParent,err:=b.ProcessInstantTx(instantTx,false,false,false)
+	if err!=nil||len(missedParent)!=0{
+		bmgrLog.Errorf("Failed to process instanttx : %v", err)
+		return
+	}
+
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
@@ -2121,7 +2144,12 @@ out:
 					acceptedTxs: acceptedTxs,
 					err:         err,
 				}
-
+			case processInstantTxMsg://handle rpc instanttx
+				missedParent,err:=b.server.txMemPool.CheckInstantTx(msg.tx,msg.allowOrphans,msg.rateLimit,msg.allowHighFees)
+				msg.reply<-processInstantTxResponse{
+					missedParent:missedParent,
+					err:err,
+				}
 			case isCurrentMsg:
 				msg.reply <- b.current()
 
@@ -2764,6 +2792,18 @@ func (b *blockManager) ProcessTransaction(tx *hcutil.Tx, allowOrphans bool,
 	response := <-reply
 	return response.acceptedTxs, response.err
 }
+
+
+
+func (b *blockManager) ProcessInstantTx(tx *hcutil.InstantTx, allowOrphans bool,
+	rateLimit bool, allowHighFees bool) ([]*chainhash.Hash, error) {
+	reply := make(chan processInstantTxResponse, 1)
+	b.msgChan <- processInstantTxMsg{tx, allowOrphans, rateLimit,
+		allowHighFees, reply}
+	response := <-reply
+	return response.missedParent, response.err
+}
+
 
 // IsCurrent returns whether or not the block manager believes it is synced with
 // the connected peers.
