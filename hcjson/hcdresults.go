@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -11,6 +11,11 @@ package hcjson
 type GetStakeDifficultyResult struct {
 	CurrentStakeDifficulty float64 `json:"current"`
 	NextStakeDifficulty    float64 `json:"next"`
+}
+
+type GetAiStakeDifficultyResult struct {
+	AiCurrentStakeDifficulty float64 `json:"aicurrent"`
+	AiNextStakeDifficulty    float64 `json:"ainext"`
 }
 
 // VersionCount models a generic version:count tuple.

@@ -1,5 +1,5 @@
 // Copyright (c) 2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -40,6 +40,19 @@ type GetStakeInfoResult struct {
 	ProportionMissed float64 `json:"proportionmissed"`
 	Revoked          uint32  `json:"revoked"`
 	Expired          uint32  `json:"expired"`
+
+	AiPoolSize         uint32  `json:"aipoolsize"`
+	AiDifficulty       float64 `json:"aidifficulty"`
+	AiAllMempoolTix    uint32  `json:"aiallmempooltix"`
+	AiOwnMempoolTix    uint32  `json:"aiownmempooltix"`
+	AiImmature         uint32  `json:"aiimmature"`
+	AiLive             uint32  `json:"ailive"`
+	AiProportionLive   float64 `json:"aiproportionlive"`
+	AiVoted            uint32  `json:"aivoted"`
+	AiMissed           uint32  `json:"aimissed"`
+	AiProportionMissed float64 `json:"aiproportionmissed"`
+	AiRevoked          uint32  `json:"airevoked"`
+	AiExpired          uint32  `json:"aiexpired"`
 }
 
 // GetTicketsResult models the data returned from the gettickets

@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -64,10 +64,22 @@ type ExistsExpiredTicketsCmd struct {
 	TxHashBlob string
 }
 
+type ExistsExpiredAiTicketsCmd struct {
+	TxHashBlob string
+}
+
 // NewExistsExpiredTicketsCmd returns a new instance which can be used to issue an
 // existsexpiredtickets JSON-RPC command.
 func NewExistsExpiredTicketsCmd(txHashBlob string) *ExistsExpiredTicketsCmd {
 	return &ExistsExpiredTicketsCmd{
+		TxHashBlob: txHashBlob,
+	}
+}
+
+// NewExistsExpiredTicketsCmd returns a new instance which can be used to issue an
+// existsexpiredtickets JSON-RPC command.
+func NewExistsExpiredAiTicketsCmd(txHashBlob string) *ExistsExpiredAiTicketsCmd {
+	return &ExistsExpiredAiTicketsCmd{
 		TxHashBlob: txHashBlob,
 	}
 }
@@ -89,11 +101,20 @@ func NewExistsLiveTicketCmd(txHash string) *ExistsLiveTicketCmd {
 type ExistsLiveTicketsCmd struct {
 	TxHashBlob string
 }
+type ExistsLiveAiTicketsCmd struct {
+	TxHashBlob string
+}
 
 // NewExistsLiveTicketsCmd returns a new instance which can be used to issue an
 // existslivetickets JSON-RPC command.
 func NewExistsLiveTicketsCmd(txHashBlob string) *ExistsLiveTicketsCmd {
 	return &ExistsLiveTicketsCmd{
+		TxHashBlob: txHashBlob,
+	}
+}
+
+func NewExistsLiveAiTicketsCmd(txHashBlob string) *ExistsLiveAiTicketsCmd {
+	return &ExistsLiveAiTicketsCmd{
 		TxHashBlob: txHashBlob,
 	}
 }
@@ -124,10 +145,20 @@ func NewGetCoinSupplyCmd() *GetCoinSupplyCmd {
 // unmarshaling of getstakedifficulty JSON RPC commands.
 type GetStakeDifficultyCmd struct{}
 
+// GetStakeDifficultyCmd is a type handling custom marshaling and
+// unmarshaling of getstakedifficulty JSON RPC commands.
+type GetAiStakeDifficultyCmd struct{}
+
 // NewGetStakeDifficultyCmd returns a new instance which can be used to
 // issue a JSON-RPC getstakedifficulty command.
 func NewGetStakeDifficultyCmd() *GetStakeDifficultyCmd {
 	return &GetStakeDifficultyCmd{}
+}
+
+// NewGetStakeDifficultyCmd returns a new instance which can be used to
+// issue a JSON-RPC getstakedifficulty command.
+func NewGetAiStakeDifficultyCmd() *GetAiStakeDifficultyCmd {
+	return &GetAiStakeDifficultyCmd{}
 }
 
 // GetStakeVersionInfoCmd returns stake version info for the current interval.
