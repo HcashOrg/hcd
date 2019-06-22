@@ -17,6 +17,9 @@ type blockProgressLogger struct {
 	receivedLogVotes       int64
 	receivedLogRevocations int64
 	receivedLogTickets     int64
+	receivedLogAiVotes       int64
+	receivedLogAiRevocations int64
+	receivedLogAiTickets     int64
 	lastBlockLogTime       time.Time
 
 	subsystemLogger btclog.Logger
@@ -47,6 +50,11 @@ func (b *blockProgressLogger) logBlockHeight(block *hcutil.Block) {
 	b.receivedLogVotes += int64(block.MsgBlock().Header.Voters)
 	b.receivedLogRevocations += int64(block.MsgBlock().Header.Revocations)
 	b.receivedLogTickets += int64(block.MsgBlock().Header.FreshStake)
+
+	b.receivedLogAiVotes += int64(block.MsgBlock().Header.AiVoters)
+	b.receivedLogAiRevocations += int64(block.MsgBlock().Header.AiRevocations)
+	b.receivedLogAiTickets += int64(block.MsgBlock().Header.AiFreshStake)
+
 	now := time.Now()
 	duration := now.Sub(b.lastBlockLogTime)
 	if duration < time.Second*10 {

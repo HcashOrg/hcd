@@ -333,6 +333,7 @@ func (view *UtxoViewpoint) AddTxOuts(tx *hcutil.Tx, blockHeight int64,
 	msgTx := tx.MsgTx()
 	// When there are not already any utxos associated with the transaction,
 	// add a new entry for it to the view.
+
 	entry := view.LookupEntry(tx.Hash())
 	if entry == nil {
 		txType := stake.DetermineTxType(msgTx)
@@ -546,6 +547,9 @@ func (b *BlockChain) disconnectTransactions(view *UtxoViewpoint,
 	for txIdx := len(transactions) - 1; txIdx > -1; txIdx-- {
 		tx := transactions[txIdx]
 		msgTx := tx.MsgTx()
+		if ok,_ := stake.IsAiSStx(msgTx); ok{
+			fmt.Println("test msgTx")
+		}
 		tt := stake.DetermineTxType(msgTx)
 
 		// Clear this transaction from the view if it already exists or
@@ -884,7 +888,6 @@ func (view *UtxoViewpoint) fetchUtxosMain(db database.DB, txSet map[chainhash.Ha
 			if err != nil {
 				return err
 			}
-
 			view.entries[hash] = entry
 		}
 
@@ -1133,7 +1136,7 @@ func (b *BlockChain) FetchUtxoView(tx *hcutil.Tx, treeValid bool) (*UtxoViewpoin
 	txNeededSet[*tx.Hash()] = struct{}{}
 	msgTx := tx.MsgTx()
 	isSSGen, _ := stake.IsSSGen(msgTx)
-	isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
+	isAiSSGen, _ := stake.IsAiSSGen(msgTx)
 	if !IsCoinBaseTx(msgTx) {
 		for i, txIn := range msgTx.TxIn {
 			if (isSSGen || isAiSSGen)&& i == 0 {

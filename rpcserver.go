@@ -1964,9 +1964,13 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
+		AiVoters:        blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
+		AiFreshStake:    blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
+		AiRevocations:   blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
+		AiPoolSize:      blockHeader.AiPoolSize,
 		Time:          blockHeader.Timestamp.Unix(),
 		StakeVersion:  blockHeader.StakeVersion,
 		Confirmations: confirmations,
@@ -2121,9 +2125,13 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
+		AiVoters:        blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
+		AiFreshStake:    blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
+		AiRevocations:   blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
+		AiPoolSize:      blockHeader.AiPoolSize,
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         hcutil.Amount(blockHeader.SBits).ToCoin(),
 		Height:        uint32(height),
@@ -5614,11 +5622,11 @@ func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*hc
 	case stake.TxTypeSStx:
 		txNum = int(bl.MsgBlock().Header.FreshStake)
 	case stake.TxTypeAiSStx:
-		txNum = int(bl.MsgBlock().Header.FreshStake)
+		txNum = int(bl.MsgBlock().Header.AiFreshStake)
 	case stake.TxTypeSSGen:
 		txNum = int(bl.MsgBlock().Header.Voters)
 	case stake.TxTypeAiSSGen:
-		txNum = int(bl.MsgBlock().Header.Voters)
+		txNum = int(bl.MsgBlock().Header.AiVoters)
 	case stake.TxTypeSSRtx:
 		txNum = int(bl.MsgBlock().Header.Revocations)
 	case stake.TxTypeAiSSRtx:

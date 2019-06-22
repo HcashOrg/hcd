@@ -23,9 +23,13 @@ type GetBlockHeaderVerboseResult struct {
 	VoteBits      uint16  `json:"votebits"`
 	FinalState    string  `json:"finalstate"`
 	Voters        uint16  `json:"voters"`
+	AiVoters        uint16  `json:"aivoters"`
 	FreshStake    uint8   `json:"freshstake"`
+	AiFreshStake    uint8   `json:"aifreshstake"`
 	Revocations   uint8   `json:"revocations"`
+	AiRevocations   uint8   `json:"airevocations"`
 	PoolSize      uint32  `json:"poolsize"`
+	AiPoolSize      uint32  `json:"aipoolsize"`
 	Bits          string  `json:"bits"`
 	SBits         float64 `json:"sbits"`
 	Height        uint32  `json:"height"`
@@ -57,9 +61,13 @@ type GetBlockVerboseResult struct {
 	VoteBits      uint16        `json:"votebits"`
 	FinalState    string        `json:"finalstate"`
 	Voters        uint16        `json:"voters"`
+	AiVoters        uint16        `json:"aivoters"`
 	FreshStake    uint8         `json:"freshstake"`
+	AiFreshStake    uint8         `json:"aifreshstake"`
 	Revocations   uint8         `json:"revocations"`
+	AiRevocations   uint8         `json:"airevocations"`
 	PoolSize      uint32        `json:"poolsize"`
+	AiPoolSize      uint32      `json:"aipoolsize"`
 	Bits          string        `json:"bits"`
 	SBits         float64       `json:"sbits"`
 	Difficulty    float64       `json:"difficulty"`

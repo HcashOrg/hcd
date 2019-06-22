@@ -1701,6 +1701,7 @@ mempoolLoop:
 
 	// Get the block votes (SSGen tx) and store them and their number.
 	voters := 0
+	aiVoters := 0
 	var voteBitsVoters []uint16
 
 	for _, tx := range blockTxns {
@@ -1716,12 +1717,19 @@ mempoolLoop:
 				vb := stake.SSGenVoteBits(txCopy.MsgTx())
 				voteBitsVoters = append(voteBitsVoters, vb)
 				blockTxnsStake = append(blockTxnsStake, txCopy)
-				voters++
+				if isAiSSGen {
+					aiVoters++
+				}else{
+					voters++
+				}
 			}
 		}
 
 		// Don't let this overflow, although probably it's impossible.
 		if voters >= math.MaxUint16 {
+			break
+		}
+		if aiVoters >= math.MaxUint16 {
 			break
 		}
 	}
@@ -1804,6 +1812,7 @@ mempoolLoop:
 
 	// Get the newly purchased tickets (SStx tx) and store them and their number.
 	freshStake := 0
+	aiFreshStake := 0
 	for _, tx := range blockTxns {
 		msgTx := tx.MsgTx()
 		isSStx, _ := stake.IsSStx(msgTx)
@@ -1820,26 +1829,30 @@ mempoolLoop:
 				txCopy := hcutil.NewTxDeepTxIns(msgTx)
 				if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 					blockTxnsStake = append(blockTxnsStake, txCopy)
-					freshStake++
+					if isAiSStx {
+						aiFreshStake++
+					}else{
+						freshStake++
+					}
 				}
 			}
 		}
 
 		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
 			// Don't let this overflow.
-			if freshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
+			if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
 				break
 			}
-		}else{
-			// Don't let this overflow.
-			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
-				break
-			}
+		}
+		// Don't let this overflow.
+		if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
+			break
 		}
 	}
 
 	// Get the ticket revocations (SSRtx tx) and store them and their number.
 	revocations := 0
+	aiRevocations := 0
 	for _, tx := range blockTxns {
 		if nextBlockHeight < stakeValidationHeight {
 			break // No SSRtx should be present before this height.
@@ -1852,12 +1865,19 @@ mempoolLoop:
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				blockTxnsStake = append(blockTxnsStake, txCopy)
-				revocations++
+				if isAiSSRtx{
+					aiRevocations++
+				}else{
+					revocations++
+				}
 			}
 		}
 
 		// Don't let this overflow.
 		if revocations >= math.MaxUint8 {
+			break
+		}
+		if aiRevocations >= math.MaxUint8 {
 			break
 		}
 	}
@@ -2105,8 +2125,11 @@ mempoolLoop:
 		FinalState:   finalState,
 		AiFinalState:   aiFinalState,
 		Voters:       uint16(voters),
+		AiVoters:       uint16(aiVoters),
 		FreshStake:   uint8(freshStake),
+		AiFreshStake:   uint8(aiFreshStake),
 		Revocations:  uint8(revocations),
+		AiRevocations:  uint8(aiRevocations),
 		PoolSize:     poolSize,
 		AiPoolSize:   aiPoolSize,
 		Timestamp:    ts,

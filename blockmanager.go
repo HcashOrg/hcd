@@ -943,6 +943,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// Here we map the vote by their ticket hashes, since the vote
 	// hash itself varies with the settings of voteBits.
 	var newVotes []*hcutil.Tx
+	var newAiVotes []*hcutil.Tx
 	var oldTickets []*hcutil.Tx
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
@@ -963,7 +964,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 			txType == stake.TxTypeAiSSGen {
 				ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
 				oldVoteMap[ticketH] = struct{}{}
-				newVotes = append(newVotes, stx)
+				if txType == stake.TxTypeAiSSGen {
+					newAiVotes = append(newAiVotes, stx)
+				}else{
+					newVotes = append(newVotes, stx)
+				}
+
 			}
 
 			// Create a list of old tickets and revocations
@@ -983,7 +989,11 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 		for _, vote := range votesFromBlock {
 			ticketH := vote.MsgTx().TxIn[1].PreviousOutPoint.Hash
 			if _, exists := oldVoteMap[ticketH]; !exists {
-				newVotes = append(newVotes, vote)
+				if isAiSSGen,_ :=stake.IsAiSSGen(vote.MsgTx()); isAiSSGen {
+					newAiVotes = append(newAiVotes, vote)
+				}else{
+					newVotes = append(newVotes, vote)
+				}
 			}
 		}
 	}
@@ -991,26 +1001,23 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// Check the length of the reconstructed voter list for
 	// integrity.
 	votesTotal := len(newVotes)
-	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
-		if votesTotal > int(b.server.chainParams.AiTicketsPerBlock) {
-			bmgrLog.Warnf("error found while adding hidden votes "+
-				"from block %v to the old block template: %v max "+
-				"votes expected but %v votes found", block.Hash(),
-				int(b.server.chainParams.AiTicketsPerBlock),
-				votesTotal)
-			return
-		}
-	}else{
-		if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
-			bmgrLog.Warnf("error found while adding hidden votes "+
-				"from block %v to the old block template: %v max "+
-				"votes expected but %v votes found", block.Hash(),
-				int(b.server.chainParams.TicketsPerBlock),
-				votesTotal)
-			return
-		}
+	aiVotesTotal := len(newAiVotes)
+	if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
+		bmgrLog.Warnf("error found while adding hidden votes "+
+			"from block %v to the old block template: %v max "+
+			"votes expected but %v votes found", block.Hash(),
+			int(b.server.chainParams.TicketsPerBlock),
+			votesTotal)
+		return
 	}
-
+	if aiVotesTotal > int(b.server.chainParams.AiTicketsPerBlock) {
+		bmgrLog.Warnf("error found while adding hidden ai votes "+
+			"from block %v to the old block template: %v max "+
+			"votes expected but %v votes found", block.Hash(),
+			int(b.server.chainParams.AiTicketsPerBlock),
+			aiVotesTotal)
+		return
+	}
 
 	// Clear the old stake transactions and begin inserting the
 	// new vote list along with all the old transactions. Do this
@@ -1019,8 +1026,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// calculated.
 	template.Block.ClearSTransactions()
 	updatedTxTreeStake := make([]*hcutil.Tx, 0,
-		votesTotal+len(oldTickets)+len(oldRevocations))
+		votesTotal + aiVotesTotal +len(oldTickets)+len(oldRevocations))
 	for _, vote := range newVotes {
+		updatedTxTreeStake = append(updatedTxTreeStake, vote)
+		template.Block.AddSTransaction(vote.MsgTx())
+	}
+	for _, vote := range newAiVotes {
 		updatedTxTreeStake = append(updatedTxTreeStake, vote)
 		template.Block.AddSTransaction(vote.MsgTx())
 	}
@@ -2208,14 +2219,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
 			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(block)
-			// Obtain the winning tickets for this block.  handleNotifyMsg
-			// should be safe for concurrent access of things contained
-			//			// within blockchain.
-			if block.Height() == 145 {
-				fmt.Println("test 145")
-			}
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
-
 			aiwt, _, _, err2 := b.chain.LotteryAiDataForBlock(hash)
 			if err != nil {
 				bmgrLog.Errorf("Couldn't calculate winning tickets for "+

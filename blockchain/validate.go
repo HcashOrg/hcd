@@ -55,6 +55,10 @@ const (
 	// maxRevocationsPerBlock is the maximum number of revocations that are
 	// allowed per block.
 	maxRevocationsPerBlock = 255
+
+	// maxRevocationsPerBlock is the maximum number of revocations that are
+	// allowed per block.
+	maxAiRevocationsPerBlock = 50
 )
 
 var (
@@ -537,6 +541,9 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 	totalTickets := 0
 	totalVotes := 0
 	totalRevocations := 0
+	totalAiTickets := 0
+	totalAiVotes := 0
+	totalAiRevocations := 0
 	for _, stx := range block.MsgBlock().STransactions {
 		err := CheckTransactionSanity(stx, chainParams)
 		if err != nil {
@@ -554,15 +561,15 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		case stake.TxTypeSStx:
 			totalTickets++
 		case stake.TxTypeAiSStx:
-			totalTickets++
+			totalAiTickets++
 		case stake.TxTypeSSGen:
 			totalVotes++
 		case stake.TxTypeAiSSGen:
-			totalVotes++
+			totalAiVotes++
 		case stake.TxTypeSSRtx:
 			totalRevocations++
 		case stake.TxTypeAiSSRtx:
-			totalRevocations++
+			totalAiRevocations++
 		}
 	}
 
@@ -574,6 +581,14 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			totalRevocations, maxRevocationsPerBlock)
 		return ruleError(ErrTooManyRevocations, errStr)
 	}
+	// A block must not contain more than the maximum allowed number of
+	// ai revocations.
+	if totalAiRevocations > maxAiRevocationsPerBlock {
+		errStr := fmt.Sprintf("block contains %d revocations which "+
+			"exceeds the maximum allowed amount of %d",
+			totalAiRevocations, maxAiRevocationsPerBlock)
+		return ruleError(ErrTooManyRevocations, errStr)
+	}
 
 
 	if totalTickets != int(block.MsgBlock().Header.FreshStake) {
@@ -582,41 +597,44 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			block.MsgBlock().Header.FreshStake)
 		return ruleError(ErrFreshStakeMismatch, errStr)
 	}
+	if totalAiTickets != int(block.MsgBlock().Header.AiFreshStake) {
+		errStr := fmt.Sprintf("%v tickets found in block, while "+
+			"header reports %v", totalAiTickets,
+			block.MsgBlock().Header.AiFreshStake)
+		return ruleError(ErrFreshStakeMismatch, errStr)
+	}
 
 
+	// Not enough voters on this block.
+	if block.Height() >= chainParams.StakeValidationHeight &&
+		totalVotes <= int(chainParams.TicketsPerBlock)/2 {
+		errStr := fmt.Sprintf("block contained too few votes! %v "+
+			"votes but %v or more required", totalVotes,
+			(int(chainParams.TicketsPerBlock)/2)+1)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
+	// Not enough ai voters on this block.
+	if block.Height() >= int64(chainParams.AIEnableHeight)&&
+		totalAiVotes <= int(chainParams.AiTicketsPerBlock)/2 {
+		errStr := fmt.Sprintf("block contained too few ai votes! %v "+
+			"votes but %v or more required", totalAiVotes,
+			(int(chainParams.AiTicketsPerBlock)/2)+1)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
+	if totalVotes > int(chainParams.TicketsPerBlock) {
+		errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
+			"was %v, overflowing the maximum allowed (%v)",
+			block.Hash(), totalVotes,
+			int(chainParams.TicketsPerBlock))
+		return ruleError(ErrTooManyVotes, errStr)
+	}
 
-	if uint64(block.Height()) >= chainParams.AIEnableHeight {
-		// Not enough voters on this block.
-		if block.Height() >= chainParams.StakeValidationHeight &&
-			totalVotes <= int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock)/2 {
-			errStr := fmt.Sprintf("block contained too few votes! %v "+
-				"votes but %v or more required", totalVotes,
-				(int(chainParams.AiTicketsPerBlock + chainParams.AiTicketsPerBlock)/2)+1)
-			return ruleError(ErrNotEnoughVotes, errStr)
-		}
-		if totalVotes > int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock ) {
-			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
-				"was %v, overflowing the maximum allowed (%v)",
-				block.Hash(), totalVotes,
-				int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock))
-			return ruleError(ErrTooManyVotes, errStr)
-		}
-	}else{
-		// Not enough voters on this block.
-		if block.Height() >= chainParams.StakeValidationHeight &&
-			totalVotes <= int(chainParams.TicketsPerBlock)/2 {
-			errStr := fmt.Sprintf("block contained too few votes! %v "+
-				"votes but %v or more required", totalVotes,
-				(int(chainParams.TicketsPerBlock)/2)+1)
-			return ruleError(ErrNotEnoughVotes, errStr)
-		}
-		if totalVotes > int(chainParams.TicketsPerBlock) {
-			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
-				"was %v, overflowing the maximum allowed (%v)",
-				block.Hash(), totalVotes,
-				int(chainParams.TicketsPerBlock))
-			return ruleError(ErrTooManyVotes, errStr)
-		}
+	if totalAiVotes > int(chainParams.AiTicketsPerBlock) {
+		errStr := fmt.Sprintf("the number of ai SSGen tx in block %v "+
+			"was %v, overflowing the maximum allowed (%v)",
+			block.Hash(), totalAiVotes,
+			int(chainParams.AiTicketsPerBlock))
+		return ruleError(ErrTooManyVotes, errStr)
 	}
 
 	if totalVotes != int(block.MsgBlock().Header.Voters) {
@@ -625,11 +643,23 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			block.MsgBlock().Header.Voters)
 		return ruleError(ErrVotesMismatch, errStr)
 	}
+	if totalAiVotes != int(block.MsgBlock().Header.AiVoters) {
+		errStr := fmt.Sprintf("%v ai votes found in block, while header "+
+			"reports %v", totalAiVotes,
+			block.MsgBlock().Header.AiVoters)
+		return ruleError(ErrVotesMismatch, errStr)
+	}
 
 	if totalRevocations != int(block.MsgBlock().Header.Revocations) {
 		errStr := fmt.Sprintf("%v revocations found in block, while "+
 			"header reports %v", totalRevocations,
 			block.MsgBlock().Header.Revocations)
+		return ruleError(ErrRevocationsMismatch, errStr)
+	}
+	if totalAiRevocations != int(block.MsgBlock().Header.AiRevocations) {
+		errStr := fmt.Sprintf("%v ai revocations found in block, while "+
+			"header reports %v", totalAiRevocations,
+			block.MsgBlock().Header.AiRevocations)
 		return ruleError(ErrRevocationsMismatch, errStr)
 	}
 
@@ -1140,18 +1170,26 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
+	if msgBlock.Header.AiVoters == 0 && uint64(msgBlock.Header.Height) >= b.chainParams.AIEnableHeight{
+		errStr := fmt.Sprintf("Error: no ai voters in block %v",
+			blockHash)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
 
 	majority := (chainParams.TicketsPerBlock / 2) + 1
-	if uint64(block.Height()) >= chainParams.AIEnableHeight {
-		majority = (chainParams.AiTicketsPerBlock / 2) + 1
-	}
 	if msgBlock.Header.Voters < majority {
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+
 			"of voters is not in the majority as compared to "+
 			"potential votes for block %v", blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
-
+	majorityAi := (chainParams.AiTicketsPerBlock / 2) + 1
+	if msgBlock.Header.AiVoters < majorityAi && uint64(msgBlock.Header.Height) >= b.chainParams.AIEnableHeight{
+		errStr := fmt.Sprintf("Error in stake consensus: the number "+
+			"of ai voters is not in the majorityai as compared to "+
+			"potential ai votes for block %v", blockHash)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
 	// -------------------------------------------------------------------
 	// SSGen Tx Handling
 	// -------------------------------------------------------------------
@@ -2422,17 +2460,16 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 	if txTree { //TxTreeRegular
 		// Apply penalty to fees if we're at stake validation height.
 		if node.height >= b.chainParams.StakeValidationHeight {
-			totalFees *= int64(node.header.Voters)
-			if uint64(node.height) >= b.chainParams.AIEnableHeight {
-				totalFees /= int64(b.chainParams.AiTicketsPerBlock)
+			if node.height >= int64(b.chainParams.AIEnableHeight){
+				totalFees *= int64(node.header.Voters + node.header.AiVoters)
+				totalFees /= int64(b.chainParams.TicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 			}else{
+				totalFees *= int64(node.header.Voters)
 				totalFees /= int64(b.chainParams.TicketsPerBlock)
 			}
-
 		}
 
 		var totalAtomOutRegular int64
-
 		for _, txOut := range txs[0].MsgTx().TxOut {
 			totalAtomOutRegular += txOut.Value
 		}
@@ -2441,11 +2478,20 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height == 1 {
 			expAtomOut = subsidyCache.CalcBlockSubsidy(node.height)
 		} else {
-			subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
-				node.height, node.header.Voters, b.chainParams)
-			subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
-				node.height, node.header.Voters, b.chainParams)
-			expAtomOut = subsidyWork + subsidyTax + totalFees
+			if node.height >= int64(b.chainParams.AIEnableHeight){
+				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
+					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
+				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
+					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
+				expAtomOut = subsidyWork + subsidyTax + totalFees
+			}else{
+				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
+					node.height, node.header.Voters, b.chainParams)
+				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
+					node.height, node.header.Voters, b.chainParams)
+				expAtomOut = subsidyWork + subsidyTax + totalFees
+			}
+
 		}
 
 		// AmountIn for the input should be equal to the subsidy.
@@ -2493,9 +2539,16 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height >= b.chainParams.StakeValidationHeight {
 			// Subsidy aligns with the height we're voting on, not
 			// with the height of the current block.
-			expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
-				node.height-1, b.chainParams) *
-				int64(node.header.Voters)
+			if node.height >= int64(b.chainParams.AIEnableHeight){
+				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
+					node.height-1, b.chainParams) *
+					int64(node.header.Voters + node.header.AiVoters)
+			}else {
+				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
+					node.height-1, b.chainParams) *
+					int64(node.header.Voters)
+			}
+
 		} else {
 			expAtomOut = totalFees
 		}
@@ -2576,11 +2629,20 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block *hcutil.Block, utx
 			node.header.PrevBlock))
 	}
 
-	// Check that the coinbase pays the tax, if applicable.
-	err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
-		node.header.Height, node.header.Voters, b.chainParams)
-	if err != nil {
-		return err
+	if node.height > int64(b.chainParams.AIEnableHeight){
+		// Check that the coinbase pays the tax, if applicable.
+		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
+			node.header.Height, node.header.Voters + node.header.Voters, b.chainParams)
+		if err != nil {
+			return err
+		}
+	} else{
+		// Check that the coinbase pays the tax, if applicable.
+		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
+			node.header.Height, node.header.Voters, b.chainParams)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = b.CheckBlockStakeSanity(b.chainParams.StakeValidationHeight, node,

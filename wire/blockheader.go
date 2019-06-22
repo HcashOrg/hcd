@@ -47,12 +47,15 @@ type BlockHeader struct {
 	AiFinalState [6]byte
 	// Number of participating voters for this block.
 	Voters uint16
-
+	AiVoters uint16
 	// Number of new sstx in this block.
 	FreshStake uint8
 
+	AiFreshStake uint8
+
 	// Number of ssrtx present in this block.
 	Revocations uint8
+	AiRevocations uint8
 
 	// Size of the ticket pool.
 	PoolSize uint32

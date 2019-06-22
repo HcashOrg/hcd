@@ -136,7 +136,7 @@ func CalcBlockWorkSubsidy(subsidyCache *SubsidyCache, height int64,
 	// with 50 * 10^8 Atoms and voters and potentialVoters are uint16.
 	potentialVoters := params.TicketsPerBlock
 	if height >= int64(params.AIEnableHeight) {
-		potentialVoters = params.AiTicketsPerBlock
+		potentialVoters = params.TicketsPerBlock + params.AiTicketsPerBlock
 	}
 	actual := (int64(voters) * subsidy) / int64(potentialVoters)
 
@@ -198,7 +198,7 @@ func CalcBlockTaxSubsidy(subsidyCache *SubsidyCache, height int64, voters uint16
 	// with 50 * 10^8 Atoms and voters and potentialVoters are uint16.
 	potentialVoters := params.TicketsPerBlock
 	if height >= int64(params.AIEnableHeight) {
-		potentialVoters = params.AiTicketsPerBlock
+		potentialVoters = params.TicketsPerBlock + params.AiTicketsPerBlock
 	}
 	adjusted := (int64(voters) * subsidy) / int64(potentialVoters)
 
