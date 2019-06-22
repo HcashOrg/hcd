@@ -13,6 +13,10 @@ type EstimateStakeDiffCmd struct {
 	Tickets *uint32
 }
 
+type EstimateAiStakeDiffCmd struct {
+	AiTickets *uint32
+}
+
 // NewEstimateStakeDiffCmd defines the eststakedifficulty JSON-RPC command.
 func NewEstimateStakeDiffCmd(tickets *uint32) *EstimateStakeDiffCmd {
 	return &EstimateStakeDiffCmd{

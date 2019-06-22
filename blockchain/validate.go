@@ -1092,6 +1092,20 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return ruleError(ErrUnexpectedDifficulty, errStr)
 	}
 
+	// Check the stake difficulty.
+	calcAiSBits, err := b.calcNextRequiredAiStakeDifficulty(node.parent)
+	if err != nil {
+		errStr := fmt.Sprintf("couldn't calculate ai stake difficulty "+
+			"for block node %v: %v", node.hash, err)
+		return ruleError(ErrUnexpectedDifficulty, errStr)
+	}
+	if block.MsgBlock().Header.AiSBits != calcAiSBits {
+		errStr := fmt.Sprintf("block had unexpected ai stake difficulty "+
+			"(%v given, %v expected)",
+			block.MsgBlock().Header.AiSBits, calcAiSBits)
+		return ruleError(ErrUnexpectedDifficulty, errStr)
+	}
+
 	// --------------------------------------------------------------------
 	// SStx Tx Handling
 	// --------------------------------------------------------------------

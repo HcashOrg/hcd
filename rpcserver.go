@@ -1561,6 +1561,79 @@ func handleEstimateStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}, nil
 }
 
+
+// handleEstimateAiStakeDiff implements the estimatestakediff command.
+func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.EstimateAiStakeDiffCmd)
+
+	// Minimum possible stake difficulty.
+	chain := s.server.blockManager.chain
+	min, err := chain.EstimateNextAiStakeDifficulty(0, false)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not "+
+			"estimate next minimum stake difficulty")
+	}
+
+	// Maximum possible stake difficulty.
+	max, err := chain.EstimateNextAiStakeDifficulty(0, true)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not "+
+			"estimate next maximum stake difficulty")
+	}
+
+	// The expected stake difficulty. Average the number of fresh stake
+	// since the last retarget to get the number of tickets per block,
+	// then use that to estimate the next stake difficulty.
+	_, bestHeight := s.server.blockManager.chainState.Best()
+	lastAdjustment := (bestHeight / activeNetParams.StakeDiffWindowSize) *
+		activeNetParams.StakeDiffWindowSize
+	nextAdjustment := ((bestHeight / activeNetParams.StakeDiffWindowSize) +
+		1) * activeNetParams.StakeDiffWindowSize
+	totalAiTickets := 0
+	err = s.server.db.View(func(dbTx database.Tx) error {
+		for i := lastAdjustment; i <= bestHeight; i++ {
+			bh, err := blockchain.DBFetchHeaderByHeight(dbTx, i)
+			if err != nil {
+				return err
+			}
+			totalAiTickets += int(bh.AiFreshStake)
+		}
+
+		return nil
+	})
+	blocksSince := float64(bestHeight - lastAdjustment + 1)
+	remaining := float64(nextAdjustment - bestHeight - 1)
+	averagePerBlock := float64(totalAiTickets) / blocksSince
+	expectedTickets := int64(math.Floor(averagePerBlock * remaining))
+	expected, err := chain.EstimateNextAiStakeDifficulty(expectedTickets,
+		false)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not "+
+			"estimate next stake difficulty")
+	}
+
+	// User-specified stake difficulty, if they asked for one.
+	var userEstFltPtr *float64
+	if c.AiTickets != nil {
+		userEst, err := chain.EstimateNextStakeDifficulty(int64(*c.AiTickets),
+			false)
+		if err != nil {
+			return nil, rpcInternalError(err.Error(), "Could not "+
+				"estimate next user specified stake difficulty")
+		}
+		userEstFlt := hcutil.Amount(userEst).ToCoin()
+		userEstFltPtr = &userEstFlt
+	}
+
+	return &hcjson.EstimateStakeDiffResult{
+		Min:      hcutil.Amount(min).ToCoin(),
+		Max:      hcutil.Amount(max).ToCoin(),
+		Expected: hcutil.Amount(expected).ToCoin(),
+		User:     userEstFltPtr,
+	}, nil
+}
+
+
 // handleExistsAddress implements the existsaddress command.
 func handleExistsAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	existsAddrIndex := s.server.existsAddrIndex
