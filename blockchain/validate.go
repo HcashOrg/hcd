@@ -2629,7 +2629,7 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block *hcutil.Block, utx
 			node.header.PrevBlock))
 	}
 
-	if node.height > int64(b.chainParams.AIEnableHeight){
+	if node.height >= int64(b.chainParams.AIEnableHeight){
 		// Check that the coinbase pays the tax, if applicable.
 		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
 			node.header.Height, node.header.Voters + node.header.Voters, b.chainParams)
