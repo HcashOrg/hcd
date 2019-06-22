@@ -1912,7 +1912,7 @@ mempoolLoop:
 		opReturnPkScript,
 		nextBlockHeight,
 		payToAddress,
-		uint16(voters),
+		uint16(voters + aiVoters),
 		server.chainParams)
 	if err != nil {
 		return nil, err
