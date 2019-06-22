@@ -368,6 +368,7 @@ type StakeDifficultyNtfnData struct {
 	BlockHash       chainhash.Hash
 	BlockHeight     int64
 	StakeDifficulty int64
+	AiStakeDifficulty int64
 }
 
 type wsClientFilter struct {

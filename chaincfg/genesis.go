@@ -97,6 +97,7 @@ var genesisBlock = wire.MsgBlock{
 		Timestamp:    time.Unix(1533635700, 0), // Changed for dev use
 		Bits:         0x1b01ffff,               // Difficulty 32767
 		SBits:        2 * 1e8,                  // 2 Coin
+		AiSBits:        0,                  // 2 Coin
 		Nonce:        0x00000000,
 		StakeVersion: 0,
 	},
@@ -169,6 +170,7 @@ var testNet2GenesisBlock = wire.MsgBlock{
 		Timestamp:    time.Unix(1522944000, 0), // 2018-04-05 TestNet1
 		Bits:         0x1e00ffff,
 		SBits:        20000000,
+		AiSBits:      0,
 		Nonce:        0x18aea41a,
 		StakeVersion: 0,
 	},
@@ -258,6 +260,7 @@ var simNetGenesisBlock = wire.MsgBlock{
 		//Bits:         0x1f00ffff,//0x207fffff, // 545259519 0x1e00ffff
 		Bits:         0x207fffff,
 		SBits:        0,
+		AiSBits:        0,
 		Nonce:        0,
 		StakeVersion: 0,
 		Height:       0,

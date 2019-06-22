@@ -327,7 +327,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 
 // checkProofOfStake checks to see that all new SStx tx in a block are actually
 // at the network stake target.
-func checkProofOfStake(block *hcutil.Block, posLimit int64) error {
+func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 	msgBlock := block.MsgBlock()
 	for _, staketx := range block.STransactions() {
 		msgTx := staketx.MsgTx()
@@ -335,25 +335,48 @@ func checkProofOfStake(block *hcutil.Block, posLimit int64) error {
 		if is, _ := stake.IsSStx(msgTx); is || isAiSStx{
 			commitValue := msgTx.TxOut[0].Value
 
-			// Check for underflow block sbits.
-			if commitValue < msgBlock.Header.SBits {
-				errStr := fmt.Sprintf("Stake tx %v has a "+
-					"commitment value less than the "+
-					"minimum stake difficulty specified in"+
-					" the block (%v)", staketx.Hash(),
-					msgBlock.Header.SBits)
-				return ruleError(ErrNotEnoughStake, errStr)
+			if isAiSStx {
+				// Check for underflow block sbits.
+				if commitValue < msgBlock.Header.AiSBits {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum ai stake difficulty specified in"+
+						" the block (%v)", staketx.Hash(),
+						msgBlock.Header.AiSBits)
+					return ruleError(ErrNotEnoughStake, errStr)
+				}
+
+				// Check if it's above the PoS limit.
+				if commitValue < posAiLimit {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum stake difficulty for the "+
+						"network (%v)", staketx.Hash(),
+						posAiLimit)
+					return ruleError(ErrStakeBelowMinimum, errStr)
+				}
+			}else{
+				// Check for underflow block sbits.
+				if commitValue < msgBlock.Header.SBits {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum stake difficulty specified in"+
+						" the block (%v)", staketx.Hash(),
+						msgBlock.Header.SBits)
+					return ruleError(ErrNotEnoughStake, errStr)
+				}
+
+				// Check if it's above the PoS limit.
+				if commitValue < posLimit {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum stake difficulty for the "+
+						"network (%v)", staketx.Hash(),
+						posLimit)
+					return ruleError(ErrStakeBelowMinimum, errStr)
+				}
 			}
 
-			// Check if it's above the PoS limit.
-			if commitValue < posLimit {
-				errStr := fmt.Sprintf("Stake tx %v has a "+
-					"commitment value less than the "+
-					"minimum stake difficulty for the "+
-					"network (%v)", staketx.Hash(),
-					posLimit)
-				return ruleError(ErrStakeBelowMinimum, errStr)
-			}
 		}
 	}
 
@@ -361,8 +384,8 @@ func checkProofOfStake(block *hcutil.Block, posLimit int64) error {
 }
 
 // CheckProofOfStake exports the above func.
-func CheckProofOfStake(block *hcutil.Block, posLimit int64) error {
-	return checkProofOfStake(block, posLimit)
+func CheckProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
+	return checkProofOfStake(block, posLimit, posAiLimit)
 }
 
 // checkProofOfWork ensures the block header bits which indicate the target
@@ -420,6 +443,7 @@ func CheckProofOfWork(block *hcutil.Block, powLimit *big.Int) error {
 func checkBlockHeaderSanity(block *hcutil.Block, timeSource MedianTimeSource, flags BehaviorFlags, chainParams *chaincfg.Params) error {
 	powLimit := chainParams.PowLimit
 	posLimit := chainParams.MinimumStakeDiff
+	posAiLimit := chainParams.MinimumAiStakeDiff
 	header := &block.MsgBlock().Header
 
 	// Ensure the proof of work bits in the block header is in min/max
@@ -432,7 +456,7 @@ func checkBlockHeaderSanity(block *hcutil.Block, timeSource MedianTimeSource, fl
 
 	// Check to make sure that all newly purchased tickets meet the
 	// difficulty specified in the block.
-	err = checkProofOfStake(block, posLimit)
+	err = checkProofOfStake(block, posLimit, posAiLimit)
 	if err != nil {
 		return err
 	}

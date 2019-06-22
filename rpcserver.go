@@ -2022,6 +2022,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 	}
 
 	sbitsFloat := float64(blockHeader.SBits) / hcutil.AtomsPerCoin
+	aiStakeBitsFloat := float64(blockHeader.AiSBits) / hcutil.AtomsPerCoin
 	blockReply := hcjson.GetBlockVerboseResult{
 		Hash:          c.Hash,
 		Version:       blockHeader.Version,
@@ -2046,6 +2047,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		Size:          int32(blk.MsgBlock().Header.Size),
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         sbitsFloat,
+		AiSBits:         aiStakeBitsFloat,
 		Difficulty:    getDifficultyRatio(blockHeader.Bits),
 		ExtraData:     hex.EncodeToString(blockHeader.ExtraData[:]),
 		NextHash:      nextHashString,
@@ -2202,6 +2204,7 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		AiPoolSize:      blockHeader.AiPoolSize,
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         hcutil.Amount(blockHeader.SBits).ToCoin(),
+		AiSBits:         hcutil.Amount(blockHeader.AiSBits).ToCoin(),
 		Height:        uint32(height),
 		Size:          blockHeader.Size,
 		Time:          blockHeader.Timestamp.Unix(),
@@ -3806,7 +3809,6 @@ func handleGetStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan st
 		}
 	}
 	currentSdiff := hcutil.Amount(blockHeader.SBits)
-
 	nextSdiff, err := s.server.blockManager.CalcNextRequiredStakeDifficulty()
 	if err != nil {
 		return nil, rpcInternalError("Could not calculate next stake "+
@@ -3835,7 +3837,7 @@ func handleGetAiStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan 
 	}
 	currentSdiff := hcutil.Amount(blockHeader.AiSBits)
 
-	nextSdiff, err := s.server.blockManager.CalcNextRequiredStakeDifficulty()
+	nextSdiff, err := s.server.blockManager.CalcNextRequiredAiStakeDifficulty()
 	if err != nil {
 		return nil, rpcInternalError("Could not calculate next stake "+
 			"difficulty "+err.Error(), "")
@@ -5968,6 +5970,65 @@ func handleTicketVWAP(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) 
 
 		ticketNum += int64(blockHeader.FreshStake)
 		totalValue += blockHeader.SBits * int64(blockHeader.FreshStake)
+	}
+	vwap := int64(0)
+	if ticketNum > 0 {
+		vwap = totalValue / ticketNum
+	}
+
+	return hcutil.Amount(vwap).ToCoin(), nil
+}
+
+// handleTicketVWAP implements the ticketvwap command.
+func handleAiTicketVWAP(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.AiTicketVWAPCmd)
+
+	// The default VWAP is for the past WorkDiffWindows * WorkDiffWindowSize
+	// many blocks.
+	_, bestHeight := s.server.blockManager.chainState.Best()
+	start := uint32(0)
+	if c.Start == nil {
+		toEval := activeNetParams.WorkDiffWindows *
+			activeNetParams.WorkDiffWindowSize
+		startI64 := bestHeight - toEval
+
+		// Use 1 as the first block if there aren't
+		// enough blocks.
+		if startI64 <= 0 {
+			start = 1
+		} else {
+			start = uint32(startI64)
+		}
+	} else {
+		start = *c.Start
+	}
+
+	end := uint32(bestHeight)
+	if c.End != nil {
+		end = *c.End
+	}
+	if start > end {
+		return nil, rpcInvalidError("Start height %v is beyond end "+
+			"height %v", start, end)
+	}
+	if end > uint32(bestHeight) {
+		return nil, rpcInvalidError("End height %v is beyond "+
+			"blockchain tip height %v", end, bestHeight)
+	}
+
+	// Calculate the volume weighted average price of a ticket for the
+	// given range.
+	ticketNum := int64(0)
+	totalValue := int64(0)
+	for i := start; i <= end; i++ {
+		blockHeader, err := s.chain.HeaderByHeight(int64(i))
+		if err != nil {
+			return nil, rpcInternalError(err.Error(),
+				"Could not obtain header")
+		}
+
+		ticketNum += int64(blockHeader.AiFreshStake)
+		totalValue += blockHeader.AiSBits * int64(blockHeader.AiFreshStake)
 	}
 	vwap := int64(0)
 	if ticketNum > 0 {

@@ -362,6 +362,7 @@ type chainState struct {
 	nextPoolSize        uint32
 	nextAiPoolSize        uint32
 	nextStakeDifficulty int64
+	nextAiStakeDifficulty int64
 	winningTickets      []chainhash.Hash
 	winningAiTickets      []chainhash.Hash
 	missedTickets       []chainhash.Hash
@@ -490,7 +491,7 @@ func (b *blockManager) resetHeaderState(newestHash *chainhash.Hash, newestHeight
 // processing block and inventory.
 func (b *blockManager) updateChainState(newestHash *chainhash.Hash,
 	newestHeight int64, finalState, aiFinalState [6]byte, poolSize, aiPoolSize uint32,
-	nextStakeDiff int64, winningTickets, winningAiTickets []chainhash.Hash,
+	nextStakeDiff, nextAiStakeDiff int64, winningTickets, winningAiTickets []chainhash.Hash,
 	missedTickets, missedAiTickets []chainhash.Hash, curPrevHash chainhash.Hash) {
 
 	b.chainState.Lock()
@@ -504,6 +505,7 @@ func (b *blockManager) updateChainState(newestHash *chainhash.Hash,
 	b.chainState.nextPoolSize = poolSize
 	b.chainState.nextAiPoolSize = aiPoolSize
 	b.chainState.nextStakeDifficulty = nextStakeDiff
+	b.chainState.nextAiStakeDifficulty = nextAiStakeDiff
 	b.chainState.winningTickets = winningTickets
 	b.chainState.winningAiTickets = winningAiTickets
 	b.chainState.missedTickets = missedTickets
@@ -1334,6 +1336,12 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 				bmgrLog.Warnf("Failed to get next stake difficulty "+
 					"calculation: %v", err)
 			}
+			nextAiStakeDiff, errSDiff :=
+				b.chain.CalcNextRequiredAiStakeDifficulty()
+			if errSDiff != nil {
+				bmgrLog.Warnf("Failed to get next stake difficulty "+
+					"calculation: %v", err)
+			}
 			if r != nil && errSDiff == nil {
 				// Update registered websocket clients on the
 				// current stake difficulty.
@@ -1342,9 +1350,9 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 						*best.Hash,
 						best.Height,
 						nextStakeDiff,
+						nextAiStakeDiff,
 					})
-				b.server.txMemPool.PruneStakeTx(nextStakeDiff,
-					best.Height)
+				b.server.txMemPool.PruneStakeTx(nextStakeDiff, nextAiStakeDiff, best.Height)
 				b.server.txMemPool.PruneExpiredTx(best.Height)
 			}
 
@@ -1363,7 +1371,7 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			}
 
 			b.updateChainState(best.Hash, best.Height, finalState,aiFinalState,
-				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, winningTickets,winningAiTickets,
+				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, nextAiStakeDiff,  winningTickets,winningAiTickets,
 				missedTickets, missedAiTickets, curPrevHash)
 
 			// Update this peer's latest block height, for future
@@ -1886,6 +1894,13 @@ out:
 					err:             err,
 				}
 
+			case calcNextReqAiStakeDifficultyMsg:
+				stakeDiff, err := b.chain.CalcNextRequiredAiStakeDifficulty()
+				msg.reply <- calcNextReqAiStakeDifficultyResponse{
+					aiStakeDifficulty: stakeDiff,
+					err:             err,
+				}
+
 			case forceReorganizationMsg:
 				err := b.chain.ForceHeadReorganization(
 					msg.formerBest, msg.newBest)
@@ -1913,15 +1928,21 @@ out:
 						bmgrLog.Warnf("Failed to get next stake difficulty "+
 							"calculation: %v", err)
 					}
+					nextAiStakeDiff, errSDiff :=
+						b.chain.CalcNextRequiredAiStakeDifficulty()
+					if err != nil {
+						bmgrLog.Warnf("Failed to get next stake difficulty "+
+							"calculation: %v", err)
+					}
 					r := b.server.rpcServer
 					if r != nil && errSDiff == nil {
 						r.ntfnMgr.NotifyStakeDifficulty(
 							&StakeDifficultyNtfnData{
 								*best.Hash,
 								best.Height,
-								nextStakeDiff,
+								nextStakeDiff,nextAiStakeDiff,
 							})
-						b.server.txMemPool.PruneStakeTx(nextStakeDiff,
+						b.server.txMemPool.PruneStakeTx(nextStakeDiff,nextAiStakeDiff,
 							best.Height)
 						b.server.txMemPool.PruneExpiredTx(best.Height)
 					}
@@ -1946,7 +1967,7 @@ out:
 						best.Height,
 						finalState, aiFinalState,
 						uint32(poolSize),uint32(aiPoolSize),
-						nextStakeDiff,
+						nextStakeDiff,nextAiStakeDiff,
 						winningTickets,winningAiTickets,
 						missedTickets, missedAiTickets,
 						curPrevHash)
@@ -2061,24 +2082,30 @@ out:
 
 					// Update registered websocket clients on the
 					// current stake difficulty.
+					nextAiStakeDiff := int64(0)
 					nextStakeDiff, err :=
 						b.chain.CalcNextRequiredStakeDifficulty()
 					if err != nil {
 						bmgrLog.Warnf("Failed to get next stake difficulty "+
 							"calculation: %v", err)
 					} else {
+						nextAiStakeDiff, err = b.chain.CalcNextRequiredAiStakeDifficulty()
+						if err != nil {
+							bmgrLog.Warnf("Failed to get next ai stake difficulty "+
+								"calculation: %v", err)
+						}
 						r := b.server.rpcServer
 						if r != nil {
 							r.ntfnMgr.NotifyStakeDifficulty(
 								&StakeDifficultyNtfnData{
 									*best.Hash,
 									best.Height,
-									nextStakeDiff,
+									nextStakeDiff,nextAiStakeDiff,
 								})
 						}
 					}
 
-					b.server.txMemPool.PruneStakeTx(nextStakeDiff,
+					b.server.txMemPool.PruneStakeTx(nextStakeDiff,nextAiStakeDiff,
 						best.Height)
 					b.server.txMemPool.PruneExpiredTx(
 						best.Height)
@@ -2115,7 +2142,7 @@ out:
 						best.Height,
 						finalState,aiFinalState,
 						uint32(poolSize), uint32(aiPoolSize),
-						nextStakeDiff,
+						nextStakeDiff,nextAiStakeDiff,
 						winningTickets,winningAiTickets,
 						missedTickets,missedAiTickets,
 						curPrevHash)
@@ -2918,12 +2945,16 @@ func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockMan
 	if err != nil {
 		return nil, err
 	}
+	nextAiStakeDiff, err := bm.chain.CalcNextRequiredAiStakeDifficulty()
+	if err != nil {
+		return nil, err
+	}
 
 	bm.updateChainState(best.Hash,
 		best.Height,
 		fs, aifs,
 		uint32(ps),uint32(aips),
-		nextStakeDiff,
+		nextStakeDiff,nextAiStakeDiff,
 		wt,aiwt,
 		missedTickets,missedAiTickets,
 		curPrevHash)

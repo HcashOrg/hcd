@@ -165,8 +165,8 @@ func (h *BlockHeader) Bytes() ([]byte, error) {
 // block with defaults for the remaining fields.
 func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 	merkleRootHash *chainhash.Hash, stakeRoot *chainhash.Hash, voteBits uint16,
-	finalState [6]byte, voters uint16, freshStake uint8, revocations uint8,
-	poolsize uint32, bits uint32, sbits int64, height uint32, size uint32,
+	finalState, aiFinalState [6]byte, voters, aiVoters uint16, freshStake, aiFreshStake  uint8, revocations, aiRevocations  uint8,
+	poolsize, aiPoolsize uint32, bits uint32, sbits, aiSbit int64, height uint32, size uint32,
 	nonce uint32, extraData [32]byte, stakeVersion uint32) *BlockHeader {
 
 	// Limit the timestamp to one second precision since the protocol
@@ -178,13 +178,18 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 		StakeRoot:    *stakeRoot,
 		VoteBits:     voteBits,
 		FinalState:   finalState,
+		AiFinalState:   aiFinalState,
 		Voters:       voters,
+		AiVoters:       aiVoters,
 		FreshStake:   freshStake,
+		AiFreshStake:   aiFreshStake,
 		Revocations:  revocations,
+		AiRevocations:  aiRevocations,
 		PoolSize:     poolsize,
 		AiPoolSize:   0,
 		Bits:         bits,
 		SBits:        sbits,
+		AiSBits:      aiSbit,
 		Height:       height,
 		Size:         size,
 		Timestamp:    time.Unix(time.Now().Unix(), 0),
@@ -199,9 +204,9 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // decoding from the wire.
 func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 	return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
-		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
-		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
+		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.AiFinalState, &bh.Voters,&bh.AiVoters,
+		&bh.FreshStake, &bh.AiFreshStake, &bh.Revocations, &bh.AiRevocations, &bh.PoolSize, &bh.AiPoolSize, &bh.Bits,
+		&bh.SBits, &bh.AiSBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
 		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
 }
 
@@ -211,8 +216,8 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 	sec := uint32(bh.Timestamp.Unix())
 	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
-		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
+		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.AiFinalState, bh.Voters,bh.AiVoters,
+		bh.FreshStake, bh.AiFreshStake, bh.Revocations, bh.AiRevocations, bh.PoolSize, bh.AiPoolSize, bh.Bits, bh.SBits,bh.AiSBits,
 		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
 		bh.StakeVersion)
 }

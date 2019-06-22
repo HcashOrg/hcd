@@ -577,6 +577,28 @@ func (b *BlockChain) sumPurchasedTickets(startNode *blockNode, numToSum int64) (
 	return numPurchased, nil
 }
 
+func (b *BlockChain) sumPurchasedAiTickets(startNode *blockNode, numToSum int64) (int64, error) {
+	var numPurchased int64
+	for node, numTraversed := startNode, int64(0); node != nil &&
+		numTraversed < numToSum; numTraversed++ {
+
+		numPurchased += int64(node.header.AiFreshStake)
+
+		// Get the previous block node.  This function is used over
+		// simply accessing iterNode.parent directly as it will
+		// dynamically create previous block nodes as needed.  This
+		// helps allow only the pieces of the chain that are needed
+		// to remain in memory.
+		var err error
+		node, err = b.getPrevNodeFromNode(node)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return numPurchased, nil
+}
+
 // calcNextStakeDiffV2 calculates the next stake difficulty for the given set
 // of parameters using the algorithm defined in DCP0001.
 //
@@ -720,6 +742,72 @@ func (b *BlockChain) calcNextRequiredStakeDifficultyV2(curNode *blockNode) (int6
 		prevPoolSizeAll, curPoolSizeAll), nil
 }
 
+
+// This function MUST be called with the chain state lock held (for writes).
+func (b *BlockChain) calcNextRequiredAiStakeDifficultyV2(curNode *blockNode) (int64, error) {
+	// Stake difficulty before any tickets could possibly be purchased is
+	// the minimum value.
+	nextHeight := int64(0)
+	if curNode != nil {
+		nextHeight = curNode.height + 1
+	}
+	stakeDiffStartHeight := int64(b.chainParams.CoinbaseMaturity) + 1
+	if nextHeight < stakeDiffStartHeight {
+		return b.chainParams.MinimumAiStakeDiff, nil
+	}
+
+	// Return the previous block's difficulty requirements if the next block
+	// is not at a difficulty retarget interval.
+	intervalSize := b.chainParams.StakeDiffWindowSize
+	curDiff := curNode.header.AiSBits
+	if nextHeight%intervalSize != 0 {
+		return curDiff, nil
+	}
+
+	// Get the pool size and number of tickets that were immature at the
+	// previous retarget interval.
+	//
+	// NOTE: Since the stake difficulty must be calculated based on existing
+	// blocks, it is always calculated for the block after a given block, so
+	// the information for the previous retarget interval must be retrieved
+	// relative to the block just before it to coincide with how it was
+	// originally calculated.
+	var prevPoolSize int64
+	prevRetargetHeight := nextHeight - intervalSize - 1
+	prevRetargetNode, err := b.ancestorNode(curNode, prevRetargetHeight)
+	if err != nil {
+		return 0, err
+	}
+	if prevRetargetNode != nil {
+		prevPoolSize = int64(prevRetargetNode.header.AiPoolSize)
+	}
+	ticketMaturity := int64(b.chainParams.AiTicketMaturity)
+	prevImmatureTickets, err := b.sumPurchasedAiTickets(prevRetargetNode,
+		ticketMaturity)
+	if err != nil {
+		return 0, err
+	}
+
+	// Return the existing ticket price for the first few intervals to avoid
+	// division by zero and encourage initial pool population.
+	prevPoolSizeAll := prevPoolSize + prevImmatureTickets
+	if prevPoolSizeAll == 0 {
+		return curDiff, nil
+	}
+
+	// Count the number of currently immature tickets.
+	immatureTickets, err := b.sumPurchasedAiTickets(curNode, ticketMaturity)
+	if err != nil {
+		return 0, err
+	}
+
+	// Calculate and return the final next required difficulty.
+	curAiPoolSizeAll := int64(curNode.header.AiPoolSize) + immatureTickets
+	return calcNextStakeDiffV2(b.chainParams, nextHeight, curDiff,
+		prevPoolSizeAll, curAiPoolSizeAll), nil
+}
+
+
 // calcNextRequiredStakeDifficulty calculates the required stake difficulty for
 // the block after the passed previous block node based on the active stake
 // difficulty retarget rules.
@@ -735,6 +823,12 @@ func (b *BlockChain) calcNextRequiredStakeDifficulty(curNode *blockNode) (int64,
 	return b.calcNextRequiredStakeDifficultyV2(curNode)
 }
 
+func (b *BlockChain) calcNextRequiredAiStakeDifficulty(curNode *blockNode) (int64, error) {
+	// Use the V2 stake difficulty algorithm if the stake vote for the new
+	// algorithm agenda is active.
+	return b.calcNextRequiredAiStakeDifficultyV2(curNode)
+}
+
 // CalcNextRequiredStakeDifficulty calculates the required stake difficulty for
 // the block after the end of the current best chain based on the active stake
 // difficulty retarget rules.
@@ -743,6 +837,13 @@ func (b *BlockChain) calcNextRequiredStakeDifficulty(curNode *blockNode) (int64,
 func (b *BlockChain) CalcNextRequiredStakeDifficulty() (int64, error) {
 	b.chainLock.Lock()
 	nextDiff, err := b.calcNextRequiredStakeDifficulty(b.bestNode)
+	b.chainLock.Unlock()
+	return nextDiff, err
+}
+
+func (b *BlockChain) CalcNextRequiredAiStakeDifficulty() (int64, error) {
+	b.chainLock.Lock()
+	nextDiff, err := b.calcNextRequiredAiStakeDifficulty(b.bestNode)
 	b.chainLock.Unlock()
 	return nextDiff, err
 }

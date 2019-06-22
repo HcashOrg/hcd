@@ -1343,14 +1343,14 @@ func (mp *TxPool) processOrphans(hash *chainhash.Hash) []*hcutil.Tx {
 // stake difficulty is below the current required stake difficulty should be
 // pruned from mempool since they will never be mined.  The same idea stands
 // for SSGen and SSRtx
-func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, height int64) {
+func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty,  height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
-	mp.pruneStakeTx(requiredStakeDifficulty, height)
+	mp.pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty,  height)
 	mp.mtx.Unlock()
 }
 
-func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, height int64) {
+func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty, height int64) {
 	for _, tx := range mp.pool {
 		txType := stake.DetermineTxType(tx.Tx.MsgTx())
 		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx )&&
@@ -1358,7 +1358,7 @@ func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, height int64) {
 			mp.removeTransaction(tx.Tx, true)
 		}
 		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx)&&
-			tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty {
+			(tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty || tx.Tx.MsgTx().TxOut[0].Value < requiredAiStakeDifficulty) {
 			mp.removeTransaction(tx.Tx, true)
 		}
 		if (txType == stake.TxTypeSSRtx || txType == stake.TxTypeSSGen ||

@@ -324,6 +324,12 @@ type TicketVWAPCmd struct {
 	End   *uint32
 }
 
+// TicketVWAPCmd defines the ticketvwap JSON-RPC command.
+type AiTicketVWAPCmd struct {
+	Start *uint32
+	End   *uint32
+}
+
 // NewTicketVWAPCmd returns a new instance which can be used to issue a
 // JSON-RPC ticket volume weight average price command.
 func NewTicketVWAPCmd(start *uint32, end *uint32) *TicketVWAPCmd {

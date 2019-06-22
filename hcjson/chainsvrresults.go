@@ -32,6 +32,7 @@ type GetBlockHeaderVerboseResult struct {
 	AiPoolSize      uint32  `json:"aipoolsize"`
 	Bits          string  `json:"bits"`
 	SBits         float64 `json:"sbits"`
+	AiSBits         float64 `json:"aisbits"`
 	Height        uint32  `json:"height"`
 	Size          uint32  `json:"size"`
 	Time          int64   `json:"time"`
@@ -70,6 +71,7 @@ type GetBlockVerboseResult struct {
 	AiPoolSize      uint32      `json:"aipoolsize"`
 	Bits          string        `json:"bits"`
 	SBits         float64       `json:"sbits"`
+	AiSBits        float64       `json:"aisbits"`
 	Difficulty    float64       `json:"difficulty"`
 	ExtraData     string        `json:"extradata"`
 	StakeVersion  uint32        `json:"stakeversion"`

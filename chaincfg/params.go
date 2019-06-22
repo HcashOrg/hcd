@@ -370,6 +370,7 @@ type Params struct {
 	// MinimumStakeDiff if the minimum amount of Atoms required to purchase a
 	// stake ticket.
 	MinimumStakeDiff int64
+	MinimumAiStakeDiff int64
 
 	// Ticket pool sizes for Hcd PoS. This denotes the number of possible
 	// buckets/number of different ticket numbers. It is also the number of
@@ -847,6 +848,7 @@ var SimNetParams = Params{
 
 	// Hcd PoS parameters
 	MinimumStakeDiff:        20000,
+	MinimumAiStakeDiff:      200000,
 	TicketPoolSize:          64,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,

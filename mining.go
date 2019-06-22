@@ -1201,6 +1201,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	poolSize := chainState.nextPoolSize
 	aiPoolSize := chainState.nextAiPoolSize
 	reqStakeDifficulty := chainState.nextStakeDifficulty
+	reqAiStakeDifficulty := chainState.nextAiStakeDifficulty
 	finalState := chainState.nextFinalState
 	aiFinalState := chainState.nextAiFinalState
 	var winningTickets []chainhash.Hash
@@ -2134,6 +2135,7 @@ mempoolLoop:
 		AiPoolSize:   aiPoolSize,
 		Timestamp:    ts,
 		SBits:        reqStakeDifficulty,
+		AiSBits:        reqAiStakeDifficulty,
 		Bits:         reqDifficulty,
 		StakeVersion: generatedStakeVersion,
 		Height:       uint32(nextBlockHeight),
@@ -2177,11 +2179,12 @@ mempoolLoop:
 
 	minrLog.Debugf("Created new block template (%d transactions, %d "+
 		"stake transactions, %d in fees, %d signature operations, "+
-		"%d bytes, target difficulty %064x, stake difficulty %v)",
+		"%d bytes, target difficulty %064x, stake difficulty %v, ai stake difficulty %v)",
 		len(msgBlock.Transactions), len(msgBlock.STransactions),
 		totalFees, blockSigOps, blockSize,
 		blockchain.CompactToBig(msgBlock.Header.Bits),
-		hcutil.Amount(msgBlock.Header.SBits).ToCoin())
+		hcutil.Amount(msgBlock.Header.SBits).ToCoin(),
+		hcutil.Amount(msgBlock.Header.AiSBits).ToCoin())
 
 	blockTemplate := &BlockTemplate{
 		Block:           &msgBlock,
