@@ -191,8 +191,11 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"existsaddresses":           handleExistsAddresses,
 	"existsmissedtickets":       handleExistsMissedTickets,
 	"existsexpiredtickets":      handleExistsExpiredTickets,
+	"existsexpiredaitickets":      handleExistsExpiredAiTickets,
 	"existsliveticket":          handleExistsLiveTicket,
+	"existsliveaiticket":          handleExistsLiveAiTicket,
 	"existslivetickets":         handleExistsLiveTickets,
+	"existsliveaitickets":         handleExistsLiveAiTickets,
 	"existsmempooltxs":          handleExistsMempoolTxs,
 	"generate":                  handleGenerate,
 	"getaddednodeinfo":          handleGetAddedNodeInfo,
@@ -1670,6 +1673,33 @@ func handleExistsExpiredTickets(s *rpcServer, cmd interface{}, closeChan <-chan 
 	return hex.EncodeToString([]byte(set)), nil
 }
 
+// handleExistsExpiredTickets implements the existsexpiredtickets command.
+func handleExistsExpiredAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.ExistsExpiredAiTicketsCmd)
+
+	hashes, err := hcjson.DecodeConcatenatedHashes(c.TxHashBlob)
+	if err != nil {
+		return nil, err
+	}
+
+	exists := s.server.blockManager.chain.CheckExpiredTickets(hashes)
+	if len(exists) != len(hashes) {
+		return nil, rpcInvalidError("Invalid expired ticket count "+
+			"got %v, want %v", len(exists), len(hashes))
+	}
+
+	// Convert the slice of bools into a compacted set of bit flags.
+	set := bitset.NewBytes(len(hashes))
+	for i := range exists {
+		if exists[i] {
+			set.Set(i)
+		}
+	}
+
+	return hex.EncodeToString([]byte(set)), nil
+}
+
+
 // handleExistsLiveTicket implements the existsliveticket command.
 func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.ExistsLiveTicketCmd)
@@ -1682,6 +1712,18 @@ func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	return s.server.blockManager.chain.CheckLiveTicket(*hash), nil
 }
 
+// handleExistsLiveTicket implements the existsliveticket command.
+func handleExistsLiveAiTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.ExistsLiveTicketCmd)
+
+	hash, err := chainhash.NewHashFromStr(c.TxHash)
+	if err != nil {
+		return nil, rpcDecodeHexError(c.TxHash)
+	}
+
+	return s.server.blockManager.chain.CheckLiveAiTicket(*hash), nil
+}
+
 // handleExistsLiveTickets implements the existslivetickets command.
 func handleExistsLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.ExistsLiveTicketsCmd)
@@ -1692,6 +1734,31 @@ func handleExistsLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	exists := s.server.blockManager.chain.CheckLiveTickets(hashes)
+	if len(exists) != len(hashes) {
+		return nil, rpcInvalidError("Invalid live ticket count got "+
+			"%v, want %v", len(exists), len(hashes))
+	}
+
+	// Convert the slice of bools into a compacted set of bit flags.
+	set := bitset.NewBytes(len(hashes))
+	for i := range exists {
+		if exists[i] {
+			set.Set(i)
+		}
+	}
+
+	return hex.EncodeToString([]byte(set)), nil
+}
+
+func handleExistsLiveAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.ExistsLiveAiTicketsCmd)
+
+	hashes, err := hcjson.DecodeConcatenatedHashes(c.TxHashBlob)
+	if err != nil {
+		return nil, err
+	}
+
+	exists := s.server.blockManager.chain.CheckLiveAiTickets(hashes)
 	if len(exists) != len(hashes) {
 		return nil, rpcInvalidError("Invalid live ticket count got "+
 			"%v, want %v", len(exists), len(hashes))

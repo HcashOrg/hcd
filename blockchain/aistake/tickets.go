@@ -104,6 +104,10 @@ func (sn *Node) ExistsLiveTicket(ticket chainhash.Hash) bool {
 	return sn.liveTickets.Has(tickettreap.Key(ticket))
 }
 
+func (sn *Node) ExistsLiveAiTicket(ticket chainhash.Hash) bool {
+	return sn.liveTickets.Has(tickettreap.Key(ticket))
+}
+
 // LiveTickets returns the list of live tickets for this stake node.
 func (sn *Node) LiveTickets() []chainhash.Hash {
 	tickets := make([]chainhash.Hash, sn.liveTickets.Len())
