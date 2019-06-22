@@ -14,8 +14,8 @@ type GetStakeDifficultyResult struct {
 }
 
 type GetAiStakeDifficultyResult struct {
-	AiCurrentStakeDifficulty float64 `json:"aicurrent"`
-	AiNextStakeDifficulty    float64 `json:"ainext"`
+	CurrentAiStakeDifficulty float64 `json:"aicurrent"`
+	NextAiStakeDifficulty    float64 `json:"ainext"`
 }
 
 // VersionCount models a generic version:count tuple.

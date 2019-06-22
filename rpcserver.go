@@ -225,6 +225,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getrawmempool":             handleGetRawMempool,
 	"getrawtransaction":         handleGetRawTransaction,
 	"getstakedifficulty":        handleGetStakeDifficulty,
+	"getaistakedifficulty":        handleGetAiStakeDifficulty,
 	"getstakeversioninfo":       handleGetStakeVersionInfo,
 	"getstakeversions":          handleGetStakeVersions,
 	"getticketpoolvalue":        handleGetTicketPoolValue,
@@ -3821,6 +3822,33 @@ func handleGetStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan st
 	return sDiffResult, nil
 }
 
+// handleGetStakeDifficulty implements the getstakedifficulty command.
+func handleGetAiStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	best := s.chain.BestSnapshot()
+	blockHeader, err := s.chain.HeaderByHeight(best.Height)
+	if err != nil {
+		rpcsLog.Errorf("Error getting block: %v", err)
+		return nil, &hcjson.RPCError{
+			Code:    hcjson.ErrRPCDifficulty,
+			Message: "Error getting stake difficulty: " + err.Error(),
+		}
+	}
+	currentSdiff := hcutil.Amount(blockHeader.AiSBits)
+
+	nextSdiff, err := s.server.blockManager.CalcNextRequiredStakeDifficulty()
+	if err != nil {
+		return nil, rpcInternalError("Could not calculate next stake "+
+			"difficulty "+err.Error(), "")
+	}
+	nextSdiffAmount := hcutil.Amount(nextSdiff)
+
+	sDiffResult := &hcjson.GetAiStakeDifficultyResult{
+		CurrentAiStakeDifficulty: currentSdiff.ToCoin(),
+		NextAiStakeDifficulty:    nextSdiffAmount.ToCoin(),
+	}
+
+	return sDiffResult, nil
+}
 // convertVersionMap translates a map[int]int into a sorted array of
 // VersionCount that contains the same information.
 func convertVersionMap(m map[int]int) []hcjson.VersionCount {

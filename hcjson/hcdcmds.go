@@ -379,6 +379,7 @@ func init() {
 	MustRegisterCmd("existsmempooltxs", (*ExistsMempoolTxsCmd)(nil), flags)
 	MustRegisterCmd("getcoinsupply", (*GetCoinSupplyCmd)(nil), flags)
 	MustRegisterCmd("getstakedifficulty", (*GetStakeDifficultyCmd)(nil), flags)
+	MustRegisterCmd("getaistakedifficulty", (*GetAiStakeDifficultyCmd)(nil), flags)
 	MustRegisterCmd("getstakeversioninfo", (*GetStakeVersionInfoCmd)(nil), flags)
 	MustRegisterCmd("getstakeversions", (*GetStakeVersionsCmd)(nil), flags)
 	MustRegisterCmd("getticketpoolvalue", (*GetTicketPoolValueCmd)(nil), flags)

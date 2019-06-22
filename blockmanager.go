@@ -168,10 +168,19 @@ type calcNextReqStakeDifficultyResponse struct {
 	err             error
 }
 
+type calcNextReqAiStakeDifficultyResponse struct {
+	aiStakeDifficulty int64
+	err             error
+}
+
 // calcNextReqStakeDifficultyMsg is a message type to be sent across the message
 // channel for requesting the required stake difficulty of the next block.
 type calcNextReqStakeDifficultyMsg struct {
 	reply chan calcNextReqStakeDifficultyResponse
+}
+
+type calcNextReqAiStakeDifficultyMsg struct {
+	reply chan calcNextReqAiStakeDifficultyResponse
 }
 
 // getGenerationResponse is a response sent to the reply channel of a
@@ -2652,7 +2661,6 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 				"for mining state vote %v: %v",
 				vh, err.Error())
 		}
-
 		p.requestedTxns[*vh] = struct{}{}
 		b.requestedTxns[*vh] = struct{}{}
 		b.requestedEverTxns[*vh] = 0
@@ -2703,6 +2711,13 @@ func (b *blockManager) CalcNextRequiredStakeDifficulty() (int64, error) {
 	b.msgChan <- calcNextReqStakeDifficultyMsg{reply: reply}
 	response := <-reply
 	return response.stakeDifficulty, response.err
+}
+
+func (b *blockManager) CalcNextRequiredAiStakeDifficulty() (int64, error) {
+	reply := make(chan calcNextReqAiStakeDifficultyResponse)
+	b.msgChan <- calcNextReqAiStakeDifficultyMsg{reply: reply}
+	response := <-reply
+	return response.aiStakeDifficulty, response.err
 }
 
 // ForceReorganization returns the hashes of all the children of a parent for the

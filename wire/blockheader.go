@@ -67,6 +67,7 @@ type BlockHeader struct {
 
 	// Stake difficulty target.
 	SBits int64
+	AiSBits int64
 
 	// Height is the block height in the block chain.
 	Height uint32
