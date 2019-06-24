@@ -113,6 +113,15 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 	_ = writeBlockHeader(buf, 0, h)
 
+/*
+if h.Height >= 146 {
+
+		r := bytes.NewReader(buf.Bytes())
+		var bhTest BlockHeader
+		readBlockHeader(r, uint32(h.Height), &bhTest)
+		fmt.Println("%v", bhTest)
+	}
+ */
 	return chainhash.HashH(buf.Bytes())
 }
 
@@ -211,9 +220,9 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // readBlockHeader reads a hcd block header from r.  See Deserialize for
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
-func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
+func readBlockHeader(r io.Reader, height uint32, bh *BlockHeader, ) error {
 
-	if bh.Height < 146 {
+	if height < 146 {
 		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 			&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,

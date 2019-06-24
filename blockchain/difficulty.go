@@ -869,7 +869,7 @@ func (b *BlockChain) calcNextRequiredAiStakeDifficultyV2(curNode *blockNode) (in
 
 	// Calculate and return the final next required difficulty.
 	curAiPoolSizeAll := int64(curNode.header.AiPoolSize) + immatureTickets
-	return calcNextStakeDiffV2(b.chainParams, nextHeight, curDiff,
+	return calcNextAiStakeDiffV2(b.chainParams, nextHeight, curDiff,
 		prevPoolSizeAll, curAiPoolSizeAll), nil
 }
 

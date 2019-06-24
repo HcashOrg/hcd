@@ -1018,6 +1018,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	if uint64(block.Height()) >= chainParams.AIEnableHeight {
 		ticketsPerBlock = int(b.chainParams.AiTicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 	}
+
 	txTreeRegularValid := hcutil.IsFlagSet16(msgBlock.Header.VoteBits,
 		hcutil.BlockValid)
 
@@ -1261,6 +1262,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 	// Store the number of SSGen tx and votes to check later.
 	numSSGenTx := 0
+	numAiSSGenTx := 0
 	voteYea := 0
 	voteNay := 0
 
@@ -1297,8 +1299,11 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		msgTx := staketx.MsgTx()
 		isAiSSGen, _ := aistake.IsAiSSGen(msgTx);
 		if is, _ := stake.IsSSGen(msgTx); is || isAiSSGen{
-			numSSGenTx++
-
+			if isAiSSGen {
+				numAiSSGenTx++
+			}else{
+				numSSGenTx++
+			}
 			// Check and store the vote for TxTreeRegular.
 			ssGenVoteBits := stake.SSGenVoteBits(msgTx)
 			if hcutil.IsFlagSet16(ssGenVoteBits, hcutil.BlockValid) {
@@ -1400,12 +1405,16 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check and make sure that we have the same number of SSRtx tx as
 	//    we do revocations.
 	numSSRtxTx := 0
+	numAiSSRtxTx := 0
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
 		isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx);
 		if is, _ := stake.IsSSRtx(msgTx); is || isAiSSRtx{
-			numSSRtxTx++
-
+			if isAiSSRtx{
+				numAiSSRtxTx++
+			}else{
+				numSSRtxTx++
+			}
 			// Grab the input SStx hash from the inputs of the
 			// transaction.
 			sstxIn := msgTx.TxIn[0] // sstx input
@@ -1443,7 +1452,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	//    this indicates that there was some sort of non-standard stake tx
 	//    present in the block.  This is already checked before, but check
 	//    again here.
-	stakeTxSum := numSStxTx + numSSGenTx + numSSRtxTx
+	stakeTxSum := numSStxTx + numSSGenTx + numSSRtxTx + numAiSStxTx + numAiSSGenTx + numAiSSRtxTx
 
 	if stakeTxSum != len(stakeTransactions) {
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+

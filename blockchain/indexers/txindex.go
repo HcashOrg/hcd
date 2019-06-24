@@ -254,7 +254,10 @@ func dbAddTxIndexEntries(dbTx database.Tx, block, parent *hcutil.Block, blockID 
 	if approvesParent(block) && block.Height() > 1 {
 		// The offset and length of the transactions within the
 		// serialized parent block.
-		txLocs, _, err := parent.TxLoc()
+		if block.Height() >= 146 {
+			fmt.Println("test approvesParent")
+		}
+		txLocs, _, err := parent.TxLoc(uint32(parent.Height()))
 		if err != nil {
 			return err
 		}
@@ -274,7 +277,7 @@ func dbAddTxIndexEntries(dbTx database.Tx, block, parent *hcutil.Block, blockID 
 	//
 	// The offset and length of the stake transactions within the serialized
 	// block.
-	_, stakeTxLocs, err := block.TxLoc()
+	_, stakeTxLocs, err := block.TxLoc(uint32(block.Height()))
 	if err != nil {
 		return err
 	}
