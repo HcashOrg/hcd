@@ -733,8 +733,8 @@ func calcNextAiStakeDiffV2(params *chaincfg.Params, nextHeight, curDiff, prevPoo
 	if nextDiff > maximumStakeDiff {
 		nextDiff = maximumStakeDiff
 	}
-	if nextDiff < params.MinimumStakeDiff {
-		nextDiff = params.MinimumStakeDiff
+	if nextDiff < params.MinimumAiStakeDiff {
+		nextDiff = params.MinimumAiStakeDiff
 	}
 	return nextDiff
 }

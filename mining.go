@@ -1459,6 +1459,7 @@ mempoolLoop:
 	totalFees := int64(0)
 
 	numSStx := 0
+	numAiSStx := 0
 
 	foundWinningTickets := make(map[chainhash.Hash]bool, len(winningTickets))
 	for _, ticketHash := range winningTickets {
@@ -1473,46 +1474,52 @@ mempoolLoop:
 		tx := prioItem.tx
 
 		// Store if this is an SStx or not.
-		isSStx := prioItem.txType == stake.TxTypeSStx || prioItem.txType == stake.TxTypeAiSStx
+		isSStx := prioItem.txType == stake.TxTypeSStx
+		isAiSStx := prioItem.txType == stake.TxTypeAiSStx
 
 		// Store if this is an SSGen or not.
-		isSSGen := prioItem.txType == stake.TxTypeSSGen || prioItem.txType == stake.TxTypeAiSSGen
+		isSSGen := prioItem.txType == stake.TxTypeSSGen
+		isAiSSGen := prioItem.txType == stake.TxTypeAiSSGen
 
 		// Store if this is an SSRtx or not.
-		isSSRtx := prioItem.txType == stake.TxTypeSSRtx || prioItem.txType == stake.TxTypeAiSSRtx
+		isSSRtx := prioItem.txType == stake.TxTypeSSRtx
+		isAiSSRtx := prioItem.txType == stake.TxTypeAiSSRtx
 
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
-		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
-			// Skip if we already have too many SStx.
-			if isSStx && (numSStx >=
-				int(server.chainParams.AiMaxFreshStakePerBlock)) {
-				minrLog.Tracef("Skipping sstx %s because it would exceed "+
-					"the max number of sstx allowed in a block", tx.Hash())
-				logSkippedDeps(tx, deps)
-				continue
-			}
-		}else{
-			// Skip if we already have too many SStx.
-			if isSStx && (numSStx >=
-				int(server.chainParams.MaxFreshStakePerBlock)) {
-				minrLog.Tracef("Skipping sstx %s because it would exceed "+
-					"the max number of sstx allowed in a block", tx.Hash())
-				logSkippedDeps(tx, deps)
-				continue
-			}
+		if isAiSStx && (numAiSStx >=
+			int(server.chainParams.AiMaxFreshStakePerBlock)) {
+			minrLog.Tracef("Skipping sstx %s because it would exceed "+
+				"the max number of sstx allowed in a block", tx.Hash())
+			logSkippedDeps(tx, deps)
+			continue
+		}
+
+		// Skip if we already have too many SStx.
+		if isSStx && (numSStx >=
+			int(server.chainParams.MaxFreshStakePerBlock)) {
+			minrLog.Tracef("Skipping sstx %s because it would exceed "+
+				"the max number of sstx allowed in a block", tx.Hash())
+			logSkippedDeps(tx, deps)
+			continue
 		}
 		// Skip if the SStx commit value is below the value required by the
 		// stake diff.
 		if isSStx && (tx.MsgTx().TxOut[0].Value < reqStakeDifficulty) {
+			continue
+		} else if isAiSStx && (tx.MsgTx().TxOut[0].Value < reqAiStakeDifficulty) {
 			continue
 		}
 
 		// Skip all missed tickets that we've never heard of.
 		if isSSRtx {
 			ticketHash := &tx.MsgTx().TxIn[0].PreviousOutPoint.Hash
-
+			if !hashInSlice(*ticketHash, missedTickets) {
+				continue
+			}
+		}else if isAiSSRtx {
+			ticketHash := &tx.MsgTx().TxIn[0].PreviousOutPoint.Hash
 			if !hashInSlice(*ticketHash, missedTickets) {
 				continue
 			}
@@ -1532,7 +1539,7 @@ mempoolLoop:
 
 		// Enforce maximum signature operations per block.  Also check
 		// for overflow.
-		numSigOps := int64(blockchain.CountSigOps(tx, false, isSSGen))
+		numSigOps := int64(blockchain.CountSigOps(tx, false, isSSGen || isAiSSGen))
 		if blockSigOps+numSigOps < blockSigOps ||
 			blockSigOps+numSigOps > blockchain.MaxSigOpsPerBlock {
 			minrLog.Tracef("Skipping tx %s because it would "+
@@ -1544,7 +1551,7 @@ mempoolLoop:
 		// This isn't very expensive, but we do this check a number of times.
 		// Consider caching this in the mempool in the future. - Hcd
 		numP2SHSigOps, err := blockchain.CountP2SHSigOps(tx, false,
-			isSSGen, blockUtxos)
+			isSSGen || isAiSSGen, blockUtxos)
 		if err != nil {
 			minrLog.Tracef("Skipping tx %s due to error in "+
 				"CountP2SHSigOps: %v", tx.Hash(), err)
@@ -1563,7 +1570,7 @@ mempoolLoop:
 
 		// Check to see if the SSGen tx actually uses a ticket that is
 		// valid for the next block.
-		if isSSGen {
+		if isSSGen || isAiSSGen{
 			if foundWinningTickets[tx.MsgTx().TxIn[1].PreviousOutPoint.Hash] {
 				continue
 			}
@@ -1668,8 +1675,10 @@ mempoolLoop:
 		// are allowed.
 		if isSStx {
 			numSStx++
+		} else if isAiSStx {
+			numAiSStx++
 		}
-		if isSSGen {
+		if isSSGen || isAiSSGen{
 			foundWinningTickets[tx.MsgTx().TxIn[1].PreviousOutPoint.Hash] = true
 		}
 
@@ -1983,7 +1992,7 @@ mempoolLoop:
 	// fees according to the number of voters.
 	totalFees *= int64(voters)
 	if uint64(nextBlockHeight) >= server.chainParams.AIEnableHeight {
-		totalFees /= int64(server.chainParams.AiTicketsPerBlock)
+		totalFees /= int64(server.chainParams.TicketsPerBlock + server.chainParams.AiTicketsPerBlock)
 	}else{
 		totalFees /= int64(server.chainParams.TicketsPerBlock)
 	}

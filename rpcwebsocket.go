@@ -1069,7 +1069,8 @@ func (*wsNotificationManager) notifyStakeDifficulty(
 	// Notify interested websocket clients about the connected block.
 	ntfn := hcjson.NewStakeDifficultyNtfn(sdnd.BlockHash.String(),
 		int32(sdnd.BlockHeight),
-		sdnd.StakeDifficulty)
+		sdnd.StakeDifficulty,
+		sdnd.AiStakeDifficulty)
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {

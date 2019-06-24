@@ -93,6 +93,8 @@ type Config struct {
 	// This function must be safe for concurrent access.
 	NextStakeDifficulty func() (int64, error)
 
+	NextAiStakeDifficulty func() (int64, error)
+
 	// FetchUtxoView defines the function to use to fetch unspent
 	// transaction output information.
 	FetchUtxoView func(*hcutil.Tx, bool) (*blockchain.UtxoViewpoint, error)
@@ -890,13 +892,28 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 			// rule error.
 			return nil, err
 		}
-
-		if msgTx.TxOut[0].Value < sDiff {
-			str := fmt.Sprintf("transaction %v has not enough funds "+
-				"to meet stake difficuly (ticket diff %v < next diff %v)",
-				txHash, msgTx.TxOut[0].Value, sDiff)
-			return nil, txRuleError(wire.RejectInsufficientFee, str)
+		sAiDiff, err := mp.cfg.NextAiStakeDifficulty()
+		if err != nil {
+			// This is an unexpected error so don't turn it into a
+			// rule error.
+			return nil, err
 		}
+		if txType == stake.TxTypeAiSStx {
+			if msgTx.TxOut[0].Value < sAiDiff {
+				str := fmt.Sprintf("transaction %v has not enough funds "+
+					"to meet ai stake difficuly (ticket diff %v < next diff %v)",
+					txHash, msgTx.TxOut[0].Value, sAiDiff)
+				return nil, txRuleError(wire.RejectInsufficientFee, str)
+			}
+		}else{
+			if msgTx.TxOut[0].Value < sDiff {
+				str := fmt.Sprintf("transaction %v has not enough funds "+
+					"to meet stake difficuly (ticket diff %v < next diff %v)",
+					txHash, msgTx.TxOut[0].Value, sDiff)
+				return nil, txRuleError(wire.RejectInsufficientFee, str)
+			}
+		}
+
 	}
 
 	// Handle stake transaction double spending exceptions.
