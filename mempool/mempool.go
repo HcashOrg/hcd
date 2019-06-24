@@ -1634,7 +1634,7 @@ func New(cfg *Config) *TxPool {
 		votes:         make(map[chainhash.Hash][]VoteTx),
 		lockPool: lockPool{
 			txLockPool:    make(map[chainhash.Hash]*TxLockDesc),
-			lockOutpoints: make(map[wire.OutPoint]*hcutil.Tx),
+			lockOutpoints: make(map[wire.OutPoint]*hcutil.InstantTx),
 		},
 	}
 }

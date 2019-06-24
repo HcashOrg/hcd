@@ -1290,7 +1290,7 @@ func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxV
 	}
 }
 
-// pushTxMsg sends a instantTx message for the provided transaction hash to the
+// pushTxMsg sends a Tx message for the provided transaction hash to the
 // connected peer.  An error is returned if the transaction hash is not known.
 func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
@@ -1319,6 +1319,37 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 
 	return nil
 }
+
+
+func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
+	// Attempt to fetch the requested transaction from the pool.  A
+	// call could be made to check for existence first, but simply trying
+	// to fetch a missing transaction results in the same behavior.
+	// Do not allow peers to request transactions already in a block
+	// but are unconfirmed, as they may be expensive. Restrict that
+	// to the authenticated RPC only.
+
+	instantTx, err := s.txMemPool.FetchInstantTx(hash, false)
+	if err != nil {
+		peerLog.Tracef("Unable to fetch instantTx %v from transaction "+
+			"pool: %v", hash, err)
+
+		if doneChan != nil {
+			doneChan <- struct{}{}
+		}
+		return err
+	}
+
+	// Once we have fetched data wait for any previous operation to finish.
+	if waitChan != nil {
+		<-waitChan
+	}
+
+	sp.QueueMessage(instantTx.MsgTx(), doneChan)
+
+	return nil
+}
+
 
 // pushBlockMsg sends a block message for the provided block hash to the
 // connected peer.  An error is returned if the block hash is not known.

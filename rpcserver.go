@@ -5242,6 +5242,8 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 		return nil,err
 	}
 
+	s.server.txMemPool.MayBeAddToLockPool(instantTx,0)
+
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 	instantTxs = append(instantTxs, instantTx)

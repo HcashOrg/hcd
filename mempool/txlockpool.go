@@ -19,7 +19,7 @@ const (
 )
 
 type TxLockDesc struct {
-	Tx *hcutil.Tx
+	Tx *hcutil.InstantTx
 	// Height is the block height when the entry was added to the the source
 	// pool.
 	AddHeight int64
@@ -29,11 +29,11 @@ type TxLockDesc struct {
 
 type lockPool struct {
 	txLockPool    map[chainhash.Hash]*TxLockDesc //for instantsend lock tx pool
-	lockOutpoints map[wire.OutPoint]*hcutil.Tx
+	lockOutpoints map[wire.OutPoint]*hcutil.InstantTx
 }
 
 //we will update tx state according the mined height
-func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
+func (mp *TxPool) modifyLockTransaction(tx *hcutil.InstantTx, height int64) {
 	msgTx := tx.MsgTx()
 	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
@@ -51,7 +51,7 @@ func (mp *TxPool) modifyLockTransaction(tx *hcutil.Tx, height int64) {
 	}
 }
 
-func (mp *TxPool) ModifyLockTransaction(tx *hcutil.Tx, height int64) {
+func (mp *TxPool) ModifyLockTransaction(tx *hcutil.InstantTx, height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
@@ -86,7 +86,7 @@ func (mp *TxPool) isTxLockExist(hash *chainhash.Hash) bool {
 }
 
 //Is txVin  in locked?
-func (mp *TxPool) isTxLockInExist(outPoint *wire.OutPoint) (*hcutil.Tx, bool) {
+func (mp *TxPool) isTxLockInExist(outPoint *wire.OutPoint) (*hcutil.InstantTx, bool) {
 	if txLock, exists := mp.lockOutpoints[*outPoint]; exists {
 		return txLock, true
 	}
@@ -150,7 +150,7 @@ func (mp *TxPool) CheckConflictWithTxLockPool(block *hcutil.Block) (bool, error)
 }
 
 //remove txlock which is conflict with tx
-func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
+func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.InstantTx) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
@@ -172,9 +172,15 @@ func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 
 }
 
+func (mp *TxPool)MayBeAddToLockPool(tx *hcutil.InstantTx, height int64)  {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
+	mp.maybeAddtoLockPool(tx,height)
+}
+
+
 //this is called after insert to mempool
-func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
-	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
+func (mp *TxPool) maybeAddtoLockPool(tx *hcutil.InstantTx, height int64) {
 
 	//if exist just return ,or will rewrite the state of this txlock
 	if mp.isTxLockExist(tx.Hash()) {
@@ -182,13 +188,7 @@ func (mp *TxPool) maybeAddtoLockPool(utxoView *blockchain.UtxoViewpoint,
 	}
 
 	msgTx := tx.MsgTx()
-	isLockTx := false
-	for _, txOut := range msgTx.TxOut {
-		if txscript.IsLockTx(txOut.PkScript) {
-			isLockTx = true
-			break
-		}
-	}
+	isLockTx:=txscript.IsInstantTx(msgTx)
 
 	if isLockTx {
 		mp.txLockPool[*tx.Hash()] = &TxLockDesc{Tx: tx, AddHeight: height, MineHeight: 0}
@@ -530,4 +530,27 @@ func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, 
 
 
 	return nil, nil
+}
+
+func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool) (*hcutil.InstantTx, error) {
+	// Protect concurrent access.
+	mp.mtx.RLock()
+	txDesc, exists := mp.txLockPool[*txHash]
+	mp.mtx.RUnlock()
+
+	if exists {
+		return txDesc.Tx, nil
+	}
+
+	tx,err:=mp.FetchTransaction(txHash,includeRecentBlock)
+	if err!=nil{
+		return nil,err
+	}
+	msgInstantTx:=wire.NewMsgInstantTx()
+	msgInstantTx.MsgTx=*tx.MsgTx()
+	instantTx:=hcutil.NewInstantTx(msgInstantTx)
+	instantTx.SetTree(tx.Tree())
+	instantTx.SetIndex(tx.Index())
+
+	return instantTx,nil
 }

@@ -815,6 +815,8 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 		return
 	}
 
+	b.server.txMemPool.MayBeAddToLockPool(instantTx,0)
+
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
 	instantTxs = append(instantTxs, instantTx)
@@ -2150,12 +2152,14 @@ out:
 			case processTransactionMsg: //handle rpc tx
 				acceptedTxs, err := b.server.txMemPool.ProcessTransaction(msg.tx,
 					msg.allowOrphans, msg.rateLimit, msg.allowHighFees)
+
 				msg.reply <- processTransactionResponse{
 					acceptedTxs: acceptedTxs,
 					err:         err,
 				}
 			case processInstantTxMsg: //handle rpc instanttx
 				missedParent, err := b.server.txMemPool.CheckInstantTx(msg.tx, msg.allowOrphans, msg.rateLimit, msg.allowHighFees)
+
 				msg.reply <- processInstantTxResponse{
 					missedParent: missedParent,
 					err:          err,
@@ -2202,16 +2206,7 @@ out:
 }
 
 
-func IsInstantTx(msgTx *wire.MsgTx) bool {
-	isLockTx := false
-	for _, txOut := range msgTx.TxOut {
-		if txscript.IsLockTx(txOut.PkScript) {
-			isLockTx = true
-			break
-		}
-	}
-	return isLockTx
-}
+
 
 
 // handleNotifyMsg handles notifications from blockchain.  It does things such
@@ -2357,11 +2352,11 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
-			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			//b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
 
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
-			b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
+			//b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
 		}
 		b.server.txMemPool.RemoveConfirmedLockTransaction(parentBlock.Height())
 
@@ -2380,7 +2375,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
 					var iv *wire.InvVect
-					if IsInstantTx(tx.MsgTx()) {
+					if txscript.IsInstantTx(tx.MsgTx()) {
 						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
 					} else {
 						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())
@@ -2461,7 +2456,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		// tx tree regular into the transaction pool.
 		for _, tx := range parentBlock.Transactions()[1:] {
 			//reinsert tx from disconnected block, now we can update locktx height to 0 in the txlockpool
-			b.server.txMemPool.ModifyLockTransaction(tx, 0)
+			//b.server.txMemPool.ModifyLockTransaction(tx, 0)
 
 			_, err := b.server.txMemPool.MaybeAcceptTransaction(tx, false, true)
 			if err != nil {

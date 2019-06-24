@@ -359,7 +359,16 @@ func IsLockTx(pkScript []byte) bool{
 	}
 	return false
 }
-
+func IsInstantTx(msgTx *wire.MsgTx) bool {
+	isLockTx := false
+	for _, txOut := range msgTx.TxOut {
+		if IsLockTx(txOut.PkScript) {
+			isLockTx = true
+			break
+		}
+	}
+	return isLockTx
+}
 // unparseScript reversed the action of parseScript and returns the
 // parsedOpcodes as a list of bytes
 func unparseScript(pops []parsedOpcode) ([]byte, error) {
