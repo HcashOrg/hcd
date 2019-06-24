@@ -1006,6 +1006,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	stakeTransactions := block.STransactions()
 	msgBlock := block.MsgBlock()
 	sbits := msgBlock.Header.SBits
+	aiSbits := msgBlock.Header.AiSBits
 	blockHash := block.Hash()
 	prevBlockHash := &msgBlock.Header.PrevBlock
 	poolSize := int(msgBlock.Header.PoolSize)
@@ -1118,12 +1119,12 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check to make sure we haven't exceeded max number of new SStx.
 
 	numSStxTx := 0
+	numAiSStxTx := 0
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
-		isAiSStx, _ := aistake.IsAiSStx(msgTx)
-		if is, _ := stake.IsSStx(msgTx); is || isAiSStx {
-			numSStxTx++
 
+		if is, _ := stake.IsSStx(msgTx); is{
+			numSStxTx++
 			// 1. Make sure that we're committing enough coins.
 			// Checked already when we check stake difficulty, so
 			// may not be needed.
@@ -1133,6 +1134,19 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 					"consensus: the amount committed in "+
 					"SStx %v was less than the sBits "+
 					"value %v", txHash, sbits)
+				return ruleError(ErrNotEnoughStake, errStr)
+			}
+		}else if is, _ := stake.IsAiSStx(msgTx); is{
+			numAiSStxTx++
+			// 1. Make sure that we're committing enough coins.
+			// Checked already when we check stake difficulty, so
+			// may not be needed.
+			if msgTx.TxOut[0].Value < aiSbits {
+				txHash := staketx.Hash()
+				errStr := fmt.Sprintf("Error in ai stake "+
+					"consensus: the amount committed in "+
+					"AISStx %v was less than the ai sBits "+
+					"value %v", txHash, aiSbits)
 				return ruleError(ErrNotEnoughStake, errStr)
 			}
 		}
@@ -1145,26 +1159,23 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check to make sure we haven't exceeded max number of new SStx.
 	// May not need this check, as the above one should fail if you
 	// overflow uint8.
-	if block.Height() >= int64(chainParams.AIEnableHeight) {
-		if numSStxTx > int(chainParams.AiMaxFreshStakePerBlock) {
-			errStr := fmt.Sprintf("Error in stake consensus: the number "+
-				"of SStx tx "+"in block %v was %v, overflowing the "+
-				"maximum allowed (255)", blockHash, numSStxTx)
-			return ruleError(ErrTooManySStxs, errStr)
-		}
-	}else{
-		if numSStxTx > int(chainParams.MaxFreshStakePerBlock) {
-			errStr := fmt.Sprintf("Error in stake consensus: the number "+
-				"of SStx tx "+"in block %v was %v, overflowing the "+
-				"maximum allowed (255)", blockHash, numSStxTx)
-			return ruleError(ErrTooManySStxs, errStr)
-		}
+	if numSStxTx > int(chainParams.MaxFreshStakePerBlock) {
+		errStr := fmt.Sprintf("Error in stake consensus: the number "+
+			"of SStx tx "+"in block %v was %v, overflowing the "+
+			"maximum allowed (255)", blockHash, numSStxTx)
+		return ruleError(ErrTooManySStxs, errStr)
 	}
 
+	if numAiSStxTx > int(chainParams.AiMaxFreshStakePerBlock) {
+		errStr := fmt.Sprintf("Error in stake consensus: the number "+
+			"of AiSStx tx "+"in block %v was %v, overflowing the "+
+			"maximum allowed (255)", blockHash, numAiSStxTx)
+		return ruleError(ErrTooManySStxs, errStr)
+	}
 
 	// Break if the stake system is otherwise disabled.
 	if block.Height() < stakeValidationHeight {
-		stakeTxSum := numSStxTx
+		stakeTxSum := numSStxTx + numAiSStxTx
 
 		// Check and make sure we're only including SStx in the stake
 		// tx tree.
@@ -1188,7 +1199,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		// Check the ticket pool size.
 		if parentAiStakeNode.PoolSize() != aiPoolSize {
 			errStr := fmt.Sprintf("Error in stake consensus: the "+
-				"poolsize in block %v was %v, however we "+
+				"ai poolsize in block %v was %v, however we "+
 				"expected %v", node.hash, aiPoolSize,
 				parentAiStakeNode.PoolSize())
 			return ruleError(ErrPoolSize, errStr)
