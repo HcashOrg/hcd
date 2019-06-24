@@ -95,6 +95,12 @@ func (b *BlockChain) LotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Ha
 	return b.lotteryAiDataForBlock(hash)
 }
 
+func (b *BlockChain) LotteryAiDataForInstantTx(hash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
+	b.chainLock.Lock()
+	defer b.chainLock.Unlock()
+
+	return b.lotteryAiDataForBlock(hash)
+}
 
 
 // LiveTickets returns all currently live tickets from the stake database.

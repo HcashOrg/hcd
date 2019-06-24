@@ -5238,7 +5238,7 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 
 	//TODO check conflict with mempool
 	missedParent,err:=s.server.blockManager.ProcessInstantTx(instantTx,false,false,false)
-	if err!=nil||len(missedParent)==0{
+	if err!=nil||len(missedParent)!=0{
 		return nil,err
 	}
 
@@ -5279,7 +5279,9 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	instantTxHash := msgInstantTxVote.InstantTxHash
 	ticketHash := msgInstantTxVote.TicketHash
 	//todo check tickets
-	tickets, _, _, err := s.chain.LotteryAiDataForBlock(&instantTxHash)
+	//tickets, _, _, err := s.chain.LotteryAiDataForBlock(&instantTxHash)
+	b:=s.chain.BestPrevHash()
+	tickets, _, _, err := s.chain.LotteryAiDataForInstantTx(&b)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {

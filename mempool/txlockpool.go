@@ -72,6 +72,11 @@ func (mp *TxPool) RemoveConfirmedLockTransaction(height int64) {
 	}
 }
 
+func (mp *TxPool)IsTxLockExist(hash *chainhash.Hash) bool {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+	return mp.isTxLockExist(hash)
+}
 //Is tx in  locked?
 func (mp *TxPool) isTxLockExist(hash *chainhash.Hash) bool {
 	if _, exists := mp.txLockPool[*hash]; exists {

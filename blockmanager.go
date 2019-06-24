@@ -260,9 +260,8 @@ type processTransactionResponse struct {
 
 type processInstantTxResponse struct {
 	missedParent []*chainhash.Hash
-	err         error
+	err          error
 }
-
 
 // processTransactionMsg is a message type to be sent across the message
 // channel for requesting a transaction to be processed through the block
@@ -282,8 +281,6 @@ type processInstantTxMsg struct {
 	allowHighFees bool
 	reply         chan processInstantTxResponse
 }
-
-
 
 // isCurrentMsg is a message type to be sent across the message channel for
 // requesting whether or not the block manager believes it is synced with
@@ -365,14 +362,14 @@ type chainState struct {
 	newestHash          *chainhash.Hash
 	newestHeight        int64
 	nextFinalState      [6]byte
-	nextAiFinalState      [6]byte
+	nextAiFinalState    [6]byte
 	nextPoolSize        uint32
-	nextAiPoolSize        uint32
+	nextAiPoolSize      uint32
 	nextStakeDifficulty int64
 	winningTickets      []chainhash.Hash
-	winningAiTickets      []chainhash.Hash
+	winningAiTickets    []chainhash.Hash
 	missedTickets       []chainhash.Hash
-	missedAiTickets       []chainhash.Hash
+	missedAiTickets     []chainhash.Hash
 	curPrevHash         chainhash.Hash
 	pastMedianTime      time.Time
 	stakeVersion        uint32
@@ -812,12 +809,11 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
 
-	missedParent,err:=b.ProcessInstantTx(instantTx,false,false,false)
-	if err!=nil||len(missedParent)!=0{
+	missedParent, err := b.server.txMemPool.CheckInstantTx(instantTx, false, false, false)
+	if err != nil || len(missedParent) != 0 {
 		bmgrLog.Errorf("Failed to process instanttx : %v", err)
 		return
 	}
-
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
@@ -970,7 +966,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
-	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+	if uint64(template.Block.Header.Height) >= b.server.chainParams.AIEnableHeight {
 		oldVoteMap = make(map[chainhash.Hash]struct{},
 			int(b.server.chainParams.AiTicketsPerBlock))
 	}
@@ -983,7 +979,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 			mstx := stx.MsgTx()
 			txType := stake.DetermineTxType(mstx)
 			if txType == stake.TxTypeSSGen ||
-			txType == stake.TxTypeAiSSGen {
+				txType == stake.TxTypeAiSSGen {
 				ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
 				oldVoteMap[ticketH] = struct{}{}
 				newVotes = append(newVotes, stx)
@@ -991,12 +987,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 
 			// Create a list of old tickets and revocations
 			// while we're in this loop.
-			if txType == stake.TxTypeSStx||
-			txType == stake.TxTypeAiSStx {
+			if txType == stake.TxTypeSStx ||
+				txType == stake.TxTypeAiSStx {
 				oldTickets = append(oldTickets, stx)
 			}
 			if txType == stake.TxTypeSSRtx ||
-			txType == stake.TxTypeAiSSRtx {
+				txType == stake.TxTypeAiSSRtx {
 				oldRevocations = append(oldRevocations, stx)
 			}
 		}
@@ -1014,7 +1010,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// Check the length of the reconstructed voter list for
 	// integrity.
 	votesTotal := len(newVotes)
-	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+	if uint64(template.Block.Header.Height) >= b.server.chainParams.AIEnableHeight {
 		if votesTotal > int(b.server.chainParams.AiTicketsPerBlock) {
 			bmgrLog.Warnf("error found while adding hidden votes "+
 				"from block %v to the old block template: %v max "+
@@ -1023,7 +1019,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 				votesTotal)
 			return
 		}
-	}else{
+	} else {
 		if votesTotal > int(b.server.chainParams.TicketsPerBlock) {
 			bmgrLog.Warnf("error found while adding hidden votes "+
 				"from block %v to the old block template: %v max "+
@@ -1033,7 +1029,6 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 			return
 		}
 	}
-
 
 	// Clear the old stake transactions and begin inserting the
 	// new vote list along with all the old transactions. Do this
@@ -1365,8 +1360,8 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 					"data for new best block: %v", err)
 			}
 
-			b.updateChainState(best.Hash, best.Height, finalState,aiFinalState,
-				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, winningTickets,winningAiTickets,
+			b.updateChainState(best.Hash, best.Height, finalState, aiFinalState,
+				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, winningTickets, winningAiTickets,
 				missedTickets, missedAiTickets, curPrevHash)
 
 			// Update this peer's latest block height, for future
@@ -1627,6 +1622,21 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 			return false, err
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
+	case wire.InvTypeInstantTx:
+		if b.server.txMemPool.IsTxLockExist(&invVect.Hash) {
+			return true, nil
+		}
+		if b.server.txMemPool.HaveTransaction(&invVect.Hash) {
+			return true, nil
+		}
+
+		// Check if the transaction exists from the point of view of the
+		// end of the main chain.
+		entry, err := b.chain.FetchUtxoEntry(&invVect.Hash)
+		if err != nil {
+			return false, err
+		}
+		return entry != nil && !entry.IsFullySpent(), nil
 	}
 
 	// The requested inventory is is an unsupported type, so just claim
@@ -1678,7 +1688,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 	// we already have and request more blocks to prevent them.
 	for i, iv := range invVects {
 		// Ignore unsupported inventory types.
-		if iv.Type != wire.InvTypeBlock && iv.Type != wire.InvTypeTx {
+		if iv.Type != wire.InvTypeBlock && iv.Type != wire.InvTypeTx && iv.Type != wire.InvTypeInstantTx && iv.Type != wire.InvTypeInstantTxVote {
 			continue
 		}
 
@@ -1700,7 +1710,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 			continue
 		}
 		if !haveInv {
-			if iv.Type == wire.InvTypeTx {
+			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx {
 				// Skip the transaction if it has already been
 				// rejected.
 				if _, exists := b.rejectedTxns[iv.Hash]; exists {
@@ -1785,7 +1795,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 				numRequested++
 			}
 
-		case wire.InvTypeTx:
+		case wire.InvTypeTx, wire.InvTypeInstantTx:
 			// Request the transaction if there is not already a
 			// pending request.
 			if _, exists := b.requestedTxns[iv.Hash]; !exists {
@@ -1948,9 +1958,9 @@ out:
 					b.updateChainState(best.Hash,
 						best.Height,
 						finalState, aiFinalState,
-						uint32(poolSize),uint32(aiPoolSize),
+						uint32(poolSize), uint32(aiPoolSize),
 						nextStakeDiff,
-						winningTickets,winningAiTickets,
+						winningTickets, winningAiTickets,
 						missedTickets, missedAiTickets,
 						curPrevHash)
 				}
@@ -2116,11 +2126,11 @@ out:
 
 					b.updateChainState(best.Hash,
 						best.Height,
-						finalState,aiFinalState,
+						finalState, aiFinalState,
 						uint32(poolSize), uint32(aiPoolSize),
 						nextStakeDiff,
-						winningTickets,winningAiTickets,
-						missedTickets,missedAiTickets,
+						winningTickets, winningAiTickets,
+						missedTickets, missedAiTickets,
 						curPrevHash)
 				}
 
@@ -2144,11 +2154,11 @@ out:
 					acceptedTxs: acceptedTxs,
 					err:         err,
 				}
-			case processInstantTxMsg://handle rpc instanttx
-				missedParent,err:=b.server.txMemPool.CheckInstantTx(msg.tx,msg.allowOrphans,msg.rateLimit,msg.allowHighFees)
-				msg.reply<-processInstantTxResponse{
-					missedParent:missedParent,
-					err:err,
+			case processInstantTxMsg: //handle rpc instanttx
+				missedParent, err := b.server.txMemPool.CheckInstantTx(msg.tx, msg.allowOrphans, msg.rateLimit, msg.allowHighFees)
+				msg.reply <- processInstantTxResponse{
+					missedParent: missedParent,
+					err:          err,
 				}
 			case isCurrentMsg:
 				msg.reply <- b.current()
@@ -2249,7 +2259,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 				bmgrLog.Errorf("Couldn't calculate winning tickets for "+
 					"accepted block %v: %v", block.Hash(), err.Error())
 			} else {
-				if err2 == nil{
+				if err2 == nil {
 					wt = append(wt, aiwt...)
 				}
 				if !beenNotified {
@@ -2356,7 +2366,12 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			// longer needing rebroadcasting.
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
-					iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
+					var iv *wire.InvVect
+					if hcutil.IsInstantTx(tx.MsgTx()) {
+						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
+					} else {
+						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())
+					}
 					b.server.RemoveRebroadcastInventory(iv)
 				}
 			}
@@ -2660,6 +2675,10 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 			continue
 		}
 
+		if b.server.txMemPool.IsTxLockExist(vh){
+			continue
+		}
+
 		// Check if the transaction exists from the point of view of the
 		// end of the main chain.
 		entry, err := b.chain.FetchUtxoEntry(vh)
@@ -2793,8 +2812,6 @@ func (b *blockManager) ProcessTransaction(tx *hcutil.Tx, allowOrphans bool,
 	return response.acceptedTxs, response.err
 }
 
-
-
 func (b *blockManager) ProcessInstantTx(tx *hcutil.InstantTx, allowOrphans bool,
 	rateLimit bool, allowHighFees bool) ([]*chainhash.Hash, error) {
 	reply := make(chan processInstantTxResponse, 1)
@@ -2803,7 +2820,6 @@ func (b *blockManager) ProcessInstantTx(tx *hcutil.InstantTx, allowOrphans bool,
 	response := <-reply
 	return response.missedParent, response.err
 }
-
 
 // IsCurrent returns whether or not the block manager believes it is synced with
 // the connected peers.
@@ -2943,10 +2959,10 @@ func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockMan
 	bm.updateChainState(best.Hash,
 		best.Height,
 		fs, aifs,
-		uint32(ps),uint32(aips),
+		uint32(ps), uint32(aips),
 		nextStakeDiff,
-		wt,aiwt,
-		missedTickets,missedAiTickets,
+		wt, aiwt,
+		missedTickets, missedAiTickets,
 		curPrevHash)
 	bm.lotteryDataBroadcast = make(map[chainhash.Hash]struct{})
 

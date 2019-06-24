@@ -2,6 +2,7 @@ package hcutil
 
 import (
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
 )
 
@@ -54,3 +55,14 @@ func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 //	// Return the cached transaction.
 //	return instantTx.msgTx
 //}
+
+func IsInstantTx(msgTx *wire.MsgTx) bool {
+	isLockTx := false
+	for _, txOut := range msgTx.TxOut {
+		if txscript.IsLockTx(txOut.PkScript) {
+			isLockTx = true
+			break
+		}
+	}
+	return isLockTx
+}
