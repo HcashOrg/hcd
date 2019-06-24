@@ -2201,6 +2201,19 @@ out:
 	bmgrLog.Trace("Block handler done")
 }
 
+
+func IsInstantTx(msgTx *wire.MsgTx) bool {
+	isLockTx := false
+	for _, txOut := range msgTx.TxOut {
+		if txscript.IsLockTx(txOut.PkScript) {
+			isLockTx = true
+			break
+		}
+	}
+	return isLockTx
+}
+
+
 // handleNotifyMsg handles notifications from blockchain.  It does things such
 // as request orphan block parents and relay accepted blocks to connected peers.
 func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
@@ -2367,7 +2380,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
 					var iv *wire.InvVect
-					if hcutil.IsInstantTx(tx.MsgTx()) {
+					if IsInstantTx(tx.MsgTx()) {
 						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
 					} else {
 						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())
