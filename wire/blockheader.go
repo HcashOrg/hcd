@@ -203,11 +203,19 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
 func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
-	return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.AiFinalState, &bh.Voters,&bh.AiVoters,
-		&bh.FreshStake, &bh.AiFreshStake, &bh.Revocations, &bh.AiRevocations, &bh.PoolSize, &bh.AiPoolSize, &bh.Bits,
-		&bh.SBits, &bh.AiSBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+	if bh.Height < 146 {
+		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
+			&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
+			&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
+			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+	}else {
+		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.AiFinalState, &bh.Voters,&bh.AiVoters,
+			&bh.FreshStake, &bh.AiFreshStake, &bh.Revocations, &bh.AiRevocations, &bh.PoolSize, &bh.AiPoolSize, &bh.Bits,
+			&bh.SBits, &bh.AiSBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
+			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+	}
 }
 
 // writeBlockHeader writes a hcd block header to w.  See Serialize for
@@ -215,9 +223,17 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 // opposed to encoding for the wire.
 func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 	sec := uint32(bh.Timestamp.Unix())
-	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.AiFinalState, bh.Voters,bh.AiVoters,
-		bh.FreshStake, bh.AiFreshStake, bh.Revocations, bh.AiRevocations, bh.PoolSize, bh.AiPoolSize, bh.Bits, bh.SBits,bh.AiSBits,
-		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-		bh.StakeVersion)
+	if bh.Height < 146 {
+		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+			&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
+			bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
+			bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
+			bh.StakeVersion)
+	}else{
+		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+			&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.AiFinalState, bh.Voters,bh.AiVoters,
+			bh.FreshStake, bh.AiFreshStake, bh.Revocations, bh.AiRevocations, bh.PoolSize, bh.AiPoolSize, bh.Bits, bh.SBits,bh.AiSBits,
+			bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
+			bh.StakeVersion)
+	}
 }
