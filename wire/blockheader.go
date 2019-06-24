@@ -21,8 +21,17 @@ import (
 // + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
+//const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
 
+// MaxBlockHeaderPayload is the maximum number of bytes a block header can be.
+// Version 4 bytes + PrevBlock 32 bytes + MerkleRoot 32 bytes + StakeRoot 32
+// bytes + VoteBits 2 bytes + FinalState 6 bytes + Voters 2 bytes + FreshStake 1
+// byte + Revocations 1 bytes + PoolSize 4 bytes + Bits 4 bytes + SBits 8 bytes
+// + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
+// ExtraData 32 bytes + StakeVersion 4 bytes.
+// --> Total 180 bytes.
+//const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 // BlockHeader defines information about a block and is used in the hcd
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
@@ -203,6 +212,7 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
 func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
+
 	if bh.Height < 146 {
 		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
@@ -211,10 +221,10 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
 	}else {
 		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.AiFinalState, &bh.Voters,&bh.AiVoters,
-			&bh.FreshStake, &bh.AiFreshStake, &bh.Revocations, &bh.AiRevocations, &bh.PoolSize, &bh.AiPoolSize, &bh.Bits,
-			&bh.SBits, &bh.AiSBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
+		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
+		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
+		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
 	}
 }
 
@@ -231,9 +241,9 @@ func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 			bh.StakeVersion)
 	}else{
 		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-			&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.AiFinalState, bh.Voters,bh.AiVoters,
-			bh.FreshStake, bh.AiFreshStake, bh.Revocations, bh.AiRevocations, bh.PoolSize, bh.AiPoolSize, bh.Bits, bh.SBits,bh.AiSBits,
-			bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-			bh.StakeVersion)
+		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
+		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
+		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
+		bh.StakeVersion, bh.AiFinalState, bh.AiVoters, bh.AiFreshStake, bh.AiRevocations, bh.AiPoolSize, bh.AiSBits)
 	}
 }

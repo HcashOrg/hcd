@@ -1374,8 +1374,9 @@ func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficult
 			tx.Height+int64(heightDiffToPruneTicket) < height {
 			mp.removeTransaction(tx.Tx, true)
 		}
-		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx)&&
-			(tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty || tx.Tx.MsgTx().TxOut[0].Value < requiredAiStakeDifficulty) {
+		if txType == stake.TxTypeSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty  {
+			mp.removeTransaction(tx.Tx, true)
+		} else if txType == stake.TxTypeAiSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredAiStakeDifficulty  {
 			mp.removeTransaction(tx.Tx, true)
 		}
 		if (txType == stake.TxTypeSSRtx || txType == stake.TxTypeSSGen ||
