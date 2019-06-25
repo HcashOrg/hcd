@@ -104,6 +104,10 @@ func (sn *Node) ExistsLiveTicket(ticket chainhash.Hash) bool {
 	return sn.liveTickets.Has(tickettreap.Key(ticket))
 }
 
+func (sn *Node) ExistsLiveAiTicket(ticket chainhash.Hash) bool {
+	return sn.liveTickets.Has(tickettreap.Key(ticket))
+}
+
 // LiveTickets returns the list of live tickets for this stake node.
 func (sn *Node) LiveTickets() []chainhash.Hash {
 	tickets := make([]chainhash.Hash, sn.liveTickets.Len())
@@ -1038,10 +1042,11 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 	if err != nil {
 		return err
 	}
-
+/*
 	if len(node.nextWinners) == 0{
 		return nil
 	}
+*/
 	// Write the new best state to the database.
 	nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
 	if node.height >= uint32(node.params.AIEnableHeight-1) {

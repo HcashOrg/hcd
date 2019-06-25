@@ -466,6 +466,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	stakeValidationHeight := g.Params().StakeValidationHeight
 	maxBlockSize := g.Params().MaximumBlockSizes[0]
 	ticketsPerBlock := g.Params().TicketsPerBlock
+	aiTicketsPerBlock := g.Params().AiTicketsPerBlock
 
 	// ---------------------------------------------------------------------
 	// Premine tests.
@@ -1051,7 +1052,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//   ... -> b36(8)
 	//                \-> bv3(9)
 	g.SetTip("b36")
-	g.NextBlock("bv3", outs[9], ticketOuts[9], g.ReplaceWithNVotes(ticketsPerBlock+1))
+	g.NextBlock("bv3", outs[9], ticketOuts[9], g.ReplaceWithNVotes(ticketsPerBlock + aiTicketsPerBlock+1))
 	rejected(blockchain.ErrTooManyVotes)
 
 	// Attempt to add block with too few votes.
@@ -1059,7 +1060,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//   ... -> b36(8)
 	//                \-> bv4(9)
 	g.SetTip("b36")
-	g.NextBlock("bv4", outs[9], ticketOuts[9], g.ReplaceWithNVotes(ticketsPerBlock/2))
+	g.NextBlock("bv4", outs[9], ticketOuts[9], g.ReplaceWithNVotes((ticketsPerBlock+ aiTicketsPerBlock)/2))
 	rejected(blockchain.ErrNotEnoughVotes)
 
 	// Attempt to add block with different number of votes in stake tree and

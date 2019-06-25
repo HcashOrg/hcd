@@ -829,7 +829,7 @@ func (idx *AddrIndex) ConnectBlock(dbTx database.Tx, block, parent *hcutil.Block
 	var parentBlockID uint32
 	if approvesParent(block) && block.Height() > 1 {
 		var err error
-		parentTxLocs, _, err = parent.TxLoc()
+		parentTxLocs, _, err = parent.TxLoc(uint32(parent.Height()))
 		if err != nil {
 			return err
 		}
@@ -843,7 +843,7 @@ func (idx *AddrIndex) ConnectBlock(dbTx database.Tx, block, parent *hcutil.Block
 
 	// The offset and length of the transactions within the serialized
 	// block for the added stake transactions.
-	_, blockStxLocs, err := block.TxLoc()
+	_, blockStxLocs, err := block.TxLoc(uint32(block.Height()))
 	if err != nil {
 		return err
 	}

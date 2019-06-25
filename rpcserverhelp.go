@@ -922,6 +922,7 @@ var rpcResultTypes = map[string][]interface{}{
 	"getcurrentnet":         {(*uint32)(nil)},
 	"getdifficulty":         {(*float64)(nil)},
 	"getstakedifficulty":    {(*hcjson.GetStakeDifficultyResult)(nil)},
+	"getaistakedifficulty":    {(*hcjson.GetAiStakeDifficultyResult)(nil)},
 	"getstakeversioninfo":   {(*hcjson.GetStakeVersionInfoResult)(nil)},
 	"getblockchaininfo":     {(*hcjson.GetBlockChainInfoResult)(nil)},
 	"getstakeversions":      {(*hcjson.GetStakeVersionsResult)(nil)},

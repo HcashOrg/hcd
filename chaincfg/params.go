@@ -37,6 +37,8 @@ var (
 	// can have for the simulation test network.  It is the value 2^255 - 1.
 	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 240), bigOne)
 
+	//simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
+
 	VoteBitsNotFound = fmt.Errorf("vote bits not found")
 )
 
@@ -368,6 +370,7 @@ type Params struct {
 	// MinimumStakeDiff if the minimum amount of Atoms required to purchase a
 	// stake ticket.
 	MinimumStakeDiff int64
+	MinimumAiStakeDiff int64
 
 	// Ticket pool sizes for Hcd PoS. This denotes the number of possible
 	// buckets/number of different ticket numbers. It is also the number of
@@ -750,11 +753,13 @@ var SimNetParams = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
-	TargetTimePerBlock:       time.Second * 10,
+	//TargetTimePerBlock:       time.Second * 10,
+	TargetTimePerBlock:       time.Second*3,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
-	TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
+	//TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 24, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -843,6 +848,7 @@ var SimNetParams = Params{
 
 	// Hcd PoS parameters
 	MinimumStakeDiff:        20000,
+	MinimumAiStakeDiff:      50000,
 	TicketPoolSize:          64,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
@@ -861,7 +867,7 @@ var SimNetParams = Params{
 	StakeDiffWindows:        8,
 	StakeVersionInterval:    8 * 2 * 7,
 	MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
-	AiMaxFreshStakePerBlock: 40,//20+20
+	AiMaxFreshStakePerBlock: 20,//20+20
 	StakeEnabledHeight:      16 + 16,       // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:      []byte{0xDE, 0xAD, 0xBE, 0xEF},

@@ -2646,6 +2646,12 @@ func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Param
 			bm.chainState.Unlock()
 			return sDiff, nil
 		},
+		NextAiStakeDifficulty: func() (int64, error) {
+			bm.chainState.Lock()
+			sDiff := bm.chainState.nextAiStakeDifficulty
+			bm.chainState.Unlock()
+			return sDiff, nil
+		},
 		FetchUtxoView:    bm.chain.FetchUtxoView,
 		BlockByHash:      bm.chain.BlockByHash,
 		BestHash:         func() *chainhash.Hash { return bm.chain.BestSnapshot().Hash },

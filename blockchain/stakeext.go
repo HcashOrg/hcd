@@ -183,6 +183,14 @@ func (b *BlockChain) CheckLiveTicket(hash chainhash.Hash) bool {
 	return sn.ExistsLiveTicket(hash)
 }
 
+func (b *BlockChain) CheckLiveAiTicket(hash chainhash.Hash) bool {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
+	b.chainLock.RUnlock()
+
+	return sn.ExistsLiveAiTicket(hash)
+}
+
 // CheckLiveTickets returns whether or not a slice of tickets exist in the live
 // ticket treap of the best node.
 //
@@ -199,6 +207,20 @@ func (b *BlockChain) CheckLiveTickets(hashes []chainhash.Hash) []bool {
 
 	return existsSlice
 }
+
+func (b *BlockChain) CheckLiveAiTickets(hashes []chainhash.Hash) []bool {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
+	b.chainLock.RUnlock()
+
+	existsSlice := make([]bool, len(hashes))
+	for i := range hashes {
+		existsSlice[i] = sn.ExistsLiveTicket(hashes[i])
+	}
+
+	return existsSlice
+}
+
 
 // CheckMissedTickets returns a slice of bools representing whether each ticket
 // hash has been missed in the live ticket treap of the best node.

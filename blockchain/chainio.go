@@ -297,7 +297,7 @@ func spentTxOutSerializeSize(stxo *spentTxOut) int {
 	// data for UTX resurrection.
 	if stxo.txFullySpent {
 		size += serializeSizeVLQ(uint64(stxo.txVersion))
-		if stxo.txType == stake.TxTypeSStx {
+		if stxo.txType == stake.TxTypeSStx || stxo.txType == stake.TxTypeAiSStx{
 			size += len(stxo.stakeExtra)
 		}
 	}

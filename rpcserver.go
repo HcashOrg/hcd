@@ -191,8 +191,11 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"existsaddresses":           handleExistsAddresses,
 	"existsmissedtickets":       handleExistsMissedTickets,
 	"existsexpiredtickets":      handleExistsExpiredTickets,
+	"existsexpiredaitickets":      handleExistsExpiredAiTickets,
 	"existsliveticket":          handleExistsLiveTicket,
+	"existsliveaiticket":          handleExistsLiveAiTicket,
 	"existslivetickets":         handleExistsLiveTickets,
+	"existsliveaitickets":         handleExistsLiveAiTickets,
 	"existsmempooltxs":          handleExistsMempoolTxs,
 	"generate":                  handleGenerate,
 	"getaddednodeinfo":          handleGetAddedNodeInfo,
@@ -222,6 +225,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getrawmempool":             handleGetRawMempool,
 	"getrawtransaction":         handleGetRawTransaction,
 	"getstakedifficulty":        handleGetStakeDifficulty,
+	"getaistakedifficulty":        handleGetAiStakeDifficulty,
 	"getstakeversioninfo":       handleGetStakeVersionInfo,
 	"getstakeversions":          handleGetStakeVersions,
 	"getticketpoolvalue":        handleGetTicketPoolValue,
@@ -1557,6 +1561,79 @@ func handleEstimateStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}, nil
 }
 
+
+// handleEstimateAiStakeDiff implements the estimatestakediff command.
+func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.EstimateAiStakeDiffCmd)
+
+	// Minimum possible stake difficulty.
+	chain := s.server.blockManager.chain
+	min, err := chain.EstimateNextAiStakeDifficulty(0, false)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not "+
+			"estimate next minimum stake difficulty")
+	}
+
+	// Maximum possible stake difficulty.
+	max, err := chain.EstimateNextAiStakeDifficulty(0, true)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not "+
+			"estimate next maximum stake difficulty")
+	}
+
+	// The expected stake difficulty. Average the number of fresh stake
+	// since the last retarget to get the number of tickets per block,
+	// then use that to estimate the next stake difficulty.
+	_, bestHeight := s.server.blockManager.chainState.Best()
+	lastAdjustment := (bestHeight / activeNetParams.StakeDiffWindowSize) *
+		activeNetParams.StakeDiffWindowSize
+	nextAdjustment := ((bestHeight / activeNetParams.StakeDiffWindowSize) +
+		1) * activeNetParams.StakeDiffWindowSize
+	totalAiTickets := 0
+	err = s.server.db.View(func(dbTx database.Tx) error {
+		for i := lastAdjustment; i <= bestHeight; i++ {
+			bh, err := blockchain.DBFetchHeaderByHeight(dbTx, i)
+			if err != nil {
+				return err
+			}
+			totalAiTickets += int(bh.AiFreshStake)
+		}
+
+		return nil
+	})
+	blocksSince := float64(bestHeight - lastAdjustment + 1)
+	remaining := float64(nextAdjustment - bestHeight - 1)
+	averagePerBlock := float64(totalAiTickets) / blocksSince
+	expectedTickets := int64(math.Floor(averagePerBlock * remaining))
+	expected, err := chain.EstimateNextAiStakeDifficulty(expectedTickets,
+		false)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Could not "+
+			"estimate next stake difficulty")
+	}
+
+	// User-specified stake difficulty, if they asked for one.
+	var userEstFltPtr *float64
+	if c.AiTickets != nil {
+		userEst, err := chain.EstimateNextStakeDifficulty(int64(*c.AiTickets),
+			false)
+		if err != nil {
+			return nil, rpcInternalError(err.Error(), "Could not "+
+				"estimate next user specified stake difficulty")
+		}
+		userEstFlt := hcutil.Amount(userEst).ToCoin()
+		userEstFltPtr = &userEstFlt
+	}
+
+	return &hcjson.EstimateStakeDiffResult{
+		Min:      hcutil.Amount(min).ToCoin(),
+		Max:      hcutil.Amount(max).ToCoin(),
+		Expected: hcutil.Amount(expected).ToCoin(),
+		User:     userEstFltPtr,
+	}, nil
+}
+
+
 // handleExistsAddress implements the existsaddress command.
 func handleExistsAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	existsAddrIndex := s.server.existsAddrIndex
@@ -1670,6 +1747,33 @@ func handleExistsExpiredTickets(s *rpcServer, cmd interface{}, closeChan <-chan 
 	return hex.EncodeToString([]byte(set)), nil
 }
 
+// handleExistsExpiredTickets implements the existsexpiredtickets command.
+func handleExistsExpiredAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.ExistsExpiredAiTicketsCmd)
+
+	hashes, err := hcjson.DecodeConcatenatedHashes(c.TxHashBlob)
+	if err != nil {
+		return nil, err
+	}
+
+	exists := s.server.blockManager.chain.CheckExpiredTickets(hashes)
+	if len(exists) != len(hashes) {
+		return nil, rpcInvalidError("Invalid expired ticket count "+
+			"got %v, want %v", len(exists), len(hashes))
+	}
+
+	// Convert the slice of bools into a compacted set of bit flags.
+	set := bitset.NewBytes(len(hashes))
+	for i := range exists {
+		if exists[i] {
+			set.Set(i)
+		}
+	}
+
+	return hex.EncodeToString([]byte(set)), nil
+}
+
+
 // handleExistsLiveTicket implements the existsliveticket command.
 func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.ExistsLiveTicketCmd)
@@ -1682,6 +1786,18 @@ func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	return s.server.blockManager.chain.CheckLiveTicket(*hash), nil
 }
 
+// handleExistsLiveTicket implements the existsliveticket command.
+func handleExistsLiveAiTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.ExistsLiveTicketCmd)
+
+	hash, err := chainhash.NewHashFromStr(c.TxHash)
+	if err != nil {
+		return nil, rpcDecodeHexError(c.TxHash)
+	}
+
+	return s.server.blockManager.chain.CheckLiveAiTicket(*hash), nil
+}
+
 // handleExistsLiveTickets implements the existslivetickets command.
 func handleExistsLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.ExistsLiveTicketsCmd)
@@ -1692,6 +1808,31 @@ func handleExistsLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	exists := s.server.blockManager.chain.CheckLiveTickets(hashes)
+	if len(exists) != len(hashes) {
+		return nil, rpcInvalidError("Invalid live ticket count got "+
+			"%v, want %v", len(exists), len(hashes))
+	}
+
+	// Convert the slice of bools into a compacted set of bit flags.
+	set := bitset.NewBytes(len(hashes))
+	for i := range exists {
+		if exists[i] {
+			set.Set(i)
+		}
+	}
+
+	return hex.EncodeToString([]byte(set)), nil
+}
+
+func handleExistsLiveAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.ExistsLiveAiTicketsCmd)
+
+	hashes, err := hcjson.DecodeConcatenatedHashes(c.TxHashBlob)
+	if err != nil {
+		return nil, err
+	}
+
+	exists := s.server.blockManager.chain.CheckLiveAiTickets(hashes)
 	if len(exists) != len(hashes) {
 		return nil, rpcInvalidError("Invalid live ticket count got "+
 			"%v, want %v", len(exists), len(hashes))
@@ -1954,6 +2095,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 	}
 
 	sbitsFloat := float64(blockHeader.SBits) / hcutil.AtomsPerCoin
+	aiStakeBitsFloat := float64(blockHeader.AiSBits) / hcutil.AtomsPerCoin
 	blockReply := hcjson.GetBlockVerboseResult{
 		Hash:          c.Hash,
 		Version:       blockHeader.Version,
@@ -1964,9 +2106,13 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
+		AiVoters:        blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
+		AiFreshStake:    blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
+		AiRevocations:   blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
+		AiPoolSize:      blockHeader.AiPoolSize,
 		Time:          blockHeader.Timestamp.Unix(),
 		StakeVersion:  blockHeader.StakeVersion,
 		Confirmations: confirmations,
@@ -1974,6 +2120,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		Size:          int32(blk.MsgBlock().Header.Size),
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         sbitsFloat,
+		AiSBits:         aiStakeBitsFloat,
 		Difficulty:    getDifficultyRatio(blockHeader.Bits),
 		ExtraData:     hex.EncodeToString(blockHeader.ExtraData[:]),
 		NextHash:      nextHashString,
@@ -2121,11 +2268,16 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
+		AiVoters:        blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
+		AiFreshStake:    blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
+		AiRevocations:   blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
+		AiPoolSize:      blockHeader.AiPoolSize,
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         hcutil.Amount(blockHeader.SBits).ToCoin(),
+		AiSBits:         hcutil.Amount(blockHeader.AiSBits).ToCoin(),
 		Height:        uint32(height),
 		Size:          blockHeader.Size,
 		Time:          blockHeader.Timestamp.Unix(),
@@ -3730,7 +3882,6 @@ func handleGetStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan st
 		}
 	}
 	currentSdiff := hcutil.Amount(blockHeader.SBits)
-
 	nextSdiff, err := s.server.blockManager.CalcNextRequiredStakeDifficulty()
 	if err != nil {
 		return nil, rpcInternalError("Could not calculate next stake "+
@@ -3746,6 +3897,33 @@ func handleGetStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan st
 	return sDiffResult, nil
 }
 
+// handleGetStakeDifficulty implements the getstakedifficulty command.
+func handleGetAiStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	best := s.chain.BestSnapshot()
+	blockHeader, err := s.chain.HeaderByHeight(best.Height)
+	if err != nil {
+		rpcsLog.Errorf("Error getting block: %v", err)
+		return nil, &hcjson.RPCError{
+			Code:    hcjson.ErrRPCDifficulty,
+			Message: "Error getting stake difficulty: " + err.Error(),
+		}
+	}
+	currentSdiff := hcutil.Amount(blockHeader.AiSBits)
+
+	nextSdiff, err := s.server.blockManager.CalcNextRequiredAiStakeDifficulty()
+	if err != nil {
+		return nil, rpcInternalError("Could not calculate next stake "+
+			"difficulty "+err.Error(), "")
+	}
+	nextSdiffAmount := hcutil.Amount(nextSdiff)
+
+	sDiffResult := &hcjson.GetAiStakeDifficultyResult{
+		CurrentAiStakeDifficulty: currentSdiff.ToCoin(),
+		NextAiStakeDifficulty:    nextSdiffAmount.ToCoin(),
+	}
+
+	return sDiffResult, nil
+}
 // convertVersionMap translates a map[int]int into a sorted array of
 // VersionCount that contains the same information.
 func convertVersionMap(m map[int]int) []hcjson.VersionCount {
@@ -5595,11 +5773,11 @@ func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*hc
 	case stake.TxTypeSStx:
 		txNum = int(bl.MsgBlock().Header.FreshStake)
 	case stake.TxTypeAiSStx:
-		txNum = int(bl.MsgBlock().Header.FreshStake)
+		txNum = int(bl.MsgBlock().Header.AiFreshStake)
 	case stake.TxTypeSSGen:
 		txNum = int(bl.MsgBlock().Header.Voters)
 	case stake.TxTypeAiSSGen:
-		txNum = int(bl.MsgBlock().Header.Voters)
+		txNum = int(bl.MsgBlock().Header.AiVoters)
 	case stake.TxTypeSSRtx:
 		txNum = int(bl.MsgBlock().Header.Revocations)
 	case stake.TxTypeAiSSRtx:
@@ -5846,6 +6024,65 @@ func handleTicketVWAP(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) 
 
 		ticketNum += int64(blockHeader.FreshStake)
 		totalValue += blockHeader.SBits * int64(blockHeader.FreshStake)
+	}
+	vwap := int64(0)
+	if ticketNum > 0 {
+		vwap = totalValue / ticketNum
+	}
+
+	return hcutil.Amount(vwap).ToCoin(), nil
+}
+
+// handleTicketVWAP implements the ticketvwap command.
+func handleAiTicketVWAP(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.AiTicketVWAPCmd)
+
+	// The default VWAP is for the past WorkDiffWindows * WorkDiffWindowSize
+	// many blocks.
+	_, bestHeight := s.server.blockManager.chainState.Best()
+	start := uint32(0)
+	if c.Start == nil {
+		toEval := activeNetParams.WorkDiffWindows *
+			activeNetParams.WorkDiffWindowSize
+		startI64 := bestHeight - toEval
+
+		// Use 1 as the first block if there aren't
+		// enough blocks.
+		if startI64 <= 0 {
+			start = 1
+		} else {
+			start = uint32(startI64)
+		}
+	} else {
+		start = *c.Start
+	}
+
+	end := uint32(bestHeight)
+	if c.End != nil {
+		end = *c.End
+	}
+	if start > end {
+		return nil, rpcInvalidError("Start height %v is beyond end "+
+			"height %v", start, end)
+	}
+	if end > uint32(bestHeight) {
+		return nil, rpcInvalidError("End height %v is beyond "+
+			"blockchain tip height %v", end, bestHeight)
+	}
+
+	// Calculate the volume weighted average price of a ticket for the
+	// given range.
+	ticketNum := int64(0)
+	totalValue := int64(0)
+	for i := start; i <= end; i++ {
+		blockHeader, err := s.chain.HeaderByHeight(int64(i))
+		if err != nil {
+			return nil, rpcInternalError(err.Error(),
+				"Could not obtain header")
+		}
+
+		ticketNum += int64(blockHeader.AiFreshStake)
+		totalValue += blockHeader.AiSBits * int64(blockHeader.AiFreshStake)
 	}
 	vwap := int64(0)
 	if ticketNum > 0 {

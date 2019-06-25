@@ -281,7 +281,7 @@ func (b *Block) STxHash(txNum int) (*chainhash.Hash, error) {
 // TxLoc returns the offsets and lengths of each transaction in a raw block.
 // It is used to allow fast indexing into transactions within the raw byte
 // stream.
-func (b *Block) TxLoc() ([]wire.TxLoc, []wire.TxLoc, error) {
+func (b *Block) TxLoc(height uint32) ([]wire.TxLoc, []wire.TxLoc, error) {
 	rawMsg, err := b.Bytes()
 	if err != nil {
 		return nil, nil, err
@@ -289,7 +289,7 @@ func (b *Block) TxLoc() ([]wire.TxLoc, []wire.TxLoc, error) {
 	rbuf := bytes.NewBuffer(rawMsg)
 
 	var mblock wire.MsgBlock
-	txLocs, sTxLocs, err := mblock.DeserializeTxLoc(rbuf)
+	txLocs, sTxLocs, err := mblock.DeserializeTxLoc(rbuf, height)
 	if err != nil {
 		return nil, nil, err
 	}

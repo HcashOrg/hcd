@@ -169,7 +169,7 @@ func (msg *MsgBlock) FromBytes(b []byte) error {
 // a byte buffer instead of a generic reader and returns a slice containing the
 // start and length of each transaction within the raw data that is being
 // deserialized.
-func (msg *MsgBlock) DeserializeTxLoc(r *bytes.Buffer) ([]TxLoc, []TxLoc, error) {
+func (msg *MsgBlock) DeserializeTxLoc(r *bytes.Buffer, height uint32) ([]TxLoc, []TxLoc, error) {
 	fullLen := r.Len()
 
 	// At the current time, there is no difference between the wire encoding

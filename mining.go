@@ -1197,13 +1197,11 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	chainState.Lock()
 	prevHash := chainState.newestHash
 	nextBlockHeight := chainState.newestHeight + 1
-	if nextBlockHeight == 146 {
-		fmt.Println("test ")
-	}
 
 	poolSize := chainState.nextPoolSize
 	aiPoolSize := chainState.nextAiPoolSize
 	reqStakeDifficulty := chainState.nextStakeDifficulty
+	reqAiStakeDifficulty := chainState.nextAiStakeDifficulty
 	finalState := chainState.nextFinalState
 	aiFinalState := chainState.nextAiFinalState
 	var winningTickets []chainhash.Hash
@@ -1325,6 +1323,7 @@ mempoolLoop:
 		// non-finalized transactions.
 		tx := txDesc.Tx
 		msgTx := tx.MsgTx()
+
 		if blockchain.IsCoinBaseTx(msgTx) {
 			minrLog.Tracef("Skipping coinbase tx %s", tx.Hash())
 			continue
@@ -1375,7 +1374,7 @@ mempoolLoop:
 			// Evaluate if this is a stakebase input or not. If it is, continue
 			// without evaluation of the input.
 			// if isStakeBase
-			if isSSGen && (i == 0) {
+			if (isSSGen || isAiSSGen) && (i == 0) {
 				continue
 			}
 
@@ -1460,6 +1459,7 @@ mempoolLoop:
 	totalFees := int64(0)
 
 	numSStx := 0
+	numAiSStx := 0
 
 	foundWinningTickets := make(map[chainhash.Hash]bool, len(winningTickets))
 	for _, ticketHash := range winningTickets {
@@ -1474,46 +1474,52 @@ mempoolLoop:
 		tx := prioItem.tx
 
 		// Store if this is an SStx or not.
-		isSStx := prioItem.txType == stake.TxTypeSStx || prioItem.txType == stake.TxTypeAiSStx
+		isSStx := prioItem.txType == stake.TxTypeSStx
+		isAiSStx := prioItem.txType == stake.TxTypeAiSStx
 
 		// Store if this is an SSGen or not.
-		isSSGen := prioItem.txType == stake.TxTypeSSGen || prioItem.txType == stake.TxTypeAiSSGen
+		isSSGen := prioItem.txType == stake.TxTypeSSGen
+		isAiSSGen := prioItem.txType == stake.TxTypeAiSSGen
 
 		// Store if this is an SSRtx or not.
-		isSSRtx := prioItem.txType == stake.TxTypeSSRtx || prioItem.txType == stake.TxTypeAiSSRtx
+		isSSRtx := prioItem.txType == stake.TxTypeSSRtx
+		isAiSSRtx := prioItem.txType == stake.TxTypeAiSSRtx
 
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
-		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
-			// Skip if we already have too many SStx.
-			if isSStx && (numSStx >=
-				int(server.chainParams.AiMaxFreshStakePerBlock)) {
-				minrLog.Tracef("Skipping sstx %s because it would exceed "+
-					"the max number of sstx allowed in a block", tx.Hash())
-				logSkippedDeps(tx, deps)
-				continue
-			}
-		}else{
-			// Skip if we already have too many SStx.
-			if isSStx && (numSStx >=
-				int(server.chainParams.MaxFreshStakePerBlock)) {
-				minrLog.Tracef("Skipping sstx %s because it would exceed "+
-					"the max number of sstx allowed in a block", tx.Hash())
-				logSkippedDeps(tx, deps)
-				continue
-			}
+		if isAiSStx && (numAiSStx >=
+			int(server.chainParams.AiMaxFreshStakePerBlock)) {
+			minrLog.Tracef("Skipping sstx %s because it would exceed "+
+				"the max number of sstx allowed in a block", tx.Hash())
+			logSkippedDeps(tx, deps)
+			continue
+		}
+
+		// Skip if we already have too many SStx.
+		if isSStx && (numSStx >=
+			int(server.chainParams.MaxFreshStakePerBlock)) {
+			minrLog.Tracef("Skipping sstx %s because it would exceed "+
+				"the max number of sstx allowed in a block", tx.Hash())
+			logSkippedDeps(tx, deps)
+			continue
 		}
 		// Skip if the SStx commit value is below the value required by the
 		// stake diff.
 		if isSStx && (tx.MsgTx().TxOut[0].Value < reqStakeDifficulty) {
+			continue
+		} else if isAiSStx && (tx.MsgTx().TxOut[0].Value < reqAiStakeDifficulty) {
 			continue
 		}
 
 		// Skip all missed tickets that we've never heard of.
 		if isSSRtx {
 			ticketHash := &tx.MsgTx().TxIn[0].PreviousOutPoint.Hash
-
+			if !hashInSlice(*ticketHash, missedTickets) {
+				continue
+			}
+		}else if isAiSSRtx {
+			ticketHash := &tx.MsgTx().TxIn[0].PreviousOutPoint.Hash
 			if !hashInSlice(*ticketHash, missedTickets) {
 				continue
 			}
@@ -1533,7 +1539,7 @@ mempoolLoop:
 
 		// Enforce maximum signature operations per block.  Also check
 		// for overflow.
-		numSigOps := int64(blockchain.CountSigOps(tx, false, isSSGen))
+		numSigOps := int64(blockchain.CountSigOps(tx, false, isSSGen || isAiSSGen))
 		if blockSigOps+numSigOps < blockSigOps ||
 			blockSigOps+numSigOps > blockchain.MaxSigOpsPerBlock {
 			minrLog.Tracef("Skipping tx %s because it would "+
@@ -1545,7 +1551,7 @@ mempoolLoop:
 		// This isn't very expensive, but we do this check a number of times.
 		// Consider caching this in the mempool in the future. - Hcd
 		numP2SHSigOps, err := blockchain.CountP2SHSigOps(tx, false,
-			isSSGen, blockUtxos)
+			isSSGen || isAiSSGen, blockUtxos)
 		if err != nil {
 			minrLog.Tracef("Skipping tx %s due to error in "+
 				"CountP2SHSigOps: %v", tx.Hash(), err)
@@ -1564,7 +1570,7 @@ mempoolLoop:
 
 		// Check to see if the SSGen tx actually uses a ticket that is
 		// valid for the next block.
-		if isSSGen {
+		if isSSGen || isAiSSGen{
 			if foundWinningTickets[tx.MsgTx().TxIn[1].PreviousOutPoint.Hash] {
 				continue
 			}
@@ -1669,8 +1675,10 @@ mempoolLoop:
 		// are allowed.
 		if isSStx {
 			numSStx++
+		} else if isAiSStx {
+			numAiSStx++
 		}
-		if isSSGen {
+		if isSSGen || isAiSSGen{
 			foundWinningTickets[tx.MsgTx().TxIn[1].PreviousOutPoint.Hash] = true
 		}
 
@@ -1703,6 +1711,7 @@ mempoolLoop:
 
 	// Get the block votes (SSGen tx) and store them and their number.
 	voters := 0
+	aiVoters := 0
 	var voteBitsVoters []uint16
 
 	for _, tx := range blockTxns {
@@ -1712,22 +1721,25 @@ mempoolLoop:
 		}
 
 		isAiSSGen, _ := stake.IsAiSSGen(msgTx)
-		if isAiSSGen{
-			fmt.Println("test")
-		}
-
 		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen{
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				vb := stake.SSGenVoteBits(txCopy.MsgTx())
 				voteBitsVoters = append(voteBitsVoters, vb)
 				blockTxnsStake = append(blockTxnsStake, txCopy)
-				voters++
+				if isAiSSGen {
+					aiVoters++
+				}else{
+					voters++
+				}
 			}
 		}
 
 		// Don't let this overflow, although probably it's impossible.
 		if voters >= math.MaxUint16 {
+			break
+		}
+		if aiVoters >= math.MaxUint16 {
 			break
 		}
 	}
@@ -1810,6 +1822,7 @@ mempoolLoop:
 
 	// Get the newly purchased tickets (SStx tx) and store them and their number.
 	freshStake := 0
+	aiFreshStake := 0
 	for _, tx := range blockTxns {
 		msgTx := tx.MsgTx()
 		isSStx, _ := stake.IsSStx(msgTx)
@@ -1826,26 +1839,30 @@ mempoolLoop:
 				txCopy := hcutil.NewTxDeepTxIns(msgTx)
 				if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 					blockTxnsStake = append(blockTxnsStake, txCopy)
-					freshStake++
+					if isAiSStx {
+						aiFreshStake++
+					}else{
+						freshStake++
+					}
 				}
 			}
 		}
 
 		if nextBlockHeight >= int64(server.chainParams.AIEnableHeight) {
 			// Don't let this overflow.
-			if freshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
+			if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
 				break
 			}
-		}else{
-			// Don't let this overflow.
-			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
-				break
-			}
+		}
+		// Don't let this overflow.
+		if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
+			break
 		}
 	}
 
 	// Get the ticket revocations (SSRtx tx) and store them and their number.
 	revocations := 0
+	aiRevocations := 0
 	for _, tx := range blockTxns {
 		if nextBlockHeight < stakeValidationHeight {
 			break // No SSRtx should be present before this height.
@@ -1858,12 +1875,19 @@ mempoolLoop:
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				blockTxnsStake = append(blockTxnsStake, txCopy)
-				revocations++
+				if isAiSSRtx{
+					aiRevocations++
+				}else{
+					revocations++
+				}
 			}
 		}
 
 		// Don't let this overflow.
 		if revocations >= math.MaxUint8 {
+			break
+		}
+		if aiRevocations >= math.MaxUint8 {
 			break
 		}
 	}
@@ -1898,7 +1922,7 @@ mempoolLoop:
 		opReturnPkScript,
 		nextBlockHeight,
 		payToAddress,
-		uint16(voters),
+		uint16(voters + aiVoters),
 		server.chainParams)
 	if err != nil {
 		return nil, err
@@ -1968,7 +1992,7 @@ mempoolLoop:
 	// fees according to the number of voters.
 	totalFees *= int64(voters)
 	if uint64(nextBlockHeight) >= server.chainParams.AIEnableHeight {
-		totalFees /= int64(server.chainParams.AiTicketsPerBlock)
+		totalFees /= int64(server.chainParams.TicketsPerBlock + server.chainParams.AiTicketsPerBlock)
 	}else{
 		totalFees /= int64(server.chainParams.TicketsPerBlock)
 	}
@@ -2111,12 +2135,16 @@ mempoolLoop:
 		FinalState:   finalState,
 		AiFinalState:   aiFinalState,
 		Voters:       uint16(voters),
+		AiVoters:       uint16(aiVoters),
 		FreshStake:   uint8(freshStake),
+		AiFreshStake:   uint8(aiFreshStake),
 		Revocations:  uint8(revocations),
+		AiRevocations:  uint8(aiRevocations),
 		PoolSize:     poolSize,
 		AiPoolSize:   aiPoolSize,
 		Timestamp:    ts,
 		SBits:        reqStakeDifficulty,
+		AiSBits:        reqAiStakeDifficulty,
 		Bits:         reqDifficulty,
 		StakeVersion: generatedStakeVersion,
 		Height:       uint32(nextBlockHeight),
@@ -2160,11 +2188,12 @@ mempoolLoop:
 
 	minrLog.Debugf("Created new block template (%d transactions, %d "+
 		"stake transactions, %d in fees, %d signature operations, "+
-		"%d bytes, target difficulty %064x, stake difficulty %v)",
+		"%d bytes, target difficulty %064x, stake difficulty %v, ai stake difficulty %v)",
 		len(msgBlock.Transactions), len(msgBlock.STransactions),
 		totalFees, blockSigOps, blockSize,
 		blockchain.CompactToBig(msgBlock.Header.Bits),
-		hcutil.Amount(msgBlock.Header.SBits).ToCoin())
+		hcutil.Amount(msgBlock.Header.SBits).ToCoin(),
+		hcutil.Amount(msgBlock.Header.AiSBits).ToCoin())
 
 	blockTemplate := &BlockTemplate{
 		Block:           &msgBlock,

@@ -93,6 +93,8 @@ type Config struct {
 	// This function must be safe for concurrent access.
 	NextStakeDifficulty func() (int64, error)
 
+	NextAiStakeDifficulty func() (int64, error)
+
 	// FetchUtxoView defines the function to use to fetch unspent
 	// transaction output information.
 	FetchUtxoView func(*hcutil.Tx, bool) (*blockchain.UtxoViewpoint, error)
@@ -890,13 +892,28 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 			// rule error.
 			return nil, err
 		}
-
-		if msgTx.TxOut[0].Value < sDiff {
-			str := fmt.Sprintf("transaction %v has not enough funds "+
-				"to meet stake difficuly (ticket diff %v < next diff %v)",
-				txHash, msgTx.TxOut[0].Value, sDiff)
-			return nil, txRuleError(wire.RejectInsufficientFee, str)
+		sAiDiff, err := mp.cfg.NextAiStakeDifficulty()
+		if err != nil {
+			// This is an unexpected error so don't turn it into a
+			// rule error.
+			return nil, err
 		}
+		if txType == stake.TxTypeAiSStx {
+			if msgTx.TxOut[0].Value < sAiDiff {
+				str := fmt.Sprintf("transaction %v has not enough funds "+
+					"to meet ai stake difficuly (ticket diff %v < next diff %v)",
+					txHash, msgTx.TxOut[0].Value, sAiDiff)
+				return nil, txRuleError(wire.RejectInsufficientFee, str)
+			}
+		}else{
+			if msgTx.TxOut[0].Value < sDiff {
+				str := fmt.Sprintf("transaction %v has not enough funds "+
+					"to meet stake difficuly (ticket diff %v < next diff %v)",
+					txHash, msgTx.TxOut[0].Value, sDiff)
+				return nil, txRuleError(wire.RejectInsufficientFee, str)
+			}
+		}
+
 	}
 
 	// Handle stake transaction double spending exceptions.
@@ -1343,22 +1360,23 @@ func (mp *TxPool) processOrphans(hash *chainhash.Hash) []*hcutil.Tx {
 // stake difficulty is below the current required stake difficulty should be
 // pruned from mempool since they will never be mined.  The same idea stands
 // for SSGen and SSRtx
-func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, height int64) {
+func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty,  height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
-	mp.pruneStakeTx(requiredStakeDifficulty, height)
+	mp.pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty,  height)
 	mp.mtx.Unlock()
 }
 
-func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, height int64) {
+func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty, height int64) {
 	for _, tx := range mp.pool {
 		txType := stake.DetermineTxType(tx.Tx.MsgTx())
 		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx )&&
 			tx.Height+int64(heightDiffToPruneTicket) < height {
 			mp.removeTransaction(tx.Tx, true)
 		}
-		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx)&&
-			tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty {
+		if txType == stake.TxTypeSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty  {
+			mp.removeTransaction(tx.Tx, true)
+		} else if txType == stake.TxTypeAiSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredAiStakeDifficulty  {
 			mp.removeTransaction(tx.Tx, true)
 		}
 		if (txType == stake.TxTypeSSRtx || txType == stake.TxTypeSSGen ||

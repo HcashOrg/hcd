@@ -212,6 +212,7 @@ func NewGetBlockHeaderCmd(hash string, verbose *bool) *GetBlockHeaderCmd {
 type GetBlockSubsidyCmd struct {
 	Height int64
 	Voters uint16
+	AiVoters uint16
 }
 
 // NewGetBlockSubsidyCmd returns a new instance which can be used to issue a

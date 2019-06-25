@@ -133,7 +133,7 @@ func intInSlice(i int, sl []int) bool {
 // findTicketIdxs finds n many unique index numbers for a list length size.
 func findTicketIdxs(size int, n uint16, prng *Hash256PRNG) ([]int, error) {
 	if size < int(n) {
-		return nil, fmt.Errorf("list size too small: %v < %v",
+		return nil, fmt.Errorf("ai list size too small: %v < %v",
 			size, n)
 	}
 

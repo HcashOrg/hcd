@@ -1230,7 +1230,7 @@ func solveBlock(header *wire.BlockHeader) bool {
 // will lead to an invalid live ticket pool.  To help safeguard against improper
 // usage, it will panic if called with a block that does not connect to the
 // current tip block.
-func (g *Generator) ReplaceWithNVotes(numVotes uint16) func(*wire.MsgBlock) {
+func (g *Generator) ReplaceWithNVotes(numVotes, numAiVotes uint16) func(*wire.MsgBlock) {
 	return func(b *wire.MsgBlock) {
 		// Attempt to prevent misuse of this function by ensuring the
 		// provided block connects to the current tip.
@@ -1266,6 +1266,7 @@ func (g *Generator) ReplaceWithNVotes(numVotes uint16) func(*wire.MsgBlock) {
 		// header with the new number of votes.
 		b.STransactions = stakeTxns
 		b.Header.Voters = numVotes
+		b.Header.Voters = numAiVotes
 
 		// Recalculate the coinbase amount based on the number of new
 		// votes and update the coinbase so that the adjustment in

@@ -55,6 +55,10 @@ const (
 	// maxRevocationsPerBlock is the maximum number of revocations that are
 	// allowed per block.
 	maxRevocationsPerBlock = 255
+
+	// maxRevocationsPerBlock is the maximum number of revocations that are
+	// allowed per block.
+	maxAiRevocationsPerBlock = 50
 )
 
 var (
@@ -323,7 +327,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 
 // checkProofOfStake checks to see that all new SStx tx in a block are actually
 // at the network stake target.
-func checkProofOfStake(block *hcutil.Block, posLimit int64) error {
+func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 	msgBlock := block.MsgBlock()
 	for _, staketx := range block.STransactions() {
 		msgTx := staketx.MsgTx()
@@ -331,25 +335,48 @@ func checkProofOfStake(block *hcutil.Block, posLimit int64) error {
 		if is, _ := stake.IsSStx(msgTx); is || isAiSStx{
 			commitValue := msgTx.TxOut[0].Value
 
-			// Check for underflow block sbits.
-			if commitValue < msgBlock.Header.SBits {
-				errStr := fmt.Sprintf("Stake tx %v has a "+
-					"commitment value less than the "+
-					"minimum stake difficulty specified in"+
-					" the block (%v)", staketx.Hash(),
-					msgBlock.Header.SBits)
-				return ruleError(ErrNotEnoughStake, errStr)
+			if isAiSStx {
+				// Check for underflow block sbits.
+				if commitValue < msgBlock.Header.AiSBits {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum ai stake difficulty specified in"+
+						" the block (%v)", staketx.Hash(),
+						msgBlock.Header.AiSBits)
+					return ruleError(ErrNotEnoughStake, errStr)
+				}
+
+				// Check if it's above the PoS limit.
+				if commitValue < posAiLimit {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum stake difficulty for the "+
+						"network (%v)", staketx.Hash(),
+						posAiLimit)
+					return ruleError(ErrStakeBelowMinimum, errStr)
+				}
+			}else{
+				// Check for underflow block sbits.
+				if commitValue < msgBlock.Header.SBits {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum stake difficulty specified in"+
+						" the block (%v)", staketx.Hash(),
+						msgBlock.Header.SBits)
+					return ruleError(ErrNotEnoughStake, errStr)
+				}
+
+				// Check if it's above the PoS limit.
+				if commitValue < posLimit {
+					errStr := fmt.Sprintf("Stake tx %v has a "+
+						"commitment value less than the "+
+						"minimum stake difficulty for the "+
+						"network (%v)", staketx.Hash(),
+						posLimit)
+					return ruleError(ErrStakeBelowMinimum, errStr)
+				}
 			}
 
-			// Check if it's above the PoS limit.
-			if commitValue < posLimit {
-				errStr := fmt.Sprintf("Stake tx %v has a "+
-					"commitment value less than the "+
-					"minimum stake difficulty for the "+
-					"network (%v)", staketx.Hash(),
-					posLimit)
-				return ruleError(ErrStakeBelowMinimum, errStr)
-			}
 		}
 	}
 
@@ -357,8 +384,8 @@ func checkProofOfStake(block *hcutil.Block, posLimit int64) error {
 }
 
 // CheckProofOfStake exports the above func.
-func CheckProofOfStake(block *hcutil.Block, posLimit int64) error {
-	return checkProofOfStake(block, posLimit)
+func CheckProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
+	return checkProofOfStake(block, posLimit, posAiLimit)
 }
 
 // checkProofOfWork ensures the block header bits which indicate the target
@@ -416,6 +443,7 @@ func CheckProofOfWork(block *hcutil.Block, powLimit *big.Int) error {
 func checkBlockHeaderSanity(block *hcutil.Block, timeSource MedianTimeSource, flags BehaviorFlags, chainParams *chaincfg.Params) error {
 	powLimit := chainParams.PowLimit
 	posLimit := chainParams.MinimumStakeDiff
+	posAiLimit := chainParams.MinimumAiStakeDiff
 	header := &block.MsgBlock().Header
 
 	// Ensure the proof of work bits in the block header is in min/max
@@ -428,7 +456,7 @@ func checkBlockHeaderSanity(block *hcutil.Block, timeSource MedianTimeSource, fl
 
 	// Check to make sure that all newly purchased tickets meet the
 	// difficulty specified in the block.
-	err = checkProofOfStake(block, posLimit)
+	err = checkProofOfStake(block, posLimit, posAiLimit)
 	if err != nil {
 		return err
 	}
@@ -537,6 +565,9 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 	totalTickets := 0
 	totalVotes := 0
 	totalRevocations := 0
+	totalAiTickets := 0
+	totalAiVotes := 0
+	totalAiRevocations := 0
 	for _, stx := range block.MsgBlock().STransactions {
 		err := CheckTransactionSanity(stx, chainParams)
 		if err != nil {
@@ -554,15 +585,15 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		case stake.TxTypeSStx:
 			totalTickets++
 		case stake.TxTypeAiSStx:
-			totalTickets++
+			totalAiTickets++
 		case stake.TxTypeSSGen:
 			totalVotes++
 		case stake.TxTypeAiSSGen:
-			totalVotes++
+			totalAiVotes++
 		case stake.TxTypeSSRtx:
 			totalRevocations++
 		case stake.TxTypeAiSSRtx:
-			totalRevocations++
+			totalAiRevocations++
 		}
 	}
 
@@ -574,6 +605,14 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			totalRevocations, maxRevocationsPerBlock)
 		return ruleError(ErrTooManyRevocations, errStr)
 	}
+	// A block must not contain more than the maximum allowed number of
+	// ai revocations.
+	if totalAiRevocations > maxAiRevocationsPerBlock {
+		errStr := fmt.Sprintf("block contains %d revocations which "+
+			"exceeds the maximum allowed amount of %d",
+			totalAiRevocations, maxAiRevocationsPerBlock)
+		return ruleError(ErrTooManyRevocations, errStr)
+	}
 
 
 	if totalTickets != int(block.MsgBlock().Header.FreshStake) {
@@ -582,41 +621,44 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			block.MsgBlock().Header.FreshStake)
 		return ruleError(ErrFreshStakeMismatch, errStr)
 	}
+	if totalAiTickets != int(block.MsgBlock().Header.AiFreshStake) {
+		errStr := fmt.Sprintf("%v tickets found in block, while "+
+			"header reports %v", totalAiTickets,
+			block.MsgBlock().Header.AiFreshStake)
+		return ruleError(ErrFreshStakeMismatch, errStr)
+	}
 
 
+	// Not enough voters on this block.
+	if block.Height() >= chainParams.StakeValidationHeight &&
+		totalVotes <= int(chainParams.TicketsPerBlock)/2 {
+		errStr := fmt.Sprintf("block contained too few votes! %v "+
+			"votes but %v or more required", totalVotes,
+			(int(chainParams.TicketsPerBlock)/2)+1)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
+	// Not enough ai voters on this block.
+	if block.Height() >= int64(chainParams.AIEnableHeight)&&
+		totalAiVotes <= int(chainParams.AiTicketsPerBlock)/2 {
+		errStr := fmt.Sprintf("block contained too few ai votes! %v "+
+			"votes but %v or more required", totalAiVotes,
+			(int(chainParams.AiTicketsPerBlock)/2)+1)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
+	if totalVotes > int(chainParams.TicketsPerBlock) {
+		errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
+			"was %v, overflowing the maximum allowed (%v)",
+			block.Hash(), totalVotes,
+			int(chainParams.TicketsPerBlock))
+		return ruleError(ErrTooManyVotes, errStr)
+	}
 
-	if uint64(block.Height()) >= chainParams.AIEnableHeight {
-		// Not enough voters on this block.
-		if block.Height() >= chainParams.StakeValidationHeight &&
-			totalVotes <= int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock)/2 {
-			errStr := fmt.Sprintf("block contained too few votes! %v "+
-				"votes but %v or more required", totalVotes,
-				(int(chainParams.AiTicketsPerBlock + chainParams.AiTicketsPerBlock)/2)+1)
-			return ruleError(ErrNotEnoughVotes, errStr)
-		}
-		if totalVotes > int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock ) {
-			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
-				"was %v, overflowing the maximum allowed (%v)",
-				block.Hash(), totalVotes,
-				int(chainParams.AiTicketsPerBlock + chainParams.TicketsPerBlock))
-			return ruleError(ErrTooManyVotes, errStr)
-		}
-	}else{
-		// Not enough voters on this block.
-		if block.Height() >= chainParams.StakeValidationHeight &&
-			totalVotes <= int(chainParams.TicketsPerBlock)/2 {
-			errStr := fmt.Sprintf("block contained too few votes! %v "+
-				"votes but %v or more required", totalVotes,
-				(int(chainParams.TicketsPerBlock)/2)+1)
-			return ruleError(ErrNotEnoughVotes, errStr)
-		}
-		if totalVotes > int(chainParams.TicketsPerBlock) {
-			errStr := fmt.Sprintf("the number of SSGen tx in block %v "+
-				"was %v, overflowing the maximum allowed (%v)",
-				block.Hash(), totalVotes,
-				int(chainParams.TicketsPerBlock))
-			return ruleError(ErrTooManyVotes, errStr)
-		}
+	if totalAiVotes > int(chainParams.AiTicketsPerBlock) {
+		errStr := fmt.Sprintf("the number of ai SSGen tx in block %v "+
+			"was %v, overflowing the maximum allowed (%v)",
+			block.Hash(), totalAiVotes,
+			int(chainParams.AiTicketsPerBlock))
+		return ruleError(ErrTooManyVotes, errStr)
 	}
 
 	if totalVotes != int(block.MsgBlock().Header.Voters) {
@@ -625,11 +667,23 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			block.MsgBlock().Header.Voters)
 		return ruleError(ErrVotesMismatch, errStr)
 	}
+	if totalAiVotes != int(block.MsgBlock().Header.AiVoters) {
+		errStr := fmt.Sprintf("%v ai votes found in block, while header "+
+			"reports %v", totalAiVotes,
+			block.MsgBlock().Header.AiVoters)
+		return ruleError(ErrVotesMismatch, errStr)
+	}
 
 	if totalRevocations != int(block.MsgBlock().Header.Revocations) {
 		errStr := fmt.Sprintf("%v revocations found in block, while "+
 			"header reports %v", totalRevocations,
 			block.MsgBlock().Header.Revocations)
+		return ruleError(ErrRevocationsMismatch, errStr)
+	}
+	if totalAiRevocations != int(block.MsgBlock().Header.AiRevocations) {
+		errStr := fmt.Sprintf("%v ai revocations found in block, while "+
+			"header reports %v", totalAiRevocations,
+			block.MsgBlock().Header.AiRevocations)
 		return ruleError(ErrRevocationsMismatch, errStr)
 	}
 
@@ -952,6 +1006,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	stakeTransactions := block.STransactions()
 	msgBlock := block.MsgBlock()
 	sbits := msgBlock.Header.SBits
+	aiSbits := msgBlock.Header.AiSBits
 	blockHash := block.Hash()
 	prevBlockHash := &msgBlock.Header.PrevBlock
 	poolSize := int(msgBlock.Header.PoolSize)
@@ -963,6 +1018,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	if uint64(block.Height()) >= chainParams.AIEnableHeight {
 		ticketsPerBlock = int(b.chainParams.AiTicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 	}
+
 	txTreeRegularValid := hcutil.IsFlagSet16(msgBlock.Header.VoteBits,
 		hcutil.BlockValid)
 
@@ -1038,6 +1094,20 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return ruleError(ErrUnexpectedDifficulty, errStr)
 	}
 
+	// Check the stake difficulty.
+	calcAiSBits, err := b.calcNextRequiredAiStakeDifficulty(node.parent)
+	if err != nil {
+		errStr := fmt.Sprintf("couldn't calculate ai stake difficulty "+
+			"for block node %v: %v", node.hash, err)
+		return ruleError(ErrUnexpectedDifficulty, errStr)
+	}
+	if block.MsgBlock().Header.AiSBits != calcAiSBits {
+		errStr := fmt.Sprintf("block had unexpected ai stake difficulty "+
+			"(%v given, %v expected)",
+			block.MsgBlock().Header.AiSBits, calcAiSBits)
+		return ruleError(ErrUnexpectedDifficulty, errStr)
+	}
+
 	// --------------------------------------------------------------------
 	// SStx Tx Handling
 	// --------------------------------------------------------------------
@@ -1050,12 +1120,12 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check to make sure we haven't exceeded max number of new SStx.
 
 	numSStxTx := 0
+	numAiSStxTx := 0
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
-		isAiSStx, _ := aistake.IsAiSStx(msgTx)
-		if is, _ := stake.IsSStx(msgTx); is || isAiSStx {
-			numSStxTx++
 
+		if is, _ := stake.IsSStx(msgTx); is{
+			numSStxTx++
 			// 1. Make sure that we're committing enough coins.
 			// Checked already when we check stake difficulty, so
 			// may not be needed.
@@ -1065,6 +1135,19 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 					"consensus: the amount committed in "+
 					"SStx %v was less than the sBits "+
 					"value %v", txHash, sbits)
+				return ruleError(ErrNotEnoughStake, errStr)
+			}
+		}else if is, _ := stake.IsAiSStx(msgTx); is{
+			numAiSStxTx++
+			// 1. Make sure that we're committing enough coins.
+			// Checked already when we check stake difficulty, so
+			// may not be needed.
+			if msgTx.TxOut[0].Value < aiSbits {
+				txHash := staketx.Hash()
+				errStr := fmt.Sprintf("Error in ai stake "+
+					"consensus: the amount committed in "+
+					"AISStx %v was less than the ai sBits "+
+					"value %v", txHash, aiSbits)
 				return ruleError(ErrNotEnoughStake, errStr)
 			}
 		}
@@ -1077,26 +1160,23 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check to make sure we haven't exceeded max number of new SStx.
 	// May not need this check, as the above one should fail if you
 	// overflow uint8.
-	if block.Height() >= int64(chainParams.AIEnableHeight) {
-		if numSStxTx > int(chainParams.AiMaxFreshStakePerBlock) {
-			errStr := fmt.Sprintf("Error in stake consensus: the number "+
-				"of SStx tx "+"in block %v was %v, overflowing the "+
-				"maximum allowed (255)", blockHash, numSStxTx)
-			return ruleError(ErrTooManySStxs, errStr)
-		}
-	}else{
-		if numSStxTx > int(chainParams.MaxFreshStakePerBlock) {
-			errStr := fmt.Sprintf("Error in stake consensus: the number "+
-				"of SStx tx "+"in block %v was %v, overflowing the "+
-				"maximum allowed (255)", blockHash, numSStxTx)
-			return ruleError(ErrTooManySStxs, errStr)
-		}
+	if numSStxTx > int(chainParams.MaxFreshStakePerBlock) {
+		errStr := fmt.Sprintf("Error in stake consensus: the number "+
+			"of SStx tx "+"in block %v was %v, overflowing the "+
+			"maximum allowed (255)", blockHash, numSStxTx)
+		return ruleError(ErrTooManySStxs, errStr)
 	}
 
+	if numAiSStxTx > int(chainParams.AiMaxFreshStakePerBlock) {
+		errStr := fmt.Sprintf("Error in stake consensus: the number "+
+			"of AiSStx tx "+"in block %v was %v, overflowing the "+
+			"maximum allowed (255)", blockHash, numAiSStxTx)
+		return ruleError(ErrTooManySStxs, errStr)
+	}
 
 	// Break if the stake system is otherwise disabled.
 	if block.Height() < stakeValidationHeight {
-		stakeTxSum := numSStxTx
+		stakeTxSum := numSStxTx + numAiSStxTx
 
 		// Check and make sure we're only including SStx in the stake
 		// tx tree.
@@ -1120,7 +1200,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		// Check the ticket pool size.
 		if parentAiStakeNode.PoolSize() != aiPoolSize {
 			errStr := fmt.Sprintf("Error in stake consensus: the "+
-				"poolsize in block %v was %v, however we "+
+				"ai poolsize in block %v was %v, however we "+
 				"expected %v", node.hash, aiPoolSize,
 				parentAiStakeNode.PoolSize())
 			return ruleError(ErrPoolSize, errStr)
@@ -1140,18 +1220,26 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
+	if msgBlock.Header.AiVoters == 0 && uint64(msgBlock.Header.Height) >= b.chainParams.AIEnableHeight{
+		errStr := fmt.Sprintf("Error: no ai voters in block %v",
+			blockHash)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
 
 	majority := (chainParams.TicketsPerBlock / 2) + 1
-	if uint64(block.Height()) >= chainParams.AIEnableHeight {
-		majority = (chainParams.AiTicketsPerBlock / 2) + 1
-	}
 	if msgBlock.Header.Voters < majority {
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+
 			"of voters is not in the majority as compared to "+
 			"potential votes for block %v", blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
-
+	majorityAi := (chainParams.AiTicketsPerBlock / 2) + 1
+	if msgBlock.Header.AiVoters < majorityAi && uint64(msgBlock.Header.Height) >= b.chainParams.AIEnableHeight{
+		errStr := fmt.Sprintf("Error in stake consensus: the number "+
+			"of ai voters is not in the majorityai as compared to "+
+			"potential ai votes for block %v", blockHash)
+		return ruleError(ErrNotEnoughVotes, errStr)
+	}
 	// -------------------------------------------------------------------
 	// SSGen Tx Handling
 	// -------------------------------------------------------------------
@@ -1174,6 +1262,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 	// Store the number of SSGen tx and votes to check later.
 	numSSGenTx := 0
+	numAiSSGenTx := 0
 	voteYea := 0
 	voteNay := 0
 
@@ -1210,8 +1299,11 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		msgTx := staketx.MsgTx()
 		isAiSSGen, _ := aistake.IsAiSSGen(msgTx);
 		if is, _ := stake.IsSSGen(msgTx); is || isAiSSGen{
-			numSSGenTx++
-
+			if isAiSSGen {
+				numAiSSGenTx++
+			}else{
+				numSSGenTx++
+			}
 			// Check and store the vote for TxTreeRegular.
 			ssGenVoteBits := stake.SSGenVoteBits(msgTx)
 			if hcutil.IsFlagSet16(ssGenVoteBits, hcutil.BlockValid) {
@@ -1313,12 +1405,16 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	// 3. Check and make sure that we have the same number of SSRtx tx as
 	//    we do revocations.
 	numSSRtxTx := 0
+	numAiSSRtxTx := 0
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
 		isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx);
 		if is, _ := stake.IsSSRtx(msgTx); is || isAiSSRtx{
-			numSSRtxTx++
-
+			if isAiSSRtx{
+				numAiSSRtxTx++
+			}else{
+				numSSRtxTx++
+			}
 			// Grab the input SStx hash from the inputs of the
 			// transaction.
 			sstxIn := msgTx.TxIn[0] // sstx input
@@ -1356,7 +1452,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	//    this indicates that there was some sort of non-standard stake tx
 	//    present in the block.  This is already checked before, but check
 	//    again here.
-	stakeTxSum := numSStxTx + numSSGenTx + numSSRtxTx
+	stakeTxSum := numSStxTx + numSSGenTx + numSSRtxTx + numAiSStxTx + numAiSSGenTx + numAiSSRtxTx
 
 	if stakeTxSum != len(stakeTransactions) {
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+
@@ -2422,17 +2518,16 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 	if txTree { //TxTreeRegular
 		// Apply penalty to fees if we're at stake validation height.
 		if node.height >= b.chainParams.StakeValidationHeight {
-			totalFees *= int64(node.header.Voters)
-			if uint64(node.height) >= b.chainParams.AIEnableHeight {
-				totalFees /= int64(b.chainParams.AiTicketsPerBlock)
+			if node.height >= int64(b.chainParams.AIEnableHeight){
+				totalFees *= int64(node.header.Voters + node.header.AiVoters)
+				totalFees /= int64(b.chainParams.TicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 			}else{
+				totalFees *= int64(node.header.Voters)
 				totalFees /= int64(b.chainParams.TicketsPerBlock)
 			}
-
 		}
 
 		var totalAtomOutRegular int64
-
 		for _, txOut := range txs[0].MsgTx().TxOut {
 			totalAtomOutRegular += txOut.Value
 		}
@@ -2441,11 +2536,20 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height == 1 {
 			expAtomOut = subsidyCache.CalcBlockSubsidy(node.height)
 		} else {
-			subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
-				node.height, node.header.Voters, b.chainParams)
-			subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
-				node.height, node.header.Voters, b.chainParams)
-			expAtomOut = subsidyWork + subsidyTax + totalFees
+			if node.height >= int64(b.chainParams.AIEnableHeight){
+				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
+					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
+				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
+					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
+				expAtomOut = subsidyWork + subsidyTax + totalFees
+			}else{
+				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
+					node.height, node.header.Voters, b.chainParams)
+				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
+					node.height, node.header.Voters, b.chainParams)
+				expAtomOut = subsidyWork + subsidyTax + totalFees
+			}
+
 		}
 
 		// AmountIn for the input should be equal to the subsidy.
@@ -2493,9 +2597,16 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height >= b.chainParams.StakeValidationHeight {
 			// Subsidy aligns with the height we're voting on, not
 			// with the height of the current block.
-			expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
-				node.height-1, b.chainParams) *
-				int64(node.header.Voters)
+			if node.height >= int64(b.chainParams.AIEnableHeight){
+				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
+					node.height-1, b.chainParams) *
+					int64(node.header.Voters + node.header.AiVoters)
+			}else {
+				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
+					node.height-1, b.chainParams) *
+					int64(node.header.Voters)
+			}
+
 		} else {
 			expAtomOut = totalFees
 		}
@@ -2576,11 +2687,20 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block *hcutil.Block, utx
 			node.header.PrevBlock))
 	}
 
-	// Check that the coinbase pays the tax, if applicable.
-	err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
-		node.header.Height, node.header.Voters, b.chainParams)
-	if err != nil {
-		return err
+	if node.height >= int64(b.chainParams.AIEnableHeight){
+		// Check that the coinbase pays the tax, if applicable.
+		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
+			node.header.Height, node.header.Voters + node.header.Voters, b.chainParams)
+		if err != nil {
+			return err
+		}
+	} else{
+		// Check that the coinbase pays the tax, if applicable.
+		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
+			node.header.Height, node.header.Voters, b.chainParams)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = b.CheckBlockStakeSanity(b.chainParams.StakeValidationHeight, node,

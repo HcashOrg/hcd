@@ -23,11 +23,16 @@ type GetBlockHeaderVerboseResult struct {
 	VoteBits      uint16  `json:"votebits"`
 	FinalState    string  `json:"finalstate"`
 	Voters        uint16  `json:"voters"`
+	AiVoters        uint16  `json:"aivoters"`
 	FreshStake    uint8   `json:"freshstake"`
+	AiFreshStake    uint8   `json:"aifreshstake"`
 	Revocations   uint8   `json:"revocations"`
+	AiRevocations   uint8   `json:"airevocations"`
 	PoolSize      uint32  `json:"poolsize"`
+	AiPoolSize      uint32  `json:"aipoolsize"`
 	Bits          string  `json:"bits"`
 	SBits         float64 `json:"sbits"`
+	AiSBits         float64 `json:"aisbits"`
 	Height        uint32  `json:"height"`
 	Size          uint32  `json:"size"`
 	Time          int64   `json:"time"`
@@ -57,11 +62,16 @@ type GetBlockVerboseResult struct {
 	VoteBits      uint16        `json:"votebits"`
 	FinalState    string        `json:"finalstate"`
 	Voters        uint16        `json:"voters"`
+	AiVoters        uint16        `json:"aivoters"`
 	FreshStake    uint8         `json:"freshstake"`
+	AiFreshStake    uint8         `json:"aifreshstake"`
 	Revocations   uint8         `json:"revocations"`
+	AiRevocations   uint8         `json:"airevocations"`
 	PoolSize      uint32        `json:"poolsize"`
+	AiPoolSize      uint32      `json:"aipoolsize"`
 	Bits          string        `json:"bits"`
 	SBits         float64       `json:"sbits"`
+	AiSBits        float64       `json:"aisbits"`
 	Difficulty    float64       `json:"difficulty"`
 	ExtraData     string        `json:"extradata"`
 	StakeVersion  uint32        `json:"stakeversion"`

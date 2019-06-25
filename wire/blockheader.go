@@ -21,8 +21,19 @@ import (
 // + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
+//const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
 
+// MaxBlockHeaderPayload is the maximum number of bytes a block header can be.
+// Version 4 bytes + PrevBlock 32 bytes + MerkleRoot 32 bytes + StakeRoot 32
+// bytes + VoteBits 2 bytes + FinalState 6 bytes + Voters 2 bytes + FreshStake 1
+// byte + Revocations 1 bytes + PoolSize 4 bytes + Bits 4 bytes + SBits 8 bytes
+// + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
+// ExtraData 32 bytes + StakeVersion 4 bytes.
+// --> Total 180 bytes.
+//const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
+
+const AI_UPDATE_HEIGHT = 146
 // BlockHeader defines information about a block and is used in the hcd
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
@@ -47,12 +58,15 @@ type BlockHeader struct {
 	AiFinalState [6]byte
 	// Number of participating voters for this block.
 	Voters uint16
-
+	AiVoters uint16
 	// Number of new sstx in this block.
 	FreshStake uint8
 
+	AiFreshStake uint8
+
 	// Number of ssrtx present in this block.
 	Revocations uint8
+	AiRevocations uint8
 
 	// Size of the ticket pool.
 	PoolSize uint32
@@ -64,6 +78,7 @@ type BlockHeader struct {
 
 	// Stake difficulty target.
 	SBits int64
+	AiSBits int64
 
 	// Height is the block height in the block chain.
 	Height uint32
@@ -100,6 +115,15 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 	_ = writeBlockHeader(buf, 0, h)
 
+/*
+if h.Height >= 146 {
+
+		r := bytes.NewReader(buf.Bytes())
+		var bhTest BlockHeader
+		readBlockHeader(r, uint32(h.Height), &bhTest)
+		fmt.Println("%v", bhTest)
+	}
+ */
 	return chainhash.HashH(buf.Bytes())
 }
 
@@ -126,7 +150,7 @@ func (h *BlockHeader) Deserialize(r io.Reader) error {
 	// At the current time, there is no difference between the wire encoding
 	// at protocol version 0 and the stable long-term storage format.  As
 	// a result, make use of readBlockHeader.
-	return readBlockHeader(r, 0, h)
+	return readBlockHeader(r,0, h)
 }
 
 // FromBytes deserializes a block header byte slice.
@@ -161,8 +185,8 @@ func (h *BlockHeader) Bytes() ([]byte, error) {
 // block with defaults for the remaining fields.
 func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 	merkleRootHash *chainhash.Hash, stakeRoot *chainhash.Hash, voteBits uint16,
-	finalState [6]byte, voters uint16, freshStake uint8, revocations uint8,
-	poolsize uint32, bits uint32, sbits int64, height uint32, size uint32,
+	finalState, aiFinalState [6]byte, voters, aiVoters uint16, freshStake, aiFreshStake  uint8, revocations, aiRevocations  uint8,
+	poolsize, aiPoolsize uint32, bits uint32, sbits, aiSbit int64, height uint32, size uint32,
 	nonce uint32, extraData [32]byte, stakeVersion uint32) *BlockHeader {
 
 	// Limit the timestamp to one second precision since the protocol
@@ -174,13 +198,18 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 		StakeRoot:    *stakeRoot,
 		VoteBits:     voteBits,
 		FinalState:   finalState,
+		AiFinalState:   aiFinalState,
 		Voters:       voters,
+		AiVoters:       aiVoters,
 		FreshStake:   freshStake,
+		AiFreshStake:   aiFreshStake,
 		Revocations:  revocations,
+		AiRevocations:  aiRevocations,
 		PoolSize:     poolsize,
-		AiPoolSize:   0,
+		AiPoolSize:   aiPoolsize,
 		Bits:         bits,
 		SBits:        sbits,
+		AiSBits:      aiSbit,
 		Height:       height,
 		Size:         size,
 		Timestamp:    time.Unix(time.Now().Unix(), 0),
@@ -193,12 +222,18 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // readBlockHeader reads a hcd block header from r.  See Deserialize for
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
-func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
-	return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
+	//buf, _ := ioutil.ReadAll(r)
+	err := readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
 		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+	if bh.Height >= 146{
+		return readElements(r,  &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
+	}else{
+		return err
+	}
 }
 
 // writeBlockHeader writes a hcd block header to w.  See Serialize for
@@ -206,9 +241,17 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 // opposed to encoding for the wire.
 func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 	sec := uint32(bh.Timestamp.Unix())
-	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+	if bh.Height < 146 {
+		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+			&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
+			bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
+			bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
+			bh.StakeVersion)
+	}else{
+		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
 		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-		bh.StakeVersion)
+		bh.StakeVersion, bh.AiFinalState, bh.AiVoters, bh.AiFreshStake, bh.AiRevocations, bh.AiPoolSize, bh.AiSBits)
+	}
 }

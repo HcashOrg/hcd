@@ -150,14 +150,16 @@ type StakeDifficultyNtfn struct {
 	BlockHash   string
 	BlockHeight int32
 	StakeDiff   int64
+	AiStakeDiff   int64
 }
 
 // NewStakeDifficultyNtfn creates a new StakeDifficultyNtfn.
-func NewStakeDifficultyNtfn(hash string, height int32, stakeDiff int64) *StakeDifficultyNtfn {
+func NewStakeDifficultyNtfn(hash string, height int32, stakeDiff, aiStakeDiff int64) *StakeDifficultyNtfn {
 	return &StakeDifficultyNtfn{
 		BlockHash:   hash,
 		BlockHeight: height,
 		StakeDiff:   stakeDiff,
+		AiStakeDiff:   aiStakeDiff,
 	}
 }
 
