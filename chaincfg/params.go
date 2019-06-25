@@ -849,12 +849,12 @@ var SimNetParams = Params{
 	// Hcd PoS parameters
 	MinimumStakeDiff:        20000,
 	MinimumAiStakeDiff:      50000,
-	TicketPoolSize:          64,
+	TicketPoolSize:          512,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
 	TicketExpiry:            384, // 6*TicketPoolSize
 	//ai PoS parameters
-	AiTicketPoolSize:          64,//64 + 32,
+	AiTicketPoolSize:          256,//64 + 32,
 	AiTicketsPerBlock:         5,//5 + 5,
 	AiTicketMaturity:          16,
 	AiTicketExpiry:            384, // 6*AiTicketPoolSize
