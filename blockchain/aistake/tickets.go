@@ -196,6 +196,10 @@ func (sn *Node) Height() uint32 {
 	return sn.height
 }
 
+func (sn *Node) GetAiTicketsForTx(seed []byte) ([]byte, error){
+	return GetAiTicketsForTx(seed, *sn)
+}
+
 // genesisNode returns a pointer to the initialized ticket database for the
 // genesis block.
 func genesisNode(params *chaincfg.Params) *Node {
@@ -355,6 +359,19 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 	}
 	log.Infof("Stake database version %v loaded", info.Version)
 	return node, nil
+}
+
+func GetAiTicketsForTx(seed []byte, node Node) ([]byte, error){
+	prng := NewHash256PRNG(seed)
+	_, err := findTicketIdxs(node.liveTickets.Len(), node.params.AiTicketsPerBlock, prng)
+	if err != nil {
+		return nil, err
+	}
+	lastHash := prng.StateHash()
+	stateBuffer := make([]byte, 0,
+		(node.params.AiTicketsPerBlock+1)*chainhash.HashSize)
+	stateBuffer = append(stateBuffer, lastHash[:]...)
+	return stateBuffer[:], nil
 }
 
 // hashInSlice determines if a hash exists in a slice of hashes.
