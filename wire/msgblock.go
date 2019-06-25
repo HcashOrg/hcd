@@ -175,7 +175,7 @@ func (msg *MsgBlock) DeserializeTxLoc(r *bytes.Buffer, height uint32) ([]TxLoc, 
 	// At the current time, there is no difference between the wire encoding
 	// at protocol version 0 and the stable long-term storage format.  As
 	// a result, make use of existing wire protocol functions.
-	err := readBlockHeader(r, height, &msg.Header)
+	err := readBlockHeader(r, 0, &msg.Header)
 	if err != nil {
 		return nil, nil, err
 	}

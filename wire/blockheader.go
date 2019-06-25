@@ -32,6 +32,8 @@ import (
 // --> Total 180 bytes.
 //const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
+
+const AI_UPDATE_HEIGHT = 146
 // BlockHeader defines information about a block and is used in the hcd
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
@@ -148,7 +150,7 @@ func (h *BlockHeader) Deserialize(r io.Reader) error {
 	// At the current time, there is no difference between the wire encoding
 	// at protocol version 0 and the stable long-term storage format.  As
 	// a result, make use of readBlockHeader.
-	return readBlockHeader(r, 0, h)
+	return readBlockHeader(r,0, h)
 }
 
 // FromBytes deserializes a block header byte slice.
@@ -220,20 +222,21 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // readBlockHeader reads a hcd block header from r.  See Deserialize for
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
-func readBlockHeader(r io.Reader, height uint32, bh *BlockHeader, ) error {
+func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
 
-	if height < 146 {
+	err := readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
+		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
+		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
+		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
+		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+	if bh.Height >= 146{
 		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 			&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 			&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
-	}else {
-		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
-		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
-		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
+			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
+	}else{
+		return err
 	}
 }
 
