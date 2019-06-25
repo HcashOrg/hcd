@@ -223,18 +223,14 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
 func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
-
+	//buf, _ := ioutil.ReadAll(r)
 	err := readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
 		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
 	if bh.Height >= 146{
-		return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-			&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
-			&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
-			&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-			&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
+		return readElements(r,  &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
 	}else{
 		return err
 	}
