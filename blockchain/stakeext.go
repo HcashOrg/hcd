@@ -73,6 +73,12 @@ func (b *BlockChain) lotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Ha
 	return winningTickets, poolSize, finalState, nil
 }
 
+
+func (b *BlockChain) lotteryAiDataForHash(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]chainhash.Hash, error) {
+	return b.lotteryAiDataForHash(txHash, blockHash)
+}
+
+
 // LotteryDataForBlock returns lottery data for a given block in the block
 // chain, including side chain blocks.
 //
@@ -95,13 +101,12 @@ func (b *BlockChain) LotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Ha
 	return b.lotteryAiDataForBlock(hash)
 }
 
-func (b *BlockChain) LotteryAiDataForInstantTx(hash *chainhash.Hash) ([]chainhash.Hash, int, [6]byte, error) {
+func (b *BlockChain) LotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]byte, error) {
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
 
-	return b.lotteryAiDataForBlock(hash)
+	return b.lotteryAiDataForTxAndBlock(txHash, blockHash)
 }
-
 
 // LiveTickets returns all currently live tickets from the stake database.
 //
@@ -279,6 +284,27 @@ func (b *BlockChain) lotteryAiDataForNode(node *blockNode) ([]chainhash.Hash, in
 
 	return aiStakeNode.Winners(), b.bestNode.aistakeNode.PoolSize(),
 		b.bestNode.aistakeNode.FinalState(), nil
+}
+
+func (b *BlockChain) lotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]byte, error) {
+
+	var node *blockNode
+	if n, exists := b.index[*blockHash]; exists {
+		node = n
+	} else {
+		var err error
+		node, err = b.findNode(blockHash, maxSearchDepth)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	aiStakeNode, err := b.fetchAiStakeNode(node)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return aiStakeNode.GetAiTicketsForTx(txHash[:])
 }
 
 // CheckExpiredTickets returns whether or not a ticket in a slice of

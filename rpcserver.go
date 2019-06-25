@@ -5420,7 +5420,6 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 		return nil,err
 	}
 
-
 	instantTxs := make([]*hcutil.InstantTx, 0)
 	instantTxs = append(instantTxs, instantTx)
 
