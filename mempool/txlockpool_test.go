@@ -8,7 +8,7 @@ import (
 func TestTxLockPool(t *testing.T) {
 	t.Parallel()
 	var txLen = 10
-	harness, spendableOuts, err := newPoolHarness(&chaincfg.MainNetParams)
+	harness, spendableOuts, err := newLockPoolHarness(&chaincfg.MainNetParams)
 	for _, v := range spendableOuts {
 		t.Log(v.outPoint.String())
 	}
@@ -26,12 +26,13 @@ func TestTxLockPool(t *testing.T) {
 
 	// Ensure orphans are rejected when the allow orphans flag is not set.
 	for _, tx := range chainedTxns[:] {
-		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
-			0, 0)
+
+		harness.txPool.MayBeAddToLockPool(tx, 888, true,
+			false, false)
 	}
 
 	if len(harness.txPool.txLockPool) != txLen {
-		t.Fatalf("maybeAddtoLockPool err")
+		t.Fatalf("maybeAddtoLockPool fail,lockpool len:%v",len(harness.txPool.txLockPool))
 	}
 	harness.chain.currentHeight=45888
 	t.Log(harness.txPool.FetchPendingLockTx(1))
@@ -83,8 +84,8 @@ func TestTxLockPool(t *testing.T) {
 
 	for _, tx := range chainedTxns[:] {
 		//t.Log(tx.MsgTx().TxIn[0].PreviousOutPoint.String())
-		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
-			0, 0)
+		harness.txPool.MayBeAddToLockPool(tx,888, true,
+			false, false)
 	}
 
 
@@ -106,8 +107,8 @@ func TestTxLockPool(t *testing.T) {
 
 	for _, tx := range chainedTxns[:] {
 		//t.Log(tx.MsgTx().TxIn[0].PreviousOutPoint.String())
-		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
-			0, 0)
+		harness.txPool.MayBeAddToLockPool(tx,888, true,
+			false, false)
 	}
 
 	if len(harness.txPool.txLockPool) != txLen {

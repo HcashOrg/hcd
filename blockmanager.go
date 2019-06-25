@@ -809,13 +809,8 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
 
-	missedParent, err := b.server.txMemPool.CheckInstantTx(instantTx, false, false, false)
-	if err != nil || len(missedParent) != 0 {
-		bmgrLog.Errorf("Failed to process instanttx : %v", err)
-		return
-	}
+	 b.server.txMemPool.MayBeAddToLockPool(instantTx, false, false, false)
 
-	b.server.txMemPool.MayBeAddToLockPool(instantTx,0)
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
@@ -872,7 +867,7 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	sigMsg := instantTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
 
 	if !verified {
 		bmgrLog.Errorf("failed  verify signature ,instantvote %v: %v", instantTxVote.Hash(),
@@ -1164,7 +1159,7 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 	delete(b.requestedBlocks, *blockHash)
 
 	/*
-	_, err := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
+	_, err := b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
 	if err != nil{
 		bmgrLog.Infof("%v",  err)
 		return
@@ -1285,12 +1280,12 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			_, beenNotified := b.lotteryDataBroadcast[*blockHash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
-			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
+			ok:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
 
 			if !beenNotified && r != nil &&
 				int64(bmsg.block.MsgBlock().Header.Height) >
 					b.server.chainParams.LatestCheckpointHeight() {
-				if ok {
+				if ok!=nil {
 					r.ntfnMgr.NotifyWinningTickets(winningTicketsNtfn)
 				}
 				b.lotteryDataBroadcastMutex.Lock()
@@ -2056,8 +2051,8 @@ out:
 							int64(msg.block.MsgBlock().Header.Height),
 							winningTickets}
 
-						ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(msg.block)
-						if ok {
+						ok:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(msg.block)
+						if ok!=nil {
 							r.ntfnMgr.NotifyWinningTickets(ntfnData)
 						}
 						b.lotteryDataBroadcastMutex.Lock()
@@ -2158,11 +2153,10 @@ out:
 					err:         err,
 				}
 			case processInstantTxMsg: //handle rpc instanttx
-				missedParent, err := b.server.txMemPool.CheckInstantTx(msg.tx, msg.allowOrphans, msg.rateLimit, msg.allowHighFees)
-
+				b.server.txMemPool.MayBeAddToLockPool(msg.tx, true,msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processInstantTxResponse{
-					missedParent: missedParent,
-					err:          err,
+					missedParent: nil,
+					err:          nil,
 				}
 			case isCurrentMsg:
 				msg.reply <- b.current()
@@ -2253,7 +2247,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.lotteryDataBroadcastMutex.Unlock()
 
 			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
-			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(block)
+			ok:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
 			// Obtain the winning tickets for this block.  handleNotifyMsg
 			// should be safe for concurrent access of things contained
 			//			// within blockchain.
@@ -2279,7 +2273,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 					// Notify registered websocket clients of newly
 					// eligible tickets to vote on.
-					if ok {
+					if ok!=nil {
 						r.ntfnMgr.NotifyWinningTickets(ntfnData)
 					}
 

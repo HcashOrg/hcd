@@ -20,9 +20,10 @@ const (
 
 type TxLockDesc struct {
 	Tx *hcutil.InstantTx
-	// Height is the block height when the entry was added to the the source
+	// Height is the block height when the entry was added to the source
 	// pool.
 	AddHeight int64
+	Votes     []*hcutil.InstantTxVote
 
 	MineHeight int64 //
 }
@@ -72,13 +73,14 @@ func (mp *TxPool) RemoveConfirmedLockTransaction(height int64) {
 	}
 }
 
-func (mp *TxPool)IsTxLockExist(hash *chainhash.Hash) bool {
+func (mp *TxPool) IsTxLockExist(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.isTxLockExist(hash)
+	return mp.isInstantTxExist(hash)
 }
+
 //Is tx in  locked?
-func (mp *TxPool) isTxLockExist(hash *chainhash.Hash) bool {
+func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
 	if _, exists := mp.txLockPool[*hash]; exists {
 		return true
 	}
@@ -86,7 +88,7 @@ func (mp *TxPool) isTxLockExist(hash *chainhash.Hash) bool {
 }
 
 //Is txVin  in locked?
-func (mp *TxPool) isTxLockInExist(outPoint *wire.OutPoint) (*hcutil.InstantTx, bool) {
+func (mp *TxPool) isInstantTxInExist(outPoint *wire.OutPoint) (*hcutil.InstantTx, bool) {
 	if txLock, exists := mp.lockOutpoints[*outPoint]; exists {
 		return txLock, true
 	}
@@ -116,7 +118,6 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	bestHeight := mp.cfg.BestHeight()
 	minHeight := bestHeight - behindNums
 
-	log.Error("bestHeight:",bestHeight,"minHeight:",minHeight,"behindNums",behindNums)
 	retMsgTx := make([][]byte, 0)
 	for _, desc := range mp.txLockPool {
 		if desc.MineHeight == 0 && desc.AddHeight < minHeight {
@@ -128,40 +129,47 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	}
 
 	return retMsgTx
-
 }
 
-//check block transactions is conflict with lockPool .we can reject the conflict block by not notify the winningTicket
-// to wallet
-func (mp *TxPool) CheckConflictWithTxLockPool(block *hcutil.Block) (bool, error) {
-	mp.mtx.RLock()
-	defer mp.mtx.RUnlock()
+//check block transactions is conflict with lockPool
+func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) error {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 
 	for _, tx := range block.Transactions() {
-		if !mp.isTxLockExist(tx.Hash()) {
-			for _, txIn := range tx.MsgTx().TxIn {
-				if _, exist := mp.isTxLockInExist(&txIn.PreviousOutPoint); exist {
-					return false, fmt.Errorf("lock transaction conflict")
-				}
+		err := mp.checkTxWithLockPool(tx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//check the input double spent
+func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
+	if !mp.isInstantTxExist(tx.Hash()) {
+		for _, txIn := range tx.MsgTx().TxIn {
+			if _, exist := mp.isInstantTxInExist(&txIn.PreviousOutPoint); exist {
+				return fmt.Errorf("tx %v conflict with lock pool", tx.Hash())
 			}
 		}
 	}
-	return true, nil
+	return nil
 }
 
 //remove txlock which is conflict with tx
-func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.InstantTx) {
+func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
 	//if is the same tx ,just return
-	if mp.isTxLockExist(tx.Hash()) {
+	if mp.isInstantTxExist(tx.Hash()) {
 		return
 	}
 
 	//if tx in is conflict with txlock ,just remove txlock and lockOutpoint
 	for _, invalue := range tx.MsgTx().TxIn {
-		if txLock, exist := mp.isTxLockInExist(&invalue.PreviousOutPoint); exist {
+		if txLock, exist := mp.isInstantTxInExist(&invalue.PreviousOutPoint); exist {
 			delete(mp.txLockPool, *txLock.Hash())
 
 			for _, txIn := range txLock.MsgTx().TxIn {
@@ -172,42 +180,55 @@ func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.InstantTx) {
 
 }
 
-func (mp *TxPool)MayBeAddToLockPool(tx *hcutil.InstantTx, height int64)  {
+func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	mp.maybeAddtoLockPool(tx,height)
+	mp.maybeAddtoLockPool(tx,isNew, rateLimit, allowHighFees)
 }
 
-
-//this is called after insert to mempool
-func (mp *TxPool) maybeAddtoLockPool(tx *hcutil.InstantTx, height int64) {
-
+//this is called before inserting to mempool,must be called with lock
+func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx,  isNew, rateLimit, allowHighFees bool) {
 	//if exist just return ,or will rewrite the state of this txlock
-	if mp.isTxLockExist(tx.Hash()) {
+	if mp.isInstantTxExist(instantTx.Hash()) {
+		return
+	}
+	//check with lockpool
+	tx := instantTx.Tx
+	err := mp.checkTxWithLockPool(&tx)
+	if err != nil {
+		log.Tracef("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
+			err)
+		return
+	}
+	//check with mempool
+	_, err = mp.checkInstantTxWithMem(instantTx, isNew, rateLimit, allowHighFees)
+	if err != nil {
+		log.Tracef("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(),
+			err)
 		return
 	}
 
-	msgTx := tx.MsgTx()
-	isLockTx:=txscript.IsInstantTx(msgTx)
+	//check instant tag
+	msgTx := instantTx.MsgTx()
+	isInstantTx := txscript.IsInstantTx(msgTx)
+	if !isInstantTx {
+		log.Tracef("Transaction %v is not instant instantTx ", instantTx.Hash())
+		return
+	}
+	bestHeight := mp.cfg.BestHeight()
+	mp.txLockPool[*instantTx.Hash()] = &TxLockDesc{
+		Tx:         instantTx,
+		AddHeight:  bestHeight,
+		MineHeight: 0,
+		Votes:      make([]*hcutil.InstantTxVote, 0, 5)}
 
-	if isLockTx {
-		mp.txLockPool[*tx.Hash()] = &TxLockDesc{Tx: tx, AddHeight: height, MineHeight: 0}
-
-		for _, txIn := range msgTx.TxIn {
-			mp.lockOutpoints[txIn.PreviousOutPoint] = tx
-		}
+	for _, txIn := range msgTx.TxIn {
+		mp.lockOutpoints[txIn.PreviousOutPoint] = instantTx
 	}
 }
 
-func (mp *TxPool)CheckInstantTx(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool)([]*chainhash.Hash, error) {
-	mp.mtx.RLock()
-	defer mp.mtx.RUnlock()
-	return mp.checkInstantTx(tx,isNew,rateLimit,allowHighFees)
-}
-
-
-func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) ([]*chainhash.Hash, error) {
-	tx:=&instantTx.Tx
+func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) ([]*chainhash.Hash, error) {
+	tx := &instantTx.Tx
 	msgTx := tx.MsgTx()
 	txHash := tx.Hash()
 	// Don't accept the transaction if it already exists in the pool.  This
@@ -259,7 +280,7 @@ func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, 
 	if txType == stake.TxTypeRegular {
 		tx.SetTree(wire.TxTreeRegular)
 	} else {
-		tx.SetTree(wire.TxTreeStake)
+		return nil, txRuleError(wire.RejectNonstandard, "transaction is not regular")
 	}
 
 	// Don't allow non-standard transactions if the network parameters
@@ -283,21 +304,18 @@ func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, 
 		}
 	}
 
-
-		// The transaction may not use any of the same outputs as other
-		// transactions already in the pool as that would ultimately result in a
-		// double spend.  This check is intended to be quick and therefore only
-		// detects double spends within the transaction pool itself.  The
-		// transaction could still be double spending coins from the main chain
-		// at this point.  There is a more in-depth check that happens later
-		// after fetching the referenced transaction inputs from the main chain
-		// which examines the actual spend data and prevents double spends.
-		err = mp.checkPoolDoubleSpend(tx, txType)
-		if err != nil {
-			return nil, err
-		}
-
-
+	// The transaction may not use any of the same outputs as other
+	// transactions already in the pool as that would ultimately result in a
+	// double spend.  This check is intended to be quick and therefore only
+	// detects double spends within the transaction pool itself.  The
+	// transaction could still be double spending coins from the main chain
+	// at this point.  There is a more in-depth check that happens later
+	// after fetching the referenced transaction inputs from the main chain
+	// which examines the actual spend data and prevents double spends.
+	err = mp.checkPoolDoubleSpend(tx, txType)
+	if err != nil {
+		return nil, err
+	}
 
 	// Fetch all of the unspent transaction outputs referenced by the inputs
 	// to this transaction.  This function also attempts to fetch the
@@ -352,8 +370,9 @@ func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, 
 		}
 	}
 
+	//instant tx don`t allow missing parents
 	if len(missingParents) > 0 {
-		return missingParents, nil
+		return missingParents, txRuleError(wire.RejectNonstandard, "instant transaction missing parents")
 	}
 
 	// Don't allow the transaction into the mempool unless its sequence
@@ -497,8 +516,6 @@ func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, 
 			mp.cfg.Policy.FreeTxRelayLimit*10*1000)
 	}
 
-
-
 	// Check whether allowHighFees is set to false (default), if so, then make
 	// sure the current fee is sensible.  If people would like to avoid this
 	// check then they can AllowHighFees = true
@@ -528,7 +545,6 @@ func (mp *TxPool) checkInstantTx(instantTx *hcutil.InstantTx, isNew, rateLimit, 
 		return nil, err
 	}
 
-
 	return nil, nil
 }
 
@@ -542,15 +558,15 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 		return txDesc.Tx, nil
 	}
 
-	tx,err:=mp.FetchTransaction(txHash,includeRecentBlock)
-	if err!=nil{
-		return nil,err
+	tx, err := mp.FetchTransaction(txHash, includeRecentBlock)
+	if err != nil {
+		return nil, err
 	}
-	msgInstantTx:=wire.NewMsgInstantTx()
-	msgInstantTx.MsgTx=*tx.MsgTx()
-	instantTx:=hcutil.NewInstantTx(msgInstantTx)
+	msgInstantTx := wire.NewMsgInstantTx()
+	msgInstantTx.MsgTx = *tx.MsgTx()
+	instantTx := hcutil.NewInstantTx(msgInstantTx)
 	instantTx.SetTree(tx.Tree())
 	instantTx.SetIndex(tx.Index())
 
-	return instantTx,nil
+	return instantTx, nil
 }

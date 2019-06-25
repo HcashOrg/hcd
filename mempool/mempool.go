@@ -634,9 +634,9 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 
 	//if two txlock is conflict ,we will reject the lower priority tx
 	//if common tx is conflict with txlockpool ,we will reject the common tx
-	if !mp.isTxLockExist(tx.Hash()) {
+	if !mp.isInstantTxExist(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
-			if txLock, exist := mp.isTxLockInExist(&txIn.PreviousOutPoint); exist {
+			if txLock, exist := mp.isInstantTxInExist(&txIn.PreviousOutPoint); exist {
 				if isLockTx {
 					if CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
 						return

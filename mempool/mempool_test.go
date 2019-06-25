@@ -347,8 +347,8 @@ func (p *poolHarness) CreateTxChain(firstOutput spendableOutput, numTxns uint32)
 // transaction spends the entire amount from the previous one) with the first
 // one spending the provided outpoint.  Each transaction spends the entire
 // amount of the previous one and as such does not include any fees.
-func (p *poolHarness) CreateLockTxChain(firstOutput spendableOutput, numTxns uint32) ([]*hcutil.Tx, error) {
-	txChain := make([]*hcutil.Tx, 0, numTxns)
+func (p *poolHarness) CreateLockTxChain(firstOutput spendableOutput, numTxns uint32) ([]*hcutil.InstantTx, error) {
+	txChain := make([]*hcutil.InstantTx, 0, numTxns)
 	prevOutPoint := firstOutput.outPoint
 	spendableAmount := firstOutput.amount
 	for i := uint32(0); i < numTxns; i++ {
@@ -381,7 +381,8 @@ func (p *poolHarness) CreateLockTxChain(firstOutput spendableOutput, numTxns uin
 		}
 		tx.TxIn[0].SignatureScript = sigScript
 
-		txChain = append(txChain, hcutil.NewTx(tx))
+		msgInstantTx:=wire.NewMsgInstantTxFromMsgTx(tx)
+		txChain = append(txChain, hcutil.NewInstantTx(msgInstantTx))
 
 		// Next transaction uses outputs from this one.
 		prevOutPoint = wire.OutPoint{Hash: tx.TxHash(), Index: 0}
@@ -479,6 +480,94 @@ func newPoolHarness(chainParams *chaincfg.Params) (*poolHarness, []spendableOutp
 
 	return &harness, outputs, nil
 }
+
+
+
+func newLockPoolHarness(chainParams *chaincfg.Params) (*poolHarness, []spendableOutput, error) {
+	// Use a hard coded key pair for deterministic results.
+	keyBytes, err := hex.DecodeString("700868df1838811ffbdf918fb482c1f7e" +
+		"ad62db4b97bd7012c23e726485e577d")
+	if err != nil {
+		return nil, nil, err
+	}
+	signKey, signPub := secp256k1.PrivKeyFromBytes(secp256k1.S256(), keyBytes)
+
+	// Generate associated pay-to-script-hash address and resulting payment
+	// script.
+	pubKeyBytes := signPub.SerializeCompressed()
+	payPubKeyAddr, err := hcutil.NewAddressSecpPubKey(pubKeyBytes,
+		chainParams)
+	if err != nil {
+		return nil, nil, err
+	}
+	payAddr := payPubKeyAddr.AddressPubKeyHash()
+	pkScript, err := txscript.PayToAddrScript(payAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Create a new fake chain and harness bound to it.
+	subsidyCache := blockchain.NewSubsidyCache(0, chainParams)
+	chain := &fakeChain{
+		utxos:       blockchain.NewUtxoViewpoint(),
+		blocks:      make(map[chainhash.Hash]*hcutil.Block),
+		scriptFlags: BaseStandardVerifyFlags,
+	}
+	harness := poolHarness{
+		signKey:     signKey,
+		payAddr:     payAddr,
+		payScript:   pkScript,
+		chainParams: chainParams,
+
+		chain: chain,
+		txPool: New(&Config{
+			Policy: Policy{
+				MaxTxVersion:         wire.TxVersion,
+				DisableRelayPriority: true,
+				FreeTxRelayLimit:     15.0,
+				MaxOrphanTxs:         5,
+				MaxOrphanTxSize:      1000,
+				MaxSigOpsPerTx:       blockchain.MaxSigOpsPerBlock / 5,
+				MinRelayTxFee:        1000, // 1 Satoshi per byte
+				StandardVerifyFlags:  chain.StandardVerifyFlags,
+			},
+			ChainParams:         chainParams,
+			NextStakeDifficulty: chain.NextStakeDifficulty,
+			FetchUtxoView:       chain.FetchUtxoView,
+			BlockByHash:         chain.BlockByHash,
+			BestHash:            chain.BestHash,
+			BestHeight:          chain.BestHeight,
+			PastMedianTime:      chain.PastMedianTime,
+			CalcSequenceLock:    chain.CalcSequenceLock,
+			SubsidyCache:        subsidyCache,
+			SigCache:            nil,
+			AddrIndex:           nil,
+			ExistsAddrIndex:     nil,
+		}),
+	}
+
+	// Create a single coinbase transaction and add it to the harness
+	// chain's utxo set and set the harness chain height such that the
+	// coinbase will mature in the next block.  This ensures the txpool
+	// accepts transactions which spend immature coinbases that will become
+	// mature in the next block.
+	numOutputs := uint32(5)
+	outputs := make([]spendableOutput, 0, numOutputs)
+	curHeight := harness.chain.BestHeight()
+	coinbase, err := harness.CreateCoinbaseTx(curHeight+1, numOutputs)
+	if err != nil {
+		return nil, nil, err
+	}
+	harness.chain.utxos.AddTxOuts(coinbase, curHeight+1, wire.NullBlockIndex)
+	for i := uint32(0); i < numOutputs; i++ {
+		outputs = append(outputs, txOutToSpendableOut(coinbase, i))
+	}
+	harness.chain.SetHeight(int64(chainParams.CoinbaseMaturity) + curHeight)
+	harness.chain.SetPastMedianTime(time.Now())
+
+	return &harness, outputs, nil
+}
+
 
 // TestSimpleOrphanChain ensures that a simple chain of orphans is handled
 // properly.  In particular, it generates a chain of single input, single output

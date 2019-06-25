@@ -5242,8 +5242,6 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 		return nil,err
 	}
 
-	s.server.txMemPool.MayBeAddToLockPool(instantTx,0)
-
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 	instantTxs = append(instantTxs, instantTx)
@@ -5319,7 +5317,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	sigMsg := instantTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
 	if !verified {
 		return nil, fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
 			err)
@@ -5340,34 +5338,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 
 }
 
-func VerifyMessage(msg string, addr hcutil.Address, sig []byte) (bool, error) {
-	// Validate the signature - this just shows that it was valid for any pubkey
-	// at all. Whether the pubkey matches is checked below.
-	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
-	wire.WriteVarString(&buf, 0, msg)
-	expectedMessageHash := chainhash.HashB(buf.Bytes())
-	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,
-		expectedMessageHash)
-	if err != nil {
-		return false, err
-	}
-
-	// Reconstruct the address from the recovered pubkey.
-	var serializedPK []byte
-	if wasCompressed {
-		serializedPK = pk.SerializeCompressed()
-	} else {
-		serializedPK = pk.SerializeUncompressed()
-	}
-	recoveredAddr, err := hcutil.NewAddressSecpPubKey(serializedPK, addr.Net())
-	if err != nil {
-		return false, err
-	}
-
-	// Return whether addresses match.
-	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
-}
 
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
