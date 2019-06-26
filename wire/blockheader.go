@@ -33,7 +33,7 @@ import (
 //const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 
-const AI_UPDATE_HEIGHT = 146
+const AI_UPDATE_HEIGHT = 186
 // BlockHeader defines information about a block and is used in the hcd
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
@@ -115,15 +115,6 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 	_ = writeBlockHeader(buf, 0, h)
 
-/*
-if h.Height >= 146 {
-
-		r := bytes.NewReader(buf.Bytes())
-		var bhTest BlockHeader
-		readBlockHeader(r, uint32(h.Height), &bhTest)
-		fmt.Println("%v", bhTest)
-	}
- */
 	return chainhash.HashH(buf.Bytes())
 }
 
@@ -229,7 +220,7 @@ func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
 		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
-	if bh.Height >= 146{
+	if bh.Height >= AI_UPDATE_HEIGHT{
 		return readElements(r,  &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
 	}else{
 		return err
@@ -241,7 +232,7 @@ func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
 // opposed to encoding for the wire.
 func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 	sec := uint32(bh.Timestamp.Unix())
-	if bh.Height < 146 {
+	if bh.Height < AI_UPDATE_HEIGHT {
 		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 			&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 			bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,

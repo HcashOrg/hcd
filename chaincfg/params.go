@@ -908,7 +908,7 @@ var SimNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
-	AIEnableHeight:				146,
+	AIEnableHeight:				186,
 }
 
 var (

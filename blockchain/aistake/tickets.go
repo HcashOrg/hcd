@@ -196,7 +196,7 @@ func (sn *Node) Height() uint32 {
 	return sn.height
 }
 
-func (sn *Node) GetAiTicketsForTx(seed []byte) ([]byte, error){
+func (sn *Node) GetAiTicketsForTx(seed []byte) ([]chainhash.Hash, error){
 	return GetAiTicketsForTx(seed, *sn)
 }
 
@@ -361,17 +361,16 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 	return node, nil
 }
 
-func GetAiTicketsForTx(seed []byte, node Node) ([]byte, error){
+func GetAiTicketsForTx(seed []byte, node Node) ([]chainhash.Hash, error){
 	prng := NewHash256PRNG(seed)
 	_, err := findTicketIdxs(node.liveTickets.Len(), node.params.AiTicketsPerBlock, prng)
 	if err != nil {
 		return nil, err
 	}
 	lastHash := prng.StateHash()
-	stateBuffer := make([]byte, 0,
-		(node.params.AiTicketsPerBlock+1)*chainhash.HashSize)
-	stateBuffer = append(stateBuffer, lastHash[:]...)
-	return stateBuffer[:], nil
+	var hsahResult []chainhash.Hash
+	hsahResult = append(hsahResult, lastHash)
+	return hsahResult, nil
 }
 
 // hashInSlice determines if a hash exists in a slice of hashes.

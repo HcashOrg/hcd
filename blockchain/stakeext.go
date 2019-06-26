@@ -98,7 +98,7 @@ func (b *BlockChain) LotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Ha
 	return b.lotteryAiDataForBlock(hash)
 }
 
-func (b *BlockChain) LotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]byte, error) {
+func (b *BlockChain) LotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]chainhash.Hash, error) {
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
 
@@ -290,7 +290,7 @@ func (b *BlockChain) lotteryAiDataForNode(node *blockNode) ([]chainhash.Hash, in
 		b.bestNode.aistakeNode.FinalState(), nil
 }
 
-func (b *BlockChain) lotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]byte, error) {
+func (b *BlockChain) lotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]chainhash.Hash, error) {
 
 	var node *blockNode
 	if n, exists := b.index[*blockHash]; exists {
@@ -305,7 +305,7 @@ func (b *BlockChain) lotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHas
 
 	aiStakeNode, err := b.fetchAiStakeNode(node)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	return aiStakeNode.GetAiTicketsForTx(txHash[:])

@@ -547,9 +547,6 @@ func (b *BlockChain) disconnectTransactions(view *UtxoViewpoint,
 	for txIdx := len(transactions) - 1; txIdx > -1; txIdx-- {
 		tx := transactions[txIdx]
 		msgTx := tx.MsgTx()
-		if ok,_ := stake.IsAiSStx(msgTx); ok{
-			fmt.Println("test msgTx")
-		}
 		tt := stake.DetermineTxType(msgTx)
 
 		// Clear this transaction from the view if it already exists or

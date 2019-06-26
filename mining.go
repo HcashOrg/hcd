@@ -540,6 +540,7 @@ func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache,
 	nextBlockHeight int64,
 	addr hcutil.Address,
 	voters uint16,
+	aiVoters uint16,
 	params *chaincfg.Params) (*hcutil.Tx, error) {
 
 	tx := wire.NewMsgTx()
@@ -586,11 +587,11 @@ func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache,
 	// Create a coinbase with correct block subsidy and extranonce.
 	subsidy := blockchain.CalcBlockWorkSubsidy(subsidyCache,
 		nextBlockHeight,
-		voters,
+		voters +aiVoters,
 		activeNetParams.Params)
 	tax := blockchain.CalcBlockTaxSubsidy(subsidyCache,
 		nextBlockHeight,
-		voters,
+		voters +aiVoters,
 		activeNetParams.Params)
 
 	// Tax output.
@@ -936,6 +937,7 @@ func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache,
 					topBlock.Height(),
 					miningAddress,
 					topBlock.MsgBlock().Header.Voters,
+					topBlock.MsgBlock().Header.AiVoters,
 					bm.server.chainParams)
 				if err != nil {
 					return nil, err
@@ -1922,7 +1924,8 @@ mempoolLoop:
 		opReturnPkScript,
 		nextBlockHeight,
 		payToAddress,
-		uint16(voters + aiVoters),
+		uint16(voters),
+		uint16(aiVoters),
 		server.chainParams)
 	if err != nil {
 		return nil, err
@@ -2259,6 +2262,7 @@ func PreCalcCoinBaseSigNum(subsidyCache *blockchain.SubsidyCache, chainParams *c
 		opReturnPkScript,
 		nextBlockHeight,
 		payToAddress,
+		uint16(0),
 		uint16(0),
 		chainParams)
 	if err != nil {
