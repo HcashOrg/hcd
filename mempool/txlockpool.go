@@ -150,17 +150,17 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 }
 
 //check block transactions is conflict with lockPool
-func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) error {
+func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block)(bool, error) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
 	for _, tx := range block.Transactions() {
 		err := mp.checkTxWithLockPool(tx)
 		if err != nil {
-			return err
+			return false, err
 		}
 	}
-	return nil
+	return true, nil
 }
 
 //check the input double spent

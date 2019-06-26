@@ -1304,12 +1304,12 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			_, beenNotified := b.lotteryDataBroadcast[*blockHash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
-			ok:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
+			ok,_:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
 
 			if !beenNotified && r != nil &&
 				int64(bmsg.block.MsgBlock().Header.Height) >
 					b.server.chainParams.LatestCheckpointHeight() {
-				if ok!=nil {
+				if ok {
 					r.ntfnMgr.NotifyWinningTickets(winningTicketsNtfn)
 				}
 				b.lotteryDataBroadcastMutex.Lock()
@@ -2094,8 +2094,8 @@ out:
 							int64(msg.block.MsgBlock().Header.Height),
 							winningTickets}
 
-						ok:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(msg.block)
-						if ok!=nil {
+						ok,_:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(msg.block)
+						if ok {
 							r.ntfnMgr.NotifyWinningTickets(ntfnData)
 						}
 						b.lotteryDataBroadcastMutex.Lock()
@@ -2296,7 +2296,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.lotteryDataBroadcastMutex.Unlock()
 
 			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
-			ok:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
+			ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
 			aiwt, _, _, err2 := b.chain.LotteryAiDataForBlock(hash)
 			if err != nil {
@@ -2315,7 +2315,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 					// Notify registered websocket clients of newly
 					// eligible tickets to vote on.
-					if ok!=nil {
+					if ok  {
 						r.ntfnMgr.NotifyWinningTickets(ntfnData)
 					}
 
