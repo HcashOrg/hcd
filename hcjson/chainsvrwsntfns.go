@@ -36,9 +36,8 @@ const (
 	// from the chain server that inform a client that a relevant
 	// transaction was accepted by the mempool.
 	RelevantTxAcceptedNtfnMethod = "relevanttxaccepted"
-	InstantTxNtfnMethod = "InstantTxNtfn"
-	InstantTxVoteNtfnMethod = "InstantTxVoteNtfn"
-
+	InstantTxNtfnMethod          = "InstantTxNtfn"
+	InstantTxVoteNtfnMethod      = "InstantTxVoteNtfn"
 )
 
 // BlockConnectedNtfn defines the blockconnected JSON-RPC notification.
@@ -124,32 +123,32 @@ type RelevantTxAcceptedNtfn struct {
 }
 
 type InstantTxNtfn struct {
-	InstantTxHash string
-	Tickets       map[string]string
+	InstantTx string
+	Tickets   map[string]string
+	Resend    bool
 }
 
 type InstantTxVoteNtfn struct {
 	InstantTxVoteHash string
-	InstantTxHash string
-	TicketHash string
-	Vote bool
-	Sig string
+	InstantTxHash     string
+	TicketHash        string
+	Vote              bool
+	Sig               string
 }
 
-func NewInstantTxNtfn(instantTxHash string,tickets map[string]string) *InstantTxNtfn {
-	return &InstantTxNtfn{InstantTxHash: instantTxHash, Tickets:tickets}
+func NewInstantTxNtfn(instantTx string, tickets map[string]string, resend bool) *InstantTxNtfn {
+	return &InstantTxNtfn{InstantTx: instantTx, Tickets: tickets, Resend: resend}
 }
 
-func NewInstantTxVoteNtfn(instantTxVoteHash string,instantTxHash string,tickeHash string,vote bool,sig string)*InstantTxVoteNtfn  {
+func NewInstantTxVoteNtfn(instantTxVoteHash string, instantTxHash string, tickeHash string, vote bool, sig string) *InstantTxVoteNtfn {
 	return &InstantTxVoteNtfn{
-		InstantTxVoteHash:instantTxVoteHash,
-		InstantTxHash:instantTxHash,
-		TicketHash:tickeHash,
-		Vote:vote,
-		Sig:sig,
+		InstantTxVoteHash: instantTxVoteHash,
+		InstantTxHash:     instantTxHash,
+		TicketHash:        tickeHash,
+		Vote:              vote,
+		Sig:               sig,
 	}
 }
-
 
 // NewRelevantTxAcceptedNtfn returns a new instance which can be used to issue a
 // relevantxaccepted JSON-RPC notification.

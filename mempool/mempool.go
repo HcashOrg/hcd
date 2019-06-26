@@ -628,7 +628,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	msgTx := tx.MsgTx()
 	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
-		if txscript.IsLockTx(txOut.PkScript) {
+		if txscript.HasInstantTxTag(txOut.PkScript) {
 			isLockTx = true
 			break
 		}
@@ -638,7 +638,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	//if common tx is conflict with txlockpool ,we will reject the common tx
 	if !mp.isInstantTxExist(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
-			if txLock, exist := mp.isInstantTxInExist(&txIn.PreviousOutPoint); exist {
+			if txLock, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
 				if isLockTx {
 					if CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
 						return
@@ -1651,7 +1651,7 @@ func New(cfg *Config) *TxPool {
 		outpoints:     make(map[wire.OutPoint]*hcutil.Tx),
 		votes:         make(map[chainhash.Hash][]VoteTx),
 		lockPool: lockPool{
-			txLockPool:    make(map[chainhash.Hash]*TxLockDesc),
+			txLockPool:    make(map[chainhash.Hash]*InstantTxDesc),
 			lockOutpoints: make(map[wire.OutPoint]*hcutil.InstantTx),
 		},
 	}

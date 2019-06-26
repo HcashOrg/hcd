@@ -40,23 +40,23 @@ func TestTxLockPool(t *testing.T) {
 	t.Log(harness.txPool.TxLockPoolInfo())
 
 	for _, tx := range chainedTxns[:] {
-		harness.txPool.ModifyLockTransaction(tx, 45668)
+		harness.txPool.ModifyLockTxHeight(tx, 45668)
 	}
 
 	for _, desc := range harness.txPool.txLockPool {
 		if len(harness.txPool.txLockPool) != txLen || desc.MineHeight != 45668 {
-			t.Fatalf("ModifyLockTransaction 45668 err")
+			t.Fatalf("ModifyLockTxHeight 45668 err")
 		}
 	}
 
 	t.Log(harness.txPool.TxLockPoolInfo())
 	for _, tx := range chainedTxns[:] {
-		harness.txPool.ModifyLockTransaction(tx, 0)
+		harness.txPool.ModifyLockTxHeight(tx, 0)
 
 	}
 	for _, desc := range harness.txPool.txLockPool {
 		if len(harness.txPool.txLockPool) != txLen || desc.MineHeight != 0 {
-			t.Fatalf("ModifyLockTransaction 0 err")
+			t.Fatalf("ModifyLockTxHeight 0 err")
 		}
 	}
 
@@ -64,11 +64,11 @@ func TestTxLockPool(t *testing.T) {
 	t.Log(harness.txPool.TxLockPoolInfo())
 
 	for _, tx := range chainedTxns[:] {
-		harness.txPool.ModifyLockTransaction(tx, 45668)
+		harness.txPool.ModifyLockTxHeight(tx, 45668)
 	}
 	for _, desc := range harness.txPool.txLockPool {
 		if len(harness.txPool.txLockPool) != txLen || desc.MineHeight != 45668 {
-			t.Fatalf("ModifyLockTransaction 45668 err")
+			t.Fatalf("ModifyLockTxHeight 45668 err")
 		}
 	}
 
@@ -117,7 +117,7 @@ func TestTxLockPool(t *testing.T) {
 	t.Log(harness.txPool.TxLockPoolInfo())
 
 	for _, tx := range chainedTxns[:txLen/2] {
-		harness.txPool.ModifyLockTransaction(tx, 45668)
+		harness.txPool.ModifyLockTxHeight(tx, 45668)
 	}
 
 

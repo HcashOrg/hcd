@@ -305,7 +305,7 @@ func (m *wsNotificationManager) NotifyStakeDifficulty(
 
 // NotifyMempoolTx passes a transaction accepted by mempool to the
 // notification manager for transaction notification processing.  If
-// isNew is true, the instantTx is is a new transaction, rather than one
+// resend is true, the instantTx is is a new transaction, rather than one
 // added to the mempool during a reorg.
 func (m *wsNotificationManager) NotifyMempoolTx(tx *hcutil.Tx, isNew bool) {
 	n := &notificationTxAcceptedByMempool{
@@ -324,14 +324,14 @@ func (m *wsNotificationManager) NotifyMempoolTx(tx *hcutil.Tx, isNew bool) {
 }
 
 //just notify wallet to sign
-func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instantTx *hcutil.InstantTx, isNew bool) {
+func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instantTx *hcutil.InstantTx, resend bool) {
 	n := &notificationInstantTx{
-		isNew:     isNew,
+		resend:    resend,
 		instantTx: instantTx,
 		tickets:   tickets,
 	}
 
-	rpcsLog.Debug("notificationInstantTx:", n.isNew, n.instantTx.Hash())
+	rpcsLog.Debug("notificationInstantTx:", n.resend, n.instantTx.Hash())
 
 	// As notificationInstantTx will be called by mempool and the RPC server
 	// may no longer be running, use a select statement to unblock
@@ -531,7 +531,7 @@ func (f *wsClientFilter) removeUnspentOutPoint(op *wire.OutPoint) {
 }
 
 type InstantTxNtfnData struct {
-	isNew     bool
+	resend    bool
 	instantTx *hcutil.InstantTx
 	tickets   []chainhash.Hash
 }
@@ -1161,7 +1161,8 @@ func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]
 		ticketMap[strconv.Itoa(i)] = ticket.String()
 	}
 
-	ntfn := hcjson.NewInstantTxNtfn(instantTxNtfnData.instantTx.Hash().String(), ticketMap)
+	msgTx:=instantTxNtfnData.instantTx.MsgTx()
+	ntfn := hcjson.NewInstantTxNtfn(txHexString(msgTx), ticketMap,instantTxNtfnData.resend)
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {

@@ -191,11 +191,11 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"existsaddresses":           handleExistsAddresses,
 	"existsmissedtickets":       handleExistsMissedTickets,
 	"existsexpiredtickets":      handleExistsExpiredTickets,
-	"existsexpiredaitickets":      handleExistsExpiredAiTickets,
+	"existsexpiredaitickets":    handleExistsExpiredAiTickets,
 	"existsliveticket":          handleExistsLiveTicket,
-	"existsliveaiticket":          handleExistsLiveAiTicket,
+	"existsliveaiticket":        handleExistsLiveAiTicket,
 	"existslivetickets":         handleExistsLiveTickets,
-	"existsliveaitickets":         handleExistsLiveAiTickets,
+	"existsliveaitickets":       handleExistsLiveAiTickets,
 	"existsmempooltxs":          handleExistsMempoolTxs,
 	"generate":                  handleGenerate,
 	"getaddednodeinfo":          handleGetAddedNodeInfo,
@@ -225,7 +225,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getrawmempool":             handleGetRawMempool,
 	"getrawtransaction":         handleGetRawTransaction,
 	"getstakedifficulty":        handleGetStakeDifficulty,
-	"getaistakedifficulty":        handleGetAiStakeDifficulty,
+	"getaistakedifficulty":      handleGetAiStakeDifficulty,
 	"getstakeversioninfo":       handleGetStakeVersionInfo,
 	"getstakeversions":          handleGetStakeVersions,
 	"getticketpoolvalue":        handleGetTicketPoolValue,
@@ -1080,7 +1080,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	// Check to make sure our SSGen was created correctly.
 	_, err = stake.IsSSGen(mtx)
 	_, errAi := stake.IsAiSSGen(mtx)
-	if err != nil  && errAi != nil{
+	if err != nil && errAi != nil {
 		return nil, rpcInternalError(err.Error(), "Invalid SSGen")
 	}
 
@@ -1207,7 +1207,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	// Check to make sure our SSRtx was created correctly.
 	_, err = stake.IsSSRtx(mtx)
 	_, errAi := stake.IsAiSSRtx(mtx)
-	if err != nil  && errAi != nil{
+	if err != nil && errAi != nil {
 		return nil, rpcInternalError(err.Error(), "Invalid SSRtx")
 	}
 
@@ -1561,7 +1561,6 @@ func handleEstimateStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}, nil
 }
 
-
 // handleEstimateAiStakeDiff implements the estimatestakediff command.
 func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.EstimateAiStakeDiffCmd)
@@ -1632,7 +1631,6 @@ func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan s
 		User:     userEstFltPtr,
 	}, nil
 }
-
 
 // handleExistsAddress implements the existsaddress command.
 func handleExistsAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
@@ -1772,7 +1770,6 @@ func handleExistsExpiredAiTickets(s *rpcServer, cmd interface{}, closeChan <-cha
 
 	return hex.EncodeToString([]byte(set)), nil
 }
-
 
 // handleExistsLiveTicket implements the existsliveticket command.
 func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
@@ -2106,13 +2103,13 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
-		AiVoters:        blockHeader.AiVoters,
+		AiVoters:      blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
-		AiFreshStake:    blockHeader.AiFreshStake,
+		AiFreshStake:  blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
-		AiRevocations:   blockHeader.AiRevocations,
+		AiRevocations: blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
-		AiPoolSize:      blockHeader.AiPoolSize,
+		AiPoolSize:    blockHeader.AiPoolSize,
 		Time:          blockHeader.Timestamp.Unix(),
 		StakeVersion:  blockHeader.StakeVersion,
 		Confirmations: confirmations,
@@ -2120,7 +2117,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		Size:          int32(blk.MsgBlock().Header.Size),
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         sbitsFloat,
-		AiSBits:         aiStakeBitsFloat,
+		AiSBits:       aiStakeBitsFloat,
 		Difficulty:    getDifficultyRatio(blockHeader.Bits),
 		ExtraData:     hex.EncodeToString(blockHeader.ExtraData[:]),
 		NextHash:      nextHashString,
@@ -2268,16 +2265,16 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
-		AiVoters:        blockHeader.AiVoters,
+		AiVoters:      blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
-		AiFreshStake:    blockHeader.AiFreshStake,
+		AiFreshStake:  blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
-		AiRevocations:   blockHeader.AiRevocations,
+		AiRevocations: blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
-		AiPoolSize:      blockHeader.AiPoolSize,
+		AiPoolSize:    blockHeader.AiPoolSize,
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         hcutil.Amount(blockHeader.SBits).ToCoin(),
-		AiSBits:         hcutil.Amount(blockHeader.AiSBits).ToCoin(),
+		AiSBits:       hcutil.Amount(blockHeader.AiSBits).ToCoin(),
 		Height:        uint32(height),
 		Size:          blockHeader.Size,
 		Time:          blockHeader.Timestamp.Unix(),
@@ -3924,6 +3921,7 @@ func handleGetAiStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan 
 
 	return sDiffResult, nil
 }
+
 // convertVersionMap translates a map[int]int into a sorted array of
 // VersionCount that contains the same information.
 func convertVersionMap(m map[int]int) []hcjson.VersionCount {
@@ -4846,7 +4844,7 @@ func handleRebroadcastWinners(s *rpcServer, cmd interface{}, closeChan <-chan st
 			err.Error(), "")
 	}
 
-	if height >= 142{
+	if height >= 142 {
 		fmt.Println("145145")
 	}
 
@@ -5415,9 +5413,9 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	instantTx := hcutil.NewInstantTx(msgtx)
 
 	//TODO check conflict with mempool
-	missedParent,err:=s.server.blockManager.ProcessInstantTx(instantTx,false,false,false)
-	if err!=nil||len(missedParent)!=0{
-		return nil,err
+	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, false)
+	if err != nil || len(missedParent) != 0 {
+		return nil, err
 	}
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
@@ -5457,7 +5455,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	ticketHash := msgInstantTxVote.TicketHash
 	//todo check tickets
 	//tickets, _, _, err := s.chain.LotteryAiDataForBlock(&instantTxHash)
-	b:=s.chain.BestPrevHash()
+	b := s.chain.BestPrevHash()
 	tickets, _, _, err := s.chain.LotteryAiDataForInstantTx(&b)
 	ticketExist := false
 	for _, t := range tickets {
@@ -5500,6 +5498,19 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 			err)
 	}
 
+	//update lockpool
+
+	if instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
+		if len(instantTxDesc.Votes) < 5 {
+			s.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxvote)
+		}
+		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send{
+			instantTxDesc.Send=true
+			//todo send to wallet
+
+		}
+	}
+
 	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
 	instantTxvotes = append(instantTxvotes, instantTxvote)
 
@@ -5514,7 +5525,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	return nil, nil
 
 }
-
 
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {

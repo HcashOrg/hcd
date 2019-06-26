@@ -326,7 +326,7 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 */
 }
 
-func IsLockTx(pkScript []byte) bool{
+func HasInstantTxTag(pkScript []byte) bool{
 	pops, err := parseScript(pkScript)
 	if err != nil || len(pops) != 2 {
 		return false
@@ -362,7 +362,7 @@ func IsLockTx(pkScript []byte) bool{
 func IsInstantTx(msgTx *wire.MsgTx) bool {
 	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
-		if IsLockTx(txOut.PkScript) {
+		if HasInstantTxTag(txOut.PkScript) {
 			isLockTx = true
 			break
 		}

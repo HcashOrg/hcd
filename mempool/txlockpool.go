@@ -18,45 +18,63 @@ const (
 	defaultBehindNums = 10
 )
 
-type TxLockDesc struct {
+type InstantTxDesc struct {
 	Tx *hcutil.InstantTx
 	// Height is the block height when the entry was added to the source
 	// pool.
 	AddHeight int64
 	Votes     []*hcutil.InstantTxVote
+	Send      bool
 
 	MineHeight int64 //
 }
 
 type lockPool struct {
-	txLockPool    map[chainhash.Hash]*TxLockDesc //for instantsend lock tx pool
+	txLockPool    map[chainhash.Hash]*InstantTxDesc //for instantsend lock tx pool
 	lockOutpoints map[wire.OutPoint]*hcutil.InstantTx
 }
 
 //we will update tx state according the mined height
-func (mp *TxPool) modifyLockTransaction(tx *hcutil.InstantTx, height int64) {
+func (mp *TxPool) modifyInstantTxHeight(tx *hcutil.InstantTx, height int64) {
 	msgTx := tx.MsgTx()
-	isLockTx := false
-	for _, txOut := range msgTx.TxOut {
-		if txscript.IsLockTx(txOut.PkScript) {
-			isLockTx = true
-			break
-		}
-	}
-	if !isLockTx {
+	isInstantTx := txscript.IsInstantTx(msgTx)
+	if !isInstantTx {
 		return
 	}
-
 	if desc, exist := mp.txLockPool[*tx.Hash()]; exist {
 		desc.MineHeight = height
 	}
 }
 
-func (mp *TxPool) ModifyLockTransaction(tx *hcutil.InstantTx, height int64) {
+func (mp *TxPool) AppendInstantTxVote(hash *chainhash.Hash, vote *hcutil.InstantTxVote) {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
+	mp.appendInstantTxVote(hash, vote)
+}
+
+func (mp *TxPool) appendInstantTxVote(hash *chainhash.Hash, vote *hcutil.InstantTxVote) {
+	if desc, exist := mp.txLockPool[*hash]; exist && vote != nil {
+		desc.Votes = append(desc.Votes, vote)
+	}
+}
+
+func (mp *TxPool) GetInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, exist bool) {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+
+	return mp.getInstantTxDesc(hash)
+}
+
+func (mp *TxPool) getInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, exist bool) {
+	desc, exist = mp.txLockPool[*hash]
+	return
+}
+
+func (mp *TxPool) ModifyLockTxHeight(tx *hcutil.InstantTx, height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	mp.modifyLockTransaction(tx, height)
+	mp.modifyInstantTxHeight(tx, height)
 }
 
 func (mp *TxPool) RemoveConfirmedLockTransaction(height int64) {
@@ -88,7 +106,7 @@ func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
 }
 
 //Is txVin  in locked?
-func (mp *TxPool) isInstantTxInExist(outPoint *wire.OutPoint) (*hcutil.InstantTx, bool) {
+func (mp *TxPool) isInstantTxInputExist(outPoint *wire.OutPoint) (*hcutil.InstantTx, bool) {
 	if txLock, exists := mp.lockOutpoints[*outPoint]; exists {
 		return txLock, true
 	}
@@ -149,7 +167,7 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) error {
 func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
 	if !mp.isInstantTxExist(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
-			if _, exist := mp.isInstantTxInExist(&txIn.PreviousOutPoint); exist {
+			if _, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
 				return fmt.Errorf("tx %v conflict with lock pool", tx.Hash())
 			}
 		}
@@ -169,7 +187,7 @@ func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 
 	//if tx in is conflict with txlock ,just remove txlock and lockOutpoint
 	for _, invalue := range tx.MsgTx().TxIn {
-		if txLock, exist := mp.isInstantTxInExist(&invalue.PreviousOutPoint); exist {
+		if txLock, exist := mp.isInstantTxInputExist(&invalue.PreviousOutPoint); exist {
 			delete(mp.txLockPool, *txLock.Hash())
 
 			for _, txIn := range txLock.MsgTx().TxIn {
@@ -183,11 +201,11 @@ func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
 func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	mp.maybeAddtoLockPool(tx,isNew, rateLimit, allowHighFees)
+	mp.maybeAddtoLockPool(tx, isNew, rateLimit, allowHighFees)
 }
 
 //this is called before inserting to mempool,must be called with lock
-func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx,  isNew, rateLimit, allowHighFees bool) {
+func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) {
 	//if exist just return ,or will rewrite the state of this txlock
 	if mp.isInstantTxExist(instantTx.Hash()) {
 		return
@@ -216,10 +234,11 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx,  isNew, rateLi
 		return
 	}
 	bestHeight := mp.cfg.BestHeight()
-	mp.txLockPool[*instantTx.Hash()] = &TxLockDesc{
+	mp.txLockPool[*instantTx.Hash()] = &InstantTxDesc{
 		Tx:         instantTx,
 		AddHeight:  bestHeight,
 		MineHeight: 0,
+		send:       false,
 		Votes:      make([]*hcutil.InstantTxVote, 0, 5)}
 
 	for _, txIn := range msgTx.TxIn {

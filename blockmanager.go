@@ -2387,7 +2387,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
-			//b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			//b.server.txMemPool.ModifyLockTxHeight(tx, parentBlock.Height())
 
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
@@ -2491,7 +2491,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		// tx tree regular into the transaction pool.
 		for _, tx := range parentBlock.Transactions()[1:] {
 			//reinsert tx from disconnected block, now we can update locktx height to 0 in the txlockpool
-			//b.server.txMemPool.ModifyLockTransaction(tx, 0)
+			//b.server.txMemPool.ModifyLockTxHeight(tx, 0)
 
 			_, err := b.server.txMemPool.MaybeAcceptTransaction(tx, false, true)
 			if err != nil {
