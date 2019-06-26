@@ -191,11 +191,11 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"existsaddresses":           handleExistsAddresses,
 	"existsmissedtickets":       handleExistsMissedTickets,
 	"existsexpiredtickets":      handleExistsExpiredTickets,
-	"existsexpiredaitickets":      handleExistsExpiredAiTickets,
+	"existsexpiredaitickets":    handleExistsExpiredAiTickets,
 	"existsliveticket":          handleExistsLiveTicket,
-	"existsliveaiticket":          handleExistsLiveAiTicket,
+	"existsliveaiticket":        handleExistsLiveAiTicket,
 	"existslivetickets":         handleExistsLiveTickets,
-	"existsliveaitickets":         handleExistsLiveAiTickets,
+	"existsliveaitickets":       handleExistsLiveAiTickets,
 	"existsmempooltxs":          handleExistsMempoolTxs,
 	"generate":                  handleGenerate,
 	"getaddednodeinfo":          handleGetAddedNodeInfo,
@@ -225,7 +225,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getrawmempool":             handleGetRawMempool,
 	"getrawtransaction":         handleGetRawTransaction,
 	"getstakedifficulty":        handleGetStakeDifficulty,
-	"getaistakedifficulty":        handleGetAiStakeDifficulty,
+	"getaistakedifficulty":      handleGetAiStakeDifficulty,
 	"getstakeversioninfo":       handleGetStakeVersionInfo,
 	"getstakeversions":          handleGetStakeVersions,
 	"getticketpoolvalue":        handleGetTicketPoolValue,
@@ -234,6 +234,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getwork":                   handleGetWork,
 	"help":                      handleHelp,
 	"livetickets":               handleLiveTickets,
+	"ailivetickets":             handleAiLiveTickets,
 	"missedtickets":             handleMissedTickets,
 	"node":                      handleNode,
 	"ping":                      handlePing,
@@ -471,14 +472,14 @@ type gbtWorkState struct {
 	minTimestamp  time.Time
 	template      *BlockTemplate
 	notifyMap     map[chainhash.Hash]map[int64]chan struct{}
-	timeSource blockchain.MedianTimeSource
+	timeSource    blockchain.MedianTimeSource
 }
 
 // newGbtWorkState returns a new instance of a gbtWorkState with all internal
 // fields initialized and ready to use.
 func newGbtWorkState(timeSource blockchain.MedianTimeSource) *gbtWorkState {
 	return &gbtWorkState{
-		notifyMap: make(map[chainhash.Hash]map[int64]chan struct{}),
+		notifyMap:  make(map[chainhash.Hash]map[int64]chan struct{}),
 		timeSource: timeSource,
 	}
 }
@@ -1080,7 +1081,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	// Check to make sure our SSGen was created correctly.
 	_, err = stake.IsSSGen(mtx)
 	_, errAi := stake.IsAiSSGen(mtx)
-	if err != nil  && errAi != nil{
+	if err != nil && errAi != nil {
 		return nil, rpcInternalError(err.Error(), "Invalid SSGen")
 	}
 
@@ -1207,7 +1208,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	// Check to make sure our SSRtx was created correctly.
 	_, err = stake.IsSSRtx(mtx)
 	_, errAi := stake.IsAiSSRtx(mtx)
-	if err != nil  && errAi != nil{
+	if err != nil && errAi != nil {
 		return nil, rpcInternalError(err.Error(), "Invalid SSRtx")
 	}
 
@@ -1561,7 +1562,6 @@ func handleEstimateStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}, nil
 }
 
-
 // handleEstimateAiStakeDiff implements the estimatestakediff command.
 func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.EstimateAiStakeDiffCmd)
@@ -1632,7 +1632,6 @@ func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan s
 		User:     userEstFltPtr,
 	}, nil
 }
-
 
 // handleExistsAddress implements the existsaddress command.
 func handleExistsAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
@@ -1772,7 +1771,6 @@ func handleExistsExpiredAiTickets(s *rpcServer, cmd interface{}, closeChan <-cha
 
 	return hex.EncodeToString([]byte(set)), nil
 }
-
 
 // handleExistsLiveTicket implements the existsliveticket command.
 func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
@@ -2106,13 +2104,13 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
-		AiVoters:        blockHeader.AiVoters,
+		AiVoters:      blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
-		AiFreshStake:    blockHeader.AiFreshStake,
+		AiFreshStake:  blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
-		AiRevocations:   blockHeader.AiRevocations,
+		AiRevocations: blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
-		AiPoolSize:      blockHeader.AiPoolSize,
+		AiPoolSize:    blockHeader.AiPoolSize,
 		Time:          blockHeader.Timestamp.Unix(),
 		StakeVersion:  blockHeader.StakeVersion,
 		Confirmations: confirmations,
@@ -2120,7 +2118,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		Size:          int32(blk.MsgBlock().Header.Size),
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         sbitsFloat,
-		AiSBits:         aiStakeBitsFloat,
+		AiSBits:       aiStakeBitsFloat,
 		Difficulty:    getDifficultyRatio(blockHeader.Bits),
 		ExtraData:     hex.EncodeToString(blockHeader.ExtraData[:]),
 		NextHash:      nextHashString,
@@ -2268,16 +2266,16 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		VoteBits:      blockHeader.VoteBits,
 		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
 		Voters:        blockHeader.Voters,
-		AiVoters:        blockHeader.AiVoters,
+		AiVoters:      blockHeader.AiVoters,
 		FreshStake:    blockHeader.FreshStake,
-		AiFreshStake:    blockHeader.AiFreshStake,
+		AiFreshStake:  blockHeader.AiFreshStake,
 		Revocations:   blockHeader.Revocations,
-		AiRevocations:   blockHeader.AiRevocations,
+		AiRevocations: blockHeader.AiRevocations,
 		PoolSize:      blockHeader.PoolSize,
-		AiPoolSize:      blockHeader.AiPoolSize,
+		AiPoolSize:    blockHeader.AiPoolSize,
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
 		SBits:         hcutil.Amount(blockHeader.SBits).ToCoin(),
-		AiSBits:         hcutil.Amount(blockHeader.AiSBits).ToCoin(),
+		AiSBits:       hcutil.Amount(blockHeader.AiSBits).ToCoin(),
 		Height:        uint32(height),
 		Size:          blockHeader.Size,
 		Time:          blockHeader.Timestamp.Unix(),
@@ -2490,7 +2488,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 	if template == nil || state.prevHash == nil ||
 		!state.prevHash.IsEqual(latestHash) ||
 		(state.lastTxUpdate != lastTxUpdate &&
-			time.Now().After(state.lastGenerated.Add(time.Second *
+			time.Now().After(state.lastGenerated.Add(time.Second*
 				gbtRegenerateSeconds))) {
 
 		// Reset the previous best hash the block template was generated
@@ -3924,6 +3922,7 @@ func handleGetAiStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan 
 
 	return sDiffResult, nil
 }
+
 // convertVersionMap translates a map[int]int into a sorted array of
 // VersionCount that contains the same information.
 func convertVersionMap(m map[int]int) []hcjson.VersionCount {
@@ -4778,6 +4777,20 @@ func handleLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 
 	return hcjson.LiveTicketsResult{Tickets: ltString}, nil
 }
+func handleAiLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	lt, err := s.server.blockManager.chain.AiLiveTickets()
+	if err != nil {
+		return nil, rpcInternalError("Could not get live tickets "+
+			err.Error(), "")
+	}
+
+	ltString := make([]string, len(lt))
+	for i := range lt {
+		ltString[i] = lt[i].String()
+	}
+
+	return hcjson.LiveTicketsResult{Tickets: ltString}, nil
+}
 
 // handleMissedTickets implements the missedtickets command.
 func handleMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
@@ -4846,7 +4859,7 @@ func handleRebroadcastWinners(s *rpcServer, cmd interface{}, closeChan <-chan st
 			err.Error(), "")
 	}
 
-	if height >= 142{
+	if height >= 142 {
 		fmt.Println("145145")
 	}
 

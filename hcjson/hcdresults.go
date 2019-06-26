@@ -134,6 +134,17 @@ type FeeInfoBlock struct {
 	StdDev float64 `json:"stddev"`
 }
 
+// FeeInfoBlock is ticket fee information about a block.
+type AiFeeInfoBlock struct {
+	Height uint32  `json:"height"`
+	Number uint32  `json:"number"`
+	Min    float64 `json:"min"`
+	Max    float64 `json:"max"`
+	Mean   float64 `json:"mean"`
+	Median float64 `json:"median"`
+	StdDev float64 `json:"stddev"`
+}
+
 // FeeInfoMempool is ticket fee information about the mempool.
 type FeeInfoMempool struct {
 	Number uint32  `json:"number"`
