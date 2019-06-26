@@ -1078,6 +1078,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 		int64(template.Block.Header.Height),
 		cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))],
 		uint16(votesTotal),
+		uint16(aiVotesTotal),
 		b.server.chainParams)
 	if err != nil {
 		bmgrLog.Errorf("failed to create coinbase while generating " +
