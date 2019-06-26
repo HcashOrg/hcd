@@ -91,7 +91,7 @@ func IsPushOnlyScript(script []byte) bool {
 // HasP2SHScriptSigStakeOpCodes returns an error is the p2sh script has either
 // stake opcodes or if the pkscript cannot be retrieved.
 func HasP2SHScriptSigStakeOpCodes(version uint16, scriptSig,
-	scriptPubKey []byte) error {
+scriptPubKey []byte) error {
 	class := GetScriptClass(version, scriptPubKey)
 	if IsStakeOutput(scriptPubKey) {
 		class, _ = GetStakeOutSubclass(scriptPubKey)
@@ -136,7 +136,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 		instr := script[i]
 
 		// TODO for read
-		if i == 24 && script[i] < (OP_1) && script[i] != (OP_0){  //OP_O
+		if i == 24 && script[i] < (OP_1) && script[i] != (OP_0) { //OP_O
 			instr = instr + 80
 		}
 		op := &opcodes[instr]
@@ -149,7 +149,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 		case op.length == 1:
 			i++
 
-		// Data pushes of specific lengths -- OP_DATA_[1-75].
+			// Data pushes of specific lengths -- OP_DATA_[1-75].
 		case op.length > 1:
 			if len(script[i:]) < op.length {
 				return retScript, ErrStackShortScript
@@ -159,7 +159,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 			pop.data = script[i+1 : i+op.length]
 			i += op.length
 
-		// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
+			// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
 		case op.length < 0:
 			var l uint
 			off := i + 1
@@ -226,7 +226,7 @@ func parseScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode,
 		case op.length == 1:
 			i++
 
-		// Data pushes of specific lengths -- OP_DATA_[1-75].
+			// Data pushes of specific lengths -- OP_DATA_[1-75].
 		case op.length > 1:
 			if len(script[i:]) < op.length {
 				return retScript, ErrStackShortScript
@@ -236,7 +236,7 @@ func parseScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode,
 			pop.data = script[i+1 : i+op.length]
 			i += op.length
 
-		// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
+			// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
 		case op.length < 0:
 			var l uint
 			off := i + 1
@@ -303,39 +303,39 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if len(data) <= 4{
+	if len(data) <= 4 {
 		return false, nil
 	}
 	if opCode == OP_RETURN &&
 		data[0] == 111 &&
 		data[1] == 109 &&
 		data[2] == 110 &&
-		data[3] == 105{
+		data[3] == 105 {
 		return true, data[4:]
 	}
 	return false, nil
-/*
-	byte := op[1].bytes()
-	if byte[0] == 111 &&
-		byte[1] == 109 &&
-		byte[2] == 110 &&
-		byte[3] == 105 {
-		return true, byte
-	}
-	return false, nil
-*/
+	/*
+		byte := op[1].bytes()
+		if byte[0] == 111 &&
+			byte[1] == 109 &&
+			byte[2] == 110 &&
+			byte[3] == 105 {
+			return true, byte
+		}
+		return false, nil
+	*/
 }
 
-func HasInstantTxTag(pkScript []byte) bool{
+func HasInstantTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 	pops, err := parseScript(pkScript)
 	if err != nil || len(pops) != 2 {
-		return false
+		return nil, false
 	}
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if len(data) != 16{
-		return false
+	if len(data) != 16+32 {
+		return nil, false
 	}
 	//68636173  68496e73 74616e74 53656e64
 	if opCode == OP_RETURN &&
@@ -354,21 +354,26 @@ func HasInstantTxTag(pkScript []byte) bool{
 		data[12] == 0x53 &&
 		data[13] == 0x65 &&
 		data[14] == 0x6e &&
-		data[15] == 0x64{
-		return true
+		data[15] == 0x64 {
+
+		hashBytes := data[16:]
+		hash, err := chainhash.NewHash(hashBytes)
+		if err != nil {
+			return nil, false
+		}
+		return hash, true
 	}
-	return false
+	return nil, false
 }
-func IsInstantTx(msgTx *wire.MsgTx) bool {
-	isLockTx := false
+func IsInstantTx(msgTx *wire.MsgTx) (*chainhash.Hash, bool) {
 	for _, txOut := range msgTx.TxOut {
-		if HasInstantTxTag(txOut.PkScript) {
-			isLockTx = true
-			break
+		if hash, has := HasInstantTxTag(txOut.PkScript); has {
+			return hash, true
 		}
 	}
-	return isLockTx
+	return nil, false
 }
+
 // unparseScript reversed the action of parseScript and returns the
 // parsedOpcodes as a list of bytes
 func unparseScript(pops []parsedOpcode) ([]byte, error) {

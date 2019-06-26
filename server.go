@@ -1261,8 +1261,8 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 		if s.rpcServer != nil {
 			//deal with instant instantTx,
 			// just send to wallet to sign
-			b:=s.blockManager.chain.BestPrevHash()
-			tickets, _, _, err := s.rpcServer.chain.LotteryAiDataForInstantTx(&b)
+			lotteryHash,_:=txscript.IsInstantTx(instantTx.MsgTx())
+			tickets,err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(),lotteryHash)
 			if err != nil {
 				return
 			}

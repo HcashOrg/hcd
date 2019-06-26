@@ -2410,7 +2410,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
 					var iv *wire.InvVect
-					if txscript.IsInstantTx(tx.MsgTx()) {
+					if _,is:=txscript.IsInstantTx(tx.MsgTx());is {
 						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
 					} else {
 						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())

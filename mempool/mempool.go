@@ -628,7 +628,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	msgTx := tx.MsgTx()
 	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
-		if txscript.HasInstantTxTag(txOut.PkScript) {
+		if _,has:=txscript.HasInstantTxTag(txOut.PkScript);has {
 			isLockTx = true
 			break
 		}

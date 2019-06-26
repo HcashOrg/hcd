@@ -5454,9 +5454,14 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	instantTxHash := msgInstantTxVote.InstantTxHash
 	ticketHash := msgInstantTxVote.TicketHash
 	//todo check tickets
-	//tickets, _, _, err := s.chain.LotteryAiDataForBlock(&instantTxHash)
-	b := s.chain.BestPrevHash()
-	tickets, _, _, err := s.chain.LotteryAiDataForInstantTx(&b)
+	instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash)
+	if !exist{
+		return nil,fmt.Errorf("instant tx %v not exist in lock pool",instantTxHash)
+	}
+	instantTx:=instantTxDesc.Tx
+
+	lotteryHash,_:=txscript.IsInstantTx(instantTx.MsgTx())
+	tickets,err := s.chain.LotteryAiDataForTxAndBlock(&instantTxHash,lotteryHash)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
@@ -5499,7 +5504,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	//update lockpool
-
 	if instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
 		if len(instantTxDesc.Votes) < 5 {
 			s.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxvote)

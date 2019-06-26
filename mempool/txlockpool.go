@@ -37,7 +37,7 @@ type lockPool struct {
 //we will update tx state according the mined height
 func (mp *TxPool) modifyInstantTxHeight(tx *hcutil.InstantTx, height int64) {
 	msgTx := tx.MsgTx()
-	isInstantTx := txscript.IsInstantTx(msgTx)
+	_,isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
 		return
 	}
@@ -228,7 +228,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 
 	//check instant tag
 	msgTx := instantTx.MsgTx()
-	isInstantTx := txscript.IsInstantTx(msgTx)
+	_,isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
 		log.Tracef("Transaction %v is not instant instantTx ", instantTx.Hash())
 		return
@@ -238,7 +238,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 		Tx:         instantTx,
 		AddHeight:  bestHeight,
 		MineHeight: 0,
-		send:       false,
+		Send:       false,
 		Votes:      make([]*hcutil.InstantTxVote, 0, 5)}
 
 	for _, txIn := range msgTx.TxIn {
