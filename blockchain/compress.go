@@ -819,5 +819,6 @@ func decodeFlags(b byte) (bool, bool, stake.TxType, bool) {
 
 // decodeFlagsFullySpent decodes whether or not a transaction was fully spent.
 func decodeFlagsFullySpent(b byte) bool {
-	return b&(1<<4) != 0
+	//return b&(1<<4) != 0
+	return b&(1<<5) != 0
 }

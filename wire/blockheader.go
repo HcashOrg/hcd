@@ -33,7 +33,7 @@ import (
 //const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 
-const AI_UPDATE_HEIGHT = 146
+const AI_UPDATE_HEIGHT = 186
 // BlockHeader defines information about a block and is used in the hcd
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
@@ -115,15 +115,6 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 	_ = writeBlockHeader(buf, 0, h)
 
-/*
-if h.Height >= 146 {
-
-		r := bytes.NewReader(buf.Bytes())
-		var bhTest BlockHeader
-		readBlockHeader(r, uint32(h.Height), &bhTest)
-		fmt.Println("%v", bhTest)
-	}
- */
 	return chainhash.HashH(buf.Bytes())
 }
 
