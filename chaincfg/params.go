@@ -471,6 +471,8 @@ type Params struct {
 	OmniMoneyReceive string
 	OmniStartHeight uint64
 	AIEnableHeight  uint64
+	AIStakeEnabledHeight uint64
+
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -754,12 +756,12 @@ var SimNetParams = Params{
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
 	//TargetTimePerBlock:       time.Second * 10,
-	TargetTimePerBlock:       time.Second*3,
+	TargetTimePerBlock:       time.Second*10,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
 	//TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
-	TargetTimespan:           time.Second * 24, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -908,7 +910,8 @@ var SimNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
 	OmniStartHeight:			 46000,
-	AIEnableHeight:				186,
+	AIEnableHeight:				 AIEnableHeightSimNet,
+	AIStakeEnabledHeight:		 AIEnableHeightSimNet + 40,
 }
 
 var (
