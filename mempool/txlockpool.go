@@ -117,7 +117,7 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	for hash, desc := range mp.txLockPool {
 		votesHash :=make([]string,0,5)
 		for _,vote := range desc.Votes {
-			votesHash=append(votesHash, vote.Hash().String())
+			votesHash=append(votesHash, vote.Hash().String()+"-"+vote.MsgInstantTxVote().TicketHash.String())
 		}
 
 		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight,Votes:votesHash,Send:desc.Send}
