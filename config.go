@@ -30,7 +30,8 @@ import (
 	"github.com/HcashOrg/hcd/sampleconfig"
 	"github.com/btcsuite/btclog"
 	"github.com/btcsuite/go-socks/socks"
-	flags "github.com/jessevdk/go-flags"
+	"github.com/jessevdk/go-flags"
+	"github.com/HcashOrg/hcd/wire"
 )
 
 const (
@@ -587,6 +588,7 @@ func loadConfig() (*config, []string, error) {
 
 	// Count number of network flags passed; assign active network params
 	// while we're at it
+	//wire.CurrentParam = &mainNetParams
 	if cfg.TestNet {
 		numNets++
 		activeNetParams = &testNet2Params
@@ -597,6 +599,7 @@ func loadConfig() (*config, []string, error) {
 		activeNetParams = &simNetParams
 		cfg.DisableDNSSeed = true
 	}
+	wire.AI_UPDATE_HEIGHT = activeNetParams.AIUpdateHeight
 	if numNets > 1 {
 		str := "%s: the testnet and simnet params can't be " +
 			"used together -- choose one of the three"

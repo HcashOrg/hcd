@@ -1490,6 +1490,9 @@ mempoolLoop:
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
+		if isAiSStx && uint64(nextBlockHeight) < server.chainParams.AIUpdateHeight{
+			continue
+		}
 		if isAiSStx && (numAiSStx >=
 			int(server.chainParams.AiMaxFreshStakePerBlock)) {
 			minrLog.Tracef("Skipping sstx %s because it would exceed "+
