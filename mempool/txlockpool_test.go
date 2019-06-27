@@ -97,11 +97,11 @@ func TestTxLockPool(t *testing.T) {
 
 		chainedTxns2, _ := harness.CreateTxChain(spendableOutput{tx.MsgTx().TxIn[0].PreviousOutPoint, 0}, 1)
 
-		harness.txPool.RemoveTxLockDoubleSpends(chainedTxns2[0])
+		harness.txPool.RemoveInstantTxDoubleSpends(chainedTxns2[0])
 		//t.Log(harness.txPool.TxLockPoolInfo())
 	}
 	if len(harness.txPool.txLockPool) != 0 ||len(harness.txPool.lockOutpoints)!=0{
-		t.Fatalf("RemoveTxLockDoubleSpends err")
+		t.Fatalf("RemoveInstantTxDoubleSpends err")
 	}
 
 	for _, tx := range chainedTxns[:] {
@@ -125,12 +125,12 @@ func TestTxLockPool(t *testing.T) {
 
 		chainedTxns2, _ := harness.CreateTxChain(spendableOutput{tx.MsgTx().TxIn[0].PreviousOutPoint, 0}, 1)
 
-		harness.txPool.RemoveTxLockDoubleSpends(chainedTxns2[0])
+		harness.txPool.RemoveInstantTxDoubleSpends(chainedTxns2[0])
 		//t.Log(harness.txPool.TxLockPoolInfo())
 	}
 
 	if len(harness.txPool.txLockPool) != 0 || len(harness.txPool.lockOutpoints) != 0 {
-		t.Fatalf("RemoveTxLockDoubleSpends err")
+		t.Fatalf("RemoveInstantTxDoubleSpends err")
 	}
 
 	t.Log(harness.txPool.TxLockPoolInfo())
