@@ -5509,7 +5509,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send{
 			instantTxDesc.Send=true
 			//todo send to wallet
-
+			s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 		}
 	}
 

@@ -34,14 +34,8 @@ type lockPool struct {
 	lockOutpoints map[wire.OutPoint]*hcutil.InstantTx
 }
 
-//we will update tx state according the mined height
-//we will update tx state according the mined height
-func (mp *TxPool) modifyInstantTxHeight(tx *hcutil.InstantTx, height int64) {
-	msgTx := tx.MsgTx()
-	_,isInstantTx := txscript.IsInstantTx(msgTx)
-	if !isInstantTx {
-		return
-	}
+//update inistant tx state according the mined height
+func (mp *TxPool) modifyInstantTxHeight(tx *hcutil.Tx, height int64) {
 	if desc, exist := mp.txLockPool[*tx.Hash()]; exist {
 		desc.MineHeight = height
 	}
@@ -71,7 +65,7 @@ func (mp *TxPool) getInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, e
 	return
 }
 
-func (mp *TxPool) ModifyLockTxHeight(tx *hcutil.InstantTx, height int64) {
+func (mp *TxPool) ModifyInstantTxHeight(tx *hcutil.Tx, height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
@@ -121,7 +115,12 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	ret := make(map[string]*hcjson.TxLockInfo, len(mp.txLockPool))
 
 	for hash, desc := range mp.txLockPool {
-		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight}
+		votesHash :=make([]string,0,5)
+		for _,vote := range desc.Votes {
+			votesHash=append(votesHash, vote.Hash().String())
+		}
+
+		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight,Votes:votesHash,Send:desc.Send}
 	}
 
 	return ret
@@ -177,7 +176,7 @@ func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
 }
 
 //remove txlock which is conflict with tx
-func (mp *TxPool) RemoveTxLockDoubleSpends(tx *hcutil.Tx) {
+func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
@@ -577,6 +576,7 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 	if exists {
 		return txDesc.Tx, nil
 	}
+
 
 	tx, err := mp.FetchTransaction(txHash, includeRecentBlock)
 	if err != nil {

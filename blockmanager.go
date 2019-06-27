@@ -2382,11 +2382,11 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
-			//b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			b.server.txMemPool.ModifyInstantTxHeight(tx,parentBlock.Height())
 
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
-			//b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
+			b.server.txMemPool.RemoveInstantTxDoubleSpends(tx)
 		}
 		b.server.txMemPool.RemoveConfirmedLockTransaction(parentBlock.Height())
 

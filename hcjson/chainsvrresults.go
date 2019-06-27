@@ -23,16 +23,16 @@ type GetBlockHeaderVerboseResult struct {
 	VoteBits      uint16  `json:"votebits"`
 	FinalState    string  `json:"finalstate"`
 	Voters        uint16  `json:"voters"`
-	AiVoters        uint16  `json:"aivoters"`
+	AiVoters      uint16  `json:"aivoters"`
 	FreshStake    uint8   `json:"freshstake"`
-	AiFreshStake    uint8   `json:"aifreshstake"`
+	AiFreshStake  uint8   `json:"aifreshstake"`
 	Revocations   uint8   `json:"revocations"`
-	AiRevocations   uint8   `json:"airevocations"`
+	AiRevocations uint8   `json:"airevocations"`
 	PoolSize      uint32  `json:"poolsize"`
-	AiPoolSize      uint32  `json:"aipoolsize"`
+	AiPoolSize    uint32  `json:"aipoolsize"`
 	Bits          string  `json:"bits"`
 	SBits         float64 `json:"sbits"`
-	AiSBits         float64 `json:"aisbits"`
+	AiSBits       float64 `json:"aisbits"`
 	Height        uint32  `json:"height"`
 	Size          uint32  `json:"size"`
 	Time          int64   `json:"time"`
@@ -62,16 +62,16 @@ type GetBlockVerboseResult struct {
 	VoteBits      uint16        `json:"votebits"`
 	FinalState    string        `json:"finalstate"`
 	Voters        uint16        `json:"voters"`
-	AiVoters        uint16        `json:"aivoters"`
+	AiVoters      uint16        `json:"aivoters"`
 	FreshStake    uint8         `json:"freshstake"`
-	AiFreshStake    uint8         `json:"aifreshstake"`
+	AiFreshStake  uint8         `json:"aifreshstake"`
 	Revocations   uint8         `json:"revocations"`
-	AiRevocations   uint8         `json:"airevocations"`
+	AiRevocations uint8         `json:"airevocations"`
 	PoolSize      uint32        `json:"poolsize"`
-	AiPoolSize      uint32      `json:"aipoolsize"`
+	AiPoolSize    uint32        `json:"aipoolsize"`
 	Bits          string        `json:"bits"`
 	SBits         float64       `json:"sbits"`
-	AiSBits        float64       `json:"aisbits"`
+	AiSBits       float64       `json:"aisbits"`
 	Difficulty    float64       `json:"difficulty"`
 	ExtraData     string        `json:"extradata"`
 	StakeVersion  uint32        `json:"stakeversion"`
@@ -196,18 +196,18 @@ type GetMempoolInfoResult struct {
 }
 
 type GetTxLockpoolInfoResult struct {
-	Info  map[string]*TxLockInfo
+	Info map[string]*TxLockInfo
 }
 
 type FetchPendingLockTxResult struct {
 	MsgTx [][]byte
 }
 
-
-
 type TxLockInfo struct {
-	AddHeight int64 `json:"add_height"`
-	MineHeight int64 `json:"mine_height"`
+	AddHeight  int64    `json:"add_height"`
+	MineHeight int64    `json:"mine_height"`
+	Votes      []string `json:"votes"`
+	Send       bool     `json:"send"`
 }
 
 // GetNetworkInfoResult models the data returned from the getnetworkinfo
