@@ -72,7 +72,7 @@ func (mp *TxPool) ModifyInstantTxHeight(tx *hcutil.Tx, height int64) {
 	mp.modifyInstantTxHeight(tx, height)
 }
 
-func (mp *TxPool) RemoveConfirmedLockTransaction(height int64) {
+func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 	for hash, desc := range mp.txLockPool {

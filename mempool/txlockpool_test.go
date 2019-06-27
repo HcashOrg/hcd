@@ -73,10 +73,10 @@ func TestTxLockPool(t *testing.T) {
 
 	t.Log(harness.txPool.TxLockPoolInfo())
 
-	harness.txPool.RemoveConfirmedLockTransaction(45768)
+	harness.txPool.RemoveConfirmedInstantTx(45768)
 
 	if len(harness.txPool.txLockPool) != 0||len(harness.txPool.lockOutpoints)!=0 {
-		t.Fatalf("RemoveConfirmedLockTransaction err")
+		t.Fatalf("RemoveConfirmedInstantTx err")
 	}
 
 	//t.Log(harness.txPool.TxLockPoolInfo())

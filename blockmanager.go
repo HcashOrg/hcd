@@ -836,10 +836,17 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	instantTxHash := instantTxVote.MsgInstantTxVote().InstantTxHash
 	ticketHash := instantTxVote.MsgInstantTxVote().TicketHash
 
-	//TODO dealwith vote in mempool
+
+	instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(&instantTxHash)
+	if !exist {
+		bmgrLog.Errorf("instant tx %v not exist in lock pool", instantTxHash)
+		return
+	}
+	instantTx := instantTxDesc.Tx
 
 	//check ticket selected
-	tickets, _, _, err := b.chain.LotteryAiDataForBlock(&instantTxHash)
+	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
+	tickets, err := b.chain.LotteryAiDataForTxAndBlock(&instantTxHash, lotteryHash)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
@@ -848,19 +855,19 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 		}
 	}
 	if !ticketExist {
-		bmgrLog.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxVote.Hash(),
-			err)
+		bmgrLog.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxVote.Hash())
 		return
 	}
 
-	// check signature
-	//get addr
+	//check signature
+	//get address
 	entry, err := b.chain.FetchUtxoEntry(&ticketHash)
-	if err != nil {
-		bmgrLog.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
-			err)
+
+	if err != nil || entry == nil {
+		bmgrLog.Errorf("failed to fetch utxo  %v,err %v",ticketHash.String(), err)
 		return
 	}
+
 	scriptVersion := entry.ScriptVersionByIndex(0)
 	pkScript := entry.PkScriptByIndex(0)
 	script := pkScript
@@ -868,8 +875,7 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 		script, b.server.chainParams)
 
 	if err != nil {
-		bmgrLog.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
-			err)
+		bmgrLog.Errorf("failed to extractpkscript of ticket  %v,err %v", ticketHash.String(), err)
 		return
 	}
 
@@ -877,16 +883,38 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 
 	//verifymessage
 	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
-
 	if !verified {
-		bmgrLog.Errorf("failed  verify signature ,instantvote %v: %v", instantTxVote.Hash(),
-			err)
+		bmgrLog.Errorf("failed  verify signature ,instantvote %v,err: %v", instantTxVote.Hash(), err)
 		return
 	}
 
+	//update lockpool
+	if instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
+
+		//check redundancy
+		for _, vote := range instantTxDesc.Votes {
+			if instantTxVote.Hash().IsEqual(vote.Hash()){
+				bmgrLog.Errorf("redundancy vote &v",instantTxVote.Hash().String())
+				return
+			}
+		}
+
+		//update
+		if len(instantTxDesc.Votes) < 5 {
+			b.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxVote)
+		}
+		//notify wallet to resend
+		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send {
+			instantTxDesc.Send = true
+			//notify wallet to resend
+			b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+		}
+	}
+
+
 	instantTxVotes := make([]*hcutil.InstantTxVote, 0)
 	instantTxVotes = append(instantTxVotes, instantTxVote)
-	//notify wallet and rely
+	//notify wallet vote and rely to other peers
 	b.server.AnnounceNewInstantTxVote(instantTxVotes)
 }
 
@@ -2388,7 +2416,8 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			// conflict with parent block from lockPool
 			b.server.txMemPool.RemoveInstantTxDoubleSpends(tx)
 		}
-		b.server.txMemPool.RemoveConfirmedLockTransaction(parentBlock.Height())
+		//remove old instant tx
+		b.server.txMemPool.RemoveConfirmedInstantTx(parentBlock.Height())
 
 		for _, stx := range block.STransactions()[0:] {
 			b.server.txMemPool.RemoveTransaction(stx, false)

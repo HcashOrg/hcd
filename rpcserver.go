@@ -5464,13 +5464,13 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
 	instantTxHash := msgInstantTxVote.InstantTxHash
 	ticketHash := msgInstantTxVote.TicketHash
-	//todo check tickets
+
 	instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash)
 	if !exist {
 		return nil, fmt.Errorf("instant tx %v not exist in lock pool", instantTxHash)
 	}
 	instantTx := instantTxDesc.Tx
-
+	//check ticket selected
 	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
 	tickets, err := s.chain.LotteryAiDataForTxAndBlock(&instantTxHash, lotteryHash)
 	ticketExist := false
@@ -5516,12 +5516,22 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 
 	//update lockpool
 	if instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
+
+		//check redundancy
+		for _, vote := range instantTxDesc.Votes {
+			if instantTxvote.Hash().IsEqual(vote.Hash()){
+				return nil,fmt.Errorf("redundancy vote &v",instantTxvote.Hash().String())
+			}
+		}
+
+		//update
 		if len(instantTxDesc.Votes) < 5 {
 			s.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxvote)
 		}
+		//notify wallet to resend
 		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send {
 			instantTxDesc.Send = true
-			//todo send to wallet
+			//notify wallet to resend
 			s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 		}
 	}
@@ -5529,7 +5539,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
 	instantTxvotes = append(instantTxvotes, instantTxvote)
 
-	//notice wallet and rely
+	//notify wallet  vote info and rely to other peers
 	s.server.AnnounceNewInstantTxVote(instantTxvotes)
 
 	// Keep track of all the sendrawtransaction request txns so that they
