@@ -4846,10 +4846,6 @@ func handleRebroadcastWinners(s *rpcServer, cmd interface{}, closeChan <-chan st
 			err.Error(), "")
 	}
 
-	if height >= 142{
-		fmt.Println("145145")
-	}
-
 	for i := range blocks {
 		winningTickets, _, _, err :=
 			s.server.blockManager.chain.LotteryDataForBlock(&blocks[i])
@@ -5412,8 +5408,14 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 			err)
 	}
 
-	//TODO check conflict with mempool
 	instantTx := hcutil.NewInstantTx(msgtx)
+
+	//TODO check conflict with mempool
+	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, false)
+	if err != nil || len(missedParent) != 0 {
+		return nil, err
+	}
+
 	instantTxs := make([]*hcutil.InstantTx, 0)
 	instantTxs = append(instantTxs, instantTx)
 
@@ -5450,7 +5452,14 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	instantTxHash := msgInstantTxVote.InstantTxHash
 	ticketHash := msgInstantTxVote.TicketHash
 	//todo check tickets
-	tickets, _, _, err := s.chain.LotteryAiDataForBlock(&instantTxHash)
+	instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash)
+	if !exist{
+		return nil,fmt.Errorf("instant tx %v not exist in lock pool",instantTxHash)
+	}
+	instantTx:=instantTxDesc.Tx
+
+	lotteryHash,_:=txscript.IsInstantTx(instantTx.MsgTx())
+	tickets,err := s.chain.LotteryAiDataForTxAndBlock(&instantTxHash,lotteryHash)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
@@ -5486,10 +5495,22 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	sigMsg := instantTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
 	if !verified {
 		return nil, fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
 			err)
+	}
+
+	//update lockpool
+	if instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
+		if len(instantTxDesc.Votes) < 5 {
+			s.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxvote)
+		}
+		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send{
+			instantTxDesc.Send=true
+			//todo send to wallet
+
+		}
 	}
 
 	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
@@ -5505,35 +5526,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 
 	return nil, nil
 
-}
-
-func VerifyMessage(msg string, addr hcutil.Address, sig []byte) (bool, error) {
-	// Validate the signature - this just shows that it was valid for any pubkey
-	// at all. Whether the pubkey matches is checked below.
-	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
-	wire.WriteVarString(&buf, 0, msg)
-	expectedMessageHash := chainhash.HashB(buf.Bytes())
-	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,
-		expectedMessageHash)
-	if err != nil {
-		return false, err
-	}
-
-	// Reconstruct the address from the recovered pubkey.
-	var serializedPK []byte
-	if wasCompressed {
-		serializedPK = pk.SerializeCompressed()
-	} else {
-		serializedPK = pk.SerializeUncompressed()
-	}
-	recoveredAddr, err := hcutil.NewAddressSecpPubKey(serializedPK, addr.Net())
-	if err != nil {
-		return false, err
-	}
-
-	// Return whether addresses match.
-	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
 }
 
 // handleSendRawTransaction implements the sendrawtransaction command.

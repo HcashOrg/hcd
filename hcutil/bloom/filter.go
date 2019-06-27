@@ -337,7 +337,10 @@ func (bf *Filter) matchTxAndUpdate(tx *hcutil.Tx) bool {
 
 func (bf *Filter) matchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
 	//TODO implement
-	return false
+	bf.mtx.Lock()
+	match:=bf.matchTxAndUpdate(&tx.Tx)
+	bf.mtx.Unlock()
+	return match
 }
 
 // MatchTxAndUpdate returns true if the bloom filter matches data within the

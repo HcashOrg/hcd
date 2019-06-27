@@ -326,16 +326,16 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 */
 }
 
-func IsLockTx(pkScript []byte) bool{
+func HasInstantTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 	pops, err := parseScript(pkScript)
 	if err != nil || len(pops) != 2 {
-		return false
+		return nil, false
 	}
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if len(data) != 16{
-		return false
+	if len(data) != 16+32 {
+		return nil, false
 	}
 	//68636173  68496e73 74616e74 53656e64
 	if opCode == OP_RETURN &&
@@ -354,10 +354,24 @@ func IsLockTx(pkScript []byte) bool{
 		data[12] == 0x53 &&
 		data[13] == 0x65 &&
 		data[14] == 0x6e &&
-		data[15] == 0x64{
-		return true
+		data[15] == 0x64 {
+
+		hashBytes := data[16:]
+		hash, err := chainhash.NewHash(hashBytes)
+		if err != nil {
+			return nil, false
+		}
+		return hash, true
 	}
-	return false
+	return nil, false
+}
+func IsInstantTx(msgTx *wire.MsgTx) (*chainhash.Hash, bool) {
+	for _, txOut := range msgTx.TxOut {
+		if hash, has := HasInstantTxTag(txOut.PkScript); has {
+			return hash, true
+		}
+	}
+	return nil, false
 }
 
 // unparseScript reversed the action of parseScript and returns the

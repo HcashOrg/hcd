@@ -799,6 +799,8 @@ func (sp *serverPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 			err = sp.server.pushTxMsg(sp, &iv.Hash, c, waitChan)
 		case wire.InvTypeBlock:
 			err = sp.server.pushBlockMsg(sp, &iv.Hash, c, waitChan)
+		case wire.InvTypeInstantTx:
+			err = sp.server.pushInstantTxMsg(sp,&iv.Hash,c,waitChan)
 		default:
 			peerLog.Warnf("Unknown type in inventory request %d",
 				iv.Type)
@@ -1259,7 +1261,8 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 		if s.rpcServer != nil {
 			//deal with instant instantTx,
 			// just send to wallet to sign
-			tickets, _, _, err := s.rpcServer.chain.LotteryAiDataForBlock(instantTx.Hash())
+			lotteryHash,_:=txscript.IsInstantTx(instantTx.MsgTx())
+			tickets,err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(),lotteryHash)
 			if err != nil {
 				return
 			}
@@ -1315,6 +1318,35 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 	}
 
 	sp.QueueMessage(tx.MsgTx(), doneChan)
+
+	return nil
+}
+
+func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
+	// Attempt to fetch the requested transaction from the pool.  A
+	// call could be made to check for existence first, but simply trying
+	// to fetch a missing transaction results in the same behavior.
+	// Do not allow peers to request transactions already in a block
+	// but are unconfirmed, as they may be expensive. Restrict that
+	// to the authenticated RPC only.
+
+	instantTx, err := s.txMemPool.FetchInstantTx(hash, false)
+	if err != nil {
+		peerLog.Tracef("Unable to fetch instantTx %v from transaction "+
+			"pool: %v", hash, err)
+
+		if doneChan != nil {
+			doneChan <- struct{}{}
+		}
+		return err
+	}
+
+	// Once we have fetched data wait for any previous operation to finish.
+	if waitChan != nil {
+		<-waitChan
+	}
+
+	sp.QueueMessage(instantTx.MsgTx(), doneChan)
 
 	return nil
 }

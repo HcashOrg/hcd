@@ -1,8 +1,10 @@
 package hcutil
 
 import (
+	"bytes"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/HcashOrg/hcd/chaincfg/chainec"
 )
 
 
@@ -46,6 +48,13 @@ func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 		},
 	}
 }
+
+func NewInstantTxFromTx(tx *Tx)*InstantTx  {
+	return &InstantTx{
+		Tx:*tx,
+	}
+}
+
 //func (instantTx *InstantTx) Hash() *chainhash.Hash {
 //	ret:=instantTx.msgTx.TxHash()
 //	return &ret
@@ -54,3 +63,32 @@ func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 //	// Return the cached transaction.
 //	return instantTx.msgTx
 //}
+
+func VerifyMessage(msg string, addr Address, sig []byte) (bool, error) {
+	// Validate the signature - this just shows that it was valid for any pubkey
+	// at all. Whether the pubkey matches is checked below.
+	var buf bytes.Buffer
+	wire.WriteVarString(&buf, 0, "Hc Signed Message:\n")
+	wire.WriteVarString(&buf, 0, msg)
+	expectedMessageHash := chainhash.HashB(buf.Bytes())
+	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,
+		expectedMessageHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Reconstruct the address from the recovered pubkey.
+	var serializedPK []byte
+	if wasCompressed {
+		serializedPK = pk.SerializeCompressed()
+	} else {
+		serializedPK = pk.SerializeUncompressed()
+	}
+	recoveredAddr, err := NewAddressSecpPubKey(serializedPK, addr.Net())
+	if err != nil {
+		return false, err
+	}
+
+	// Return whether addresses match.
+	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
+}

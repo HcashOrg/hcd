@@ -363,13 +363,21 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 
 func GetAiTicketsForTx(seed []byte, node Node) ([]chainhash.Hash, error){
 	prng := NewHash256PRNG(seed)
-	_, err := findTicketIdxs(node.liveTickets.Len(), node.params.AiTicketsPerBlock, prng)
+	idxs, err := findTicketIdxs(node.liveTickets.Len(), node.params.AiTicketsPerBlock, prng)
 	if err != nil {
 		return nil, err
 	}
-	lastHash := prng.StateHash()
+
+	nextWinnersKeys, err := fetchWinners(idxs, node.liveTickets)
+	if err != nil {
+		return nil, err
+	}
+
 	var hsahResult []chainhash.Hash
-	hsahResult = append(hsahResult, lastHash)
+	for _, treapKey := range nextWinnersKeys {
+		ticketHash := chainhash.Hash(*treapKey)
+		hsahResult = append(hsahResult, ticketHash)
+	}
 	return hsahResult, nil
 }
 

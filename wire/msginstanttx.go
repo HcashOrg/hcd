@@ -18,6 +18,12 @@ func NewMsgInstantTx() *MsgInstantTx {
 	}
 }
 
+func NewMsgInstantTxFromMsgTx(msgTx *MsgTx) *MsgInstantTx{
+	return &MsgInstantTx{
+		MsgTx:*msgTx,
+	}
+}
+
 //func (msg *MsgInstantTx)BtcDecode(r io.Reader, pver uint32) error{
 //	err:=readElement(r,&msg.LotteryHash)
 //	if err!=nil{

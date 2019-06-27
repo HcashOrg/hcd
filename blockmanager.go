@@ -267,6 +267,11 @@ type processTransactionResponse struct {
 	err         error
 }
 
+type processInstantTxResponse struct {
+	missedParent []*chainhash.Hash
+	err          error
+}
+
 // processTransactionMsg is a message type to be sent across the message
 // channel for requesting a transaction to be processed through the block
 // manager.
@@ -276,6 +281,14 @@ type processTransactionMsg struct {
 	rateLimit     bool
 	allowHighFees bool
 	reply         chan processTransactionResponse
+}
+
+type processInstantTxMsg struct {
+	tx            *hcutil.InstantTx
+	allowOrphans  bool
+	rateLimit     bool
+	allowHighFees bool
+	reply         chan processInstantTxResponse
 }
 
 // isCurrentMsg is a message type to be sent across the message channel for
@@ -806,6 +819,7 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
+	b.server.txMemPool.MayBeAddToLockPool(instantTx, false, false, false)
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
@@ -862,7 +876,7 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	sigMsg := instantTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
 
 	if !verified {
 		bmgrLog.Errorf("failed  verify signature ,instantvote %v: %v", instantTxVote.Hash(),
@@ -1288,7 +1302,7 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			_, beenNotified := b.lotteryDataBroadcast[*blockHash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
-			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
+			ok,_:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
 
 			if !beenNotified && r != nil &&
 				int64(bmsg.block.MsgBlock().Header.Height) >
@@ -1633,6 +1647,21 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 			return false, err
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
+	case wire.InvTypeInstantTx:
+		if b.server.txMemPool.IsTxLockExist(&invVect.Hash) {
+			return true, nil
+		}
+		if b.server.txMemPool.HaveTransaction(&invVect.Hash) {
+			return true, nil
+		}
+
+		// Check if the transaction exists from the point of view of the
+		// end of the main chain.
+		entry, err := b.chain.FetchUtxoEntry(&invVect.Hash)
+		if err != nil {
+			return false, err
+		}
+		return entry != nil && !entry.IsFullySpent(), nil
 	}
 
 	// The requested inventory is is an unsupported type, so just claim
@@ -1684,7 +1713,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 	// we already have and request more blocks to prevent them.
 	for i, iv := range invVects {
 		// Ignore unsupported inventory types.
-		if iv.Type != wire.InvTypeBlock && iv.Type != wire.InvTypeTx {
+		if iv.Type != wire.InvTypeBlock && iv.Type != wire.InvTypeTx && iv.Type != wire.InvTypeInstantTx && iv.Type != wire.InvTypeInstantTxVote {
 			continue
 		}
 
@@ -1706,7 +1735,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 			continue
 		}
 		if !haveInv {
-			if iv.Type == wire.InvTypeTx {
+			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx {
 				// Skip the transaction if it has already been
 				// rejected.
 				if _, exists := b.rejectedTxns[iv.Hash]; exists {
@@ -1791,7 +1820,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 				numRequested++
 			}
 
-		case wire.InvTypeTx:
+		case wire.InvTypeTx, wire.InvTypeInstantTx:
 			// Request the transaction if there is not already a
 			// pending request.
 			if _, exists := b.requestedTxns[iv.Hash]; !exists {
@@ -2063,7 +2092,7 @@ out:
 							int64(msg.block.MsgBlock().Header.Height),
 							winningTickets}
 
-						ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(msg.block)
+						ok,_:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(msg.block)
 						if ok {
 							r.ntfnMgr.NotifyWinningTickets(ntfnData)
 						}
@@ -2170,6 +2199,12 @@ out:
 					err:         err,
 				}
 
+			case processInstantTxMsg: //handle rpc instanttx
+				b.server.txMemPool.MayBeAddToLockPool(msg.tx, true,msg.rateLimit, msg.allowHighFees)
+				msg.reply <- processInstantTxResponse{
+					missedParent: nil,
+					err:          nil,
+				}
 			case isCurrentMsg:
 				msg.reply <- b.current()
 
@@ -2255,7 +2290,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			b.lotteryDataBroadcastMutex.Unlock()
 
 			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
-			ok, _ := b.server.txMemPool.CheckConflictWithTxLockPool(block)
+			ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
 			aiwt, _, _, err2 := b.chain.LotteryAiDataForBlock(hash)
 			if err != nil {
@@ -2347,11 +2382,11 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
-			b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
+			//b.server.txMemPool.ModifyLockTransaction(tx, parentBlock.Height())
 
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
-			b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
+			//b.server.txMemPool.RemoveTxLockDoubleSpends(tx)
 		}
 		b.server.txMemPool.RemoveConfirmedLockTransaction(parentBlock.Height())
 
@@ -2369,7 +2404,12 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			// longer needing rebroadcasting.
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
-					iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
+					var iv *wire.InvVect
+					if _,is:=txscript.IsInstantTx(tx.MsgTx());is {
+						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
+					} else {
+						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())
+					}
 					b.server.RemoveRebroadcastInventory(iv)
 				}
 			}
@@ -2446,7 +2486,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		// tx tree regular into the transaction pool.
 		for _, tx := range parentBlock.Transactions()[1:] {
 			//reinsert tx from disconnected block, now we can update locktx height to 0 in the txlockpool
-			b.server.txMemPool.ModifyLockTransaction(tx, 0)
+			//b.server.txMemPool.ModifyLockTransaction(tx, 0)
 
 			_, err := b.server.txMemPool.MaybeAcceptTransaction(tx, false, true)
 			if err != nil {
@@ -2672,7 +2712,9 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 		if b.server.txMemPool.HaveTransaction(vh) {
 			continue
 		}
-
+		if b.server.txMemPool.IsTxLockExist(vh){
+			continue
+		}
 		// Check if the transaction exists from the point of view of the
 		// end of the main chain.
 		entry, err := b.chain.FetchUtxoEntry(vh)
@@ -2811,6 +2853,16 @@ func (b *blockManager) ProcessTransaction(tx *hcutil.Tx, allowOrphans bool,
 	response := <-reply
 	return response.acceptedTxs, response.err
 }
+
+func (b *blockManager) ProcessInstantTx(tx *hcutil.InstantTx, allowOrphans bool,
+	rateLimit bool, allowHighFees bool) ([]*chainhash.Hash, error) {
+	reply := make(chan processInstantTxResponse, 1)
+	b.msgChan <- processInstantTxMsg{tx, allowOrphans, rateLimit,
+		allowHighFees, reply}
+	response := <-reply
+	return response.missedParent, response.err
+}
+
 
 // IsCurrent returns whether or not the block manager believes it is synced with
 // the connected peers.
