@@ -10,11 +10,15 @@ type MsgInstantTx struct {
 	MsgTx
 }
 
-
-
 func NewMsgInstantTx() *MsgInstantTx {
 	return &MsgInstantTx{
-		MsgTx:*NewMsgTx(),
+		MsgTx: *NewMsgTx(),
+	}
+}
+
+func NewMsgInstantTxFromMsgTx(msgTx *MsgTx) *MsgInstantTx {
+	return &MsgInstantTx{
+		MsgTx: *msgTx,
 	}
 }
 
@@ -34,14 +38,13 @@ func NewMsgInstantTx() *MsgInstantTx {
 //	return msg.MsgTx.BtcEncode(w,pver)
 //}
 
-func (msg *MsgInstantTx)Command() string{
+func (msg *MsgInstantTx) Command() string {
 	return CmdInstantTx
 }
 
 //func (msg *MsgInstantTx)MaxPayloadLength(pver uint32) uint32{
 //	return msg.MsgTx.MaxPayloadLength(pver)
 //}
-
 
 // serialize returns the serialization of the transaction for the provided
 // serialization type without modifying the original transaction.

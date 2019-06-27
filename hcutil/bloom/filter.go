@@ -12,9 +12,9 @@ import (
 	"sync"
 
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // ln2Squared is simply the square of the natural log of 2.
@@ -332,12 +332,12 @@ func (bf *Filter) matchTxAndUpdate(tx *hcutil.Tx) bool {
 	return false
 }
 
-
-
-
 func (bf *Filter) matchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
 	//TODO implement
-	return false
+	bf.mtx.Lock()
+	match := bf.matchTxAndUpdate(&tx.Tx)
+	bf.mtx.Unlock()
+	return match
 }
 
 // MatchTxAndUpdate returns true if the bloom filter matches data within the
@@ -353,15 +353,12 @@ func (bf *Filter) MatchTxAndUpdate(tx *hcutil.Tx) bool {
 	return match
 }
 
-
 func (bf *Filter) MatchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
 	bf.mtx.Lock()
 	match := bf.matchInstantTxAndUpdate(tx)
 	bf.mtx.Unlock()
 	return match
 }
-
-
 
 // MsgFilterLoad returns the underlying wire.MsgFilterLoad for the bloom
 // filter.

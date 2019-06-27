@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -305,7 +305,7 @@ func (m *wsNotificationManager) NotifyStakeDifficulty(
 
 // NotifyMempoolTx passes a transaction accepted by mempool to the
 // notification manager for transaction notification processing.  If
-// isNew is true, the instantTx is is a new transaction, rather than one
+// resend is true, the instantTx is is a new transaction, rather than one
 // added to the mempool during a reorg.
 func (m *wsNotificationManager) NotifyMempoolTx(tx *hcutil.Tx, isNew bool) {
 	n := &notificationTxAcceptedByMempool{
@@ -324,14 +324,14 @@ func (m *wsNotificationManager) NotifyMempoolTx(tx *hcutil.Tx, isNew bool) {
 }
 
 //just notify wallet to sign
-func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instantTx *hcutil.InstantTx, isNew bool) {
+func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instantTx *hcutil.InstantTx, resend bool) {
 	n := &notificationInstantTx{
-		isNew:     isNew,
+		resend:    resend,
 		instantTx: instantTx,
 		tickets:   tickets,
 	}
 
-	rpcsLog.Debug("notificationInstantTx:", n.isNew, n.instantTx.Hash())
+	rpcsLog.Debug("notificationInstantTx:", n.resend, n.instantTx.Hash())
 
 	// As notificationInstantTx will be called by mempool and the RPC server
 	// may no longer be running, use a select statement to unblock
@@ -365,9 +365,9 @@ type WinningTicketsNtfnData struct {
 // StakeDifficultyNtfnData is the data that is used to generate
 // stake difficulty notifications.
 type StakeDifficultyNtfnData struct {
-	BlockHash       chainhash.Hash
-	BlockHeight     int64
-	StakeDifficulty int64
+	BlockHash         chainhash.Hash
+	BlockHeight       int64
+	StakeDifficulty   int64
 	AiStakeDifficulty int64
 }
 
@@ -531,7 +531,7 @@ func (f *wsClientFilter) removeUnspentOutPoint(op *wire.OutPoint) {
 }
 
 type InstantTxNtfnData struct {
-	isNew     bool
+	resend    bool
 	instantTx *hcutil.InstantTx
 	tickets   []chainhash.Hash
 }
@@ -644,7 +644,7 @@ out:
 			case *notificationInstantTx:
 				m.notifyForNewInstantTx(instantTxNotifications, (*InstantTxNtfnData)(n))
 			case *notificationInstantTxVote:
-				m.notifyForInstantTxVote(instantTxNotifications,(*hcutil.InstantTxVote)(n))
+				m.notifyForInstantTxVote(instantTxNotifications, (*hcutil.InstantTxVote)(n))
 			case *notificationRegisterBlocks:
 				wsc := (*wsClient)(n)
 				blockNotifications[wsc.quit] = wsc
@@ -1161,7 +1161,8 @@ func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]
 		ticketMap[strconv.Itoa(i)] = ticket.String()
 	}
 
-	ntfn := hcjson.NewInstantTxNtfn(instantTxNtfnData.instantTx.Hash().String(), ticketMap)
+	msgTx := instantTxNtfnData.instantTx.MsgTx()
+	ntfn := hcjson.NewInstantTxNtfn(txHexString(msgTx), ticketMap, instantTxNtfnData.resend)
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {
@@ -1176,11 +1177,10 @@ func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]
 	}
 }
 
-
 func (m *wsNotificationManager) notifyForInstantTxVote(clients map[chan struct{}]*wsClient, instantTxVote *hcutil.InstantTxVote) {
 
-	ntfn := hcjson.NewInstantTxVoteNtfn(instantTxVote.Hash().String(),instantTxVote.MsgInstantTxVote().InstantTxHash.String(),
-		instantTxVote.MsgInstantTxVote().TicketHash.String(),instantTxVote.MsgInstantTxVote().Vote,hex.EncodeToString(instantTxVote.MsgInstantTxVote().Sig))
+	ntfn := hcjson.NewInstantTxVoteNtfn(instantTxVote.Hash().String(), instantTxVote.MsgInstantTxVote().InstantTxHash.String(),
+		instantTxVote.MsgInstantTxVote().TicketHash.String(), instantTxVote.MsgInstantTxVote().Vote, hex.EncodeToString(instantTxVote.MsgInstantTxVote().Sig))
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {
@@ -1194,7 +1194,6 @@ func (m *wsNotificationManager) notifyForInstantTxVote(clients map[chan struct{}
 		wsc.QueueNotification(marshalledJSON)
 	}
 }
-
 
 // txHexString returns the serialized transaction encoded in hexadecimal.
 func txHexString(tx *wire.MsgTx) string {
@@ -2013,7 +2012,7 @@ func rescanBlock(filter *wsClientFilter, enableOmni bool, block *hcutil.Block) [
 			}
 		} else {
 			if stake.DetermineTxType(tx) == stake.TxTypeSSGen ||
-			stake.DetermineTxType(tx) == stake.TxTypeAiSSGen {
+				stake.DetermineTxType(tx) == stake.TxTypeAiSSGen {
 				// Skip the first stakebase input.  These do not
 				// reference a previous output.
 				inputs = inputs[1:]

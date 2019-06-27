@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/btcsuite/btclog"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/btcsuite/btclog"
 )
 
 const (
@@ -96,6 +96,8 @@ func invSummary(invList []*wire.InvVect) string {
 			return fmt.Sprintf("block %s", iv.Hash)
 		case wire.InvTypeTx:
 			return fmt.Sprintf("tx %s", iv.Hash)
+		case wire.InvTypeInstantTx:
+			return fmt.Sprintf("instanttx %s", iv.Hash)
 		}
 
 		return fmt.Sprintf("unknown (%d) %s", uint32(iv.Type), iv.Hash)
