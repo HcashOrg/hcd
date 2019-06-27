@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -36,9 +36,8 @@ const (
 	// from the chain server that inform a client that a relevant
 	// transaction was accepted by the mempool.
 	RelevantTxAcceptedNtfnMethod = "relevanttxaccepted"
-	InstantTxNtfnMethod = "InstantTxNtfn"
-	InstantTxVoteNtfnMethod = "InstantTxVoteNtfn"
-
+	InstantTxNtfnMethod          = "InstantTxNtfn"
+	InstantTxVoteNtfnMethod      = "InstantTxVoteNtfn"
 )
 
 // BlockConnectedNtfn defines the blockconnected JSON-RPC notification.
@@ -150,7 +149,6 @@ func NewInstantTxVoteNtfn(instantTxVoteHash string, instantTxHash string, tickeH
 		Sig:               sig,
 	}
 }
-
 
 // NewRelevantTxAcceptedNtfn returns a new instance which can be used to issue a
 // relevantxaccepted JSON-RPC notification.

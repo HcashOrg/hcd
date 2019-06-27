@@ -800,7 +800,7 @@ func (sp *serverPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 		case wire.InvTypeBlock:
 			err = sp.server.pushBlockMsg(sp, &iv.Hash, c, waitChan)
 		case wire.InvTypeInstantTx:
-			err = sp.server.pushInstantTxMsg(sp,&iv.Hash,c,waitChan)
+			err = sp.server.pushInstantTxMsg(sp, &iv.Hash, c, waitChan)
 		default:
 			peerLog.Warnf("Unknown type in inventory request %d",
 				iv.Type)
@@ -1261,8 +1261,8 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 		if s.rpcServer != nil {
 			//deal with instant instantTx,
 			// just send to wallet to sign
-			lotteryHash,_:=txscript.IsInstantTx(instantTx.MsgTx())
-			tickets,err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(),lotteryHash)
+			lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
+			tickets, err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
 			if err != nil {
 				return
 			}

@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -136,7 +136,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 		instr := script[i]
 
 		// TODO for read
-		if i == 24 && script[i] < (OP_1) && script[i] != (OP_0){  //OP_O
+		if i == 24 && script[i] < (OP_1) && script[i] != (OP_0) { //OP_O
 			instr = instr + 80
 		}
 		op := &opcodes[instr]
@@ -303,27 +303,27 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if len(data) <= 4{
+	if len(data) <= 4 {
 		return false, nil
 	}
 	if opCode == OP_RETURN &&
 		data[0] == 111 &&
 		data[1] == 109 &&
 		data[2] == 110 &&
-		data[3] == 105{
+		data[3] == 105 {
 		return true, data[4:]
 	}
 	return false, nil
-/*
-	byte := op[1].bytes()
-	if byte[0] == 111 &&
-		byte[1] == 109 &&
-		byte[2] == 110 &&
-		byte[3] == 105 {
-		return true, byte
-	}
-	return false, nil
-*/
+	/*
+		byte := op[1].bytes()
+		if byte[0] == 111 &&
+			byte[1] == 109 &&
+			byte[2] == 110 &&
+			byte[3] == 105 {
+			return true, byte
+		}
+		return false, nil
+	*/
 }
 
 func HasInstantTxTag(pkScript []byte) (*chainhash.Hash, bool) {

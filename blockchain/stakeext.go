@@ -26,7 +26,6 @@ func (b *BlockChain) NextLotteryData() ([]chainhash.Hash, int, [6]byte, error) {
 		b.bestNode.stakeNode.FinalState(), nil
 }
 
-
 // lotteryDataForBlock takes a node block hash and returns the next tickets
 // eligible for voting, the number of tickets in the ticket pool, and the
 // final state of the PRNG.
@@ -73,11 +72,9 @@ func (b *BlockChain) lotteryAiDataForBlock(hash *chainhash.Hash) ([]chainhash.Ha
 	return winningTickets, poolSize, finalState, nil
 }
 
-
 func (b *BlockChain) lotteryAiDataForHash(txHash *chainhash.Hash, blockHash *chainhash.Hash) ([]chainhash.Hash, error) {
 	return b.lotteryAiDataForHash(txHash, blockHash)
 }
-
 
 // LotteryDataForBlock returns lottery data for a given block in the block
 // chain, including side chain blocks.
@@ -107,12 +104,21 @@ func (b *BlockChain) LotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHas
 
 	return b.lotteryAiDataForTxAndBlock(txHash, blockHash)
 }
+
 // LiveTickets returns all currently live tickets from the stake database.
 //
 // This function is NOT safe for concurrent access.
 func (b *BlockChain) LiveTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
+	b.chainLock.RUnlock()
+
+	return sn.LiveTickets(), nil
+}
+
+func (b *BlockChain) AiLiveTickets() ([]chainhash.Hash, error) {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
 
 	return sn.LiveTickets(), nil
@@ -224,7 +230,6 @@ func (b *BlockChain) CheckLiveAiTickets(hashes []chainhash.Hash) []bool {
 
 	return existsSlice
 }
-
 
 // CheckMissedTickets returns a slice of bools representing whether each ticket
 // hash has been missed in the live ticket treap of the best node.
