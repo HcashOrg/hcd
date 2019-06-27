@@ -34,6 +34,13 @@ type InstantTx struct {
 	Tx
 }
 
+// MsgTx returns the underlying wire.MsgTx for the transaction.
+func (t *InstantTx) MsgInstantTx() *wire.MsgInstantTx {
+	// Return the cached transaction.
+	return wire.NewMsgInstantTxFromMsgTx(t.msgTx)
+}
+
+
 func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 	return &InstantTx{
 		Tx: Tx{

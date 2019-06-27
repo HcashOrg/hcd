@@ -1346,7 +1346,7 @@ func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan
 		<-waitChan
 	}
 
-	sp.QueueMessage(instantTx.MsgTx(), doneChan)
+	sp.QueueMessage(instantTx.MsgInstantTx(), doneChan)
 
 	return nil
 }
