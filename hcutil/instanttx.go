@@ -2,11 +2,10 @@ package hcutil
 
 import (
 	"bytes"
+	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
 )
-
 
 //
 //type InstantTx struct {
@@ -19,28 +18,25 @@ type InstantTxVote struct {
 
 func NewInstantTxVote(vote *wire.MsgInstantTxVote) *InstantTxVote {
 	return &InstantTxVote{
-		msgInstantTxVote:vote,
+		msgInstantTxVote: vote,
 	}
 }
 
-func (instantTxVote *InstantTxVote)Hash() *chainhash.Hash {
+func (instantTxVote *InstantTxVote) Hash() *chainhash.Hash {
 	return instantTxVote.msgInstantTxVote.Hash()
 }
 
-func (instantTxVote *InstantTxVote)MsgInstantTxVote()*wire.MsgInstantTxVote  {
+func (instantTxVote *InstantTxVote) MsgInstantTxVote() *wire.MsgInstantTxVote {
 	return instantTxVote.msgInstantTxVote
 }
-
-
 
 type InstantTx struct {
 	Tx
 }
 
-
 func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 	return &InstantTx{
-		Tx:Tx{
+		Tx: Tx{
 			hash:    msgInstantTx.TxHash(),
 			msgTx:   &msgInstantTx.MsgTx,
 			txTree:  wire.TxTreeUnknown,
@@ -49,9 +45,9 @@ func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 	}
 }
 
-func NewInstantTxFromTx(tx *Tx)*InstantTx  {
+func NewInstantTxFromTx(tx *Tx) *InstantTx {
 	return &InstantTx{
-		Tx:*tx,
+		Tx: *tx,
 	}
 }
 

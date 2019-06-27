@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -196,7 +196,7 @@ func (sn *Node) Height() uint32 {
 	return sn.height
 }
 
-func (sn *Node) GetAiTicketsForTx(seed []byte) ([]chainhash.Hash, error){
+func (sn *Node) GetAiTicketsForTx(seed []byte) ([]chainhash.Hash, error) {
 	return GetAiTicketsForTx(seed, *sn)
 }
 
@@ -336,7 +336,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 		}
 
 		// Calculate the final state from the block header.
-		if uint64(height)  >= node.params.AIEnableHeight - 1{
+		if uint64(height) >= node.params.AIEnableHeight-1 {
 			stateBuffer := make([]byte, 0,
 				(node.params.AiTicketsPerBlock+1)*chainhash.HashSize)
 			for _, ticketHash := range node.nextWinners {
@@ -361,7 +361,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 	return node, nil
 }
 
-func GetAiTicketsForTx(seed []byte, node Node) ([]chainhash.Hash, error){
+func GetAiTicketsForTx(seed []byte, node Node) ([]chainhash.Hash, error) {
 	prng := NewHash256PRNG(seed)
 	idxs, err := findTicketIdxs(node.liveTickets.Len(), node.params.AiTicketsPerBlock, prng)
 	if err != nil {
@@ -637,7 +637,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 		}
 		prng := NewHash256PRNG(hB)
 
-		if uint64(connectedNode.height)  >= node.params.AIEnableHeight - 1{
+		if uint64(connectedNode.height) >= node.params.AIEnableHeight-1 {
 			idxs, err := findTicketIdxs(connectedNode.liveTickets.Len(),
 				connectedNode.params.AiTicketsPerBlock, prng)
 			if err != nil {
@@ -668,7 +668,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 
 // ConnectNode connects a stake node to the node and returns a pointer
 // to the stake node of the child.
-func (sn *Node) ConnectNode(header wire.BlockHeader, ticketsSpentInBlock, revokedTickets,newTickets []chainhash.Hash) (*Node, error) {
+func (sn *Node) ConnectNode(header wire.BlockHeader, ticketsSpentInBlock, revokedTickets, newTickets []chainhash.Hash) (*Node, error) {
 	return connectNode(sn, header, ticketsSpentInBlock, revokedTickets, newTickets)
 }
 
@@ -687,7 +687,7 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 			"disconnecting")
 	}
 
-	if uint64(node.Height()) >= node.params.AIEnableHeight - 1{
+	if uint64(node.Height()) >= node.params.AIEnableHeight-1 {
 		return disconnectNodeForAi(node, parentHeader, parentUtds, parentTickets, dbTx)
 	}
 	// The undo ticket slice is normally stored in memory for the most
@@ -978,6 +978,7 @@ func disconnectNodeForAi(node *Node, parentHeader wire.BlockHeader, parentUtds U
 	}
 	return restoredNode, nil
 }
+
 // DisconnectNode disconnects a stake node from the node and returns a pointer
 // to the stake node of the parent.
 func (sn *Node) DisconnectNode(parentHeader wire.BlockHeader, parentUtds UndoTicketDataSlice, parentTickets []chainhash.Hash, dbTx database.Tx) (*Node, error) {
@@ -1066,11 +1067,11 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 	if err != nil {
 		return err
 	}
-/*
-	if len(node.nextWinners) == 0{
-		return nil
-	}
-*/
+	/*
+		if len(node.nextWinners) == 0{
+			return nil
+		}
+	*/
 	// Write the new best state to the database.
 	nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
 	if node.height >= uint32(node.params.AIEnableHeight-1) {

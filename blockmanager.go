@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -170,7 +170,7 @@ type calcNextReqStakeDifficultyResponse struct {
 
 type calcNextReqAiStakeDifficultyResponse struct {
 	aiStakeDifficulty int64
-	err             error
+	err               error
 }
 
 // calcNextReqStakeDifficultyMsg is a message type to be sent across the message
@@ -368,21 +368,21 @@ type headerNode struct {
 // is inserted and protecting it with a mutex.
 type chainState struct {
 	sync.Mutex
-	newestHash          *chainhash.Hash
-	newestHeight        int64
-	nextFinalState      [6]byte
+	newestHash            *chainhash.Hash
+	newestHeight          int64
+	nextFinalState        [6]byte
 	nextAiFinalState      [6]byte
-	nextPoolSize        uint32
+	nextPoolSize          uint32
 	nextAiPoolSize        uint32
-	nextStakeDifficulty int64
+	nextStakeDifficulty   int64
 	nextAiStakeDifficulty int64
-	winningTickets      []chainhash.Hash
+	winningTickets        []chainhash.Hash
 	winningAiTickets      []chainhash.Hash
-	missedTickets       []chainhash.Hash
+	missedTickets         []chainhash.Hash
 	missedAiTickets       []chainhash.Hash
-	curPrevHash         chainhash.Hash
-	pastMedianTime      time.Time
-	stakeVersion        uint32
+	curPrevHash           chainhash.Hash
+	pastMedianTime        time.Time
+	stakeVersion          uint32
 }
 
 // Best returns the block hash and height known for the tip of the best known
@@ -973,7 +973,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
-	if uint64(template.Block.Header.Height) >=  b.server.chainParams.AIEnableHeight{
+	if uint64(template.Block.Header.Height) >= b.server.chainParams.AIEnableHeight {
 		oldVoteMap = make(map[chainhash.Hash]struct{},
 			int(b.server.chainParams.AiTicketsPerBlock))
 	}
@@ -986,12 +986,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 			mstx := stx.MsgTx()
 			txType := stake.DetermineTxType(mstx)
 			if txType == stake.TxTypeSSGen ||
-			txType == stake.TxTypeAiSSGen {
+				txType == stake.TxTypeAiSSGen {
 				ticketH := mstx.TxIn[1].PreviousOutPoint.Hash
 				oldVoteMap[ticketH] = struct{}{}
 				if txType == stake.TxTypeAiSSGen {
 					newAiVotes = append(newAiVotes, stx)
-				}else{
+				} else {
 					newVotes = append(newVotes, stx)
 				}
 
@@ -999,12 +999,12 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 
 			// Create a list of old tickets and revocations
 			// while we're in this loop.
-			if txType == stake.TxTypeSStx||
-			txType == stake.TxTypeAiSStx {
+			if txType == stake.TxTypeSStx ||
+				txType == stake.TxTypeAiSStx {
 				oldTickets = append(oldTickets, stx)
 			}
 			if txType == stake.TxTypeSSRtx ||
-			txType == stake.TxTypeAiSSRtx {
+				txType == stake.TxTypeAiSSRtx {
 				oldRevocations = append(oldRevocations, stx)
 			}
 		}
@@ -1014,9 +1014,9 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 		for _, vote := range votesFromBlock {
 			ticketH := vote.MsgTx().TxIn[1].PreviousOutPoint.Hash
 			if _, exists := oldVoteMap[ticketH]; !exists {
-				if isAiSSGen,_ :=stake.IsAiSSGen(vote.MsgTx()); isAiSSGen {
+				if isAiSSGen, _ := stake.IsAiSSGen(vote.MsgTx()); isAiSSGen {
 					newAiVotes = append(newAiVotes, vote)
-				}else{
+				} else {
 					newVotes = append(newVotes, vote)
 				}
 			}
@@ -1051,7 +1051,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	// calculated.
 	template.Block.ClearSTransactions()
 	updatedTxTreeStake := make([]*hcutil.Tx, 0,
-		votesTotal + aiVotesTotal +len(oldTickets)+len(oldRevocations))
+		votesTotal+aiVotesTotal+len(oldTickets)+len(oldRevocations))
 	for _, vote := range newVotes {
 		updatedTxTreeStake = append(updatedTxTreeStake, vote)
 		template.Block.AddSTransaction(vote.MsgTx())
@@ -1181,12 +1181,12 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 	delete(b.requestedBlocks, *blockHash)
 
 	/*
-	_, err := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
-	if err != nil{
-		bmgrLog.Infof("%v",  err)
-		return
-	}
-*/
+		_, err := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
+		if err != nil{
+			bmgrLog.Infof("%v",  err)
+			return
+		}
+	*/
 	// Process the block to include validation, best chain selection, orphan
 	// handling, etc.
 	onMainChain, isOrphan, err := b.chain.ProcessBlock(bmsg.block,
@@ -1302,7 +1302,7 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 			_, beenNotified := b.lotteryDataBroadcast[*blockHash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
-			ok,_:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
+			ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(bmsg.block)
 
 			if !beenNotified && r != nil &&
 				int64(bmsg.block.MsgBlock().Header.Height) >
@@ -1385,8 +1385,8 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 					"data for new best block: %v", err)
 			}
 
-			b.updateChainState(best.Hash, best.Height, finalState,aiFinalState,
-				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, nextAiStakeDiff,  winningTickets,winningAiTickets,
+			b.updateChainState(best.Hash, best.Height, finalState, aiFinalState,
+				uint32(poolSize), uint32(aiPoolSize), nextStakeDiff, nextAiStakeDiff, winningTickets, winningAiTickets,
 				missedTickets, missedAiTickets, curPrevHash)
 
 			// Update this peer's latest block height, for future
@@ -1928,7 +1928,7 @@ out:
 				stakeDiff, err := b.chain.CalcNextRequiredAiStakeDifficulty()
 				msg.reply <- calcNextReqAiStakeDifficultyResponse{
 					aiStakeDifficulty: stakeDiff,
-					err:             err,
+					err:               err,
 				}
 
 			case forceReorganizationMsg:
@@ -1970,9 +1970,9 @@ out:
 							&StakeDifficultyNtfnData{
 								*best.Hash,
 								best.Height,
-								nextStakeDiff,nextAiStakeDiff,
+								nextStakeDiff, nextAiStakeDiff,
 							})
-						b.server.txMemPool.PruneStakeTx(nextStakeDiff,nextAiStakeDiff,
+						b.server.txMemPool.PruneStakeTx(nextStakeDiff, nextAiStakeDiff,
 							best.Height)
 						b.server.txMemPool.PruneExpiredTx(best.Height)
 					}
@@ -1996,9 +1996,9 @@ out:
 					b.updateChainState(best.Hash,
 						best.Height,
 						finalState, aiFinalState,
-						uint32(poolSize),uint32(aiPoolSize),
-						nextStakeDiff,nextAiStakeDiff,
-						winningTickets,winningAiTickets,
+						uint32(poolSize), uint32(aiPoolSize),
+						nextStakeDiff, nextAiStakeDiff,
+						winningTickets, winningAiTickets,
 						missedTickets, missedAiTickets,
 						curPrevHash)
 				}
@@ -2092,7 +2092,7 @@ out:
 							int64(msg.block.MsgBlock().Header.Height),
 							winningTickets}
 
-						ok,_:= b.server.txMemPool.CheckBlkConflictWithTxLockPool(msg.block)
+						ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(msg.block)
 						if ok {
 							r.ntfnMgr.NotifyWinningTickets(ntfnData)
 						}
@@ -2130,12 +2130,12 @@ out:
 								&StakeDifficultyNtfnData{
 									*best.Hash,
 									best.Height,
-									nextStakeDiff,nextAiStakeDiff,
+									nextStakeDiff, nextAiStakeDiff,
 								})
 						}
 					}
 
-					b.server.txMemPool.PruneStakeTx(nextStakeDiff,nextAiStakeDiff,
+					b.server.txMemPool.PruneStakeTx(nextStakeDiff, nextAiStakeDiff,
 						best.Height)
 					b.server.txMemPool.PruneExpiredTx(
 						best.Height)
@@ -2170,11 +2170,11 @@ out:
 
 					b.updateChainState(best.Hash,
 						best.Height,
-						finalState,aiFinalState,
+						finalState, aiFinalState,
 						uint32(poolSize), uint32(aiPoolSize),
-						nextStakeDiff,nextAiStakeDiff,
-						winningTickets,winningAiTickets,
-						missedTickets,missedAiTickets,
+						nextStakeDiff, nextAiStakeDiff,
+						winningTickets, winningAiTickets,
+						missedTickets, missedAiTickets,
 						curPrevHash)
 				}
 
@@ -2200,7 +2200,7 @@ out:
 				}
 
 			case processInstantTxMsg: //handle rpc instanttx
-				b.server.txMemPool.MayBeAddToLockPool(msg.tx, true,msg.rateLimit, msg.allowHighFees)
+				b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processInstantTxResponse{
 					missedParent: nil,
 					err:          nil,
@@ -2297,7 +2297,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 				bmgrLog.Errorf("Couldn't calculate winning tickets for "+
 					"accepted block %v: %v", block.Hash(), err.Error())
 			} else {
-				if err2 == nil{
+				if err2 == nil {
 					wt = append(wt, aiwt...)
 				}
 				if !beenNotified {
@@ -2405,7 +2405,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
 					var iv *wire.InvVect
-					if _,is:=txscript.IsInstantTx(tx.MsgTx());is {
+					if _, is := txscript.IsInstantTx(tx.MsgTx()); is {
 						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
 					} else {
 						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())
@@ -2712,7 +2712,7 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 		if b.server.txMemPool.HaveTransaction(vh) {
 			continue
 		}
-		if b.server.txMemPool.IsTxLockExist(vh){
+		if b.server.txMemPool.IsTxLockExist(vh) {
 			continue
 		}
 		// Check if the transaction exists from the point of view of the
@@ -2863,7 +2863,6 @@ func (b *blockManager) ProcessInstantTx(tx *hcutil.InstantTx, allowOrphans bool,
 	return response.missedParent, response.err
 }
 
-
 // IsCurrent returns whether or not the block manager believes it is synced with
 // the connected peers.
 func (b *blockManager) IsCurrent() bool {
@@ -3006,10 +3005,10 @@ func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockMan
 	bm.updateChainState(best.Hash,
 		best.Height,
 		fs, aifs,
-		uint32(ps),uint32(aips),
-		nextStakeDiff,nextAiStakeDiff,
-		wt,aiwt,
-		missedTickets,missedAiTickets,
+		uint32(ps), uint32(aips),
+		nextStakeDiff, nextAiStakeDiff,
+		wt, aiwt,
+		missedTickets, missedAiTickets,
 		curPrevHash)
 	bm.lotteryDataBroadcast = make(map[chainhash.Hash]struct{})
 

@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -22,10 +22,10 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/mining"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -242,9 +242,9 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 	// start a new buffered slice and store it.
 	vts, exists := mp.votes[blockHash]
 	if !exists {
-		if uint64(blockHeight) >= mp.cfg.ChainParams.AIEnableHeight{
+		if uint64(blockHeight) >= mp.cfg.ChainParams.AIEnableHeight {
 			vts = make([]VoteTx, 0, mp.cfg.ChainParams.AiTicketsPerBlock)
-		}else{
+		} else {
 			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)
 		}
 	}
@@ -628,7 +628,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	msgTx := tx.MsgTx()
 	isLockTx := false
 	for _, txOut := range msgTx.TxOut {
-		if _,has:=txscript.HasInstantTxTag(txOut.PkScript);has {
+		if _, has := txscript.HasInstantTxTag(txOut.PkScript); has {
 			isLockTx = true
 			break
 		}
@@ -687,7 +687,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 func (mp *TxPool) checkPoolDoubleSpend(tx *hcutil.Tx, txType stake.TxType) error {
 	for i, txIn := range tx.MsgTx().TxIn {
 		// We don't care about double spends of stake bases.
-		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx || 
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx ||
 			txType == stake.TxTypeAiSSGen || txType == stake.TxTypeAiSSRtx) {
 			continue
 		}
@@ -885,7 +885,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// If the transaction is a ticket, ensure that it meets the next
 	// stake difficulty.
 	if txType == stake.TxTypeSStx ||
-	txType == stake.TxTypeAiSStx{
+		txType == stake.TxTypeAiSStx {
 		sDiff, err := mp.cfg.NextStakeDifficulty()
 		if err != nil {
 			// This is an unexpected error so don't turn it into a
@@ -905,7 +905,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 					txHash, msgTx.TxOut[0].Value, sAiDiff)
 				return nil, txRuleError(wire.RejectInsufficientFee, str)
 			}
-		}else{
+		} else {
 			if msgTx.TxOut[0].Value < sDiff {
 				str := fmt.Sprintf("transaction %v has not enough funds "+
 					"to meet stake difficuly (ticket diff %v < next diff %v)",
@@ -918,13 +918,13 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 
 	// Handle stake transaction double spending exceptions.
 	if (txType == stake.TxTypeSSGen) || (txType == stake.TxTypeSSRtx) ||
-	(txType == stake.TxTypeAiSSGen) || (txType == stake.TxTypeAiSSRtx) {
+		(txType == stake.TxTypeAiSSGen) || (txType == stake.TxTypeAiSSRtx) {
 		if txType == stake.TxTypeSSGen ||
-		txType == stake.TxTypeAiSSGen{
+			txType == stake.TxTypeAiSSGen {
 			ssGenAlreadyFound := 0
 			for _, mpTx := range mp.pool {
 				if mpTx.Type == stake.TxTypeSSGen ||
-				mpTx.Type == stake.TxTypeAiSSGen{
+					mpTx.Type == stake.TxTypeAiSSGen {
 					if mpTx.Tx.MsgTx().TxIn[1].PreviousOutPoint ==
 						msgTx.TxIn[1].PreviousOutPoint {
 						ssGenAlreadyFound++
@@ -941,10 +941,10 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 		}
 
 		if txType == stake.TxTypeSSRtx ||
-		txType == stake.TxTypeAiSSRtx {
+			txType == stake.TxTypeAiSSRtx {
 			for _, mpTx := range mp.pool {
 				if mpTx.Type == stake.TxTypeSSRtx ||
-				mpTx.Type == stake.TxTypeAiSSRtx {
+					mpTx.Type == stake.TxTypeAiSSRtx {
 					if mpTx.Tx.MsgTx().TxIn[0].PreviousOutPoint ==
 						msgTx.TxIn[0].PreviousOutPoint {
 						str := fmt.Sprintf("transaction %v in the pool "+
@@ -972,7 +972,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 
 	// Votes that are on too old of blocks are rejected.
 	if txType == stake.TxTypeSSGen ||
-	txType == stake.TxTypeAiSSGen {
+		txType == stake.TxTypeAiSSGen {
 		_, voteHeight, err := stake.SSGenBlockVotedOn(msgTx)
 		if err != nil {
 			return nil, err
@@ -1191,7 +1191,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// miniumum may be allowed when there is sufficient priority, and these
 	// checks aren't desired for ticket purchases.
 	if txType == stake.TxTypeSStx ||
-	txType == stake.TxTypeAiSStx {
+		txType == stake.TxTypeAiSStx {
 		minTicketFee := calcMinRequiredTxRelayFee(serializedSize,
 			mp.cfg.Policy.MinRelayTxFee)
 		if txFee < minTicketFee {
@@ -1237,7 +1237,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// If it's an SSGen (vote), insert it into the list of
 	// votes.
 	if txType == stake.TxTypeSSGen ||
-	txType == stake.TxTypeAiSSGen {
+		txType == stake.TxTypeAiSSGen {
 		mp.votesMtx.Lock()
 		err := mp.insertVote(tx)
 		mp.votesMtx.Unlock()
@@ -1360,23 +1360,23 @@ func (mp *TxPool) processOrphans(hash *chainhash.Hash) []*hcutil.Tx {
 // stake difficulty is below the current required stake difficulty should be
 // pruned from mempool since they will never be mined.  The same idea stands
 // for SSGen and SSRtx
-func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty,  height int64) {
+func (mp *TxPool) PruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty, height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
-	mp.pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty,  height)
+	mp.pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty, height)
 	mp.mtx.Unlock()
 }
 
 func (mp *TxPool) pruneStakeTx(requiredStakeDifficulty, requiredAiStakeDifficulty, height int64) {
 	for _, tx := range mp.pool {
 		txType := stake.DetermineTxType(tx.Tx.MsgTx())
-		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx )&&
+		if (txType == stake.TxTypeSStx || txType == stake.TxTypeAiSStx) &&
 			tx.Height+int64(heightDiffToPruneTicket) < height {
 			mp.removeTransaction(tx.Tx, true)
 		}
-		if txType == stake.TxTypeSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty  {
+		if txType == stake.TxTypeSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredStakeDifficulty {
 			mp.removeTransaction(tx.Tx, true)
-		} else if txType == stake.TxTypeAiSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredAiStakeDifficulty  {
+		} else if txType == stake.TxTypeAiSStx && tx.Tx.MsgTx().TxOut[0].Value < requiredAiStakeDifficulty {
 			mp.removeTransaction(tx.Tx, true)
 		}
 		if (txType == stake.TxTypeSSRtx || txType == stake.TxTypeSSGen ||

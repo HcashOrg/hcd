@@ -38,7 +38,7 @@ type lockPool struct {
 //we will update tx state according the mined height
 func (mp *TxPool) modifyInstantTxHeight(tx *hcutil.InstantTx, height int64) {
 	msgTx := tx.MsgTx()
-	_,isInstantTx := txscript.IsInstantTx(msgTx)
+	_, isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
 		return
 	}
@@ -151,7 +151,7 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 }
 
 //check block transactions is conflict with lockPool
-func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block)(bool, error) {
+func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, error) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
@@ -229,7 +229,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 
 	//check instant tag
 	msgTx := instantTx.MsgTx()
-	_,isInstantTx := txscript.IsInstantTx(msgTx)
+	_, isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
 		log.Tracef("Transaction %v is not instant instantTx ", instantTx.Hash())
 		return
