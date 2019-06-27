@@ -279,7 +279,7 @@ func (b *BlockChain) calcVoterVersionInterval(prevNode *blockNode) (uint32, erro
 		}
 	}
 
-	if uint64(prevNode.height) >= b.chainParams.AIEnableHeight {
+	if uint64(prevNode.height) >= b.chainParams.AIUpdateHeight {
 		// Assert that we have enough votes in case this function is called at
 		// an invalid interval.
 		if int64(totalVotesFound) < b.chainParams.StakeVersionInterval*

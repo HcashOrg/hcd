@@ -666,7 +666,7 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 			"disconnecting")
 	}
 
-	if uint64(node.Height()) >= node.params.AIEnableHeight - 1{
+	if uint64(node.Height()) >= node.params.AIUpdateHeight - 1{
 		return disconnectNodeForAi(node, parentHeader, parentUtds, parentTickets, dbTx)
 	}
 	// The undo ticket slice is normally stored in memory for the most

@@ -242,7 +242,7 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 	// start a new buffered slice and store it.
 	vts, exists := mp.votes[blockHash]
 	if !exists {
-		if uint64(blockHeight) >= mp.cfg.ChainParams.AIEnableHeight {
+		if uint64(blockHeight) >= mp.cfg.ChainParams.AIUpdateHeight {
 			vts = make([]VoteTx, 0, mp.cfg.ChainParams.AiTicketsPerBlock)
 		} else {
 			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)

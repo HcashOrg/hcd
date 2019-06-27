@@ -191,6 +191,7 @@ func (m *CPUMiner) submitBlock(block *hcutil.Block) bool {
 func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker,
 	quit chan struct{}) bool {
 
+
 	blockHeight := int64(msgBlock.Header.Height)
 
 	// Choose a random extra nonce offset for this block template and
@@ -358,6 +359,9 @@ out:
 			}
 		}
 
+		if len(template.Block.STransactions) > 0  {
+			fmt.Println("test template.Block.STransactions")
+		}
 		// Attempt to solve the block.  The function will exit early
 		// with false when conditions that trigger a stale block, so
 		// a new block template can be generated.  When the return is

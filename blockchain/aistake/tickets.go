@@ -336,7 +336,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 		}
 
 		// Calculate the final state from the block header.
-		if uint64(height) >= node.params.AIEnableHeight-1 {
+		if uint64(height) >= node.params.AIUpdateHeight-1 {
 			stateBuffer := make([]byte, 0,
 				(node.params.AiTicketsPerBlock+1)*chainhash.HashSize)
 			for _, ticketHash := range node.nextWinners {
@@ -637,7 +637,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 		}
 		prng := NewHash256PRNG(hB)
 
-		if uint64(connectedNode.height) >= node.params.AIEnableHeight-1 {
+		if uint64(connectedNode.height) >= node.params.AIUpdateHeight-1 {
 			idxs, err := findTicketIdxs(connectedNode.liveTickets.Len(),
 				connectedNode.params.AiTicketsPerBlock, prng)
 			if err != nil {
@@ -687,7 +687,7 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 			"disconnecting")
 	}
 
-	if uint64(node.Height()) >= node.params.AIEnableHeight-1 {
+	if uint64(node.Height()) >= node.params.AIUpdateHeight-1 {
 		return disconnectNodeForAi(node, parentHeader, parentUtds, parentTickets, dbTx)
 	}
 	// The undo ticket slice is normally stored in memory for the most
@@ -1074,7 +1074,7 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 	*/
 	// Write the new best state to the database.
 	nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
-	if node.height >= uint32(node.params.AIEnableHeight-1) {
+	if node.height >= uint32(node.params.AIUpdateHeight-1) {
 		for i := range nextWinners {
 			nextWinners[i] = node.nextWinners[i]
 		}
