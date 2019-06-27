@@ -269,6 +269,7 @@ func (b *BlockChain) calcVoterVersionInterval(prevNode *blockNode) (uint32, erro
 	iterNode := prevNode
 	for i := int64(0); i < b.chainParams.StakeVersionInterval && iterNode != nil; i++ {
 		totalVotesFound += int32(len(iterNode.votes))
+		totalVotesFound += int32(len(iterNode.aiVotes))
 		for _, v := range iterNode.votes {
 			versions[v.Version]++
 		}
@@ -279,15 +280,15 @@ func (b *BlockChain) calcVoterVersionInterval(prevNode *blockNode) (uint32, erro
 		}
 	}
 
-	if uint64(prevNode.height) >= b.chainParams.AIUpdateHeight {
+	if uint64(prevNode.height) >= b.chainParams.AIStakeEnabledHeight {
 		// Assert that we have enough votes in case this function is called at
 		// an invalid interval.
 		if int64(totalVotesFound) < b.chainParams.StakeVersionInterval*
-			(int64(b.chainParams.AiTicketsPerBlock/2)+1) {
+			(int64((b.chainParams.TicketsPerBlock + b.chainParams.AiTicketsPerBlock)/2)+1) {
 			return 0, AssertError(fmt.Sprintf("Not enough "+
 				"votes: %v expected: %v ", totalVotesFound,
 				b.chainParams.StakeVersionInterval*
-					(int64(b.chainParams.AiTicketsPerBlock/2)+1)))
+					(int64((b.chainParams.TicketsPerBlock + b.chainParams.AiTicketsPerBlock)/2)+1)))
 		}
 	}else {
 		// Assert that we have enough votes in case this function is called at

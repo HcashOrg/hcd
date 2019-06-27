@@ -973,9 +973,9 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 	var oldRevocations []*hcutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
-	if uint64(template.Block.Header.Height) >= b.server.chainParams.AIUpdateHeight {
+	if uint64(template.Block.Header.Height) >= b.server.chainParams.AIStakeEnabledHeight {
 		oldVoteMap = make(map[chainhash.Hash]struct{},
-			int(b.server.chainParams.AiTicketsPerBlock))
+			int(b.server.chainParams.AiTicketsPerBlock + b.server.chainParams.TicketsPerBlock))
 	}
 	if template != nil {
 		templateBlock := hcutil.NewBlock(template.Block)
