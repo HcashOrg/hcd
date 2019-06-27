@@ -5476,7 +5476,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	//get address
 	entry, err := s.chain.FetchUtxoEntry(&ticketHash)
 
-	if err != nil {
+	if err != nil || entry==nil{
 		return nil, fmt.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
 			err)
 	}

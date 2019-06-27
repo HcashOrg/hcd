@@ -1267,7 +1267,7 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 				return
 			}
 
-			s.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+			s.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, false)
 		}
 	}
 }
