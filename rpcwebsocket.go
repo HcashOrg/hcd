@@ -250,10 +250,6 @@ func (m *wsNotificationManager) NotifyWinningTickets(
 	// and the RPC server may no longer be running, use a select
 	// statement to unblock enqueuing the notification once the RPC
 	// server has begun shutting down.
-	if len(wtnd.Tickets) == 10 {
-		fmt.Println("test NotifyWinningTickets")
-	}
-
 	select {
 	case m.queueNotification <- (*notificationWinningTickets)(wtnd):
 	case <-m.quit:
