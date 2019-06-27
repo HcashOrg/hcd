@@ -666,9 +666,6 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 			"disconnecting")
 	}
 
-	if uint64(node.Height()) >= node.params.AIUpdateHeight - 1{
-		return disconnectNodeForAi(node, parentHeader, parentUtds, parentTickets, dbTx)
-	}
 	// The undo ticket slice is normally stored in memory for the most
 	// recent blocks and the sidechain, but it may be the case that it
 	// is missing because it's in the mainchain and very old (thus
@@ -729,9 +726,9 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 				return nil, err
 			}
 
-		// The ticket was missed and revoked.  It needs to
-		// be moved from the revoked ticket treap to the
-		// missed ticket treap.
+			// The ticket was missed and revoked.  It needs to
+			// be moved from the revoked ticket treap to the
+			// missed ticket treap.
 		case undo.Missed && undo.Revoked:
 			v.Revoked = false
 			restoredNode.revokedTickets, err =
@@ -745,9 +742,9 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 				return nil, err
 			}
 
-		// The ticket was missed and was previously live.
-		// Remove it from the missed tickets bucket and
-		// move it to the live tickets bucket.
+			// The ticket was missed and was previously live.
+			// Remove it from the missed tickets bucket and
+			// move it to the live tickets bucket.
 		case undo.Missed && !undo.Revoked:
 			// Expired tickets could never have been
 			// winners.
@@ -771,9 +768,9 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 				return nil, err
 			}
 
-		// The ticket was spent.  Reinsert it into the live
-		// tickets treap and add it to the list of next
-		// winners.
+			// The ticket was spent.  Reinsert it into the live
+			// tickets treap and add it to the list of next
+			// winners.
 		case undo.Spent:
 			v.Spent = false
 			restoredNode.nextWinners = append(restoredNode.nextWinners,
@@ -790,6 +787,7 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 				"unknown ticket state in undo data")
 		}
 	}
+
 	if node.height >= uint32(node.params.StakeValidationHeight) {
 		phB, err := parentHeader.Bytes()
 		if err != nil {
@@ -805,6 +803,7 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 		stateBuffer = append(stateBuffer, lastHash[:]...)
 		copy(restoredNode.finalState[:], chainhash.HashB(stateBuffer)[0:6])
 	}
+
 	return restoredNode, nil
 }
 

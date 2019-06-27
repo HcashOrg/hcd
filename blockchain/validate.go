@@ -638,7 +638,7 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
 	// Not enough ai voters on this block.
-	if block.Height() >= int64(chainParams.AIUpdateHeight)&&
+	if block.Height() >= int64(chainParams.AIStakeEnabledHeight)&&
 		totalAiVotes <= int(chainParams.AiTicketsPerBlock)/2 {
 		errStr := fmt.Sprintf("block contained too few ai votes! %v "+
 			"votes but %v or more required", totalAiVotes,
@@ -1015,7 +1015,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	aiFinalState := node.header.AiFinalState
 
 	ticketsPerBlock := int(b.chainParams.TicketsPerBlock)
-	if uint64(block.Height()) >= chainParams.AIUpdateHeight {
+	if uint64(block.Height()) >= chainParams.AIStakeEnabledHeight {
 		ticketsPerBlock = int(b.chainParams.AiTicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 	}
 
@@ -1101,7 +1101,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			"for block node %v: %v", node.hash, err)
 		return ruleError(ErrUnexpectedDifficulty, errStr)
 	}
-	if block.MsgBlock().Header.AiSBits != calcAiSBits {
+	if block.MsgBlock().Header.AiSBits != calcAiSBits  && uint64(block.Height()) >= chainParams.AIUpdateHeight{
 		errStr := fmt.Sprintf("block had unexpected ai stake difficulty "+
 			"(%v given, %v expected)",
 			block.MsgBlock().Header.AiSBits, calcAiSBits)
@@ -1220,7 +1220,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
-	if msgBlock.Header.AiVoters == 0 && uint64(msgBlock.Header.Height) >= b.chainParams.AIUpdateHeight{
+	if msgBlock.Header.AiVoters == 0 && uint64(msgBlock.Header.Height) >= b.chainParams.AIStakeEnabledHeight{
 		errStr := fmt.Sprintf("Error: no ai voters in block %v",
 			blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
@@ -1234,7 +1234,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
 	majorityAi := (chainParams.AiTicketsPerBlock / 2) + 1
-	if msgBlock.Header.AiVoters < majorityAi && uint64(msgBlock.Header.Height) >= b.chainParams.AIUpdateHeight{
+	if msgBlock.Header.AiVoters < majorityAi && uint64(msgBlock.Header.Height) >= b.chainParams.AIStakeEnabledHeight{
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+
 			"of ai voters is not in the majorityai as compared to "+
 			"potential ai votes for block %v", blockHash)
@@ -2518,7 +2518,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 	if txTree { //TxTreeRegular
 		// Apply penalty to fees if we're at stake validation height.
 		if node.height >= b.chainParams.StakeValidationHeight {
-			if node.height >= int64(b.chainParams.AIUpdateHeight){
+			if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
 				totalFees *= int64(node.header.Voters + node.header.AiVoters)
 				totalFees /= int64(b.chainParams.TicketsPerBlock + b.chainParams.AiTicketsPerBlock)
 			}else{
@@ -2536,7 +2536,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height == 1 {
 			expAtomOut = subsidyCache.CalcBlockSubsidy(node.height)
 		} else {
-			if node.height >= int64(b.chainParams.AIUpdateHeight){
+			if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
 				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
 					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
 				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
@@ -2597,7 +2597,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height >= b.chainParams.StakeValidationHeight {
 			// Subsidy aligns with the height we're voting on, not
 			// with the height of the current block.
-			if node.height >= int64(b.chainParams.AIUpdateHeight){
+			if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
 				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
 					node.height-1, b.chainParams) *
 					int64(node.header.Voters + node.header.AiVoters)
@@ -2687,7 +2687,7 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block *hcutil.Block, utx
 			node.header.PrevBlock))
 	}
 
-	if node.height >= int64(b.chainParams.AIUpdateHeight){
+	if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
 		// Check that the coinbase pays the tax, if applicable.
 		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
 			node.header.Height, node.header.Voters + node.header.Voters, b.chainParams)

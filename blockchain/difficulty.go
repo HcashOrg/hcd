@@ -817,7 +817,7 @@ func (b *BlockChain) calcNextRequiredAiStakeDifficultyV2(curNode *blockNode) (in
 	if curNode != nil {
 		nextHeight = curNode.height + 1
 	}
-	stakeDiffStartHeight := int64(b.chainParams.CoinbaseMaturity) + 1
+	stakeDiffStartHeight := int64(b.chainParams.AIUpdateHeight) + 1
 	if nextHeight < stakeDiffStartHeight {
 		return b.chainParams.MinimumAiStakeDiff, nil
 	}
@@ -949,8 +949,8 @@ func (b *BlockChain) estimateNextStakeDifficultyV2(curNode *blockNode, newTicket
 	// flag.
 
 	maxTicketsPerBlock := int64(b.chainParams.MaxFreshStakePerBlock)
-	if curHeight >= int64(b.chainParams.AIUpdateHeight) {
-		maxTicketsPerBlock = int64(b.chainParams.AiMaxFreshStakePerBlock)
+	if curHeight >= int64(b.chainParams.AIStakeEnabledHeight) {
+		maxTicketsPerBlock += int64(b.chainParams.AiMaxFreshStakePerBlock)
 	}
 	maxRemainingTickets := (blocksUntilRetarget - 1) * maxTicketsPerBlock
 	if useMaxTickets {
@@ -1040,8 +1040,8 @@ func (b *BlockChain) estimateNextStakeDifficultyV2(curNode *blockNode, newTicket
 			votingBlocks = nextRetargetHeight - stakeValidationHeight
 		}
 		votesPerBlock := int64(b.chainParams.TicketsPerBlock)
-		if curNode.height >= int64(b.chainParams.AIUpdateHeight) {
-			votesPerBlock = int64(b.chainParams.AiTicketsPerBlock)
+		if curNode.height >= int64(b.chainParams.AIStakeEnabledHeight) {
+			votesPerBlock += int64(b.chainParams.AiTicketsPerBlock)
 		}
 		pendingVotes = votingBlocks * votesPerBlock
 	}

@@ -320,7 +320,7 @@ func SortParentsByVotes(height uint64, mp *mempool.TxPool, currentTopBlock chain
 	// mempool and filter out any blocks that do not have the minimum
 	// required number of votes.
 	minVotesRequired := (params.TicketsPerBlock / 2) + 1
-	if height >= params.AIUpdateHeight {
+	if height >= params.AIStakeEnabledHeight {
 		minVotesRequired = (params.AiTicketsPerBlock / 2) + 1
 	}
 	voteMetadata := mp.VotesForBlocks(blocks)
@@ -1490,6 +1490,9 @@ mempoolLoop:
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
+		if isAiSStx && uint64(nextBlockHeight) < server.chainParams.AIUpdateHeight{
+			continue
+		}
 		if isAiSStx && (numAiSStx >=
 			int(server.chainParams.AiMaxFreshStakePerBlock)) {
 			minrLog.Tracef("Skipping sstx %s because it would exceed "+
@@ -1994,7 +1997,7 @@ mempoolLoop:
 	// If we're greater than or equal to stake validation height, scale the
 	// fees according to the number of voters.
 	totalFees *= int64(voters)
-	if uint64(nextBlockHeight) >= server.chainParams.AIUpdateHeight {
+	if uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
 		totalFees /= int64(server.chainParams.TicketsPerBlock + server.chainParams.AiTicketsPerBlock)
 	}else{
 		totalFees /= int64(server.chainParams.TicketsPerBlock)
@@ -2028,16 +2031,22 @@ mempoolLoop:
 	// bit for the mempool to sync with the votes map and we end up down
 	// here despite having the relevant votes available in the votes map.
 	minimumVotesRequired := int((server.chainParams.TicketsPerBlock / 2) + 1)
-	if uint64(nextBlockHeight) >= server.chainParams.AIUpdateHeight {
-		minimumVotesRequired = int((server.chainParams.AiTicketsPerBlock / 2) + 1)
+	if uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
+		minimumVotesRequired += int((server.chainParams.AiTicketsPerBlock / 2) + 1)
+		if nextBlockHeight >= stakeValidationHeight &&
+			voters +aiVoters < minimumVotesRequired {
+			minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")
+			return handleTooFewVoters(subsidyCache, nextBlockHeight, payToAddress,
+				server.blockManager)
+		}
+	}else{
+		if nextBlockHeight >= stakeValidationHeight &&
+			voters < minimumVotesRequired {
+			minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")
+			return handleTooFewVoters(subsidyCache, nextBlockHeight, payToAddress,
+				server.blockManager)
+		}
 	}
-	if nextBlockHeight >= stakeValidationHeight &&
-		voters < minimumVotesRequired {
-		minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")
-		return handleTooFewVoters(subsidyCache, nextBlockHeight, payToAddress,
-			server.blockManager)
-	}
-
 	// Correct transaction index fraud proofs for any transactions that
 	// are chains. maybeInsertStakeTx fills this in for stake transactions
 	// already, so only do it for regular transactions.
