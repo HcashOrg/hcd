@@ -1101,7 +1101,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			"for block node %v: %v", node.hash, err)
 		return ruleError(ErrUnexpectedDifficulty, errStr)
 	}
-	if block.MsgBlock().Header.AiSBits != calcAiSBits {
+	if block.MsgBlock().Header.AiSBits != calcAiSBits  && uint64(block.Height()) >= chainParams.AIUpdateHeight{
 		errStr := fmt.Sprintf("block had unexpected ai stake difficulty "+
 			"(%v given, %v expected)",
 			block.MsgBlock().Header.AiSBits, calcAiSBits)
