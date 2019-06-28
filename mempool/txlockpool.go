@@ -593,7 +593,7 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 }
 
 func (mp *TxPool)FetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote,error) {
-	mp.mtx.RUnlock()
+	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 	return mp.fetchInstantTxVote(txVoteHash)
 }
