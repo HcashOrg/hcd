@@ -708,6 +708,12 @@ var TestNet2Params = Params{
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
 	TicketExpiry:            6144, // 6*TicketPoolSize
+	//ai PoS parameters
+	AiTicketPoolSize:          512,//64 + 32,
+	AiTicketsPerBlock:         5,//5 + 5,
+	AiTicketMaturity:          16,
+	AiTicketExpiry:            6144, // 6*AiTicketPoolSize
+
 	CoinbaseMaturity:        16,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
@@ -716,6 +722,7 @@ var TestNet2Params = Params{
 	StakeDiffWindows:        20,
 	StakeVersionInterval:    144 * 2 * 7, // ~1 week
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
+	AiMaxFreshStakePerBlock: 20,
 	StakeEnabledHeight:      16 + 16,     // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   775,         // Arbitrary
 	StakeBaseSigScript:      []byte{0x00, 0x00},
@@ -729,7 +736,8 @@ var TestNet2Params = Params{
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
-	AIUpdateHeight:				363000,
+	AIUpdateHeight:				 AIEnableHeightTestNet,
+	AIStakeEnabledHeight:		 AIEnableHeightTestNet + 144,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
