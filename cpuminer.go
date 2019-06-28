@@ -359,9 +359,6 @@ out:
 			}
 		}
 
-		if len(template.Block.STransactions) > 0  {
-			fmt.Println("test template.Block.STransactions")
-		}
 		// Attempt to solve the block.  The function will exit early
 		// with false when conditions that trigger a stale block, so
 		// a new block template can be generated.  When the return is
