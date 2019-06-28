@@ -334,10 +334,16 @@ func (bf *Filter) matchTxAndUpdate(tx *hcutil.Tx) bool {
 
 func (bf *Filter) matchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
 	//TODO implement
-	bf.mtx.Lock()
-	match := bf.matchTxAndUpdate(&tx.Tx)
-	bf.mtx.Unlock()
-	return match
+
+	return true
+}
+
+
+
+func (bf *Filter) matchInstantTxVoteAndUpdate(tx *hcutil.InstantTxVote) bool {
+	//TODO implement
+
+	return true
 }
 
 // MatchTxAndUpdate returns true if the bloom filter matches data within the
@@ -356,6 +362,13 @@ func (bf *Filter) MatchTxAndUpdate(tx *hcutil.Tx) bool {
 func (bf *Filter) MatchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
 	bf.mtx.Lock()
 	match := bf.matchInstantTxAndUpdate(tx)
+	bf.mtx.Unlock()
+	return match
+}
+
+func (bf *Filter) MatchInstantTxVoteAndUpdate(tx *hcutil.InstantTxVote) bool {
+	bf.mtx.Lock()
+	match := bf.matchInstantTxVoteAndUpdate(tx)
 	bf.mtx.Unlock()
 	return match
 }

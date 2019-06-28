@@ -1410,6 +1410,7 @@ out:
 
 		// Handle each supported message type.
 		p.stallControl <- stallControlMsg{sccHandlerStart, rmsg}
+
 		switch msg := rmsg.(type) {
 		case *wire.MsgVersion:
 			p.PushRejectMsg(msg.Command(), wire.RejectDuplicate,

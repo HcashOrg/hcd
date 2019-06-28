@@ -5529,7 +5529,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 			s.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxvote)
 		}
 		//notify wallet to resend
-		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send {
+		if len(instantTxDesc.Votes) > 2 && !instantTxDesc.Send {
 			instantTxDesc.Send = true
 			//notify wallet to resend
 			s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
