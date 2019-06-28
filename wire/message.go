@@ -107,6 +107,9 @@ func makeEmptyMessage(command string) (Message, error) {
 	case CmdInstantTx:
 		msg = &MsgInstantTx{}
 
+	case CmdInstantTxVote:
+		msg = &MsgInstantTxVote{}
+
 	case CmdPing:
 		msg = &MsgPing{}
 

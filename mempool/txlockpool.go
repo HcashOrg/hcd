@@ -1,6 +1,7 @@
 package mempool
 
 import (
+	"errors"
 	"fmt"
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/stake"
@@ -589,4 +590,24 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 	instantTx.SetIndex(tx.Index())
 
 	return instantTx, nil
+}
+
+func (mp *TxPool)FetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote,error) {
+	mp.mtx.RUnlock()
+	defer mp.mtx.RUnlock()
+	return mp.fetchInstantTxVote(txVoteHash)
+}
+
+func (mp *TxPool)fetchInstantTxVote(txVoteHash *chainhash.Hash)(*hcutil.InstantTxVote,error) {
+	//TODO optimize 0(n)
+	for _, desc := range mp.txLockPool {
+		for _, vote := range desc.Votes {
+			if txVoteHash!=nil&&vote.Hash().IsEqual(txVoteHash){
+				retVote:=*vote
+				return &retVote,nil
+			}
+		}
+	}
+
+	return nil,errors.New("instantTx not exist ")
 }
