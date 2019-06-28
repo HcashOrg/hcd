@@ -40,7 +40,6 @@ func (t *InstantTx) MsgInstantTx() *wire.MsgInstantTx {
 	return wire.NewMsgInstantTxFromMsgTx(t.msgTx)
 }
 
-
 func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
 	return &InstantTx{
 		Tx: Tx{
@@ -57,6 +56,8 @@ func NewInstantTxFromTx(tx *Tx) *InstantTx {
 		Tx: *tx,
 	}
 }
+
+
 
 //func (instantTx *InstantTx) Hash() *chainhash.Hash {
 //	ret:=instantTx.msgTx.TxHash()
