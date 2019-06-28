@@ -1693,7 +1693,7 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 	case wire.InvTypeInstantTxVote:
 		_,err:=b.server.txMemPool.FetchInstantTxVote(&invVect.Hash)
 		if err!=nil{
-			return false,err
+			return false,nil
 		}
 		return true,nil
 
