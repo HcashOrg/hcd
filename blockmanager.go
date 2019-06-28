@@ -1690,6 +1690,13 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 			return false, err
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
+	case wire.InvTypeInstantTxVote:
+		_,err:=b.server.txMemPool.FetchInstantTxVote(&invVect.Hash)
+		if err!=nil{
+			return false,err
+		}
+		return true,nil
+
 	}
 
 	// The requested inventory is is an unsupported type, so just claim
@@ -1763,7 +1770,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 			continue
 		}
 		if !haveInv {
-			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx {
+			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx||iv.Type==wire.InvTypeInstantTxVote {
 				// Skip the transaction if it has already been
 				// rejected.
 				if _, exists := b.rejectedTxns[iv.Hash]; exists {
@@ -1848,7 +1855,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 				numRequested++
 			}
 
-		case wire.InvTypeTx, wire.InvTypeInstantTx:
+		case wire.InvTypeTx, wire.InvTypeInstantTx,wire.InvTypeInstantTxVote:
 			// Request the transaction if there is not already a
 			// pending request.
 			if _, exists := b.requestedTxns[iv.Hash]; !exists {

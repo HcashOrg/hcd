@@ -40,6 +40,7 @@ var ivStrings = map[InvType]string{
 	InvTypeError:         "ERROR",
 	InvTypeTx:            "MSG_TX",
 	InvTypeInstantTx:     "MSG_INSTANT_TX",
+	InvTypeInstantTxVote: "MSG_INSTANT_TX_Vote",
 	InvTypeBlock:         "MSG_BLOCK",
 	InvTypeFilteredBlock: "MSG_FILTERED_BLOCK",
 }

@@ -1642,6 +1642,28 @@ func (s *server) handleRelayInvMsg(state *peerState, msg relayMsg) {
 			}
 		}
 
+		if msg.invVect.Type == wire.InvTypeInstantTxVote {
+			// Don't relay the instant instantTxVote to the peer when it has
+			// transaction relaying disabled.
+			if sp.relayTxDisabled() {
+				return
+			}
+			// Don't relay the transaction if there is a bloom
+			// filter loaded and the transaction doesn't match it.
+			if sp.filter.IsLoaded() {
+				instantTxVote, ok := msg.data.(*hcutil.InstantTxVote)
+				if !ok {
+					peerLog.Warnf("Underlying data for instantTx" +
+						" inv relay is not a transaction")
+					return
+				}
+
+				if !sp.filter.MatchInstantTxVoteAndUpdate(instantTxVote) {
+					return
+				}
+			}
+		}
+
 		// Queue the inventory to be relayed with the next batch.
 		// It will be ignored if the peer is already known to
 		// have the inventory.
