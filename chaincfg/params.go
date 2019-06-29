@@ -704,6 +704,7 @@ var TestNet2Params = Params{
 
 	// Hcd PoS parameters
 	MinimumStakeDiff:        20000000, // 0.2 Coin
+	MinimumAiStakeDiff:      10000000000,
 	TicketPoolSize:          1024,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
