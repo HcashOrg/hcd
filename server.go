@@ -188,20 +188,24 @@ type server struct {
 type serverPeer struct {
 	*peer.Peer
 
-	connReq         *connmgr.ConnReq
-	server          *server
-	persistent      bool
-	continueHash    *chainhash.Hash
-	relayMtx        sync.Mutex
-	disableRelayTx  bool
-	isWhitelisted   bool
-	requestQueue    []*wire.InvVect
-	requestedTxns   map[chainhash.Hash]struct{}
-	requestedBlocks map[chainhash.Hash]struct{}
-	filter          *bloom.Filter
-	knownAddresses  map[string]struct{}
-	banScore        connmgr.DynamicBanScore
-	quit            chan struct{}
+	connReq               *connmgr.ConnReq
+	server                *server
+	persistent            bool
+	continueHash          *chainhash.Hash
+	relayMtx              sync.Mutex
+	disableRelayTx        bool
+	isWhitelisted         bool
+	requestQueue          []*wire.InvVect
+	requestedTxns         map[chainhash.Hash]struct{}
+	requestedBlocks       map[chainhash.Hash]struct{}
+	//instant tx
+	requestedInstantTxs   map[chainhash.Hash]struct{}
+	requestedInstantVotes map[chainhash.Hash]struct{}
+
+	filter                *bloom.Filter
+	knownAddresses        map[string]struct{}
+	banScore              connmgr.DynamicBanScore
+	quit                  chan struct{}
 	// It is used to prevent more than one response per connection.
 	addrsSent bool
 	// addrsSent and getMiningStateSent both track whether or not the peer
@@ -227,16 +231,18 @@ type serverPeer struct {
 // the caller.
 func newServerPeer(s *server, isPersistent bool) *serverPeer {
 	return &serverPeer{
-		server:             s,
-		persistent:         isPersistent,
-		requestedTxns:      make(map[chainhash.Hash]struct{}),
-		requestedBlocks:    make(map[chainhash.Hash]struct{}),
-		filter:             bloom.LoadFilter(nil),
-		knownAddresses:     make(map[string]struct{}),
-		quit:               make(chan struct{}),
-		txProcessed:        make(chan struct{}, 1),
-		instantTxProcessed: make(chan struct{}, 1),
-		blockProcessed:     make(chan struct{}, 1),
+		server:                s,
+		persistent:            isPersistent,
+		requestedTxns:         make(map[chainhash.Hash]struct{}),
+		requestedBlocks:       make(map[chainhash.Hash]struct{}),
+		requestedInstantTxs:   make(map[chainhash.Hash]struct{}),
+		requestedInstantVotes: make(map[chainhash.Hash]struct{}),
+		filter:                bloom.LoadFilter(nil),
+		knownAddresses:        make(map[string]struct{}),
+		quit:                  make(chan struct{}),
+		txProcessed:           make(chan struct{}, 1),
+		instantTxProcessed:    make(chan struct{}, 1),
+		blockProcessed:        make(chan struct{}, 1),
 	}
 }
 
@@ -682,6 +688,12 @@ func (sp *serverPeer) OnInstantTxVote(p *peer.Peer, msg *wire.MsgInstantTxVote) 
 	// methods and things such as hash caching.
 	//TODO check this instant instantTxvote inventory implement
 	instantTxVote := hcutil.NewInstantTxVote(msg)
+
+	_, err := sp.server.txMemPool.FetchInstantTxVote(instantTxVote.Hash())
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
 	p.AddKnownInventory(iv)
 
@@ -1284,6 +1296,12 @@ func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxV
 		// Generate the inventory vector and relay it.
 		//TODO check instant instantTxvote invvect
 		//relay instantvote
+
+		_, err := s.txMemPool.FetchInstantTxVote(instantTxVote.Hash())
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
 		s.RelayInventory(iv, instantTxVote)
 
@@ -1334,7 +1352,7 @@ func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan
 
 	instantTx, err := s.txMemPool.FetchInstantTx(hash, false)
 	if err != nil {
-		peerLog.Tracef("Unable to fetch instantTx %v from transaction "+
+		peerLog.Tracef("Unable to fetch instantTx %v from tx lock "+
 			"pool: %v", hash, err)
 
 		if doneChan != nil {
@@ -1353,8 +1371,6 @@ func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan
 	return nil
 }
 
-
-
 func (s *server) pushInstantTxVoteMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
 	// call could be made to check for existence first, but simply trying
@@ -1365,7 +1381,7 @@ func (s *server) pushInstantTxVoteMsg(sp *serverPeer, hash *chainhash.Hash, done
 
 	instantTxVote, err := s.txMemPool.FetchInstantTxVote(hash)
 	if err != nil {
-		peerLog.Tracef("Unable to fetch instantTx %v from transaction "+
+		peerLog.Tracef("Unable to fetch instantTxVote %v from lock "+
 			"pool: %v", hash, err)
 
 		if doneChan != nil {
@@ -1623,45 +1639,45 @@ func (s *server) handleRelayInvMsg(state *peerState, msg relayMsg) {
 		if msg.invVect.Type == wire.InvTypeInstantTx {
 			// Don't relay the instant instantTx to the peer when it has
 			// transaction relaying disabled.
-			if sp.relayTxDisabled() {
-				return
-			}
+			//if sp.relayTxDisabled() {
+			//	return
+			//}
 			// Don't relay the transaction if there is a bloom
 			// filter loaded and the transaction doesn't match it.
-			if sp.filter.IsLoaded() {
-				instantTx, ok := msg.data.(*hcutil.InstantTx)
-				if !ok {
-					peerLog.Warnf("Underlying data for instantTx" +
-						" inv relay is not a transaction")
-					return
-				}
-
-				if !sp.filter.MatchInstantTxAndUpdate(instantTx) {
-					return
-				}
-			}
+			//if sp.filter.IsLoaded() {
+			//	instantTx, ok := msg.data.(*hcutil.InstantTx)
+			//	if !ok {
+			//		peerLog.Warnf("Underlying data for instantTx" +
+			//			" inv relay is not a transaction")
+			//		return
+			//	}
+			//
+			//	if !sp.filter.MatchInstantTxAndUpdate(instantTx) {
+			//		return
+			//	}
+			//}
 		}
 
 		if msg.invVect.Type == wire.InvTypeInstantTxVote {
 			// Don't relay the instant instantTxVote to the peer when it has
 			// transaction relaying disabled.
-			if sp.relayTxDisabled() {
-				return
-			}
+			//if sp.relayTxDisabled() {
+			//	return
+			//}
 			// Don't relay the transaction if there is a bloom
 			// filter loaded and the transaction doesn't match it.
-			if sp.filter.IsLoaded() {
-				instantTxVote, ok := msg.data.(*hcutil.InstantTxVote)
-				if !ok {
-					peerLog.Warnf("Underlying data for instantTx" +
-						" inv relay is not a transaction")
-					return
-				}
-
-				if !sp.filter.MatchInstantTxVoteAndUpdate(instantTxVote) {
-					return
-				}
-			}
+			//if sp.filter.IsLoaded() {
+			//	instantTxVote, ok := msg.data.(*hcutil.InstantTxVote)
+			//	if !ok {
+			//		peerLog.Warnf("Underlying data for instantTx" +
+			//			" inv relay is not a transaction")
+			//		return
+			//	}
+			//
+			//	if !sp.filter.MatchInstantTxVoteAndUpdate(instantTxVote) {
+			//		return
+			//	}
+			//}
 		}
 
 		// Queue the inventory to be relayed with the next batch.
