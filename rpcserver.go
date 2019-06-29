@@ -5546,7 +5546,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	// Keep track of all the sendrawtransaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
 
-	fmt.Println("7777777777777777777",instantTxvote.Hash())
 	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxvote.Hash())
 
 	s.server.AddRebroadcastInventory(iv, instantTxvote)

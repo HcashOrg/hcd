@@ -300,9 +300,7 @@ func ReadMessageN(r io.Reader, pver uint32, hcnet CurrencyNet) (int, Message, []
 	if err != nil {
 		return totalBytes, nil, nil, err
 	}
-	if hdr.command==CmdInstantTxVote{
-		fmt.Println(hdr.command)
-	}
+
 	// Enforce maximum message payload.
 	if hdr.length > MaxMessagePayload {
 		str := fmt.Sprintf("message payload is too large - header "+

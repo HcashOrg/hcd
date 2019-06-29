@@ -616,5 +616,5 @@ func (mp *TxPool) fetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.Instan
 	if instantTxVote, exist := mp.instantTxVotes[*txVoteHash]; exist {
 		return instantTxVote, nil
 	}
-	return nil, errors.New("instantTx not exist ")
+	return nil, errors.New("instantTxVote not exist ")
 }
