@@ -31,8 +31,9 @@ type InstantTxDesc struct {
 }
 
 type lockPool struct {
-	txLockPool    map[chainhash.Hash]*InstantTxDesc //for instantsend lock tx pool
-	lockOutpoints map[wire.OutPoint]*hcutil.InstantTx
+	txLockPool     map[chainhash.Hash]*InstantTxDesc //for instantsend lock tx pool
+	lockOutpoints  map[wire.OutPoint]*hcutil.InstantTx
+	instantTxVotes map[chainhash.Hash]*hcutil.InstantTxVote
 }
 
 //update inistant tx state according the mined height
@@ -51,6 +52,8 @@ func (mp *TxPool) AppendInstantTxVote(hash *chainhash.Hash, vote *hcutil.Instant
 func (mp *TxPool) appendInstantTxVote(hash *chainhash.Hash, vote *hcutil.InstantTxVote) {
 	if desc, exist := mp.txLockPool[*hash]; exist && vote != nil {
 		desc.Votes = append(desc.Votes, vote)
+
+		mp.instantTxVotes[*vote.Hash()] = vote
 	}
 }
 
@@ -78,6 +81,11 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	defer mp.mtx.Unlock()
 	for hash, desc := range mp.txLockPool {
 		if desc.MineHeight != 0 && desc.MineHeight < height-defaultConfirmNum {
+
+			for _, vote := range desc.Votes {
+				delete(mp.instantTxVotes, *vote.Hash())
+			}
+
 			delete(mp.txLockPool, hash)
 
 			for _, txIn := range desc.Tx.MsgTx().TxIn {
@@ -87,7 +95,7 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	}
 }
 
-func (mp *TxPool) IsTxLockExist(hash *chainhash.Hash) bool {
+func (mp *TxPool) IsInstantTxExist(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 	return mp.isInstantTxExist(hash)
@@ -116,12 +124,12 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	ret := make(map[string]*hcjson.TxLockInfo, len(mp.txLockPool))
 
 	for hash, desc := range mp.txLockPool {
-		votesHash :=make([]string,0,5)
-		for _,vote := range desc.Votes {
-			votesHash=append(votesHash, vote.Hash().String()+"-"+vote.MsgInstantTxVote().TicketHash.String())
+		votesHash := make([]string, 0, 5)
+		for _, vote := range desc.Votes {
+			votesHash = append(votesHash, vote.Hash().String()+"-"+vote.MsgInstantTxVote().TicketHash.String())
 		}
 
-		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight,Votes:votesHash,Send:desc.Send}
+		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight, Votes: votesHash, Send: desc.Send}
 	}
 
 	return ret
@@ -189,11 +197,18 @@ func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
 	//if tx in is conflict with txlock ,just remove txlock and lockOutpoint
 	for _, invalue := range tx.MsgTx().TxIn {
 		if txLock, exist := mp.isInstantTxInputExist(&invalue.PreviousOutPoint); exist {
+			instantTxdesc := mp.txLockPool[*txLock.Hash()]
+
+			for _, vote := range instantTxdesc.Votes {
+				delete(mp.instantTxVotes, *vote.Hash())
+			}
+
 			delete(mp.txLockPool, *txLock.Hash())
 
 			for _, txIn := range txLock.MsgTx().TxIn {
 				delete(mp.lockOutpoints, txIn.PreviousOutPoint)
 			}
+
 		}
 	}
 
@@ -578,7 +593,6 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 		return txDesc.Tx, nil
 	}
 
-
 	tx, err := mp.FetchTransaction(txHash, includeRecentBlock)
 	if err != nil {
 		return nil, err
@@ -592,22 +606,15 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 	return instantTx, nil
 }
 
-func (mp *TxPool)FetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote,error) {
+func (mp *TxPool) FetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote, error) {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 	return mp.fetchInstantTxVote(txVoteHash)
 }
 
-func (mp *TxPool)fetchInstantTxVote(txVoteHash *chainhash.Hash)(*hcutil.InstantTxVote,error) {
-	//TODO optimize 0(n)
-	for _, desc := range mp.txLockPool {
-		for _, vote := range desc.Votes {
-			if txVoteHash!=nil&&vote.Hash().IsEqual(txVoteHash){
-				retVote:=*vote
-				return &retVote,nil
-			}
-		}
+func (mp *TxPool) fetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote, error) {
+	if instantTxVote, exist := mp.instantTxVotes[*txVoteHash]; exist {
+		return instantTxVote, nil
 	}
-
-	return nil,errors.New("instantTx not exist ")
+	return nil, errors.New("instantTx not exist ")
 }

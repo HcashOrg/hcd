@@ -243,7 +243,7 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 	vts, exists := mp.votes[blockHash]
 	if !exists {
 		if uint64(blockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight {
-			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock + mp.cfg.ChainParams.AiTicketsPerBlock)
+			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock+mp.cfg.ChainParams.AiTicketsPerBlock)
 		} else {
 			vts = make([]VoteTx, 0, mp.cfg.ChainParams.TicketsPerBlock)
 		}
@@ -1651,8 +1651,9 @@ func New(cfg *Config) *TxPool {
 		outpoints:     make(map[wire.OutPoint]*hcutil.Tx),
 		votes:         make(map[chainhash.Hash][]VoteTx),
 		lockPool: lockPool{
-			txLockPool:    make(map[chainhash.Hash]*InstantTxDesc),
-			lockOutpoints: make(map[wire.OutPoint]*hcutil.InstantTx),
+			txLockPool:     make(map[chainhash.Hash]*InstantTxDesc),
+			lockOutpoints:  make(map[wire.OutPoint]*hcutil.InstantTx),
+			instantTxVotes: make(map[chainhash.Hash]*hcutil.InstantTxVote),
 		},
 	}
 }

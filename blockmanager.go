@@ -126,10 +126,12 @@ type getSyncPeerMsg struct {
 // this through the block manager so the block manager doesn't ban the peer
 // when it sends this information back.
 type requestFromPeerMsg struct {
-	peer   *serverPeer
-	blocks []*chainhash.Hash
-	txs    []*chainhash.Hash
-	reply  chan requestFromPeerResponse
+	peer         *serverPeer
+	blocks       []*chainhash.Hash
+	txs          []*chainhash.Hash
+	instantTxs   []*chainhash.Hash
+	instantVotes []*chainhash.Hash
+	reply        chan requestFromPeerResponse
 }
 
 // requestFromPeerResponse is a response sent to the reply channel of a
@@ -457,12 +459,18 @@ type blockManager struct {
 	requestedEverTxns   map[chainhash.Hash]uint8
 	requestedBlocks     map[chainhash.Hash]struct{}
 	requestedEverBlocks map[chainhash.Hash]uint8
-	progressLogger      *blockProgressLogger
-	syncPeer            *serverPeer
-	msgChan             chan interface{}
-	chainState          chainState
-	wg                  sync.WaitGroup
-	quit                chan struct{}
+
+	requestedInstantTxs       map[chainhash.Hash]struct{}
+	requestedEverInstantTxs   map[chainhash.Hash]uint8
+	requestedInstantVotes     map[chainhash.Hash]struct{}
+	requestedEverInstantVotes map[chainhash.Hash]uint8
+
+	progressLogger *blockProgressLogger
+	syncPeer       *serverPeer
+	msgChan        chan interface{}
+	chainState     chainState
+	wg             sync.WaitGroup
+	quit           chan struct{}
 
 	// The following fields are used for headers-first mode.
 	headersFirstMode bool
@@ -836,7 +844,6 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	instantTxHash := instantTxVote.MsgInstantTxVote().InstantTxHash
 	ticketHash := instantTxVote.MsgInstantTxVote().TicketHash
 
-
 	instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(&instantTxHash)
 	if !exist {
 		bmgrLog.Errorf("instant tx %v not exist in lock pool", instantTxHash)
@@ -864,7 +871,7 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	entry, err := b.chain.FetchUtxoEntry(&ticketHash)
 
 	if err != nil || entry == nil {
-		bmgrLog.Errorf("failed to fetch utxo  %v,err %v",ticketHash.String(), err)
+		bmgrLog.Errorf("failed to fetch utxo  %v,err %v", ticketHash.String(), err)
 		return
 	}
 
@@ -893,8 +900,8 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 
 		//check redundancy
 		for _, vote := range instantTxDesc.Votes {
-			if instantTxVote.Hash().IsEqual(vote.Hash()){
-				bmgrLog.Errorf("redundancy vote &v",instantTxVote.Hash().String())
+			if instantTxVote.Hash().IsEqual(vote.Hash()) {
+				bmgrLog.Errorf("redundancy vote &v", instantTxVote.Hash().String())
 				return
 			}
 		}
@@ -910,7 +917,6 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 			b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 		}
 	}
-
 
 	instantTxVotes := make([]*hcutil.InstantTxVote, 0)
 	instantTxVotes = append(instantTxVotes, instantTxVote)
@@ -1003,7 +1009,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *hcutil.Block) {
 		int(b.server.chainParams.TicketsPerBlock))
 	if uint64(template.Block.Header.Height) >= b.server.chainParams.AIStakeEnabledHeight {
 		oldVoteMap = make(map[chainhash.Hash]struct{},
-			int(b.server.chainParams.AiTicketsPerBlock + b.server.chainParams.TicketsPerBlock))
+			int(b.server.chainParams.AiTicketsPerBlock+b.server.chainParams.TicketsPerBlock))
 	}
 	if template != nil {
 		templateBlock := hcutil.NewBlock(template.Block)
@@ -1676,7 +1682,7 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
 	case wire.InvTypeInstantTx:
-		if b.server.txMemPool.IsTxLockExist(&invVect.Hash) {
+		if b.server.txMemPool.IsInstantTxExist(&invVect.Hash) {
 			return true, nil
 		}
 		if b.server.txMemPool.HaveTransaction(&invVect.Hash) {
@@ -1691,11 +1697,12 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
 	case wire.InvTypeInstantTxVote:
-		_,err:=b.server.txMemPool.FetchInstantTxVote(&invVect.Hash)
-		if err!=nil{
-			return false,nil
+		fmt.Println("8888888888888888888", invVect.Hash)
+		_, err := b.server.txMemPool.FetchInstantTxVote(&invVect.Hash)
+		if err != nil {
+			return false, nil
 		}
-		return true,nil
+		return true, nil
 
 	}
 
@@ -1770,7 +1777,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 			continue
 		}
 		if !haveInv {
-			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx||iv.Type==wire.InvTypeInstantTxVote {
+			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx || iv.Type == wire.InvTypeInstantTxVote {
 				// Skip the transaction if it has already been
 				// rejected.
 				if _, exists := b.rejectedTxns[iv.Hash]; exists {
@@ -1855,7 +1862,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 				numRequested++
 			}
 
-		case wire.InvTypeTx, wire.InvTypeInstantTx,wire.InvTypeInstantTxVote:
+		case wire.InvTypeTx:
 			// Request the transaction if there is not already a
 			// pending request.
 			if _, exists := b.requestedTxns[iv.Hash]; !exists {
@@ -1863,6 +1870,24 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 				b.requestedEverTxns[iv.Hash] = 0
 				b.limitMap(b.requestedTxns, maxRequestedTxns)
 				imsg.peer.requestedTxns[iv.Hash] = struct{}{}
+				gdmsg.AddInvVect(iv)
+				numRequested++
+			}
+		case wire.InvTypeInstantTx:
+			if _, exists := b.requestedInstantTxs[iv.Hash]; !exists {
+				b.requestedInstantTxs[iv.Hash] = struct{}{}
+				b.requestedEverInstantTxs[iv.Hash] = 0
+				b.limitMap(b.requestedInstantTxs, maxRequestedTxns)
+				imsg.peer.requestedInstantTxs[iv.Hash] = struct{}{}
+				gdmsg.AddInvVect(iv)
+				numRequested++
+			}
+		case wire.InvTypeInstantTxVote:
+			if _, exists := b.requestedInstantVotes[iv.Hash]; !exists {
+				b.requestedInstantVotes[iv.Hash] = struct{}{}
+				b.requestedEverInstantVotes[iv.Hash] = 0
+				b.limitMap(b.requestedInstantVotes, maxRequestedTxns)
+				imsg.peer.requestedInstantVotes[iv.Hash] = struct{}{}
 				gdmsg.AddInvVect(iv)
 				numRequested++
 			}
@@ -1938,7 +1963,7 @@ out:
 				msg.reply <- b.syncPeer
 
 			case requestFromPeerMsg:
-				err := b.requestFromPeer(msg.peer, msg.blocks, msg.txs)
+				err := b.requestFromPeer(msg.peer, msg.blocks, msg.txs, msg.instantTxs, msg.instantVotes)
 				msg.reply <- requestFromPeerResponse{
 					err: err,
 				}
@@ -2417,7 +2442,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
-			b.server.txMemPool.ModifyInstantTxHeight(tx,parentBlock.Height())
+			b.server.txMemPool.ModifyInstantTxHeight(tx, parentBlock.Height())
 
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
@@ -2698,7 +2723,7 @@ func (b *blockManager) RequestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 	return response.err
 }
 
-func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash) error {
+func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash, instantTxs []*chainhash.Hash, instantVotes []*chainhash.Hash) error {
 	msgResp := wire.NewMsgGetData()
 
 	// Add the blocks to the request.
@@ -2748,9 +2773,7 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 		if b.server.txMemPool.HaveTransaction(vh) {
 			continue
 		}
-		if b.server.txMemPool.IsTxLockExist(vh) {
-			continue
-		}
+
 		// Check if the transaction exists from the point of view of the
 		// end of the main chain.
 		entry, err := b.chain.FetchUtxoEntry(vh)
@@ -2771,6 +2794,60 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 		b.requestedTxns[*vh] = struct{}{}
 		b.requestedEverTxns[*vh] = 0
 	}
+
+	for _, instantTx := range instantTxs {
+		// If we've already requested this transaction, skip it.
+		_, alreadyReqP := p.requestedInstantTxs[*instantTx]
+		_, alreadyReqB := b.requestedInstantTxs[*instantTx]
+
+		if alreadyReqP || alreadyReqB {
+			continue
+		}
+
+		// Ask the transaction lock pool if the transaction is known
+		// to it
+		if b.server.txMemPool.IsInstantTxExist(instantTx) {
+			continue
+		}
+
+		err := msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeInstantTx, instantTx))
+		if err != nil {
+			return fmt.Errorf("unexpected error encountered building request "+
+				"for instanttx %v: %v",
+				instantTx, err.Error())
+		}
+		p.requestedInstantTxs[*instantTx] = struct{}{}
+		b.requestedInstantTxs[*instantTx] = struct{}{}
+		b.requestedEverInstantTxs[*instantTx] = 0
+	}
+
+	for _, instantVote := range instantVotes {
+		// If we've already requested this instantvote, skip it.
+		_, alreadyReqP := p.requestedInstantVotes[*instantVote]
+		_, alreadyReqB := b.requestedInstantVotes[*instantVote]
+
+		if alreadyReqP || alreadyReqB {
+			continue
+		}
+
+		// Ask the transaction lock pool if the vote is known
+		// to it
+		if _,err:=b.server.txMemPool.FetchInstantTxVote(instantVote); err==nil{
+			continue
+		}
+
+		err := msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeInstantTxVote, instantVote))
+		if err != nil {
+			return fmt.Errorf("unexpected error encountered building request "+
+				"for instanttxvote %v: %v",
+				instantVote, err.Error())
+		}
+		p.requestedInstantVotes[*instantVote] = struct{}{}
+		b.requestedInstantVotes[*instantVote] = struct{}{}
+		b.requestedEverInstantVotes[*instantVote] = 0
+	}
+
+
 
 	if len(msgResp.InvList) > 0 {
 		p.QueueMessage(msgResp, nil)
@@ -2959,17 +3036,21 @@ func (b *blockManager) SetParentTemplate(bt *BlockTemplate) {
 // Use Start to begin processing asynchronous block and inv updates.
 func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockManager, error) {
 	bm := blockManager{
-		server:              s,
-		rejectedTxns:        make(map[chainhash.Hash]struct{}),
-		requestedTxns:       make(map[chainhash.Hash]struct{}),
-		requestedEverTxns:   make(map[chainhash.Hash]uint8),
-		requestedBlocks:     make(map[chainhash.Hash]struct{}),
-		requestedEverBlocks: make(map[chainhash.Hash]uint8),
-		progressLogger:      newBlockProgressLogger("Processed", bmgrLog),
-		msgChan:             make(chan interface{}, cfg.MaxPeers*3),
-		headerList:          list.New(),
-		AggressiveMining:    !cfg.NonAggressive,
-		quit:                make(chan struct{}),
+		server:                    s,
+		rejectedTxns:              make(map[chainhash.Hash]struct{}),
+		requestedTxns:             make(map[chainhash.Hash]struct{}),
+		requestedEverTxns:         make(map[chainhash.Hash]uint8),
+		requestedBlocks:           make(map[chainhash.Hash]struct{}),
+		requestedEverBlocks:       make(map[chainhash.Hash]uint8),
+		requestedInstantTxs:       make(map[chainhash.Hash]struct{}),
+		requestedEverInstantTxs:   make(map[chainhash.Hash]uint8),
+		requestedInstantVotes:     make(map[chainhash.Hash]struct{}),
+		requestedEverInstantVotes: make(map[chainhash.Hash]uint8),
+		progressLogger:            newBlockProgressLogger("Processed", bmgrLog),
+		msgChan:                   make(chan interface{}, cfg.MaxPeers*3),
+		headerList:                list.New(),
+		AggressiveMining:          !cfg.NonAggressive,
+		quit:                      make(chan struct{}),
 	}
 
 	// Create a new block chain instance with the appropriate configuration.

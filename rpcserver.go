@@ -5436,7 +5436,7 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 
 	// Keep track of all the sendrawtransaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
-	iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+	iv := wire.NewInvVect(wire. InvTypeInstantTx, instantTx.Hash())
 	s.server.AddRebroadcastInventory(iv, instantTx)
 
 	return instantTx.Hash().String(), nil
@@ -5542,9 +5542,13 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	//notify wallet  vote info and rely to other peers
 	s.server.AnnounceNewInstantTxVote(instantTxvotes)
 
+
 	// Keep track of all the sendrawtransaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
+
+	fmt.Println("7777777777777777777",instantTxvote.Hash())
 	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxvote.Hash())
+
 	s.server.AddRebroadcastInventory(iv, instantTxvote)
 
 	return nil, nil
