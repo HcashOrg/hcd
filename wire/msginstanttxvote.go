@@ -29,11 +29,11 @@ func (msg *MsgInstantTxVote) BtcDecode(r io.Reader, pver uint32) error {
 	if err != nil {
 		return err
 	}
-	msg.Sig, err = ReadVarBytes(r, pver, 300, "read instantTxVote sig")
+	msg.Sig, err = ReadVarBytes(r, pver, MaxMessagePayload, "read instantTxVote sig")
 	if err != nil {
 		return err
 	}
-	msg.PubKey, err = ReadVarBytes(r, pver, 300, "read instantTxVote sig")
+	msg.PubKey, err = ReadVarBytes(r, pver, MaxMessagePayload, "read instantTxVote sig")
 	if err != nil {
 		return err
 	}
