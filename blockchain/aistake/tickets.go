@@ -275,6 +275,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 	if err != nil {
 		return nil, err
 	}
+
 	if state.Hash != blockHash || state.Height != height {
 		return nil, stakeRuleError(ErrDatabaseCorrupt, "best state corruption")
 	}
@@ -329,7 +330,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 
 	// Restore the next winners for the node.
 	node.nextWinners = make([]chainhash.Hash, 0)
-	if node.height >= uint32(node.params.StakeValidationHeight-1) {
+	if node.height >= uint32(node.params.AIStakeEnabledHeight-1) {
 		node.nextWinners = make([]chainhash.Hash, len(state.NextWinners))
 		for i := range state.NextWinners {
 			node.nextWinners[i] = state.NextWinners[i]
@@ -402,7 +403,7 @@ func safeGet(t *tickettreap.Immutable, k tickettreap.Key) (*tickettreap.Value, e
 	if v == nil {
 		h := chainhash.Hash(k)
 		return nil, stakeRuleError(ErrMissingTicket, fmt.Sprintf(
-			"ticket %v was supposed to be in the passed "+
+			"ai ticket %v was supposed to be in the passed "+
 				"treap, but could not be found", h))
 	}
 
@@ -629,7 +630,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 	// The first block voted on is at StakeValidationHeight, so begin calculating
 	// winners at the block before StakeValidationHeight.
 	if connectedNode.height >=
-		uint32(connectedNode.params.StakeValidationHeight-1) {
+		uint32(connectedNode.params.AIStakeEnabledHeight-1) {
 		// Find the next set of winners.
 		hB, err := header.Bytes()
 		if err != nil {
@@ -809,7 +810,7 @@ func disconnectNode(node *Node, parentHeader wire.BlockHeader, parentUtds UndoTi
 		}
 	}
 
-	if node.height >= uint32(node.params.StakeValidationHeight) {
+	if node.height >= uint32(node.params.AIStakeEnabledHeight) {
 		phB, err := parentHeader.Bytes()
 		if err != nil {
 			return nil, err
@@ -960,7 +961,7 @@ func disconnectNodeForAi(node *Node, parentHeader wire.BlockHeader, parentUtds U
 				"unknown ticket state in undo data")
 		}
 	}
-	if node.height >= uint32(node.params.StakeValidationHeight) {
+	if node.height >= uint32(node.params.AIStakeEnabledHeight) {
 		phB, err := parentHeader.Bytes()
 		if err != nil {
 			return nil, err
@@ -1203,7 +1204,7 @@ func WriteDisconnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash
 	}
 	// Write the new best state to the database.
 	nextWinners := make([]chainhash.Hash, int(node.params.AiTicketsPerBlock))
-	if node.height >= uint32(node.params.StakeValidationHeight-1) {
+	if node.height >= uint32(node.params.AIStakeEnabledHeight-1) {
 		for i := range nextWinners {
 			nextWinners[i] = node.nextWinners[i]
 		}
