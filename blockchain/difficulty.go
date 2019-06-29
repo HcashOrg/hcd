@@ -817,7 +817,7 @@ func (b *BlockChain) calcNextRequiredAiStakeDifficultyV2(curNode *blockNode) (in
 	if curNode != nil {
 		nextHeight = curNode.height + 1
 	}
-	stakeDiffStartHeight := int64(b.chainParams.AIUpdateHeight) + 1
+	stakeDiffStartHeight := int64(b.chainParams.AIStakeEnabledHeight) + 1
 	if nextHeight < stakeDiffStartHeight {
 		return b.chainParams.MinimumAiStakeDiff, nil
 	}
