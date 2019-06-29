@@ -58,3 +58,19 @@ func TestInstantTxDecode(t *testing.T) {
 		t.Errorf("BtcDecode error %v",err)
 	}
 }
+
+func TestInstantTxVoteDecode(t *testing.T) {
+	msg:=NewMsgInstantTxVote()
+	var buf bytes.Buffer
+	err := msg.BtcEncode(&buf, ProtocolVersion)
+	if err != nil {
+		t.Errorf("BtcEncode error %v", err)
+	}
+
+	var msg2 MsgInstantTxVote
+	rbuf := bytes.NewReader(buf.Bytes())
+	err = msg2.BtcDecode(rbuf, ProtocolVersion)
+	if err != nil {
+		t.Errorf("BtcDecode error %v",err)
+	}
+}
