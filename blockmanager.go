@@ -905,7 +905,6 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 				return
 			}
 		}
-
 		//update
 		if len(instantTxDesc.Votes) < 5 {
 			b.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxVote)
@@ -915,6 +914,9 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 			instantTxDesc.Send = true
 			//notify wallet to resend
 			b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+			//remove from rebroadcastInventory
+			iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+			b.server.RemoveRebroadcastInventory(iv)
 		}
 	}
 
