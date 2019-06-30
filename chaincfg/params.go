@@ -704,6 +704,7 @@ var TestNet2Params = Params{
 
 	// Hcd PoS parameters
 	MinimumStakeDiff:        20000000, // 0.2 Coin
+	MinimumAiStakeDiff:      10000000000,
 	TicketPoolSize:          1024,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
@@ -737,7 +738,7 @@ var TestNet2Params = Params{
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
 	OmniStartHeight:			 46000,
 	AIUpdateHeight:				 AIEnableHeightTestNet,
-	AIStakeEnabledHeight:		 AIEnableHeightTestNet + 144,
+	AIStakeEnabledHeight:		 AIEnableHeightTestNet + 288,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
