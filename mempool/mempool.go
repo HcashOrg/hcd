@@ -624,31 +624,8 @@ func (mp *TxPool) RemoveDoubleSpends(tx *hcutil.Tx) {
 // This function MUST be called with the mempool lock held (for writes).
 func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	tx *hcutil.Tx, txType stake.TxType, height int64, fee int64) {
-
 	msgTx := tx.MsgTx()
-	isLockTx := false
-	for _, txOut := range msgTx.TxOut {
-		if _, has := txscript.HasInstantTxTag(txOut.PkScript); has {
-			isLockTx = true
-			break
-		}
-	}
 
-	//if two txlock is conflict ,we will reject the lower priority tx
-	//if common tx is conflict with txlockpool ,we will reject the common tx
-	if !mp.isInstantTxExist(tx.Hash()) {
-		for _, txIn := range tx.MsgTx().TxIn {
-			if txLock, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
-				if isLockTx {
-					if CalcPriority(tx.MsgTx(), utxoView, height) < CalcPriority(txLock.MsgTx(), utxoView, height) {
-						return
-					}
-				} else {
-					return
-				}
-			}
-		}
-	}
 	// Add the transaction to the pool and mark the referenced outpoints
 	// as spent by the pool.
 	//	msgTx := tx.msgTx()
@@ -1229,6 +1206,30 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 			return nil, chainRuleError(cerr)
 		}
 		return nil, err
+	}
+
+	//check  with lockpool
+	//instanttx type must be regular
+	if txType == stake.TxTypeRegular {
+		if _, isInstantTx := txscript.IsInstantTx(msgTx); isInstantTx {
+			//check exist and vote number
+			if desc, exist := mp.getInstantTxDesc(txHash); exist {
+				if !desc.Send {
+					return nil, fmt.Errorf("instanttx %v too few votes", txHash)
+				}
+			} else {
+				return nil, fmt.Errorf("instanttx %v not exist in lockpool", txHash)
+			}
+		}
+	}
+	//check double spend with tx in lockpool
+	//if common tx is conflict with txlockpool ,we will reject the common tx
+	if !mp.isInstantTxExist(txHash) {
+		for _, txIn := range msgTx.TxIn {
+			if instx, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
+				return nil, fmt.Errorf("tx %v have same input with instant tx %v", txHash, instx.Hash())
+			}
+		}
 	}
 
 	// Add to transaction pool.
