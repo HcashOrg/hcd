@@ -5531,8 +5531,11 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 		//notify wallet to resend
 		if len(instantTxDesc.Votes) > 2 && !instantTxDesc.Send {
 			instantTxDesc.Send = true
-			//notify wallet to resend
+			//notify wallet to resend normal tx
 			s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+			//remove from rebroadcastInventory
+			iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+			s.server.RemoveRebroadcastInventory(iv)
 		}
 	}
 

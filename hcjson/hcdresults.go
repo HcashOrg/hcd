@@ -154,6 +154,15 @@ type FeeInfoMempool struct {
 	Median float64 `json:"median"`
 	StdDev float64 `json:"stddev"`
 }
+type AiFeeInfoMempool struct {
+	Number uint32  `json:"number"`
+	Min    float64 `json:"min"`
+	Max    float64 `json:"max"`
+	Mean   float64 `json:"mean"`
+	Median float64 `json:"median"`
+	StdDev float64 `json:"stddev"`
+}
+
 
 // FeeInfoRange is ticket fee information about a range.
 type FeeInfoRange struct {
@@ -183,6 +192,11 @@ type TicketFeeInfoResult struct {
 	FeeInfoMempool FeeInfoMempool  `json:"feeinfomempool"`
 	FeeInfoBlocks  []FeeInfoBlock  `json:"feeinfoblocks"`
 	FeeInfoWindows []FeeInfoWindow `json:"feeinfowindows"`
+}
+type AiTicketFeeInfoResult struct {
+	AiFeeInfoMempool FeeInfoMempool  `json:"aifeeinfomempool"`
+	AiFeeInfoBlocks  []FeeInfoBlock  `json:"aifeeinfoblocks"`
+	AiFeeInfoWindows []FeeInfoWindow `json:"aifeeinfowindows"`
 }
 
 // TicketsForAddressResult models the data returned from the ticketforaddress

@@ -315,7 +315,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	if txType == stake.TxTypeRegular {
 		tx.SetTree(wire.TxTreeRegular)
 	} else {
-		return nil, txRuleError(wire.RejectNonstandard, "transaction is not regular")
+		return nil, txRuleError(wire.RejectNonstandard, "instant transaction  type must be regular")
 	}
 
 	// Don't allow non-standard transactions if the network parameters
@@ -407,7 +407,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 
 	//instant tx don`t allow missing parents
 	if len(missingParents) > 0 {
-		return missingParents, txRuleError(wire.RejectNonstandard, "instant transaction missing parents")
+		return missingParents, txRuleError(wire.RejectNonstandard, "instant transaction inputs missing parents")
 	}
 
 	// Don't allow the transaction into the mempool unless its sequence
