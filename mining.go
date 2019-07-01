@@ -1966,7 +1966,7 @@ mempoolLoop:
 				*tx.Hash())
 		}
 		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok{
-			outAmount := fee + tx.MsgTx().GetTxOutAmount()
+			outAmount := tx.MsgTx().GetTxOutAmount()
 			totalAiFees += outAmount / 1000
 			totalFees += fee - outAmount / 1000
 			txFees = append(txFees, fee - outAmount / 1000)
@@ -1983,18 +1983,20 @@ mempoolLoop:
 		txSigOpCounts = append(txSigOpCounts, tsos)
 	}
 
-	var aiPkScript [][]byte
+	var aiSSGenAddrs []hcutil.Address
 	for _, tx := range blockTxnsStake {
 		fee, ok := txFeesMap[*tx.Hash()]
 		if !ok {
 			return nil, fmt.Errorf("couldn't find fee for stx %v",
 				*tx.Hash())
 		}
-		if ok,_ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0{
-			pk := tx.MsgTx().TxOut[2].PkScript[1:]
-			pk = pk[:len(pk) - 2]
-			pk = append(pk, 172)
-			aiPkScript = append(aiPkScript, pk)
+		if ok,_ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0  && uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight{
+			_, addrs, _, _ :=
+				txscript.ExtractPkScriptAddrs(txscript.DefaultScriptVersion,
+					tx.MsgTx().TxOut[2].PkScript, server.chainParams)
+			if len(addrs) > 0{
+				aiSSGenAddrs = append(aiSSGenAddrs, addrs[0])
+			}
 		}
 
 		txFees = append(txFees, fee)
@@ -2026,10 +2028,14 @@ mempoolLoop:
 				uint64(len(blockTxnsStake))))
 		coinbaseTx.MsgTx().TxOut[2].Value += totalFees
 		txFees[0] = -totalFees
-		for i := 0; i< len(aiPkScript); i++{
+		for i := 0; i< len(aiSSGenAddrs); i++{
+			pk, err := txscript.PayToAddrScript(aiSSGenAddrs[i])
+			if err != nil{
+				continue;
+			}
 			coinbaseTx.MsgTx().AddTxOut(&wire.TxOut{
-				Value:    totalAiFees / int64(len(aiPkScript)),
-				PkScript: aiPkScript[i],
+				Value:    totalAiFees / int64(len(aiSSGenAddrs)),
+				PkScript:pk,
 			})
 		}
 
