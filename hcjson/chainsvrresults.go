@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -36,6 +36,7 @@ type GetBlockHeaderVerboseResult struct {
 	Height        uint32  `json:"height"`
 	Size          uint32  `json:"size"`
 	Time          int64   `json:"time"`
+	ChainWork     string  `json:"chainwork"`
 	Nonce         uint32  `json:"nonce"`
 	StakeVersion  uint32  `json:"stakeversion"`
 	Difficulty    float64 `json:"difficulty"`
@@ -468,6 +469,14 @@ type GetMiningInfoResult struct {
 	NetworkHashPS    int64   `json:"networkhashps"`
 	PooledTx         uint64  `json:"pooledtx"`
 	TestNet          bool    `json:"testnet"`
+}
+
+// GetChainTipsResult models the data returns from the getchaintips command.
+type GetChainTipsResult struct {
+	Height    int64  `json:"height"`
+	Hash      string `json:"hash"`
+	BranchLen int64  `json:"branchlen"`
+	Status    string `json:"status"`
 }
 
 // GetWorkResult models the data from the getwork command.

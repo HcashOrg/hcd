@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -148,6 +148,21 @@ func (sn *Node) MissedTickets() []chainhash.Hash {
 	})
 
 	return tickets
+}
+
+// ExpiredByBlock returns the tickets that expired in this block. This is a
+// subset of the missed tickets returned by MissedByBlock. The output only
+// includes the initial expiration of the ticket, not when an expired ticket is
+// revoked. This is unlike MissedByBlock that includes the revocation as well.
+func (sn *Node) ExpiredByBlock() []chainhash.Hash {
+	var expired []chainhash.Hash
+	for _, undo := range sn.databaseUndoUpdate {
+		if undo.Expired && !undo.Revoked {
+			expired = append(expired, undo.TicketHash)
+		}
+	}
+
+	return expired
 }
 
 // ExistsRevokedTicket returns whether or not a ticket exists in the revoked
@@ -337,24 +352,24 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 		}
 
 		// Calculate the final state from the block header.
-			stateBuffer := make([]byte, 0,
-				(node.params.TicketsPerBlock+1)*chainhash.HashSize)
-			for _, ticketHash := range node.nextWinners {
-				stateBuffer = append(stateBuffer, ticketHash[:]...)
-			}
-			hB, err := header.Bytes()
-			if err != nil {
-				return nil, err
-			}
-			prng := NewHash256PRNG(hB)
-			_, err = findTicketIdxs(node.liveTickets.Len(),
-				node.params.TicketsPerBlock, prng)
-			if err != nil {
-				return nil, err
-			}
-			lastHash := prng.StateHash()
-			stateBuffer = append(stateBuffer, lastHash[:]...)
-			copy(node.finalState[:], chainhash.HashB(stateBuffer)[0:6])
+		stateBuffer := make([]byte, 0,
+			(node.params.TicketsPerBlock+1)*chainhash.HashSize)
+		for _, ticketHash := range node.nextWinners {
+			stateBuffer = append(stateBuffer, ticketHash[:]...)
+		}
+		hB, err := header.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		prng := NewHash256PRNG(hB)
+		_, err = findTicketIdxs(node.liveTickets.Len(),
+			node.params.TicketsPerBlock, prng)
+		if err != nil {
+			return nil, err
+		}
+		lastHash := prng.StateHash()
+		stateBuffer = append(stateBuffer, lastHash[:]...)
+		copy(node.finalState[:], chainhash.HashB(stateBuffer)[0:6])
 	}
 
 	log.Infof("Stake database version %v loaded", info.Version)
@@ -618,28 +633,28 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 		}
 		prng := NewHash256PRNG(hB)
 
-			idxs, err := findTicketIdxs(connectedNode.liveTickets.Len(),
-				connectedNode.params.TicketsPerBlock, prng)
-			if err != nil {
-				return nil, err
-			}
+		idxs, err := findTicketIdxs(connectedNode.liveTickets.Len(),
+			connectedNode.params.TicketsPerBlock, prng)
+		if err != nil {
+			return nil, err
+		}
 
-			stateBuffer := make([]byte, 0,
-				(connectedNode.params.TicketsPerBlock+1)*chainhash.HashSize)
-			nextWinnersKeys, err := fetchWinners(idxs, connectedNode.liveTickets)
-			if err != nil {
-				return nil, err
-			}
+		stateBuffer := make([]byte, 0,
+			(connectedNode.params.TicketsPerBlock+1)*chainhash.HashSize)
+		nextWinnersKeys, err := fetchWinners(idxs, connectedNode.liveTickets)
+		if err != nil {
+			return nil, err
+		}
 
-			for _, treapKey := range nextWinnersKeys {
-				ticketHash := chainhash.Hash(*treapKey)
-				connectedNode.nextWinners = append(connectedNode.nextWinners,
-					ticketHash)
-				stateBuffer = append(stateBuffer, ticketHash[:]...)
-			}
-			lastHash := prng.StateHash()
-			stateBuffer = append(stateBuffer, lastHash[:]...)
-			copy(connectedNode.finalState[:], chainhash.HashB(stateBuffer)[0:6])
+		for _, treapKey := range nextWinnersKeys {
+			ticketHash := chainhash.Hash(*treapKey)
+			connectedNode.nextWinners = append(connectedNode.nextWinners,
+				ticketHash)
+			stateBuffer = append(stateBuffer, ticketHash[:]...)
+		}
+		lastHash := prng.StateHash()
+		stateBuffer = append(stateBuffer, lastHash[:]...)
+		copy(connectedNode.finalState[:], chainhash.HashB(stateBuffer)[0:6])
 	}
 
 	return connectedNode, nil
@@ -647,8 +662,8 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 
 // ConnectNode connects a stake node to the node and returns a pointer
 // to the stake node of the child.
-func (sn *Node) ConnectNode(header wire.BlockHeader, ticketsSpentInBlock, revokedTickets,newTickets []chainhash.Hash) (*Node, error) {
-	return connectNode(sn, header, ticketsSpentInBlock, revokedTickets,newTickets)
+func (sn *Node) ConnectNode(header wire.BlockHeader, ticketsSpentInBlock, revokedTickets, newTickets []chainhash.Hash) (*Node, error) {
+	return connectNode(sn, header, ticketsSpentInBlock, revokedTickets, newTickets)
 }
 
 // disconnectNode disconnects a stake node from itself and returns the state of
@@ -956,6 +971,7 @@ func disconnectNodeForAi(node *Node, parentHeader wire.BlockHeader, parentUtds U
 	}
 	return restoredNode, nil
 }
+
 // DisconnectNode disconnects a stake node from the node and returns a pointer
 // to the stake node of the parent.
 func (sn *Node) DisconnectNode(parentHeader wire.BlockHeader, parentUtds UndoTicketDataSlice, parentTickets []chainhash.Hash, dbTx database.Tx) (*Node, error) {
@@ -1045,23 +1061,23 @@ func WriteConnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash) e
 		return err
 	}
 
-		// Write the new best state to the database.
-		nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
-		if node.height >= uint32(node.params.StakeValidationHeight-1) {
-			for i := range nextWinners {
-				nextWinners[i] = node.nextWinners[i]
-			}
+	// Write the new best state to the database.
+	nextWinners := make([]chainhash.Hash, int(node.params.TicketsPerBlock))
+	if node.height >= uint32(node.params.StakeValidationHeight-1) {
+		for i := range nextWinners {
+			nextWinners[i] = node.nextWinners[i]
 		}
+	}
 
-		return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
-			Hash:        hash,
-			Height:      node.height,
-			Live:        uint32(node.liveTickets.Len()),
-			Missed:      uint64(node.missedTickets.Len()),
-			Revoked:     uint64(node.revokedTickets.Len()),
-			PerBlock:    node.params.TicketsPerBlock,
-			NextWinners: nextWinners,
-		})
+	return ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
+		Hash:        hash,
+		Height:      node.height,
+		Live:        uint32(node.liveTickets.Len()),
+		Missed:      uint64(node.missedTickets.Len()),
+		Revoked:     uint64(node.revokedTickets.Len()),
+		PerBlock:    node.params.TicketsPerBlock,
+		NextWinners: nextWinners,
+	})
 }
 
 // WriteDisconnectedBestNode writes the newly connected best node to the database
