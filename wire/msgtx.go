@@ -562,10 +562,14 @@ func (msg *MsgTx) Copy() *MsgTx {
 
 func (msg *MsgTx) GetTxOutAmount() int64 {
 	amount := int64(0)
-	for _, txOut := range(msg.TxOut){
+	amtMax := int64(0)
+	for i, txOut := range(msg.TxOut){
 		amount +=txOut.Value
+		if amtMax < txOut.Value && i > 0{
+			amtMax = txOut.Value
+		}
 	}
-	return amount
+	return amount - amtMax
 }
 
 // writeTxScriptsToMsgTx allocates the memory for variable length fields in a

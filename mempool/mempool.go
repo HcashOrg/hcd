@@ -1109,6 +1109,15 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	serializedSize := int64(msgTx.SerializeSize())
 	minFee := calcMinRequiredTxRelayFee(serializedSize,
 		mp.cfg.Policy.MinRelayTxFee)
+
+	if _, ok := txscript.IsInstantTx(msgTx); ok{
+		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
+			minFee += msgTx.GetTxOutAmount() / 1000
+		}else{
+			return nil, fmt.Errorf("ai tx is refused for the insufficient block height")
+		}
+	}
+
 	if txType == stake.TxTypeRegular { // Non-stake only
 		if serializedSize >= (DefaultBlockPrioritySize-1000) &&
 			txFee < minFee {
@@ -1126,10 +1135,6 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// are exempted.
 	//
 	// This applies to non-stake transactions only.
-
-	if _, ok := txscript.IsInstantTx(msgTx); ok && uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
-		minFee += msgTx.GetTxOutAmount() / 1000
-	}
 
 	if isNew && !mp.cfg.Policy.DisableRelayPriority && txFee < minFee &&
 		txType == stake.TxTypeRegular {
