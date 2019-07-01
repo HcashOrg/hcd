@@ -104,7 +104,7 @@ type BlockHeader struct {
 	StakeVersion uint32
 
 	//Ring signature
-	RingSignHash chainhash.Hash
+	RingSignHash [32]byte
 	RingSignData [6]byte
 	RingSignExtraData [4]byte
 }
