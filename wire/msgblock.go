@@ -320,7 +320,8 @@ func (msg *MsgBlock) SerializeSize() int {
 	// transactions + Serialized varint size for the number of
 	// stake transactions
 
-	n := blockHeaderLen + VarIntSerializeSize(uint64(len(msg.Transactions))) +
+	//n := blockHeaderLen + VarIntSerializeSize(uint64(len(msg.Transactions))) +
+	n := MaxBlockHeaderPayload + VarIntSerializeSize(uint64(len(msg.Transactions))) +
 		VarIntSerializeSize(uint64(len(msg.STransactions)))
 
 	for _, tx := range msg.Transactions {
