@@ -1459,6 +1459,7 @@ mempoolLoop:
 		return nil, miningRuleError(ErrCheckConnectBlock, "unable to get sigNum from coinbase tx")
 	}
 	totalFees := int64(0)
+	totalAiFees := int64(0)
 
 	numSStx := 0
 	numAiSStx := 0
@@ -1964,8 +1965,15 @@ mempoolLoop:
 			return nil, fmt.Errorf("couldn't find fee for tx %v",
 				*tx.Hash())
 		}
-		totalFees += fee
-		txFees = append(txFees, fee)
+		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok{
+			outAmount := fee + tx.MsgTx().GetTxOutAmount()
+			totalAiFees += outAmount / 1000
+			totalFees += fee - outAmount / 1000
+			txFees = append(txFees, fee - outAmount / 1000)
+		} else{
+			totalFees += fee
+			txFees = append(txFees, fee)
+		}
 
 		tsos, ok := txSigOpCountsMap[*tx.Hash()]
 		if !ok {
@@ -1975,15 +1983,21 @@ mempoolLoop:
 		txSigOpCounts = append(txSigOpCounts, tsos)
 	}
 
+	var aiPkScript [][]byte
 	for _, tx := range blockTxnsStake {
 		fee, ok := txFeesMap[*tx.Hash()]
 		if !ok {
 			return nil, fmt.Errorf("couldn't find fee for stx %v",
 				*tx.Hash())
 		}
-		totalFees += fee
-		txFees = append(txFees, fee)
+		if ok,_ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0{
+			pk := tx.MsgTx().TxOut[2].PkScript[1:]
+			pk = pk[:len(pk) - 2]
+			pk = append(pk, 172)
+			aiPkScript = append(aiPkScript, pk)
+		}
 
+		txFees = append(txFees, fee)
 		tsos, ok := txSigOpCountsMap[*tx.Hash()]
 		if !ok {
 			return nil, fmt.Errorf("couldn't find sig ops count for stx %v",
@@ -1996,7 +2010,7 @@ mempoolLoop:
 
 	// If we're greater than or equal to stake validation height, scale the
 	// fees according to the number of voters.
-	totalFees *= int64(voters)
+	totalFees *= int64(voters + aiVoters)
 	if uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
 		totalFees /= int64(server.chainParams.TicketsPerBlock + server.chainParams.AiTicketsPerBlock)
 	}else{
@@ -2012,6 +2026,13 @@ mempoolLoop:
 				uint64(len(blockTxnsStake))))
 		coinbaseTx.MsgTx().TxOut[2].Value += totalFees
 		txFees[0] = -totalFees
+		for i := 0; i< len(aiPkScript); i++{
+			coinbaseTx.MsgTx().AddTxOut(&wire.TxOut{
+				Value:    totalAiFees / int64(len(aiPkScript)),
+				PkScript: aiPkScript[i],
+			})
+		}
+
 	}
 
 	// Calculate the required difficulty for the block.  The timestamp

@@ -560,6 +560,14 @@ func (msg *MsgTx) Copy() *MsgTx {
 	return &newTx
 }
 
+func (msg *MsgTx) GetTxOutAmount() int64 {
+	amount := int64(0)
+	for _, txOut := range(msg.TxOut){
+		amount +=txOut.Value
+	}
+	return amount
+}
+
 // writeTxScriptsToMsgTx allocates the memory for variable length fields in a
 // MsgTx TxIns, TxOuts, or both as a contiguous chunk of memory, then fills
 // in these fields for the MsgTx by copying to a contiguous piece of memory
