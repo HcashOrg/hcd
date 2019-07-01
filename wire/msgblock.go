@@ -323,7 +323,9 @@ func (msg *MsgBlock) SerializeSize() int {
 	//n := blockHeaderLen + VarIntSerializeSize(uint64(len(msg.Transactions))) +
 	n := MaxBlockHeaderPayload + VarIntSerializeSize(uint64(len(msg.Transactions))) +
 		VarIntSerializeSize(uint64(len(msg.STransactions)))
-
+	if uint64(msg.Header.Height) < AI_UPDATE_HEIGHT {
+		n -= HeaderLengthOffset
+	}
 	for _, tx := range msg.Transactions {
 		n += tx.SerializeSize()
 	}
