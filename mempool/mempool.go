@@ -1126,6 +1126,11 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// are exempted.
 	//
 	// This applies to non-stake transactions only.
+
+	if _, ok := txscript.IsInstantTx(msgTx); ok && uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
+		minFee += msgTx.GetTxOutAmount() / 1000
+	}
+
 	if isNew && !mp.cfg.Policy.DisableRelayPriority && txFee < minFee &&
 		txType == stake.TxTypeRegular {
 

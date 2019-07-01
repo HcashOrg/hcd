@@ -31,7 +31,7 @@ import (
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
 //const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8 + 32 + 6 + 4
 
 //const AI_UPDATE_HEIGHT = 186
 
@@ -102,6 +102,11 @@ type BlockHeader struct {
 
 	// StakeVersion used for voting.
 	StakeVersion uint32
+
+	//Ring signature
+	RingSignHash [32]byte
+	RingSignData [6]byte
+	RingSignExtraData [4]byte
 }
 
 // blockHeaderLen is a constant that represents the number of bytes for a block
@@ -220,10 +225,15 @@ func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
 	err := readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
-		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
-	if uint64(bh.Height) >= AI_UPDATE_HEIGHT {
-		return readElements(r,  &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits)
+		&bh.SBits, &bh.Height, &bh.Size)
+	if err == nil{
+		if uint64(bh.Height) < AI_UPDATE_HEIGHT {
+			return readElements(r,  (*uint32Time)(&bh.Timestamp), &bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+		}else{
+			return readElements(r,  &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits,
+				&bh.RingSignHash, &bh.RingSignData, &bh.RingSignExtraData,
+				(*uint32Time)(&bh.Timestamp), &bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+		}
 	}else{
 		return err
 	}
@@ -244,7 +254,8 @@ func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
-		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-		bh.StakeVersion, bh.AiFinalState, bh.AiVoters, bh.AiFreshStake, bh.AiRevocations, bh.AiPoolSize, bh.AiSBits)
+		bh.Height, bh.Size, bh.AiFinalState, bh.AiVoters, bh.AiFreshStake, bh.AiRevocations, bh.AiPoolSize, bh.AiSBits,
+			bh.RingSignHash, bh.RingSignData,bh.RingSignExtraData,
+			sec, bh.Nonce, bh.ExtraData, bh.StakeVersion)
 	}
 }
