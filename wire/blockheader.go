@@ -104,7 +104,7 @@ type BlockHeader struct {
 	StakeVersion uint32
 
 	//Ring signature
-	RingSignHash [32]byte
+	RingSignHash chainhash.Hash
 	RingSignData [6]byte
 	RingSignExtraData [4]byte
 }
@@ -231,7 +231,7 @@ func readBlockHeader(r io.Reader, prev uint32, bh *BlockHeader, ) error {
 			return readElements(r,  (*uint32Time)(&bh.Timestamp), &bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
 		}else{
 			return readElements(r,  &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits, &bh.AiSBits,
-				bh.RingSignHash, bh.RingSignData,bh.RingSignExtraData,
+				&bh.RingSignHash, &bh.RingSignData, &bh.RingSignExtraData,
 				(*uint32Time)(&bh.Timestamp), &bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
 		}
 	}else{
@@ -267,8 +267,8 @@ func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 		return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
-		bh.Height, bh.Size, &bh.AiFinalState, &bh.AiVoters, &bh.AiFreshStake, &bh.AiRevocations, &bh.AiPoolSize, &bh.AiSBits, &bh.AiSBits,
+		bh.Height, bh.Size, bh.AiFinalState, bh.AiVoters, bh.AiFreshStake, bh.AiRevocations, bh.AiPoolSize, bh.AiSBits, bh.AiSBits,
 			bh.RingSignHash, bh.RingSignData,bh.RingSignExtraData,
-			sec, &bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+			sec, bh.Nonce, bh.ExtraData, bh.StakeVersion)
 	}
 }
