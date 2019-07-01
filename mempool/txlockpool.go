@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultConfirmNum = 24
+	defaultConfirmNum = 6
 	defaultBehindNums = 10
 )
 

@@ -20,6 +20,7 @@ type GetAccountBalanceResult struct {
 	Spendable               float64 `json:"spendable"`
 	Total                   float64 `json:"total"`
 	Unconfirmed             float64 `json:"unconfirmed"`
+	AiTxConfirmed           float64 `json:"aitxconfirmed"`
 	VotingAuthority         float64 `json:"votingauthority"`
 }
 
@@ -33,6 +34,7 @@ type GetBalanceResult struct {
 	TotalSpendable               float64                   `json:"totalspendable,omitempty"`
 	CumulativeTotal              float64                   `json:"cumulativetotal,omitempty"`
 	TotalUnconfirmed             float64                   `json:"totalunconfirmed,omitempty"`
+	TotalAiTxConfirmed           float64                   `json:"totalaitxconfirmed,omitempty"`
 	TotalVotingAuthority         float64                   `json:"totalvotingauthority,omitempty"`
 }
 
