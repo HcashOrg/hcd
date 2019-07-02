@@ -299,10 +299,12 @@ type Params struct {
 	// WorkRewardProportion is the comparative amount of the subsidy given for
 	// creating a block.
 	WorkRewardProportion uint16
+	AiWorkRewardProportion uint16
 
 	// StakeRewardProportion is the comparative amount of the subsidy given for
 	// casting stake votes (collectively, per block).
 	StakeRewardProportion uint16
+	AiStakeRewardProportion uint16
 
 	// BlockTaxProportion is the inverse of the percentage of funds for each
 	// block to allocate to the developer organization.
@@ -311,7 +313,7 @@ type Params struct {
 	BlockTaxProportion uint16
 
 	//for utxo used in instantsend tx
-	InstantSendConfirmationsRequired  int32
+	AiSendConfirmationsRequired  int32
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints []Checkpoint
@@ -511,9 +513,11 @@ var MainNetParams = Params{
 	DivSubsidy:               1000,
 	SubsidyReductionInterval: 12288,
 	WorkRewardProportion:     6,
+	AiWorkRewardProportion:     3,
 	StakeRewardProportion:    3,
+	AiStakeRewardProportion:    3,
 	BlockTaxProportion:       1,
-	InstantSendConfirmationsRequired: 6,
+	AiSendConfirmationsRequired: 6,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -624,9 +628,11 @@ var TestNet2Params = Params{
 	DivSubsidy:               1000,
 	SubsidyReductionInterval: 2048,
 	WorkRewardProportion:     6,
+	AiWorkRewardProportion:     3,
 	StakeRewardProportion:    3,
+	AiStakeRewardProportion:    3,
 	BlockTaxProportion:       1,
-	InstantSendConfirmationsRequired: 2,
+	AiSendConfirmationsRequired: 2,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -765,12 +771,12 @@ var SimNetParams = Params{
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
 	//TargetTimePerBlock:       time.Second * 10,
-	TargetTimePerBlock:       time.Second*10,
+	TargetTimePerBlock:       time.Second*1,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
 	//TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
-	TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 8, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -779,9 +785,11 @@ var SimNetParams = Params{
 	DivSubsidy:               1000,
 	SubsidyReductionInterval: 128,
 	WorkRewardProportion:     6,
+	AiWorkRewardProportion:     3,
 	StakeRewardProportion:    3,
+	AiStakeRewardProportion:    3,
 	BlockTaxProportion:       1,
-	InstantSendConfirmationsRequired: 2,
+	AiSendConfirmationsRequired: 2,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,

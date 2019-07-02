@@ -280,6 +280,9 @@ func (g *Generator) calcFullSubsidy(blockHeight uint32) hcutil.Amount {
 // same code to generate them.
 func (g *Generator) calcPoWSubsidy(fullSubsidy hcutil.Amount, blockHeight uint32, numVotes uint16) hcutil.Amount {
 	powProportion := hcutil.Amount(g.params.WorkRewardProportion)
+	if uint64(blockHeight) >= g.params.AIStakeEnabledHeight {
+		powProportion = hcutil.Amount(g.params.AiWorkRewardProportion)
+	}
 	totalProportions := hcutil.Amount(g.params.TotalSubsidyProportions())
 	powSubsidy := (fullSubsidy * powProportion) / totalProportions
 	if int64(blockHeight) < g.params.StakeValidationHeight {
@@ -288,6 +291,9 @@ func (g *Generator) calcPoWSubsidy(fullSubsidy hcutil.Amount, blockHeight uint32
 
 	// Reduce the subsidy according to the number of votes.
 	ticketsPerBlock := hcutil.Amount(g.params.TicketsPerBlock)
+	if uint64(blockHeight) >= g.params.AIStakeEnabledHeight {
+		ticketsPerBlock += hcutil.Amount(g.params.AiTicketsPerBlock)
+	}
 	return (powSubsidy * hcutil.Amount(numVotes)) / ticketsPerBlock
 }
 
@@ -305,6 +311,9 @@ func (g *Generator) calcPoSSubsidy(heightVotedOn uint32) hcutil.Amount {
 
 	fullSubsidy := g.calcFullSubsidy(heightVotedOn)
 	posProportion := hcutil.Amount(g.params.StakeRewardProportion)
+	if int64(heightVotedOn) >= g.params.StakeValidationHeight{
+		posProportion += hcutil.Amount(g.params.AiStakeRewardProportion)
+	}
 	totalProportions := hcutil.Amount(g.params.TotalSubsidyProportions())
 	return (fullSubsidy * posProportion) / totalProportions
 }

@@ -118,6 +118,10 @@ func CalcBlockWorkSubsidy(subsidyCache *SubsidyCache, height int64,
 
 	proportionWork := int64(params.WorkRewardProportion)
 	proportions := int64(params.TotalSubsidyProportions())
+	if height >= int64(params.AIStakeEnabledHeight) {
+		proportionWork = int64(params.AiWorkRewardProportion)
+	}
+
 	subsidy *= proportionWork
 	subsidy /= proportions
 
@@ -156,6 +160,9 @@ func CalcStakeVoteSubsidy(subsidyCache *SubsidyCache, height int64,
 	subsidy := subsidyCache.CalcBlockSubsidy(height)
 
 	proportionStake := int64(params.StakeRewardProportion)
+	if height >= int64(params.AIStakeEnabledHeight) {
+		proportionStake += int64(params.AiStakeRewardProportion)
+	}
 	proportions := int64(params.TotalSubsidyProportions())
 	subsidy *= proportionStake
 
