@@ -1840,18 +1840,26 @@ mempoolLoop:
 				continue
 			}
 
-			// Quick check for difficulty here.
-			if msgTx.TxOut[0].Value >= reqStakeDifficulty {
-				txCopy := hcutil.NewTxDeepTxIns(msgTx)
-				if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
-					blockTxnsStake = append(blockTxnsStake, txCopy)
-					if isAiSStx {
-						aiFreshStake++
-					}else{
+			if isSStx{
+				// Quick check for difficulty here.
+				if msgTx.TxOut[0].Value >= reqStakeDifficulty {
+					txCopy := hcutil.NewTxDeepTxIns(msgTx)
+					if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
+						blockTxnsStake = append(blockTxnsStake, txCopy)
 						freshStake++
 					}
 				}
+			}else if isAiSStx{
+				// Quick check for difficulty here.
+				if msgTx.TxOut[0].Value >= reqAiStakeDifficulty {
+					txCopy := hcutil.NewTxDeepTxIns(msgTx)
+					if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
+						blockTxnsStake = append(blockTxnsStake, txCopy)
+						aiFreshStake++
+					}
+				}
 			}
+
 		}
 
 		if nextBlockHeight >= int64(server.chainParams.AIUpdateHeight) {
