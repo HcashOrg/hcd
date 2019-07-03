@@ -81,13 +81,15 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	defer mp.mtx.Unlock()
 	for hash, desc := range mp.txLockPool {
 		if desc.MineHeight != 0 && desc.MineHeight < height-defaultConfirmNum {
-
+			//remove vote index
 			for _, vote := range desc.Votes {
 				delete(mp.instantTxVotes, *vote.Hash())
 			}
 
+			//remove instantTx
 			delete(mp.txLockPool, hash)
 
+			//remove tx output index
 			for _, txIn := range desc.Tx.MsgTx().TxIn {
 				delete(mp.lockOutpoints, txIn.PreviousOutPoint)
 			}
@@ -146,13 +148,31 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	minHeight := bestHeight - behindNums
 
 	retMsgTx := make([][]byte, 0)
-	for _, desc := range mp.txLockPool {
+	for hash, desc := range mp.txLockPool {
 		if desc.MineHeight == 0 && desc.AddHeight < minHeight {
-			bts, err := desc.Tx.MsgTx().Bytes()
-			if err == nil {
-				retMsgTx = append(retMsgTx, bts)
+			if desc.Send {//voted but not be mine,it will be resend by wallet
+				bts, err := desc.Tx.MsgTx().Bytes()
+				if err == nil {
+					retMsgTx = append(retMsgTx, bts)
+				}
+			}else{// remove from txlockpool,because havn`t be voted for a long time
+
+				//remove vote index
+				for _, vote := range desc.Votes {
+					delete(mp.instantTxVotes, *vote.Hash())
+				}
+
+				//remove instantTx
+				delete(mp.txLockPool, hash)
+
+				//remove tx output index
+				for _, txIn := range desc.Tx.MsgTx().TxIn {
+					delete(mp.lockOutpoints, txIn.PreviousOutPoint)
+				}
+
 			}
 		}
+
 	}
 
 	return retMsgTx
