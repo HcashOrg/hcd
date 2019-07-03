@@ -215,7 +215,6 @@ type TxPool struct {
 	orphansByPrev map[chainhash.Hash]map[chainhash.Hash]*hcutil.Tx
 	addrindex     map[string]map[chainhash.Hash]struct{} // maps address to txs
 	outpoints     map[wire.OutPoint]*hcutil.Tx
-	//txLockPool    map[int64]map[chainhash.Hash]*hcutil.Tx //for instantsend lock tx pool
 	lockPool
 	// Votes on blocks.
 	votesMtx sync.RWMutex

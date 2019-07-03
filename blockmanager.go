@@ -2470,6 +2470,14 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 					var iv *wire.InvVect
 					if _, is := txscript.IsInstantTx(tx.MsgTx()); is {
 						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
+						//remove txvote rebroadcast
+						if instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(tx.Hash()); exist {
+							for _, vote := range instantTxDesc.Votes {
+								ivVote := wire.NewInvVect(wire.InvTypeInstantTxVote, vote.Hash())
+								b.server.RemoveRebroadcastInventory(ivVote)
+							}
+						}
+
 					} else {
 						iv = wire.NewInvVect(wire.InvTypeTx, tx.Hash())
 					}

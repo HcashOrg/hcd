@@ -5536,6 +5536,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 			//remove from rebroadcastInventory
 			iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
 			s.server.RemoveRebroadcastInventory(iv)
+
 		}
 	}
 
