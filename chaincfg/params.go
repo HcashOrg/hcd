@@ -564,10 +564,18 @@ var MainNetParams = Params{
 
 	// Hcd PoS parameters
 	MinimumStakeDiff:        2 * 1e8, // 2 Coin
+	MinimumAiStakeDiff:      1000 * 1e8, // 1000 Coin
 	TicketPoolSize:          8192,
 	TicketsPerBlock:         5,
 	TicketMaturity:          512,
 	TicketExpiry:            40960, // 5*TicketPoolSize
+
+	//ai PoS parameters
+	AiTicketPoolSize:          4096,//64 + 32,
+	AiTicketsPerBlock:         5,//5 + 5,
+	AiTicketMaturity:          512,
+	AiTicketExpiry:            40960, // 6*AiTicketPoolSize
+
 	CoinbaseMaturity:        512,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
@@ -576,6 +584,7 @@ var MainNetParams = Params{
 	StakeDiffWindows:        20,
 	StakeVersionInterval:    288 * 2 * 7, // ~1 week
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
+	AiMaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 	StakeEnabledHeight:      512 + 512,   // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   4096,        // ~7 days
 	StakeBaseSigScript:      []byte{0x00, 0x00},
@@ -590,6 +599,7 @@ var MainNetParams = Params{
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
 	OmniStartHeight:			 46000,
 	AIUpdateHeight:				363000,
+	AIStakeEnabledHeight:		288,
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
