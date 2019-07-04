@@ -328,6 +328,19 @@ func (b *BlockChain) CheckExpiredTickets(hashes []chainhash.Hash) []bool {
 	return existsSlice
 }
 
+func (b *BlockChain) CheckExpiredAiTickets(hashes []chainhash.Hash) []bool {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
+	b.chainLock.RUnlock()
+
+	existsSlice := make([]bool, len(hashes))
+	for i := range hashes {
+		existsSlice[i] = sn.ExistsExpiredTicket(hashes[i])
+	}
+
+	return existsSlice
+}
+
 // TicketPoolValue returns the current value of all the locked funds in the
 // ticket pool.
 //
