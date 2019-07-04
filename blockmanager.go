@@ -2534,7 +2534,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 		block := blockSlice[0]
 		parentBlock := blockSlice[1]
-		bmgrLog.Error("blockchain: NTBlockDisconnected", block.Height(), parentBlock.Height())
+		bmgrLog.Debug("blockchain: NTBlockDisconnected", block.Height(), parentBlock.Height())
 
 		// If the parent tx tree was invalidated, we need to remove these
 		// tx from the mempool as the next incoming block may alternatively
@@ -2542,7 +2542,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		txTreeRegularValid := hcutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
 			hcutil.BlockValid)
 
-		bmgrLog.Error("NTBlockDisconnected NTBlockDisconnected:", txTreeRegularValid)
+		bmgrLog.Debug("NTBlockDisconnected NTBlockDisconnected:", txTreeRegularValid)
 		if !txTreeRegularValid {
 			for _, tx := range parentBlock.Transactions()[1:] {
 				b.server.txMemPool.RemoveTransaction(tx, false)
