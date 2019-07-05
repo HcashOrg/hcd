@@ -827,8 +827,11 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
-	b.server.txMemPool.MayBeAddToLockPool(instantTx, false, false, false)
-
+	err:=b.server.txMemPool.MayBeAddToLockPool(instantTx, true, false, false)
+	if err!=nil{
+		bmgrLog.Errorf("instant tx %v not failed to add lockpool", instantTx.Hash())
+		return
+	}
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
 	instantTxs = append(instantTxs, instantTx)
@@ -915,8 +918,8 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 			//notify wallet to resend
 			b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 			//remove from rebroadcastInventory
-			iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
-			b.server.RemoveRebroadcastInventory(iv)
+			//iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+			//b.server.RemoveRebroadcastInventory(iv)
 		}
 	}
 
@@ -2262,10 +2265,10 @@ out:
 				}
 
 			case processInstantTxMsg: //handle rpc instanttx
-				b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
+				err:=b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processInstantTxResponse{
 					missedParent: nil,
-					err:          nil,
+					err:          err,
 				}
 			case isCurrentMsg:
 				msg.reply <- b.current()

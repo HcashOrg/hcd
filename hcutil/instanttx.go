@@ -7,10 +7,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 )
 
-//
-//type InstantTx struct {
-//	msgTx *wire.MsgInstantTx // Underlying MsgInstantTx
-//}
+
 
 type InstantTxVote struct {
 	msgInstantTxVote *wire.MsgInstantTxVote
@@ -58,15 +55,6 @@ func NewInstantTxFromTx(tx *Tx) *InstantTx {
 }
 
 
-
-//func (instantTx *InstantTx) Hash() *chainhash.Hash {
-//	ret:=instantTx.msgTx.TxHash()
-//	return &ret
-//}
-//func (instantTx *InstantTx) MsgTx() *wire.MsgInstantTx {
-//	// Return the cached transaction.
-//	return instantTx.msgTx
-//}
 
 func VerifyMessage(msg string, addr Address, sig []byte) (bool, error) {
 	// Validate the signature - this just shows that it was valid for any pubkey

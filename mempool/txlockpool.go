@@ -234,40 +234,40 @@ func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
 
 }
 
-func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) {
+func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error{
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	mp.maybeAddtoLockPool(tx, isNew, rateLimit, allowHighFees)
+	return mp.maybeAddtoLockPool(tx, isNew, rateLimit, allowHighFees)
 }
 
 //this is called before inserting to mempool,must be called with lock
-func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) {
+func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error{
 	//if exist just return ,or will rewrite the state of this txlock
 	if mp.isInstantTxExist(instantTx.Hash()) {
-		return
+		return fmt.Errorf("instant tx %v already exists",instantTx.Hash())
 	}
 	//check with lockpool
 	tx := instantTx.Tx
 	err := mp.checkTxWithLockPool(&tx)
 	if err != nil {
-		log.Tracef("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
+		log.Error("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
 			err)
-		return
+		return err
 	}
 	//check with mempool
 	_, err = mp.checkInstantTxWithMem(instantTx, isNew, rateLimit, allowHighFees)
 	if err != nil {
-		log.Tracef("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(),
+		log.Error("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(),
 			err)
-		return
+		return err
 	}
 
 	//check instant tag
 	msgTx := instantTx.MsgTx()
 	_, isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
-		log.Tracef("Transaction %v is not instant instantTx ", instantTx.Hash())
-		return
+		log.Error("Transaction %v is not instant instantTx ", instantTx.Hash())
+		return fmt.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
 	}
 	bestHeight := mp.cfg.BestHeight()
 	mp.txLockPool[*instantTx.Hash()] = &InstantTxDesc{
@@ -280,6 +280,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 	for _, txIn := range msgTx.TxIn {
 		mp.lockOutpoints[txIn.PreviousOutPoint] = instantTx
 	}
+	return nil
 }
 
 func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) ([]*chainhash.Hash, error) {
@@ -400,8 +401,11 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 			continue
 		}
 
-		entry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
-		if entry == nil || entry.IsFullySpent() {
+		originHash := &txIn.PreviousOutPoint.Hash
+		originIndex := txIn.PreviousOutPoint.Index
+		utxoEntry := utxoView.LookupEntry(originHash)
+		//check every input index
+		if utxoEntry == nil || utxoEntry.IsOutputSpent(originIndex) {
 			// Must make a copy of the hash here since the iterator
 			// is replaced and taking its address directly would
 			// result in all of the entries pointing to the same
@@ -411,23 +415,48 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 
 			// Prevent a panic in the logger by continuing here if the
 			// transaction input is nil.
-			if entry == nil {
-				log.Tracef("Transaction %v uses unknown input %v "+
+			if utxoEntry == nil {
+				log.Tracef("instant Transaction %v uses unknown input %v "+
 					"and will be considered an orphan", txHash,
 					txIn.PreviousOutPoint.Hash)
 				continue
 			}
-			if entry.IsFullySpent() {
-				log.Tracef("Transaction %v uses full spent input %v "+
-					"and will be considered an orphan", txHash,
+			if utxoEntry.IsOutputSpent(originIndex) {
+				log.Tracef("instant Transaction %v uses full spent input %v", txHash,
 					txIn.PreviousOutPoint.Hash)
 			}
 		}
+
+
+		//
+		//entry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
+		//if entry == nil || entry.IsFullySpent() {
+		//	// Must make a copy of the hash here since the iterator
+		//	// is replaced and taking its address directly would
+		//	// result in all of the entries pointing to the same
+		//	// memory location and thus all be the final hash.
+		//	hashCopy := txIn.PreviousOutPoint.Hash
+		//	missingParents = append(missingParents, &hashCopy)
+		//
+		//	// Prevent a panic in the logger by continuing here if the
+		//	// transaction input is nil.
+		//	if entry == nil {
+		//		log.Tracef("Transaction %v uses unknown input %v "+
+		//			"and will be considered an orphan", txHash,
+		//			txIn.PreviousOutPoint.Hash)
+		//		continue
+		//	}
+		//	if entry.IsFullySpent() {
+		//		log.Tracef("Transaction %v uses full spent input %v "+
+		//			"and will be considered an orphan", txHash,
+		//			txIn.PreviousOutPoint.Hash)
+		//	}
+		//}
 	}
 
 	//instant tx don`t allow missing parents
 	if len(missingParents) > 0 {
-		return missingParents, txRuleError(wire.RejectNonstandard, "instant transaction inputs missing parents")
+		return missingParents, txRuleError(wire.RejectNonstandard, "instant transaction inputs have been fully spent")
 	}
 
 	// Don't allow the transaction into the mempool unless its sequence
