@@ -1755,7 +1755,7 @@ func handleExistsExpiredAiTickets(s *rpcServer, cmd interface{}, closeChan <-cha
 		return nil, err
 	}
 
-	exists := s.server.blockManager.chain.CheckExpiredTickets(hashes)
+	exists := s.server.blockManager.chain.CheckExpiredAiTickets(hashes)
 	if len(exists) != len(hashes) {
 		return nil, rpcInvalidError("Invalid expired ticket count "+
 			"got %v, want %v", len(exists), len(hashes))
