@@ -690,6 +690,21 @@ func (b *blockManager) syncMiningStateAfterSync(sp *serverPeer) {
 		}
 	}()
 }
+func (b *blockManager) syncLockPoolStateAfterSync(sp *serverPeer) {
+	go func() {
+		for {
+			time.Sleep(3 * time.Second)
+			if !sp.Connected() {
+				return
+			}
+			if b.IsCurrent() {
+				msg := wire.NewMsgGetLockPoolState()
+				sp.QueueMessage(msg, nil)
+				return
+			}
+		}
+	}()
+}
 
 // handleNewPeerMsg deals with new peers that have signalled they may
 // be considered as a sync peer (they have already successfully negotiated).  It
@@ -717,6 +732,8 @@ func (b *blockManager) handleNewPeerMsg(peers *list.List, sp *serverPeer) {
 	if !cfg.NoMiningStateSync {
 		b.syncMiningStateAfterSync(sp)
 	}
+	//sync lock pool
+	b.syncLockPoolStateAfterSync(sp)
 }
 
 // handleDonePeerMsg deals with peers that have signalled they are done.  It
@@ -827,8 +844,8 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
-	err:=b.server.txMemPool.MayBeAddToLockPool(instantTx, true, false, false)
-	if err!=nil{
+	err := b.server.txMemPool.MayBeAddToLockPool(instantTx, true, false, false)
+	if err != nil {
 		bmgrLog.Errorf("instant tx %v not failed to add lockpool", instantTx.Hash())
 		return
 	}
@@ -2265,7 +2282,7 @@ out:
 				}
 
 			case processInstantTxMsg: //handle rpc instanttx
-				err:=b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
+				err := b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processInstantTxResponse{
 					missedParent: nil,
 					err:          err,
@@ -2727,9 +2744,9 @@ func (b *blockManager) SyncPeer() *serverPeer {
 // RequestFromPeer allows an outside caller to request blocks or transactions
 // from a peer. The requests are logged in the blockmanager's internal map of
 // requests so they do not later ban the peer for sending the respective data.
-func (b *blockManager) RequestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash) error {
+func (b *blockManager) RequestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash, instantTxs []*chainhash.Hash, instantVotes []*chainhash.Hash) error {
 	reply := make(chan requestFromPeerResponse)
-	b.msgChan <- requestFromPeerMsg{peer: p, blocks: blocks, txs: txs,
+	b.msgChan <- requestFromPeerMsg{peer: p, blocks: blocks, txs: txs, instantTxs: instantTxs, instantVotes: instantVotes,
 		reply: reply}
 	response := <-reply
 
@@ -2845,7 +2862,7 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 
 		// Ask the transaction lock pool if the vote is known
 		// to it
-		if _,err:=b.server.txMemPool.FetchInstantTxVote(instantVote); err==nil{
+		if _, err := b.server.txMemPool.FetchInstantTxVote(instantVote); err == nil {
 			continue
 		}
 
@@ -2859,8 +2876,6 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 		b.requestedInstantVotes[*instantVote] = struct{}{}
 		b.requestedEverInstantVotes[*instantVote] = 0
 	}
-
-
 
 	if len(msgResp.InvList) > 0 {
 		p.QueueMessage(msgResp, nil)

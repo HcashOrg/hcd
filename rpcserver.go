@@ -5423,7 +5423,7 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 
 	instantTx := hcutil.NewInstantTx(msgtx)
 
-	//TODO check conflict with mempool
+	//check conflict with mempool
 	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, false)
 	if err != nil || len(missedParent) != 0 {
 		return nil, err

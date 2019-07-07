@@ -211,7 +211,8 @@ type serverPeer struct {
 	// addrsSent and getMiningStateSent both track whether or not the peer
 	// has already sent the respective request.  It is used to prevent more
 	// than one response per connection.
-	getMiningStateSent bool
+	getMiningStateSent   bool
+	getLockPoolStateSent bool
 	// The following chans are used to sync blockmanager and server.
 	txProcessed            chan struct{}
 	instantTxProcessed     chan struct{}
@@ -513,6 +514,31 @@ func (sp *serverPeer) OnMemPool(p *peer.Peer, msg *wire.MsgMemPool) {
 	}
 }
 
+func (sp *serverPeer) pushLockPoolMsg(instantTxHashs []*chainhash.Hash, instantTxVoteHashs []*chainhash.Hash) error {
+	if len(instantTxHashs) == 0 {
+		return nil
+	}
+
+	msg := wire.NewMsgLockPoolState()
+
+	for i := range instantTxHashs {
+		err := msg.AddInstantTxHash(instantTxHashs[i])
+
+		if err != nil {
+			return err
+		}
+	}
+
+	for i := range instantTxVoteHashs {
+		err := msg.AddInstantTxVoteHash(instantTxVoteHashs[i])
+		if err != nil {
+			return err
+		}
+	}
+	sp.QueueMessage(msg, nil)
+	return nil
+}
+
 // pushMiningStateMsg pushes a mining state message to the queue for a
 // requesting peer.
 func (sp *serverPeer) pushMiningStateMsg(height uint32, blockHashes []chainhash.Hash, voteHashes []chainhash.Hash) error {
@@ -543,6 +569,30 @@ func (sp *serverPeer) pushMiningStateMsg(height uint32, blockHashes []chainhash.
 	sp.QueueMessage(msg, nil)
 
 	return nil
+}
+
+func (sp *serverPeer) OnGetLockPoolState(p *peer.Peer, msg *wire.MsgGetLockPoolState) {
+	if sp.getLockPoolStateSent {
+		peerLog.Tracef("Ignoring getlockpoolstate from %v - already sent", sp.Peer)
+		return
+	}
+	sp.getLockPoolStateSent = true
+
+	bm := sp.server.blockManager
+	mp := sp.server.txMemPool
+
+	if !bm.IsCurrent() {
+		peerLog.Tracef("Ignoring getlockpoolstate from %v - is syncing to the latest block", sp.Peer)
+		return
+	}
+
+	instantTxHashs, instantTxVoteHashs := mp.FetchLockPoolState()
+	err := sp.pushLockPoolMsg(instantTxHashs, instantTxVoteHashs)
+
+	if err != nil {
+		peerLog.Warnf("unexpected error while pushing data for "+
+			"lockpool state request: %v", err.Error())
+	}
 }
 
 // OnGetMiningState is invoked when a peer receives a getminings wire message.
@@ -614,11 +664,19 @@ func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState
 	}
 }
 
+func (sp *serverPeer) OnLockPoolState(p *peer.Peer, msg *wire.MsgLockPoolState) {
+	err := sp.server.blockManager.RequestFromPeer(sp, nil, nil, msg.InstantTxHashes, msg.InstantTxVoteHashes)
+	if err != nil {
+		peerLog.Warnf("couldn't handle lockpool state message: %v",
+			err.Error())
+	}
+}
+
 // OnMiningState is invoked when a peer receives a miningstate wire message.  It
 // requests the data advertised in the message from the peer.
 func (sp *serverPeer) OnMiningState(p *peer.Peer, msg *wire.MsgMiningState) {
 	err := sp.server.blockManager.RequestFromPeer(sp, msg.BlockHashes,
-		msg.VoteHashes)
+		msg.VoteHashes, nil, nil)
 	if err != nil {
 		peerLog.Warnf("couldn't handle mining state message: %v",
 			err.Error())
@@ -1274,6 +1332,7 @@ func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
 			lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
 			tickets, err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
 			if err != nil {
+				srvrLog.Errorf("LotteryAiDataForTx %v loggeryHash %v err:%v", instantTx.Hash().String(), lotteryHash.String(), err)
 				return
 			}
 
@@ -1292,7 +1351,6 @@ func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxV
 		// Generate the inventory vector and relay it.
 		//TODO check instant instantTxvote invvect
 		//relay instantvote
-
 		iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
 		s.RelayInventory(iv, instantTxVote)
 
@@ -1869,26 +1927,28 @@ func disconnectPeer(peerList map[int32]*serverPeer, compareFunc func(*serverPeer
 func newPeerConfig(sp *serverPeer) *peer.Config {
 	return &peer.Config{
 		Listeners: peer.MessageListeners{
-			OnVersion:        sp.OnVersion,
-			OnMemPool:        sp.OnMemPool,
-			OnGetMiningState: sp.OnGetMiningState,
-			OnMiningState:    sp.OnMiningState,
-			OnTx:             sp.OnTx,
-			OnInstantTx:      sp.OnInstantTx,
-			OnInstantTxVote:  sp.OnInstantTxVote,
-			OnBlock:          sp.OnBlock,
-			OnInv:            sp.OnInv,
-			OnHeaders:        sp.OnHeaders,
-			OnGetData:        sp.OnGetData,
-			OnGetBlocks:      sp.OnGetBlocks,
-			OnGetHeaders:     sp.OnGetHeaders,
-			OnFilterAdd:      sp.OnFilterAdd,
-			OnFilterClear:    sp.OnFilterClear,
-			OnFilterLoad:     sp.OnFilterLoad,
-			OnGetAddr:        sp.OnGetAddr,
-			OnAddr:           sp.OnAddr,
-			OnRead:           sp.OnRead,
-			OnWrite:          sp.OnWrite,
+			OnVersion:          sp.OnVersion,
+			OnMemPool:          sp.OnMemPool,
+			OnGetMiningState:   sp.OnGetMiningState,
+			OnGetLockPoolState: sp.OnGetLockPoolState,
+			OnMiningState:      sp.OnMiningState,
+			OnLockPoolState:    sp.OnLockPoolState,
+			OnTx:               sp.OnTx,
+			OnInstantTx:        sp.OnInstantTx,
+			OnInstantTxVote:    sp.OnInstantTxVote,
+			OnBlock:            sp.OnBlock,
+			OnInv:              sp.OnInv,
+			OnHeaders:          sp.OnHeaders,
+			OnGetData:          sp.OnGetData,
+			OnGetBlocks:        sp.OnGetBlocks,
+			OnGetHeaders:       sp.OnGetHeaders,
+			OnFilterAdd:        sp.OnFilterAdd,
+			OnFilterClear:      sp.OnFilterClear,
+			OnFilterLoad:       sp.OnFilterLoad,
+			OnGetAddr:          sp.OnGetAddr,
+			OnAddr:             sp.OnAddr,
+			OnRead:             sp.OnRead,
+			OnWrite:            sp.OnWrite,
 		},
 		NewestBlock:      sp.newestBlock,
 		HostToNetAddress: sp.server.addrManager.HostToNetAddress,

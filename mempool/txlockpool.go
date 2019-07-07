@@ -137,6 +137,29 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	return ret
 }
 
+func (mp *TxPool)FetchLockPoolState()([]*chainhash.Hash,[]*chainhash.Hash) {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+	return mp.fetchLockPoolState()
+}
+
+func (mp *TxPool)fetchLockPoolState()([]*chainhash.Hash,[]*chainhash.Hash) {
+	instantTxHashs:=make([]*chainhash.Hash,len(mp.txLockPool))
+	instantTxVoteHashs:=make([]*chainhash.Hash,len(mp.instantTxVotes))
+	for instantTxHash,_:=range mp.txLockPool{
+		copy:=instantTxHash
+		instantTxHashs=append(instantTxHashs,&copy)
+	}
+
+	for instantTxVoteHash,_:=range mp.instantTxVotes{
+		copy:=instantTxVoteHash
+		instantTxVoteHashs=append(instantTxVoteHashs,&copy)
+	}
+
+	return instantTxHashs,instantTxVoteHashs
+}
+
+
 func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
