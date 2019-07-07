@@ -144,8 +144,9 @@ func (mp *TxPool)FetchLockPoolState()([]*chainhash.Hash,[]*chainhash.Hash) {
 }
 
 func (mp *TxPool)fetchLockPoolState()([]*chainhash.Hash,[]*chainhash.Hash) {
-	instantTxHashs:=make([]*chainhash.Hash,len(mp.txLockPool))
-	instantTxVoteHashs:=make([]*chainhash.Hash,len(mp.instantTxVotes))
+	instantTxHashs:=make([]*chainhash.Hash,0,len(mp.txLockPool))
+	instantTxVoteHashs:=make([]*chainhash.Hash,0,len(mp.instantTxVotes))
+
 	for instantTxHash,_:=range mp.txLockPool{
 		copy:=instantTxHash
 		instantTxHashs=append(instantTxHashs,&copy)
