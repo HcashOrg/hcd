@@ -102,7 +102,14 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 func (mp *TxPool) IsInstantTxExist(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.isInstantTxExistAndVoted(hash)
+	return mp.isInstantTxExist(hash)
+}
+
+func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
+	if _, exists := mp.txLockPool[*hash]; exists{
+		return true
+	}
+	return false
 }
 
 //Is instant tx voted ?
@@ -275,7 +282,7 @@ func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, all
 //this is called before inserting to mempool,must be called with lock
 func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error {
 	//if exist just return ,or will rewrite the state of this txlock
-	if mp.isInstantTxExistAndVoted(instantTx.Hash()) {
+	if mp.isInstantTxExist(instantTx.Hash()) {
 		return fmt.Errorf("instant tx %v already exists", instantTx.Hash())
 	}
 	//check with lockpool
