@@ -1236,13 +1236,6 @@ func (b *blockManager) handleBlockMsg(bmsg *blockMsg) {
 	delete(bmsg.peer.requestedBlocks, *blockHash)
 	delete(b.requestedBlocks, *blockHash)
 
-	/*
-		_, err := b.server.txMemPool.CheckConflictWithTxLockPool(bmsg.block)
-		if err != nil{
-			bmgrLog.Infof("%v",  err)
-			return
-		}
-	*/
 	// Process the block to include validation, best chain selection, orphan
 	// handling, etc.
 	onMainChain, isOrphan, err := b.chain.ProcessBlock(bmsg.block,
@@ -2371,8 +2364,6 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			_, beenNotified := b.lotteryDataBroadcast[*hash]
 			b.lotteryDataBroadcastMutex.Unlock()
 
-			//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
-			ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
 			wt, _, _, err := b.chain.LotteryDataForBlock(hash)
 			aiwt, _, _, err2 := b.chain.LotteryAiDataForBlock(hash)
 			if err != nil {
@@ -2389,6 +2380,9 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 						Tickets:     wt,
 					}
 
+
+					//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
+					ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
 					// Notify registered websocket clients of newly
 					// eligible tickets to vote on.
 					if ok {

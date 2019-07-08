@@ -31,9 +31,9 @@ type InstantTxDesc struct {
 }
 
 type lockPool struct {
-	txLockPool     map[chainhash.Hash]*InstantTxDesc //for instantsend lock tx pool
-	lockOutpoints  map[wire.OutPoint]*hcutil.InstantTx
-	instantTxVotes map[chainhash.Hash]*hcutil.InstantTxVote
+	txLockPool     map[chainhash.Hash]*InstantTxDesc        //  lock tx pool
+	lockOutpoints  map[wire.OutPoint]*hcutil.InstantTx      //output index
+	instantTxVotes map[chainhash.Hash]*hcutil.InstantTxVote //vote index
 }
 
 //update inistant tx state according the mined height
@@ -79,6 +79,7 @@ func (mp *TxPool) ModifyInstantTxHeight(tx *hcutil.Tx, height int64) {
 func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
+
 	for hash, desc := range mp.txLockPool {
 		if desc.MineHeight != 0 && desc.MineHeight < height-defaultConfirmNum {
 			//remove vote index
@@ -94,18 +95,19 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 				delete(mp.lockOutpoints, txIn.PreviousOutPoint)
 			}
 		}
+
 	}
 }
 
 func (mp *TxPool) IsInstantTxExist(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.isInstantTxExist(hash)
+	return mp.isInstantTxExistAndVoted(hash)
 }
 
-//Is tx in  locked?
-func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
-	if _, exists := mp.txLockPool[*hash]; exists {
+//Is instant tx voted ?
+func (mp *TxPool) isInstantTxExistAndVoted(hash *chainhash.Hash) bool {
+	if desc, exists := mp.txLockPool[*hash]; exists && desc.Send {
 		return true
 	}
 	return false
@@ -137,29 +139,28 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	return ret
 }
 
-func (mp *TxPool)FetchLockPoolState()([]*chainhash.Hash,[]*chainhash.Hash) {
+func (mp *TxPool) FetchLockPoolState() ([]*chainhash.Hash, []*chainhash.Hash) {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 	return mp.fetchLockPoolState()
 }
 
-func (mp *TxPool)fetchLockPoolState()([]*chainhash.Hash,[]*chainhash.Hash) {
-	instantTxHashs:=make([]*chainhash.Hash,0,len(mp.txLockPool))
-	instantTxVoteHashs:=make([]*chainhash.Hash,0,len(mp.instantTxVotes))
+func (mp *TxPool) fetchLockPoolState() ([]*chainhash.Hash, []*chainhash.Hash) {
+	instantTxHashes := make([]*chainhash.Hash, 0, len(mp.txLockPool))
+	instantTxVoteHashes := make([]*chainhash.Hash, 0, len(mp.instantTxVotes))
 
-	for instantTxHash,_:=range mp.txLockPool{
-		copy:=instantTxHash
-		instantTxHashs=append(instantTxHashs,&copy)
+	for instantTxHash := range mp.txLockPool {
+		copy := instantTxHash
+		instantTxHashes = append(instantTxHashes, &copy)
 	}
 
-	for instantTxVoteHash,_:=range mp.instantTxVotes{
-		copy:=instantTxVoteHash
-		instantTxVoteHashs=append(instantTxVoteHashs,&copy)
+	for instantTxVoteHash := range mp.instantTxVotes {
+		copy := instantTxVoteHash
+		instantTxVoteHashes = append(instantTxVoteHashes, &copy)
 	}
 
-	return instantTxHashs,instantTxVoteHashs
+	return instantTxHashes, instantTxVoteHashes
 }
-
 
 func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	mp.mtx.RLock()
@@ -174,12 +175,12 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	retMsgTx := make([][]byte, 0)
 	for hash, desc := range mp.txLockPool {
 		if desc.MineHeight == 0 && desc.AddHeight < minHeight {
-			if desc.Send {//voted but not be mine,it will be resend by wallet
+			if desc.Send { //voted but not be mine,it will be resend by wallet
 				bts, err := desc.Tx.MsgTx().Bytes()
 				if err == nil {
 					retMsgTx = append(retMsgTx, bts)
 				}
-			}else{// remove from txlockpool,because havn`t be voted for a long time
+			} else { // remove from txlockpool,because havn`t be voted for a long time
 
 				//remove vote index
 				for _, vote := range desc.Votes {
@@ -218,7 +219,7 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, err
 
 //check the input double spent
 func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
-	if !mp.isInstantTxExist(tx.Hash()) {
+	if !mp.isInstantTxExistAndVoted(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
 			if _, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
 				return fmt.Errorf("tx %v conflict with lock pool", tx.Hash())
@@ -233,22 +234,29 @@ func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
-	//if is the same tx ,just return
-	if mp.isInstantTxExist(tx.Hash()) {
+	//if is the same tx and voted,just return
+	if mp.isInstantTxExistAndVoted(tx.Hash()) {
 		return
 	}
 
 	//if tx in is conflict with txlock ,just remove txlock and lockOutpoint
 	for _, invalue := range tx.MsgTx().TxIn {
 		if txLock, exist := mp.isInstantTxInputExist(&invalue.PreviousOutPoint); exist {
-			instantTxdesc := mp.txLockPool[*txLock.Hash()]
+			instantTxdesc, exist := mp.txLockPool[*txLock.Hash()]
 
+			if !exist || instantTxdesc == nil {
+				continue
+			}
+			//remove all information about this txlock
+			//vote
 			for _, vote := range instantTxdesc.Votes {
 				delete(mp.instantTxVotes, *vote.Hash())
 			}
 
+			//lockpool
 			delete(mp.txLockPool, *txLock.Hash())
 
+			//outpoints
 			for _, txIn := range txLock.MsgTx().TxIn {
 				delete(mp.lockOutpoints, txIn.PreviousOutPoint)
 			}
@@ -258,17 +266,17 @@ func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
 
 }
 
-func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error{
+func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 	return mp.maybeAddtoLockPool(tx, isNew, rateLimit, allowHighFees)
 }
 
 //this is called before inserting to mempool,must be called with lock
-func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error{
+func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error {
 	//if exist just return ,or will rewrite the state of this txlock
-	if mp.isInstantTxExist(instantTx.Hash()) {
-		return fmt.Errorf("instant tx %v already exists",instantTx.Hash())
+	if mp.isInstantTxExistAndVoted(instantTx.Hash()) {
+		return fmt.Errorf("instant tx %v already exists", instantTx.Hash())
 	}
 	//check with lockpool
 	tx := instantTx.Tx
@@ -450,7 +458,6 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 					txIn.PreviousOutPoint.Hash)
 			}
 		}
-
 
 		//
 		//entry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
