@@ -1588,6 +1588,9 @@ func (mp *TxPool) haveAiChange(tx *hcutil.Tx) bool {
 	var haveChange bool = false
 	if lenOut > 1 {
 		_, addr, _, _ := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, mp.cfg.ChainParams)
+		if len(addr) <1 {
+			return haveChange
+		}
 		for _, txIn := range (tx.MsgTx().TxIn) {
 			utxoEntry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
 			if utxoEntry == nil {
@@ -1597,8 +1600,7 @@ func (mp *TxPool) haveAiChange(tx *hcutil.Tx) bool {
 			txInPkScript := utxoEntry.PkScriptByIndex(originTxIndex)
 			if txInPkScript != nil {
 				_, txInAddr,_,_:= txscript.ExtractPkScriptAddrs(0, txInPkScript, mp.cfg.ChainParams)
-
-				if txInAddr[0].String() == addr[0].String(){
+				if len(txInAddr) > 0 && txInAddr[0].String() == addr[0].String(){
 					haveChange = true
 					break;
 				}
