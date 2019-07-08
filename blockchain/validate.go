@@ -2470,6 +2470,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 	// scripts) checks against all the inputs when the signature operations
 	// are out of bounds.
 	totalFees := int64(inputFees) // Stake tx tree carry forward
+	totalAiFees := int64(0)
 	var cumulativeSigOps int
 	for idx, tx := range txs {
 		// Ensure that the number of signature operations is not beyond
@@ -2490,6 +2491,36 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 			log.Tracef("CheckTransactionInputs failed; error "+
 				"returned: %v", err)
 			return err
+		}
+
+		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok{
+			lenOut :=len(tx.MsgTx().TxOut)
+			var haveChange bool = false
+			if lenOut > 1 {
+				_, addr, _, _ := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, b.chainParams)
+				for _, txIn := range (tx.MsgTx().TxIn) {
+					utxoEntry, exists := utxoView.entries[txIn.PreviousOutPoint.Hash]
+					if !exists || utxoEntry == nil {
+						str := fmt.Sprintf("unable to find input "+
+							"transaction %v for transaction %v",
+							txIn.PreviousOutPoint.Hash, txIn.PreviousOutPoint.Hash)
+						return ruleError(ErrMissingTx, str)
+					}
+					originTxIndex := txIn.PreviousOutPoint.Index
+					txInPkScript := utxoEntry.PkScriptByIndex(originTxIndex)
+					if txInPkScript != nil {
+						_, txInAddr,_,_:= txscript.ExtractPkScriptAddrs(0, txInPkScript, b.chainParams)
+						if txInAddr[0].String() == addr[0].String(){
+							haveChange = true
+							break;
+						}
+					}
+				}
+			}
+
+			aiFees := tx.MsgTx().GetTxAiFee(haveChange)
+			totalAiFees += aiFees
+			txFee -= aiFees
 		}
 
 		// Sum the total fees and ensure we don't overflow the
@@ -2541,7 +2572,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
 				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
 					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
-				expAtomOut = subsidyWork + subsidyTax + totalFees
+				expAtomOut = subsidyWork + subsidyTax + totalFees + totalAiFees
 			}else{
 				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
 					node.height, node.header.Voters, b.chainParams)
@@ -2554,7 +2585,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 
 		// AmountIn for the input should be equal to the subsidy.
 		coinbaseIn := txs[0].MsgTx().TxIn[0]
-		subsidyWithoutFees := expAtomOut - totalFees
+		subsidyWithoutFees := expAtomOut - totalFees - totalAiFees
 		if (coinbaseIn.ValueIn != subsidyWithoutFees) &&
 			(node.height > 0) {
 			errStr := fmt.Sprintf("bad coinbase subsidy in input;"+
