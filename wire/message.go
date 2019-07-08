@@ -30,33 +30,35 @@ const MaxMessagePayload = (1024 * 1024 * 32) // 32MB
 
 // Commands used in message headers which describe the type of message.
 const (
-	CmdVersion        = "version"
-	CmdVerAck         = "verack"
-	CmdGetAddr        = "getaddr"
-	CmdAddr           = "addr"
-	CmdGetBlocks      = "getblocks"
-	CmdInv            = "inv"
-	CmdGetData        = "getdata"
-	CmdNotFound       = "notfound"
-	CmdBlock          = "block"
-	CmdTx             = "tx"
-	CmdInstantTx      = "instanttx"
-	CmdInstantTxVote  = "instantvote"
-	CmdGetHeaders     = "getheaders"
-	CmdHeaders        = "headers"
-	CmdPing           = "ping"
-	CmdPong           = "pong"
-	CmdAlert          = "alert"
-	CmdMemPool        = "mempool"
-	CmdMiningState    = "miningstate"
-	CmdGetMiningState = "getminings"
-	CmdFilterAdd      = "filteradd"
-	CmdFilterClear    = "filterclear"
-	CmdFilterLoad     = "filterload"
-	CmdMerkleBlock    = "merkleblock"
-	CmdReject         = "reject"
-	CmdSendHeaders    = "sendheaders"
-	CmdFeeFilter      = "feefilter"
+	CmdVersion          = "version"
+	CmdVerAck           = "verack"
+	CmdGetAddr          = "getaddr"
+	CmdAddr             = "addr"
+	CmdGetBlocks        = "getblocks"
+	CmdInv              = "inv"
+	CmdGetData          = "getdata"
+	CmdNotFound         = "notfound"
+	CmdBlock            = "block"
+	CmdTx               = "tx"
+	CmdInstantTx        = "instanttx"
+	CmdInstantTxVote    = "instantvote"
+	CmdGetHeaders       = "getheaders"
+	CmdHeaders          = "headers"
+	CmdPing             = "ping"
+	CmdPong             = "pong"
+	CmdAlert            = "alert"
+	CmdMemPool          = "mempool"
+	CmdMiningState      = "miningstate"
+	CmdLockPoolState    = "lockstate"
+	CmdGetMiningState   = "getminings"
+	CmdGetLockPoolState = "getlockpool"
+	CmdFilterAdd        = "filteradd"
+	CmdFilterClear      = "filterclear"
+	CmdFilterLoad       = "filterload"
+	CmdMerkleBlock      = "merkleblock"
+	CmdReject           = "reject"
+	CmdSendHeaders      = "sendheaders"
+	CmdFeeFilter        = "feefilter"
 )
 
 // Message is an interface that describes a HC message.  A type that
@@ -130,6 +132,12 @@ func makeEmptyMessage(command string) (Message, error) {
 
 	case CmdMiningState:
 		msg = &MsgMiningState{}
+
+	case CmdLockPoolState:
+		msg = &MsgLockPoolState{}
+
+	case CmdGetLockPoolState:
+		msg = &MsgGetLockPoolState{}
 
 	case CmdGetMiningState:
 		msg = &MsgGetMiningState{}

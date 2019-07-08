@@ -1234,7 +1234,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	}
 	//check double spend with tx in lockpool
 	//if common tx is conflict with txlockpool ,we will reject the common tx
-	if !mp.isInstantTxExist(txHash) {
+	if !mp.isInstantTxExistAndVoted(txHash) {
 		for _, txIn := range msgTx.TxIn {
 			if instx, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
 				return nil, fmt.Errorf("tx %v have same input with instant tx %v", txHash, instx.Hash())

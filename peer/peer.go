@@ -119,14 +119,18 @@ type MessageListeners struct {
 	// message.
 	OnGetMiningState func(p *Peer, msg *wire.MsgGetMiningState)
 
+	OnGetLockPoolState func(p *Peer, msg *wire.MsgGetLockPoolState)
+
 	// OnMiningState is invoked when a peer receives a miningstate wire
 	// message.
 	OnMiningState func(p *Peer, msg *wire.MsgMiningState)
 
+	OnLockPoolState func(p *Peer, msg *wire.MsgLockPoolState)
+
 	// OnTx is invoked when a peer receives a tx wire message.
 	OnTx func(p *Peer, msg *wire.MsgTx)
 
-	OnInstantTx func(p *Peer, msg *wire.MsgInstantTx)
+	OnInstantTx     func(p *Peer, msg *wire.MsgInstantTx)
 	OnInstantTxVote func(p *Peer, msg *wire.MsgInstantTxVote)
 
 	// OnBlock is invoked when a peer receives a block wire message.
@@ -1041,7 +1045,7 @@ func (p *Peer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 	// advertised.
 	p.services = msg.Services
 
-	p.na.Services=msg.Services
+	p.na.Services = msg.Services
 	// Set the remote peer's user agent.
 	p.userAgent = msg.UserAgent
 	p.flagsMtx.Unlock()
@@ -1204,6 +1208,8 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 		pendingResponses[wire.CmdBlock] = deadline
 		pendingResponses[wire.CmdTx] = deadline
 		pendingResponses[wire.CmdNotFound] = deadline
+		pendingResponses[wire.CmdInstantTx] = deadline
+		pendingResponses[wire.CmdInstantTxVote] = deadline
 
 	case wire.CmdGetHeaders:
 		// Expects a headers message.  Use a longer deadline since it
@@ -1214,6 +1220,8 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 
 	case wire.CmdGetMiningState:
 		pendingResponses[wire.CmdMiningState] = deadline
+	case wire.CmdGetLockPoolState:
+		pendingResponses[wire.CmdLockPoolState] = deadline
 	}
 }
 
@@ -1263,10 +1271,16 @@ out:
 					fallthrough
 				case wire.CmdTx:
 					fallthrough
+				case wire.CmdInstantTx:
+					fallthrough
+				case wire.CmdInstantTxVote:
+					fallthrough
 				case wire.CmdNotFound:
 					delete(pendingResponses, wire.CmdBlock)
 					delete(pendingResponses, wire.CmdTx)
 					delete(pendingResponses, wire.CmdNotFound)
+					delete(pendingResponses, wire.CmdInstantTx)
+					delete(pendingResponses, wire.CmdInstantTxVote)
 
 				default:
 					delete(pendingResponses, msgCmd)
@@ -1324,7 +1338,7 @@ out:
 					continue
 				}
 
-				if command != wire.CmdMiningState {
+				if command != wire.CmdMiningState||command!=wire.CmdLockPoolState {
 					log.Infof("Peer %s appears to be stalled or "+
 						"misbehaving, %s timeout -- "+
 						"disconnecting", p, command)
@@ -1470,23 +1484,30 @@ out:
 				p.cfg.Listeners.OnGetMiningState(p, msg)
 			}
 
+		case *wire.MsgGetLockPoolState:
+			if p.cfg.Listeners.OnGetLockPoolState != nil {
+				p.cfg.Listeners.OnGetLockPoolState(p, msg)
+			}
 		case *wire.MsgMiningState:
 			if p.cfg.Listeners.OnMiningState != nil {
 				p.cfg.Listeners.OnMiningState(p, msg)
 			}
-
+		case *wire.MsgLockPoolState:
+			if p.cfg.Listeners.OnLockPoolState != nil {
+				p.cfg.Listeners.OnLockPoolState(p, msg)
+			}
 		case *wire.MsgTx:
 			if p.cfg.Listeners.OnTx != nil {
 				p.cfg.Listeners.OnTx(p, msg)
 			}
 		case *wire.MsgInstantTx:
-			if p.cfg.Listeners.OnInstantTx!=nil{
-				p.cfg.Listeners.OnInstantTx(p,msg)
+			if p.cfg.Listeners.OnInstantTx != nil {
+				p.cfg.Listeners.OnInstantTx(p, msg)
 			}
 
 		case *wire.MsgInstantTxVote:
-			if p.cfg.Listeners.OnInstantTxVote!=nil{
-				p.cfg.Listeners.OnInstantTxVote(p,msg)
+			if p.cfg.Listeners.OnInstantTxVote != nil {
+				p.cfg.Listeners.OnInstantTxVote(p, msg)
 			}
 
 		case *wire.MsgBlock:
@@ -1577,12 +1598,11 @@ out:
 	close(p.inQuit)
 	log.Tracef("Peer input handler done for %s", p)
 }
+
 //KnownInverntory list
-func (p *Peer)KnownInventory() *list.List {
+func (p *Peer) KnownInventory() *list.List {
 	return p.knownInventory.invList
 }
-
-
 
 // queueHandler handles the queuing of outgoing data for the peer. This runs as
 // a muxer for various sources of input so we can ensure that server and peer
@@ -1623,8 +1643,8 @@ out:
 			//waiting = queuePacket(msg, pendingMsgs, waiting)
 			waiting = queuePacket(msg, &pendingMsgs, waiting)
 
-		// This channel is notified when a message has been sent across
-		// the network socket.
+			// This channel is notified when a message has been sent across
+			// the network socket.
 		case <-p.sendDoneQueue:
 			// No longer waiting if there are no more messages
 			// in the pending messages queue.
@@ -1656,7 +1676,7 @@ out:
 			// is no queued inventory.
 			// version is known if send queue has any entries.
 			if atomic.LoadInt32(&p.disconnect) != 0 ||
-				//invSendQueue.Len() == 0 {
+			//invSendQueue.Len() == 0 {
 				len(invSendQueue) == 0 {
 				continue
 			}
@@ -1703,7 +1723,7 @@ out:
 	// waiting for us.
 	//for e := pendingMsgs.Front(); e != nil; e = pendingMsgs.Front() {
 	//	val := pendingMsgs.Remove(e)
-		//msg := val.(outMsg)
+	//msg := val.(outMsg)
 	for _, msg := range pendingMsgs {
 		if msg.doneChan != nil {
 			msg.doneChan <- struct{}{}
@@ -1718,7 +1738,7 @@ cleanup:
 			}
 		case <-p.outputInvChan:
 			// Just drain channel
-		// sendDoneQueue is buffered so doesn't need draining.
+			// sendDoneQueue is buffered so doesn't need draining.
 		default:
 			break cleanup
 		}
@@ -1726,6 +1746,7 @@ cleanup:
 	close(p.queueQuit)
 	log.Tracef("Peer queue handler done for %s", p)
 }
+
 // shouldLogWriteError returns whether or not the passed error, which is
 // expected to have come from writing to the remote peer in the outHandler,
 // should be logged.
