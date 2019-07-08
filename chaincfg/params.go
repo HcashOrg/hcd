@@ -781,12 +781,12 @@ var SimNetParams = Params{
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
 	//TargetTimePerBlock:       time.Second * 10,
-	TargetTimePerBlock:       time.Second*1,
+	TargetTimePerBlock:       time.Second*2,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
 	//TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
-	TargetTimespan:           time.Second * 8, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 160, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.

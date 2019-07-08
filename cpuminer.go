@@ -351,7 +351,7 @@ out:
 
 		// This prevents you from causing memory exhaustion issues
 		// when mining aggressively in a simulation network.
-		if cfg.SimNet {
+		if cfg.SimNet && false {
 			if m.minedOnParents[template.Block.Header.PrevBlock] >=
 				maxSimnetToMine {
 				minrLog.Tracef("too many blocks mined on parent, stopping until there are enough votes on these to make a new block")

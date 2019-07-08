@@ -560,16 +560,19 @@ func (msg *MsgTx) Copy() *MsgTx {
 	return &newTx
 }
 
-func (msg *MsgTx) GetTxOutAmount() int64 {
+func (msg *MsgTx) GetTxAiFee(haveChange bool) int64 {
+	return msg.getAmountForFee(haveChange)/1000
+}
+
+func (msg *MsgTx) getAmountForFee(haveChange bool) int64 {
 	amount := int64(0)
-	amtMax := int64(0)
 	for i, txOut := range(msg.TxOut){
 		amount +=txOut.Value
-		if amtMax < txOut.Value && i > 0{
-			amtMax = txOut.Value
+		if haveChange && i == len(msg.TxOut) - 1{
+			amount -=txOut.Value
 		}
 	}
-	return amount - amtMax
+	return amount
 }
 
 // writeTxScriptsToMsgTx allocates the memory for variable length fields in a

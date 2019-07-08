@@ -1111,7 +1111,8 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 
 	if _, ok := txscript.IsInstantTx(msgTx); ok{
 		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
-			minFee += msgTx.GetTxOutAmount() / 1000
+			haveChange := mp.haveAiChange(tx)
+			minFee += msgTx.GetTxAiFee(haveChange)
 		}else{
 			return nil, fmt.Errorf("ai tx is refused for the insufficient block height")
 		}
@@ -1571,6 +1572,41 @@ func (mp *TxPool) MiningDescs() []*mining.TxDesc {
 	return descs
 }
 
+func (mp *TxPool) HaveAiChange(tx *hcutil.Tx) bool {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+	return mp.haveAiChange(tx)
+}
+
+func (mp *TxPool) haveAiChange(tx *hcutil.Tx) bool {
+	utxoView, err := mp.fetchInputUtxos(tx)
+	if err != nil {
+		return false
+	}
+
+	lenOut :=len(tx.MsgTx().TxOut)
+	var haveChange bool = false
+	if lenOut > 1 {
+		_, addr, _, _ := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, mp.cfg.ChainParams)
+		for _, txIn := range (tx.MsgTx().TxIn) {
+			utxoEntry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
+			if utxoEntry == nil {
+				return false
+			}
+			originTxIndex := txIn.PreviousOutPoint.Index
+			txInPkScript := utxoEntry.PkScriptByIndex(originTxIndex)
+			if txInPkScript != nil {
+				_, txInAddr,_,_:= txscript.ExtractPkScriptAddrs(0, txInPkScript, mp.cfg.ChainParams)
+
+				if txInAddr[0].String() == addr[0].String(){
+					haveChange = true
+					break;
+				}
+			}
+		}
+	}
+return haveChange
+}
 // RawMempoolVerbose returns all of the entries in the mempool filtered by the
 // provided stake type as a fully populated JSON result.  The filter type can be
 // nil in which case all transactions will be returned.
