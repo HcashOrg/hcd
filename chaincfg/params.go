@@ -786,7 +786,7 @@ var SimNetParams = Params{
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
 	//TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
-	TargetTimespan:           time.Second * 160, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 16, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.

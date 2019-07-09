@@ -1975,10 +1975,10 @@ mempoolLoop:
 		}
 		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok{
 			haveChange := mp.HaveAiChange(tx)
-			outAmount := tx.MsgTx().GetTxAiFee(haveChange)
-			totalAiFees += outAmount / 1000
-			totalFees += fee - outAmount / 1000
-			txFees = append(txFees, fee - outAmount / 1000)
+			aiFee := tx.MsgTx().GetTxAiFee(haveChange)
+			totalAiFees += aiFee
+			totalFees += fee - aiFee
+			txFees = append(txFees, fee - aiFee)
 		} else{
 			totalFees += fee
 			txFees = append(txFees, fee)

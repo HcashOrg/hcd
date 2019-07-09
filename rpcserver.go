@@ -2295,17 +2295,19 @@ func handleGetBlockSubsidy(s *rpcServer, cmd interface{}, closeChan <-chan struc
 
 	height := c.Height
 	voters := c.Voters
+	aiVoters := c.AiVoters
+
 
 	cache := s.chain.FetchSubsidyCache()
 	if cache == nil {
 		return nil, rpcInternalError("empty subsidy cache", "")
 	}
 
-	dev := blockchain.CalcBlockTaxSubsidy(cache, height, voters,
+	dev := blockchain.CalcBlockTaxSubsidy(cache, height, voters + aiVoters,
 		s.server.chainParams)
 	pos := blockchain.CalcStakeVoteSubsidy(cache, height,
-		s.server.chainParams) * int64(voters)
-	pow := blockchain.CalcBlockWorkSubsidy(cache, height, voters,
+		s.server.chainParams) * int64(voters + aiVoters)
+	pow := blockchain.CalcBlockWorkSubsidy(cache, height, voters + aiVoters,
 		s.server.chainParams)
 	total := dev + pos + pow
 

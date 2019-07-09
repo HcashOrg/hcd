@@ -255,14 +255,14 @@ func InitDatabaseState(dbTx database.Tx, params *chaincfg.Params) (*Node, error)
 	}
 
 	// Write the new best state to the database.
-	nextWinners := make([]chainhash.Hash, int(genesis.params.TicketsPerBlock))
+	nextWinners := make([]chainhash.Hash, int(genesis.params.AiTicketsPerBlock))
 	err = ticketdb.DbPutBestState(dbTx, ticketdb.BestChainState{
 		Hash:        *params.GenesisHash,
 		Height:      genesis.height,
 		Live:        uint32(genesis.liveTickets.Len()),
 		Missed:      uint64(genesis.missedTickets.Len()),
 		Revoked:     uint64(genesis.revokedTickets.Len()),
-		PerBlock:    genesis.params.TicketsPerBlock,
+		PerBlock:    genesis.params.AiTicketsPerBlock,
 		NextWinners: nextWinners,
 	})
 	if err != nil {
@@ -285,67 +285,70 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 		return nil, err
 	}
 
+	var state ticketdb.BestChainState
+	if uint64(height) >= params.AIUpdateHeight{
 	// Compare the tip and make sure it matches.
-	state, err := ticketdb.DbFetchBestState(dbTx)
-	if err != nil {
-		return nil, err
-	}
+		state, err = ticketdb.DbFetchBestState(dbTx)
+		if err != nil {
+			return nil, err
+		}
 
-	if state.Hash != blockHash || state.Height != height {
-		return nil, stakeRuleError(ErrDatabaseCorrupt, "best state corruption")
+		if state.Hash != blockHash || state.Height != height {
+			return nil, stakeRuleError(ErrDatabaseCorrupt, "best state corruption")
+		}
 	}
-
 	// Restore the best node treaps form the database.
 	node := new(Node)
 	node.height = height
 	node.params = params
-	node.liveTickets, err = ticketdb.DbLoadAllTickets(dbTx,
-		dbnamespace.LiveTicketsBucketName)
-	if err != nil {
-		return nil, err
-	}
-	if node.liveTickets.Len() != int(state.Live) {
-		return nil, stakeRuleError(ErrDatabaseCorrupt,
-			fmt.Sprintf("live tickets corruption (got "+
-				"%v in state but loaded %v)", int(state.Live),
-				node.liveTickets.Len()))
-	}
-	node.missedTickets, err = ticketdb.DbLoadAllTickets(dbTx,
-		dbnamespace.MissedTicketsBucketName)
-	if err != nil {
-		return nil, err
-	}
-	if node.missedTickets.Len() != int(state.Missed) {
-		return nil, stakeRuleError(ErrDatabaseCorrupt,
-			fmt.Sprintf("missed tickets corruption (got "+
-				"%v in state but loaded %v)", int(state.Missed),
-				node.missedTickets.Len()))
-	}
-	node.revokedTickets, err = ticketdb.DbLoadAllTickets(dbTx,
-		dbnamespace.RevokedTicketsBucketName)
-	if err != nil {
-		return nil, err
-	}
-	if node.revokedTickets.Len() != int(state.Revoked) {
-		return nil, stakeRuleError(ErrDatabaseCorrupt,
-			fmt.Sprintf("revoked tickets corruption (got "+
-				"%v in state but loaded %v)", int(state.Revoked),
-				node.revokedTickets.Len()))
-	}
+	if uint64(height) >= params.AIUpdateHeight {
+		node.liveTickets, err = ticketdb.DbLoadAllTickets(dbTx,
+			dbnamespace.LiveTicketsBucketName)
+		if err != nil {
+			return nil, err
+		}
+		if node.liveTickets.Len() != int(state.Live) {
+			return nil, stakeRuleError(ErrDatabaseCorrupt,
+				fmt.Sprintf("live tickets corruption (got "+
+					"%v in state but loaded %v)", int(state.Live),
+					node.liveTickets.Len()))
+		}
+		node.missedTickets, err = ticketdb.DbLoadAllTickets(dbTx,
+			dbnamespace.MissedTicketsBucketName)
+		if err != nil {
+			return nil, err
+		}
+		if node.missedTickets.Len() != int(state.Missed) {
+			return nil, stakeRuleError(ErrDatabaseCorrupt,
+				fmt.Sprintf("missed tickets corruption (got "+
+					"%v in state but loaded %v)", int(state.Missed),
+					node.missedTickets.Len()))
+		}
+		node.revokedTickets, err = ticketdb.DbLoadAllTickets(dbTx,
+			dbnamespace.RevokedTicketsBucketName)
+		if err != nil {
+			return nil, err
+		}
+		if node.revokedTickets.Len() != int(state.Revoked) {
+			return nil, stakeRuleError(ErrDatabaseCorrupt,
+				fmt.Sprintf("revoked tickets corruption (got "+
+					"%v in state but loaded %v)", int(state.Revoked),
+					node.revokedTickets.Len()))
+		}
 
-	// Restore the node undo and new tickets data.
-	node.databaseUndoUpdate, err = ticketdb.DbFetchBlockUndoData(dbTx, height)
-	if err != nil {
-		return nil, err
-	}
-	node.databaseBlockTickets, err = ticketdb.DbFetchNewTickets(dbTx, height)
-	if err != nil {
-		return nil, err
-	}
+		// Restore the node undo and new tickets data.
+		node.databaseUndoUpdate, err = ticketdb.DbFetchBlockUndoData(dbTx, height)
+		if err != nil {
+			return nil, err
+		}
+		node.databaseBlockTickets, err = ticketdb.DbFetchNewTickets(dbTx, height)
+		if err != nil {
+			return nil, err
+		}
 
-	// Restore the next winners for the node.
-	node.nextWinners = make([]chainhash.Hash, 0)
-	if node.height >= uint32(node.params.AIStakeEnabledHeight-1) {
+		// Restore the next winners for the node.
+		node.nextWinners = make([]chainhash.Hash, 0)
+	//if node.height >= uint32(node.params.AIStakeEnabledHeight-1) {
 		node.nextWinners = make([]chainhash.Hash, len(state.NextWinners))
 		for i := range state.NextWinners {
 			node.nextWinners[i] = state.NextWinners[i]
@@ -372,8 +375,16 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 			stateBuffer = append(stateBuffer, lastHash[:]...)
 			copy(node.finalState[:], chainhash.HashB(stateBuffer)[0:6])
 		}
+		log.Infof("Stake database version %v loaded", info.Version)
+	}else{
+		node.liveTickets=          &tickettreap.Immutable{}
+		node.missedTickets=        &tickettreap.Immutable{}
+		node.revokedTickets=       &tickettreap.Immutable{}
+		node.databaseUndoUpdate=   make([]ticketdb.UndoTicketData, 0)
+		node.databaseBlockTickets= make(ticketdb.TicketHashes, 0)
+		node.nextWinners=          make([]chainhash.Hash, 0)
+		node.params=               params
 	}
-	log.Infof("Stake database version %v loaded", info.Version)
 	return node, nil
 }
 
