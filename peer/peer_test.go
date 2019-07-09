@@ -7,7 +7,6 @@
 package peer_test
 
 import (
-	"encoding/binary"
 	"errors"
 	"io"
 	"net"
@@ -16,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/go-socks/socks"
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/peer"
 	"github.com/HcashOrg/hcd/wire"
+	"github.com/btcsuite/go-socks/socks"
 )
 
 // conn mocks a network connection by implementing the net.Conn interface.  It
@@ -460,13 +459,6 @@ func TestPeerListeners(t *testing.T) {
 			wire.NewMsgTx(),
 		},
 		{
-			"OnBlock",
-			wire.NewMsgBlock(wire.NewBlockHeader(0, &chainhash.Hash{},
-				&chainhash.Hash{}, &chainhash.Hash{}, 1, [6]byte{},
-				1, 1, 1, 1, 1, 1, 1, 1, 1, [32]byte{},
-				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}))),
-		},
-		{
 			"OnInv",
 			wire.NewMsgInv(),
 		},
@@ -505,14 +497,6 @@ func TestPeerListeners(t *testing.T) {
 		{
 			"OnFilterLoad",
 			wire.NewMsgFilterLoad([]byte{0x01}, 10, 0, wire.BloomUpdateNone),
-		},
-		{
-			"OnMerkleBlock",
-			wire.NewMsgMerkleBlock(wire.NewBlockHeader(0,
-				&chainhash.Hash{}, &chainhash.Hash{},
-				&chainhash.Hash{}, 1, [6]byte{},
-				1, 1, 1, 1, 1, 1, 1, 1, 1, [32]byte{},
-				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}))),
 		},
 		// only one version message is allowed
 		// only one verack message is allowed

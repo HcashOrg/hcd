@@ -7,6 +7,7 @@
 package peer
 
 import (
+	"crypto/rand"
 	"fmt"
 	"testing"
 

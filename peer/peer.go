@@ -1338,7 +1338,7 @@ out:
 					continue
 				}
 
-				if command != wire.CmdMiningState||command!=wire.CmdLockPoolState {
+				if command != wire.CmdMiningState && command != wire.CmdLockPoolState {
 					log.Infof("Peer %s appears to be stalled or "+
 						"misbehaving, %s timeout -- "+
 						"disconnecting", p, command)

@@ -869,8 +869,6 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	}
 
 
-
-
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
 	instantTxs = append(instantTxs, instantTx)
