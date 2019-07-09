@@ -32,6 +32,6 @@ var BlockOneLedgerSimNet = []*TokenPayout{
 	{"Ssf3CjCEU28p8BNm2k53DqC2FZDJ6PdEHe8", 100000 * 1e8},
 	{"SsW6wQWN8wiVY4eqQY3sQi4Eu6kjTqmCH1q", 100000 * 1e8},
 }
-//var AIEnableHeightTestNet = uint64(370000)
+var AIEnableHeightMainNet = uint64(206666)
 var AIEnableHeightTestNet = uint64(366560)
 var AIEnableHeightSimNet = uint64(186)

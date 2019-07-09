@@ -32,6 +32,7 @@ import (
 // --> Total 180 bytes.
 //const MaxBlockHeaderPayloadAi = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8
 const HeaderLengthOffset = 64
+const MaxBlockHeaderPayloadOld = 84 + (chainhash.HashSize * 3)
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 6 + 2 + 1 + 1+ 4 + 8 + 32 + 6 + 4
 
 //const AI_UPDATE_HEIGHT = 186

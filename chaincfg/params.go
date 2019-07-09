@@ -571,10 +571,10 @@ var MainNetParams = Params{
 	TicketExpiry:            40960, // 5*TicketPoolSize
 
 	//ai PoS parameters
-	AiTicketPoolSize:          4096,//64 + 32,
+	AiTicketPoolSize:          820,//64 + 32,
 	AiTicketsPerBlock:         5,//5 + 5,
-	AiTicketMaturity:          512,
-	AiTicketExpiry:            40960, // 6*AiTicketPoolSize
+	AiTicketMaturity:          96,//4 h
+	AiTicketExpiry:            4100, // 6*AiTicketPoolSize
 
 	CoinbaseMaturity:        512,
 	SStxChangeMaturity:      1,
@@ -598,8 +598,8 @@ var MainNetParams = Params{
 	BlockOneLedger:              BlockOneLedgerMainNet,
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
 	OmniStartHeight:			 46000,
-	AIUpdateHeight:				363000,
-	AIStakeEnabledHeight:		288,
+	AIUpdateHeight:				 AIEnableHeightMainNet,
+	AIStakeEnabledHeight:		 AIEnableHeightMainNet + 1024,
 }
 
 // TestNet2Params defines the network parameters for the test currency network.

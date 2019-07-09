@@ -37,7 +37,7 @@ const (
 	// blockHdrSize is the size of a block header.  This is simply the
 	// constant from wire and is only provided here for convenience since
 	// wire.MaxBlockHeaderPayload is quite long.
-	blockHdrSize = wire.MaxBlockHeaderPayload
+//	blockHdrSize = wire.MaxBlockHeaderPayload
 
 	// blockHdrOffset defines the offsets into a block index row for the
 	// block header.
@@ -1266,7 +1266,12 @@ func (tx *transaction) FetchBlockHeader(hash *chainhash.Hash) ([]byte, error) {
 	// from there.
 	if idx, exists := tx.pendingBlocks[*hash]; exists {
 		blockBytes := tx.pendingBlockData[idx].bytes
-		return blockBytes[0:blockHdrSize:blockHdrSize], nil
+		if len(blockBytes) < wire.MaxBlockHeaderPayload{
+			return blockBytes[0:wire.MaxBlockHeaderPayloadOld:wire.MaxBlockHeaderPayloadOld], nil
+		}else{
+			return blockBytes[0:wire.MaxBlockHeaderPayload:wire.MaxBlockHeaderPayload], nil
+		}
+		//return blockBytes[0:blockHdrSize:blockHdrSize], nil
 	}
 
 	// Fetch the block index row and slice off the header.  Notice the use
@@ -1276,7 +1281,14 @@ func (tx *transaction) FetchBlockHeader(hash *chainhash.Hash) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	endOffset := blockLocSize + blockHdrSize
+	endOffset := blockLocSize + wire.MaxBlockHeaderPayload
+	if len(blockRow) < blockLocSize + wire.MaxBlockHeaderPayload{//old version
+		endOffset := blockLocSize + wire.MaxBlockHeaderPayloadOld
+		if len(blockRow) !=endOffset{
+			return nil, fmt.Errorf("blockRow data is error with length : %d, want %d", len(blockRow), endOffset)
+		}
+		return blockRow[blockLocSize:endOffset:endOffset], nil
+	}
 	return blockRow[blockLocSize:endOffset:endOffset], nil
 }
 
@@ -1315,7 +1327,15 @@ func (tx *transaction) FetchBlockHeaders(hashes []chainhash.Hash) ([][]byte, err
 		// bytes from there.
 		if idx, exists := tx.pendingBlocks[*hash]; exists {
 			blkBytes := tx.pendingBlockData[idx].bytes
-			headers[i] = blkBytes[0:blockHdrSize:blockHdrSize]
+			if len(blkBytes) < wire.MaxBlockHeaderPayload{
+				if len(blkBytes) != wire.MaxBlockHeaderPayloadOld{
+					return nil, fmt.Errorf("blkBytes is error with bad length %v", len(blkBytes))
+				}
+				headers[i] = blkBytes[0:wire.MaxBlockHeaderPayloadOld:wire.MaxBlockHeaderPayloadOld]
+			}else{
+				headers[i] = blkBytes[0: wire.MaxBlockHeaderPayload: wire.MaxBlockHeaderPayload]
+			}
+			//headers[i] = blkBytes[0:blockHdrSize:blockHdrSize]
 			continue
 		}
 
@@ -1326,8 +1346,18 @@ func (tx *transaction) FetchBlockHeaders(hashes []chainhash.Hash) ([][]byte, err
 		if err != nil {
 			return nil, err
 		}
-		endOffset := blockLocSize + blockHdrSize
-		headers[i] = blockRow[blockLocSize:endOffset:endOffset]
+		if len(blockRow) < wire.MaxBlockHeaderPayload{
+			endOffset := blockLocSize + wire.MaxBlockHeaderPayloadOld
+			if len(blockRow) !=  endOffset{
+				return nil, fmt.Errorf("blockRow has bad length with len: %d .", len(blockRow))
+			}
+			headers[i] = blockRow[blockLocSize:endOffset:endOffset]
+		}else{
+			endOffset := blockLocSize +  wire.MaxBlockHeaderPayload
+			headers[i] = blockRow[blockLocSize:endOffset:endOffset]
+		}
+		//endOffset := blockLocSize + blockHdrSize
+		//headers[i] = blockRow[blockLocSize:endOffset:endOffset]
 	}
 
 	return headers, nil
@@ -1660,15 +1690,28 @@ func (tx *transaction) close() {
 
 // serializeBlockRow serializes a block row into a format suitable for storage
 // into the block index.
-func serializeBlockRow(blockLoc blockLocation, blockHdr []byte) []byte {
+func serializeBlockRow(blockLoc blockLocation, blockHdr []byte, len uint64) []byte {
 	// The serialized block index row format is:
 	//
 	//  [0:blockLocSize]                          Block location
 	//  [blockLocSize:blockLocSize+blockHdrSize]  Block header
+	if len == wire.MaxBlockHeaderPayload{
+		serializedRow := make([]byte, blockLocSize+wire.MaxBlockHeaderPayload)
+		copy(serializedRow, serializeBlockLoc(blockLoc))
+		copy(serializedRow[blockHdrOffset:], blockHdr)
+		return serializedRow
+	}else{
+		serializedRow := make([]byte, blockLocSize+wire.MaxBlockHeaderPayload)
+		copy(serializedRow, serializeBlockLoc(blockLoc))
+		copy(serializedRow[blockHdrOffset:], blockHdr)
+		return serializedRow
+	}
+	/*
 	serializedRow := make([]byte, blockLocSize+blockHdrSize)
 	copy(serializedRow, serializeBlockLoc(blockLoc))
 	copy(serializedRow[blockHdrOffset:], blockHdr)
 	return serializedRow
+	*/
 }
 
 // writePendingAndCommit writes pending block data to the flat block files,
@@ -1708,6 +1751,30 @@ func (tx *transaction) writePendingAndCommit() error {
 		// includes the location information needed to locate the block
 		// on the filesystem as well as the block header since they are
 		// so commonly needed.
+		if len(blockData.bytes) < wire.MaxBlockHeaderPayload{
+			if len(blockData.bytes) != wire.MaxBlockHeaderPayloadOld{
+				fmt.Println("test len(blockData.bytes) %d", len(blockData.bytes))
+			}
+			blockHdr := blockData.bytes[0:wire.MaxBlockHeaderPayloadOld]
+			blockRow := serializeBlockRow(location, blockHdr, wire.MaxBlockHeaderPayloadOld)
+			err = tx.blockIdxBucket.Put(blockData.hash[:], blockRow)
+			if err != nil {
+				rollback()
+				return err
+			}
+		}else{
+			if len(blockData.bytes) != wire.MaxBlockHeaderPayload{
+				fmt.Println("test len(blockData.bytes) %d", len(blockData.bytes))
+			}
+			blockHdr := blockData.bytes[0:wire.MaxBlockHeaderPayload]
+			blockRow := serializeBlockRow(location, blockHdr, wire.MaxBlockHeaderPayload)
+			err = tx.blockIdxBucket.Put(blockData.hash[:], blockRow)
+			if err != nil {
+				rollback()
+				return err
+			}
+		}
+		/*
 		blockHdr := blockData.bytes[0:blockHdrSize]
 		blockRow := serializeBlockRow(location, blockHdr)
 		err = tx.blockIdxBucket.Put(blockData.hash[:], blockRow)
@@ -1715,6 +1782,7 @@ func (tx *transaction) writePendingAndCommit() error {
 			rollback()
 			return err
 		}
+		*/
 	}
 
 	// Update the metadata for the current write file and offset.
