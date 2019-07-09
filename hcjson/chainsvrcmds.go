@@ -210,8 +210,8 @@ func NewGetBlockHeaderCmd(hash string, verbose *bool) *GetBlockHeaderCmd {
 
 // GetBlockSubsidyCmd defines the getblocksubsidy JSON-RPC command.
 type GetBlockSubsidyCmd struct {
-	Height int64
-	Voters uint16
+	Height   int64
+	Voters   uint16
 	AiVoters uint16
 }
 
