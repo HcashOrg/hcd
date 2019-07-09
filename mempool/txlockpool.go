@@ -112,6 +112,13 @@ func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
 	return false
 }
 
+func (mp *TxPool)IsInstantTxExistAndVoted(hash *chainhash.Hash) bool {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+	return mp.isInstantTxExistAndVoted(hash)
+}
+
+
 //Is instant tx voted ?
 func (mp *TxPool) isInstantTxExistAndVoted(hash *chainhash.Hash) bool {
 	if desc, exists := mp.txLockPool[*hash]; exists && desc.Send {

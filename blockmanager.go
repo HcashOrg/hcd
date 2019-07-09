@@ -844,11 +844,33 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 	//TODO verify conflict with mempool
 	instantTx := instantTxMsg.tx
+	txHash := instantTx.Hash()
+
+	if _, exists := b.rejectedTxns[*txHash]; exists {
+		bmgrLog.Debugf("Ignoring unsolicited previously rejected "+
+			"transaction %v from %s", txHash, instantTxMsg.peer)
+		return
+	}
+
 	err := b.server.txMemPool.MayBeAddToLockPool(instantTx, true, false, false)
+
+
+	delete(instantTxMsg.peer.requestedInstantTxs, *txHash)
+	delete(b.requestedInstantTxs, *txHash)
+
 	if err != nil {
+		// Do not request this transaction again until a new block
+		// has been processed.
+		b.rejectedTxns[*txHash] = struct{}{}
+		b.limitMap(b.rejectedTxns, maxRejectedTxns)
+
 		bmgrLog.Errorf("instant tx %v not failed to add lockpool", instantTx.Hash())
 		return
 	}
+
+
+
+
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
 	instantTxs = append(instantTxs, instantTx)
@@ -2834,7 +2856,15 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 			continue
 		}
 
-		err := msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeInstantTx, instantTx))
+		entry, err := b.chain.FetchUtxoEntry(instantTx)
+		if err != nil {
+			return err
+		}
+		if entry != nil {
+			continue
+		}
+
+		err = msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeInstantTx, instantTx))
 		if err != nil {
 			return fmt.Errorf("unexpected error encountered building request "+
 				"for instanttx %v: %v",
