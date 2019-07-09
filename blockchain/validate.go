@@ -1029,7 +1029,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return err
 	}
 
-	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent)
+	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent, b.chainParams)
 	if err != nil {
 		return err
 	}
