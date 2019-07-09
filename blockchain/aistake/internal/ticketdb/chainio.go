@@ -23,7 +23,7 @@ const (
 
 	// currentDatabaseVersion indicates what the current database
 	// version is.
-	currentDatabaseVersion = 1
+	currentDatabaseVersion = 3
 )
 
 // Database structure -------------------------------------------------------------

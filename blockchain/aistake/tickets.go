@@ -288,7 +288,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 	var state ticketdb.BestChainState
 	if uint64(height) >= params.AIUpdateHeight{
 	// Compare the tip and make sure it matches.
-		state, err := ticketdb.DbFetchBestState(dbTx)
+		state, err = ticketdb.DbFetchBestState(dbTx)
 		if err != nil {
 			return nil, err
 		}
