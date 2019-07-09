@@ -55,7 +55,7 @@ const (
 
 	// currentDatabaseVersion indicates what the current database
 	// version is.
-	currentDatabaseVersion = 2
+	currentDatabaseVersion = 3
 )
 
 // errNotInMainChain signifies that a block hash or height that is not in the

@@ -278,7 +278,7 @@ func (b *BlockChain) lotteryDataForNode(node *blockNode) ([]chainhash.Hash, int,
 }
 
 func (b *BlockChain) lotteryAiDataForNode(node *blockNode) ([]chainhash.Hash, int, [6]byte, error) {
-	if node.height < b.chainParams.StakeEnabledHeight {
+	if uint64(node.height) < b.chainParams.AIStakeEnabledHeight {
 		return []chainhash.Hash{}, 0, [6]byte{}, nil
 	}
 	aiStakeNode, err := b.fetchAiStakeNode(node)
