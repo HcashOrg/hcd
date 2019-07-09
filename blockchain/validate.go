@@ -1196,17 +1196,16 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 				parentStakeNode.PoolSize())
 			return ruleError(ErrPoolSize, errStr)
 		}
-
-		// Check the ticket pool size.
-		if parentAiStakeNode.PoolSize() != aiPoolSize {
-			errStr := fmt.Sprintf("Error in stake consensus: the "+
-				"ai poolsize in block %v was %v, however we "+
-				"expected %v", node.hash, aiPoolSize,
-				parentAiStakeNode.PoolSize())
-			return ruleError(ErrPoolSize, errStr)
-		}
-
 		return nil
+	}
+
+	// Check the ticket pool size.
+	if uint64(block.Height()) >= b.chainParams.AIUpdateHeight && parentAiStakeNode.PoolSize() != aiPoolSize {
+		errStr := fmt.Sprintf("Error in stake consensus: the "+
+			"ai poolsize in block %v was %v, however we "+
+			"expected %v", node.hash, aiPoolSize,
+			parentAiStakeNode.PoolSize())
+		return ruleError(ErrPoolSize, errStr)
 	}
 
 	// -------------------------------------------------------------------

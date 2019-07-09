@@ -12,6 +12,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
+	"github.com/HcashOrg/hcd/wire"
 )
 
 // nodeAtHeightFromTopNode goes backwards through a node until it a reaches
@@ -272,6 +273,10 @@ func (b *BlockChain) fetchStakeNode(node *blockNode) (*stake.Node, error) {
 func (b *BlockChain) fetchAiStakeNode(node *blockNode) (*aistake.Node, error) {
 	// If we already have the stake node fetched, returned the cached result.
 	// Stake nodes are immutable.
+	if uint64(node.height) < wire.AI_UPDATE_HEIGHT{
+		return aistake.NullNode(), nil
+	}
+
 	if node.aistakeNode != nil {
 		return node.aistakeNode, nil
 	}
