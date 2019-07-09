@@ -217,10 +217,10 @@ type GetBlockSubsidyCmd struct {
 
 // NewGetBlockSubsidyCmd returns a new instance which can be used to issue a
 // getblocksubsidy JSON-RPC command.
-func NewGetBlockSubsidyCmd(height int64, voters uint16, aiVoters uint16) *GetBlockSubsidyCmd {
+func NewGetBlockSubsidyCmd(height int64, voters, aiVoters uint16) *GetBlockSubsidyCmd {
 	return &GetBlockSubsidyCmd{
-		Height:   height,
-		Voters:   voters,
+		Height: height,
+		Voters: voters,
 		AiVoters: aiVoters,
 	}
 }
@@ -391,9 +391,9 @@ func NewGetMempoolInfoCmd() *GetMempoolInfoCmd {
 	return &GetMempoolInfoCmd{}
 }
 
-type GetTxlockPoolInfoCmd struct{}
+type GetTxlockPoolInfoCmd struct {}
 
-func NewGetTxlockPoolInfoCmd() *GetTxlockPoolInfoCmd {
+func NewGetTxlockPoolInfoCmd()*GetTxlockPoolInfoCmd  {
 	return &GetTxlockPoolInfoCmd{}
 }
 
@@ -401,11 +401,12 @@ type FetchPendingLockTxCmd struct {
 	BehindNums int64 `json:"behind_nums"`
 }
 
-func NewFetchPendingLockTxCmd(behindNums int64) *FetchPendingLockTxCmd {
+func NewFetchPendingLockTxCmd(behindNums int64)*FetchPendingLockTxCmd  {
 	return &FetchPendingLockTxCmd{
-		BehindNums: behindNums,
+		BehindNums:behindNums,
 	}
 }
+
 
 // GetMiningInfoCmd defines the getmininginfo JSON-RPC command.
 type GetMiningInfoCmd struct{}
@@ -634,6 +635,7 @@ type SendRawTransactionCmd struct {
 	AllowHighFees *bool `jsonrpcdefault:"false"`
 }
 
+
 type SendInstantRawTransactionCmd struct {
 	HexTx         string
 	AllowHighFees *bool `jsonrpcdefault:"false"`
@@ -642,7 +644,6 @@ type SendInstantRawTransactionCmd struct {
 type SendInstantTxVoteCmd struct {
 	HexTxVote string
 }
-
 // NewSendRawTransactionCmd returns a new instance which can be used to issue a
 // sendrawtransaction JSON-RPC command.
 //
@@ -655,18 +656,21 @@ func NewSendRawTransactionCmd(hexTx string, allowHighFees *bool) *SendRawTransac
 	}
 }
 
-func NewSendInstantRawTransactionCmd(hexTx string, allowHighFees *bool) *SendInstantRawTransactionCmd {
+
+func NewSendInstantRawTransactionCmd(hexTx string, allowHighFees *bool) *SendInstantRawTransactionCmd{
 	return &SendInstantRawTransactionCmd{
 		HexTx:         hexTx,
 		AllowHighFees: allowHighFees,
 	}
 }
 
-func NewSendInstantTxVoteCmd(hexTx string) *SendInstantTxVoteCmd {
+
+func NewSendInstantTxVoteCmd(hexTx string) *SendInstantTxVoteCmd{
 	return &SendInstantTxVoteCmd{
-		HexTxVote: hexTx,
+		HexTxVote:         hexTx,
 	}
 }
+
 
 // SetGenerateCmd defines the setgenerate JSON-RPC command.
 type SetGenerateCmd struct {
@@ -811,8 +815,8 @@ func init() {
 	MustRegisterCmd("getheaders", (*GetHeadersCmd)(nil), flags)
 	MustRegisterCmd("getinfo", (*GetInfoCmd)(nil), flags)
 	MustRegisterCmd("getmempoolinfo", (*GetMempoolInfoCmd)(nil), flags)
-	MustRegisterCmd("gettxlockpoolinfo", (*GetTxlockPoolInfoCmd)(nil), flags)
-	MustRegisterCmd("fetchpendinglocktx", (*FetchPendingLockTxCmd)(nil), flags)
+	MustRegisterCmd("gettxlockpoolinfo",(*GetTxlockPoolInfoCmd)(nil),flags)
+	MustRegisterCmd("fetchpendinglocktx",(*FetchPendingLockTxCmd)(nil),flags)
 	MustRegisterCmd("getmininginfo", (*GetMiningInfoCmd)(nil), flags)
 	MustRegisterCmd("getnetworkinfo", (*GetNetworkInfoCmd)(nil), flags)
 	MustRegisterCmd("getnettotals", (*GetNetTotalsCmd)(nil), flags)
