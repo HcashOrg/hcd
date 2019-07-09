@@ -7,6 +7,8 @@
 package hcutil_test
 
 import (
+	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/HcashOrg/hcd/chaincfg"
@@ -16,6 +18,19 @@ import (
 
 //TestEncodeDecodeWIF tests encode and decode wallet import format
 func TestEncodeDecodeWIF(t *testing.T) {
+
+	priv := "ab9715425cb447f24dcd64df7099fea0dd41986fa917c569a255858dcbf26147"
+	buf,_ := hex.DecodeString(priv)
+	privKey, _ := chainec.Secp256k1.PrivKeyFromBytes(buf)
+	algType := chainec.ECTypeSecp256k1
+
+//	netIDTest := [2]byte{25,171}
+	wifTest, _ := NewWIF(privKey, &chaincfg.MainNetParams, algType)
+
+	fmt.Println(wifTest.String())
+	return
+
+
 	suites := []int{
 		chainec.ECTypeSecp256k1,
 		chainec.ECTypeEdwards,
