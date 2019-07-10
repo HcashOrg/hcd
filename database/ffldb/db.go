@@ -1751,10 +1751,12 @@ func (tx *transaction) writePendingAndCommit() error {
 		// includes the location information needed to locate the block
 		// on the filesystem as well as the block header since they are
 		// so commonly needed.
-		if len(blockData.bytes) < wire.MaxBlockHeaderPayload{
-			if len(blockData.bytes) != wire.MaxBlockHeaderPayloadOld{
-				fmt.Println("test len(blockData.bytes) %d", len(blockData.bytes))
-			}
+
+		height := byteOrder.Uint32(blockData.bytes[128:132])
+		if uint64(height) < wire.AI_UPDATE_HEIGHT{
+//			if len(blockData.bytes) != wire.MaxBlockHeaderPayloadOld{
+//				fmt.Println("test len(blockData.bytes) %d", len(blockData.bytes))
+//			}
 			blockHdr := blockData.bytes[0:wire.MaxBlockHeaderPayloadOld]
 			blockRow := serializeBlockRow(location, blockHdr, wire.MaxBlockHeaderPayloadOld)
 			err = tx.blockIdxBucket.Put(blockData.hash[:], blockRow)
@@ -1763,9 +1765,9 @@ func (tx *transaction) writePendingAndCommit() error {
 				return err
 			}
 		}else{
-			if len(blockData.bytes) != wire.MaxBlockHeaderPayload{
-				fmt.Println("test len(blockData.bytes) %d", len(blockData.bytes))
-			}
+//			if len(blockData.bytes) != wire.MaxBlockHeaderPayload{
+//				fmt.Println("test len(blockData.bytes) %d", len(blockData.bytes))
+//			}
 			blockHdr := blockData.bytes[0:wire.MaxBlockHeaderPayload]
 			blockRow := serializeBlockRow(location, blockHdr, wire.MaxBlockHeaderPayload)
 			err = tx.blockIdxBucket.Put(blockData.hash[:], blockRow)
