@@ -81,6 +81,7 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	defer mp.mtx.Unlock()
 
 	for hash, desc := range mp.txLockPool {
+		//rm confirmed mined tx
 		if desc.MineHeight != 0 && desc.MineHeight < height-defaultConfirmNum {
 			//remove vote index
 			for _, vote := range desc.Votes {
@@ -96,6 +97,25 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 			}
 		}
 
+		//rm unconfirmed unmined tx
+		if !desc.Send && desc.MineHeight == 0 && desc.AddHeight < height-defaultConfirmNum {
+			// remove from txlockpool,because havn`t be voted for a long time
+
+			//remove vote index
+			for _, vote := range desc.Votes {
+				delete(mp.instantTxVotes, *vote.Hash())
+			}
+
+			//remove instantTx
+			delete(mp.txLockPool, hash)
+
+			//remove tx output index
+			for _, txIn := range desc.Tx.MsgTx().TxIn {
+				delete(mp.lockOutpoints, txIn.PreviousOutPoint)
+			}
+
+		}
+
 	}
 }
 
@@ -106,18 +126,17 @@ func (mp *TxPool) IsInstantTxExist(hash *chainhash.Hash) bool {
 }
 
 func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
-	if _, exists := mp.txLockPool[*hash]; exists{
+	if _, exists := mp.txLockPool[*hash]; exists {
 		return true
 	}
 	return false
 }
 
-func (mp *TxPool)IsInstantTxExistAndVoted(hash *chainhash.Hash) bool {
+func (mp *TxPool) IsInstantTxExistAndVoted(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 	return mp.isInstantTxExistAndVoted(hash)
 }
-
 
 //Is instant tx voted ?
 func (mp *TxPool) isInstantTxExistAndVoted(hash *chainhash.Hash) bool {
@@ -176,6 +195,7 @@ func (mp *TxPool) fetchLockPoolState() ([]*chainhash.Hash, []*chainhash.Hash) {
 	return instantTxHashes, instantTxVoteHashes
 }
 
+//fetch confirmed unmined tx
 func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
@@ -184,31 +204,15 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 		behindNums = defaultBehindNums
 	}
 	bestHeight := mp.cfg.BestHeight()
-	minHeight := bestHeight - behindNums
+	minExpectHeight := bestHeight - behindNums
 
 	retMsgTx := make([][]byte, 0)
-	for hash, desc := range mp.txLockPool {
-		if desc.MineHeight == 0 && desc.AddHeight < minHeight {
-			if desc.Send { //voted but not be mine,it will be resend by wallet
-				bts, err := desc.Tx.MsgTx().Bytes()
-				if err == nil {
-					retMsgTx = append(retMsgTx, bts)
-				}
-			} else { // remove from txlockpool,because havn`t be voted for a long time
-
-				//remove vote index
-				for _, vote := range desc.Votes {
-					delete(mp.instantTxVotes, *vote.Hash())
-				}
-
-				//remove instantTx
-				delete(mp.txLockPool, hash)
-
-				//remove tx output index
-				for _, txIn := range desc.Tx.MsgTx().TxIn {
-					delete(mp.lockOutpoints, txIn.PreviousOutPoint)
-				}
-
+	for _, desc := range mp.txLockPool {
+		if desc.Send && desc.MineHeight == 0 && desc.AddHeight < minExpectHeight {
+			//voted but not be mine,it will be resend by wallet
+			bts, err := desc.Tx.MsgTx().Bytes()
+			if err == nil {
+				retMsgTx = append(retMsgTx, bts)
 			}
 		}
 
