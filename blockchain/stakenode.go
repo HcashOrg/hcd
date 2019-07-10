@@ -275,7 +275,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 	// If we already have the stake node fetched, returned the cached result.
 	// Stake nodes are immutable.
 	if uint64(node.height) < wire.AI_UPDATE_HEIGHT{
-		return aistake.NullNode(params), nil
+		return aistake.NullNode(params, uint32(node.height)), nil
 	}
 
 	if node.aistakeNode != nil {
@@ -394,7 +394,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 					return nil, err
 				}
 			}else{
-				n.aistakeNode = aistake.NullNode(b.chainParams)
+				n.aistakeNode = aistake.NullNode(b.chainParams, uint32(current.height))
 			}
 
 		}
