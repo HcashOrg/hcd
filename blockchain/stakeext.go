@@ -120,7 +120,9 @@ func (b *BlockChain) AiLiveTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
-
+	if sn == nil{
+		return []chainhash.Hash{}, nil
+	}
 	return sn.LiveTickets(), nil
 }
 
@@ -140,6 +142,9 @@ func (b *BlockChain) MissedAiTickets() ([]chainhash.Hash, error) {
 	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
 
+	if sn == nil{
+		return []chainhash.Hash{}, nil
+	}
 	return sn.MissedTickets(), nil
 }
 
@@ -197,7 +202,9 @@ func (b *BlockChain) CheckLiveAiTicket(hash chainhash.Hash) bool {
 	b.chainLock.RLock()
 	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
-
+	if sn == nil{
+		return false
+	}
 	return sn.ExistsLiveAiTicket(hash)
 }
 
@@ -224,6 +231,9 @@ func (b *BlockChain) CheckLiveAiTickets(hashes []chainhash.Hash) []bool {
 	b.chainLock.RUnlock()
 
 	existsSlice := make([]bool, len(hashes))
+	if sn == nil{
+		return existsSlice
+	}
 	for i := range hashes {
 		existsSlice[i] = sn.ExistsLiveTicket(hashes[i])
 	}
@@ -281,7 +291,7 @@ func (b *BlockChain) lotteryAiDataForNode(node *blockNode) ([]chainhash.Hash, in
 	if uint64(node.height) < b.chainParams.AIStakeEnabledHeight {
 		return []chainhash.Hash{}, 0, [6]byte{}, nil
 	}
-	aiStakeNode, err := b.fetchAiStakeNode(node)
+	aiStakeNode, err := b.fetchAiStakeNode(node, b.chainParams)
 	if err != nil {
 		return []chainhash.Hash{}, 0, [6]byte{}, err
 	}
@@ -303,7 +313,7 @@ func (b *BlockChain) lotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHas
 		}
 	}
 
-	aiStakeNode, err := b.fetchAiStakeNode(node)
+	aiStakeNode, err := b.fetchAiStakeNode(node, b.chainParams)
 	if err != nil {
 		return nil, err
 	}
@@ -334,6 +344,9 @@ func (b *BlockChain) CheckExpiredAiTickets(hashes []chainhash.Hash) []bool {
 	b.chainLock.RUnlock()
 
 	existsSlice := make([]bool, len(hashes))
+	if sn == nil{
+		return existsSlice
+	}
 	for i := range hashes {
 		existsSlice[i] = sn.ExistsExpiredTicket(hashes[i])
 	}

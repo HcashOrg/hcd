@@ -1280,7 +1280,7 @@ func (b *BlockChain) connectBlock(node *blockNode, block *hcutil.Block, view *Ut
 		return err
 	}
 
-	aistakeNode, err := b.fetchAiStakeNode(node)
+	aistakeNode, err := b.fetchAiStakeNode(node, b.chainParams)
 	if err != nil {
 		return err
 	}
@@ -1495,12 +1495,12 @@ func (b *BlockChain) disconnectBlock(node *blockNode, block *hcutil.Block, view 
 		return err
 	}
 
-	childAiStakeNode, err := b.fetchAiStakeNode(node)
+	childAiStakeNode, err := b.fetchAiStakeNode(node, b.chainParams)
 	if err != nil {
 		return err
 	}
 
-	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent)
+	parentAiStakeNode, err := b.fetchAiStakeNode(node.parent, b.chainParams)
 	if err != nil {
 		return err
 	}

@@ -294,7 +294,7 @@ func (b *BlockChain) maybeAcceptBlock(block *hcutil.Block, flags BehaviorFlags) 
 		if err != nil {
 			return false, err
 		}
-		newNode.aistakeNode, err = b.fetchAiStakeNode(newNode)
+		newNode.aistakeNode, err = b.fetchAiStakeNode(newNode, b.chainParams)
 		if err != nil {
 			return false, err
 		}

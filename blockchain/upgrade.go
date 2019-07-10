@@ -199,6 +199,9 @@ func (b *BlockChain) upgradeToVersion3() error {
 			progressLogger.LogBlockHeight(block.MsgBlock(), parent.MsgBlock())
 			parent = block
 		}
+		if uint64(best.Height) < b.chainParams.AIUpdateHeight {
+			b.bestNode.aistakeNode = aistake.NullNode( b.chainParams)
+		}
 
 		// Write the new database version.
 		b.dbInfo.version = 3
