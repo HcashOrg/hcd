@@ -303,6 +303,17 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 			}
 
 			return node.aistakeNode, nil
+		} else {
+			var err error
+			if node.newAiTickets == nil {
+				node.newAiTickets, err = b.fetchNewAiTicketsForNode(node)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			node.aistakeNode = aistake.NullNode(b.chainParams, uint32(node.height ))
+			return node.aistakeNode, nil
 		}
 	}
 
