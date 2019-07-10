@@ -44,13 +44,13 @@ type Node struct {
 	revokedTickets *tickettreap.Immutable
 
 	// liveTickets is the treap of the live tickets for this node.
-	aiLiveTickets *tickettreap.Immutable
+	//aiLiveTickets *tickettreap.Immutable
 
 	// missedTickets is the treap of missed tickets for this node.
-	aiMissedTickets *tickettreap.Immutable
+	//aiMissedTickets *tickettreap.Immutable
 
 	// revokedTickets is the treap of revoked tickets for this node.
-	aiRevokedTickets *tickettreap.Immutable
+	//aiRevokedTickets *tickettreap.Immutable
 
 	// databaseUndoUpdate is the cache of the database used to undo
 	// the current node's addition to the blockchain.
