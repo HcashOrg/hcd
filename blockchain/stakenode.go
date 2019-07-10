@@ -275,7 +275,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 	// If we already have the stake node fetched, returned the cached result.
 	// Stake nodes are immutable.
 	if uint64(node.height) < wire.AI_UPDATE_HEIGHT{
-		return aistake.NullNode(params), nil
+		return aistake.NullNode(params, uint32(node.height)), nil
 	}
 
 	if node.aistakeNode != nil {
@@ -303,6 +303,17 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 			}
 
 			return node.aistakeNode, nil
+		} else {
+			var err error
+			if node.newAiTickets == nil {
+				node.newAiTickets, err = b.fetchNewAiTicketsForNode(node)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			node.aistakeNode = aistake.NullNode(b.chainParams, uint32(node.height ))
+			return node.aistakeNode, nil
 		}
 	}
 
@@ -323,7 +334,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 	err = b.db.View(func(dbTx database.Tx) error {
 		for e := detachNodes.Front(); e != nil; e = e.Next() {
 			n := e.Value.(*blockNode)
-			if n.aistakeNode == nil {
+			if n.aistakeNode == nil  && uint64(current.height) >= wire.AI_UPDATE_HEIGHT{
 				var errLocal error
 				n.aistakeNode, errLocal =
 					current.aistakeNode.DisconnectNode(n.header,
@@ -344,7 +355,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 	// Detach the final block and get the filled in node for the fork
 	// point.
 	err = b.db.View(func(dbTx database.Tx) error {
-		if current.parent.aistakeNode == nil {
+		if current.parent.aistakeNode == nil  && uint64(current.height) >= wire.AI_UPDATE_HEIGHT{
 			var errLocal error
 			current.parent.aistakeNode, errLocal =
 				current.aistakeNode.DisconnectNode(current.parent.header,
@@ -387,11 +398,16 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 				}
 			}
 
-			n.aistakeNode, err = current.aistakeNode.ConnectNode(n.header,
-				n.aiTicketsSpent, n.aiTicketsRevoked, n.newAiTickets)
-			if err != nil {
-				return nil, err
+			if uint64(current.height) >= wire.AI_UPDATE_HEIGHT{
+				n.aistakeNode, err = current.aistakeNode.ConnectNode(n.header,
+					n.aiTicketsSpent, n.aiTicketsRevoked, n.newAiTickets)
+				if err != nil {
+					return nil, err
+				}
+			}else{
+				n.aistakeNode = aistake.NullNode(b.chainParams, uint32(current.height))
 			}
+
 		}
 
 		current = n

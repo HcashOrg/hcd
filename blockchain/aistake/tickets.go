@@ -1248,11 +1248,11 @@ func WriteDisconnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash
 
 }
 
-func NullNode(params *chaincfg.Params)  (*Node) {
+func NullNode(params *chaincfg.Params, h uint32)  (*Node) {
 	// Write the new block undo and new tickets data to the
 	// database for the genesis block.
 	return &Node{
-		height:               0,
+		height:               h,
 		liveTickets:          &tickettreap.Immutable{},
 		missedTickets:        &tickettreap.Immutable{},
 		revokedTickets:       &tickettreap.Immutable{},

@@ -200,7 +200,7 @@ func (b *BlockChain) upgradeToVersion3() error {
 			parent = block
 		}
 		if uint64(best.Height) < b.chainParams.AIUpdateHeight {
-			b.bestNode.aistakeNode = aistake.NullNode( b.chainParams)
+			b.bestNode.aistakeNode = aistake.NullNode( b.chainParams, uint32(best.Height))
 		}
 
 		// Write the new database version.
