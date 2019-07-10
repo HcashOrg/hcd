@@ -300,15 +300,14 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 	tx := instantTx.Tx
 	err := mp.checkTxWithLockPool(&tx)
 	if err != nil {
-		log.Error("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
+		log.Errorf("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
 			err)
 		return err
 	}
 	//check with mempool
 	_, err = mp.checkInstantTxWithMem(instantTx, isNew, rateLimit, allowHighFees)
 	if err != nil {
-		log.Error("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(),
-			err)
+		log.Errorf("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(), err)
 		return err
 	}
 
@@ -316,7 +315,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 	msgTx := instantTx.MsgTx()
 	_, isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
-		log.Error("Transaction %v is not instant instantTx ", instantTx.Hash())
+		log.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
 		return fmt.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
 	}
 	bestHeight := mp.cfg.BestHeight()

@@ -472,14 +472,14 @@ type gbtWorkState struct {
 	minTimestamp  time.Time
 	template      *BlockTemplate
 	notifyMap     map[chainhash.Hash]map[int64]chan struct{}
-	timeSource    blockchain.MedianTimeSource
+	timeSource blockchain.MedianTimeSource
 }
 
 // newGbtWorkState returns a new instance of a gbtWorkState with all internal
 // fields initialized and ready to use.
 func newGbtWorkState(timeSource blockchain.MedianTimeSource) *gbtWorkState {
 	return &gbtWorkState{
-		notifyMap:  make(map[chainhash.Hash]map[int64]chan struct{}),
+		notifyMap: make(map[chainhash.Hash]map[int64]chan struct{}),
 		timeSource: timeSource,
 	}
 }
@@ -2297,17 +2297,16 @@ func handleGetBlockSubsidy(s *rpcServer, cmd interface{}, closeChan <-chan struc
 	voters := c.Voters
 	aiVoters := c.AiVoters
 
-
 	cache := s.chain.FetchSubsidyCache()
 	if cache == nil {
 		return nil, rpcInternalError("empty subsidy cache", "")
 	}
 
-	dev := blockchain.CalcBlockTaxSubsidy(cache, height, voters + aiVoters,
+	dev := blockchain.CalcBlockTaxSubsidy(cache, height, voters+aiVoters,
 		s.server.chainParams)
 	pos := blockchain.CalcStakeVoteSubsidy(cache, height,
-		s.server.chainParams) * int64(voters + aiVoters)
-	pow := blockchain.CalcBlockWorkSubsidy(cache, height, voters + aiVoters,
+		s.server.chainParams) * int64(voters+aiVoters)
+	pow := blockchain.CalcBlockWorkSubsidy(cache, height, voters+aiVoters,
 		s.server.chainParams)
 	total := dev + pos + pow
 
@@ -2490,7 +2489,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 	if template == nil || state.prevHash == nil ||
 		!state.prevHash.IsEqual(latestHash) ||
 		(state.lastTxUpdate != lastTxUpdate &&
-			time.Now().After(state.lastGenerated.Add(time.Second*
+			time.Now().After(state.lastGenerated.Add(time.Second *
 				gbtRegenerateSeconds))) {
 
 		// Reset the previous best hash the block template was generated
@@ -5492,8 +5491,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	entry, err := s.chain.FetchUtxoEntry(&ticketHash)
 
 	if err != nil || entry == nil {
-		return nil, fmt.Errorf("failed to get  ticket fetchutxo  %v", ticketHash.String(),
-			err)
+		return nil, fmt.Errorf("failed to get ticket  %v utxoentry ,err %v", ticketHash.String(), err)
 	}
 
 	scriptVersion := entry.ScriptVersionByIndex(0)
@@ -5502,9 +5500,8 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
 		script, s.server.chainParams)
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to extractpkscript of ticket  %v", ticketHash.String(),
-			err)
+	if err != nil || len(addrs) == 0 {
+		return nil, fmt.Errorf("failed to extractpkscriptaddrs of ticket  %v , err %v", ticketHash.String(), err)
 	}
 
 	sigMsg := instantTxHash.String() + ticketHash.String()
@@ -5512,8 +5509,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	//verifymessage
 	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
 	if !verified {
-		return nil, fmt.Errorf("failed  verify signature ,instantvote %v: %v", instantTxvote.Hash(),
-			err)
+		return nil, fmt.Errorf("failed to verify signature ,instantvote %v , err %v", instantTxvote.Hash(), err)
 	}
 
 	//update lockpool
@@ -5521,8 +5517,8 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 
 		//check redundancy
 		for _, vote := range instantTxDesc.Votes {
-			if instantTxvote.Hash().IsEqual(vote.Hash()){
-				return nil,fmt.Errorf("redundancy vote &v",instantTxvote.Hash().String())
+			if instantTxvote.Hash().IsEqual(vote.Hash()) {
+				return nil, fmt.Errorf("redundancy vote %v", instantTxvote.Hash().String())
 			}
 		}
 
@@ -5547,7 +5543,6 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 
 	//notify wallet  vote info and rely to other peers
 	s.server.AnnounceNewInstantTxVote(instantTxvotes)
-
 
 	// Keep track of all the sendrawtransaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
@@ -5584,13 +5579,12 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 	tx := hcutil.NewTx(msgtx)
 
 	//check instantTx
-	if _,isInstantTx:=txscript.IsInstantTx(msgtx);isInstantTx{
-		existAndVoted:=s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash())
-		if !existAndVoted{
-			return handleSendInstantRawTransaction(s,cmd,closeChan)
+	if _, isInstantTx := txscript.IsInstantTx(msgtx); isInstantTx {
+		existAndVoted := s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash())
+		if !existAndVoted {
+			return handleSendInstantRawTransaction(s, cmd, closeChan)
 		}
 	}
-
 
 	acceptedTxs, err := s.server.blockManager.ProcessTransaction(tx, false,
 		false, allowHighFees)
