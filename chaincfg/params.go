@@ -574,7 +574,7 @@ var MainNetParams = Params{
 	AiTicketPoolSize:          820,//64 + 32,
 	AiTicketsPerBlock:         5,//5 + 5,
 	AiTicketMaturity:          96,//4 h
-	AiTicketExpiry:            4100, // 6*AiTicketPoolSize
+	AiTicketExpiry:            4100, // 5*AiTicketPoolSize
 
 	CoinbaseMaturity:        512,
 	SStxChangeMaturity:      1,
