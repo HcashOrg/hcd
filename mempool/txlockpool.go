@@ -260,6 +260,7 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, err
 	for _, tx := range block.Transactions() {
 		err := mp.checkTxWithLockPool(tx)
 		if err != nil {
+			log.Errorf("CheckBlkConflictWithTxLockPool failed , err: %v",err)
 			return false, err
 		}
 	}
@@ -270,8 +271,8 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, err
 func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
 	if !mp.isInstantTxExistAndVoted(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
-			if _, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
-				return fmt.Errorf("tx %v conflict with lock pool", tx.Hash())
+			if instantTx, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
+				return fmt.Errorf("tx %v is conflict with  instanttx %v in lock pool", tx.Hash(),instantTx.Hash())
 			}
 		}
 	}

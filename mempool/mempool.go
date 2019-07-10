@@ -1232,16 +1232,13 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 			}
 		}
 	}
-	//check double spend with tx in lockpool
-	//if common tx is conflict with txlockpool ,we will reject the common tx
-	if !mp.isInstantTxExistAndVoted(txHash) {
-		for _, txIn := range msgTx.TxIn {
-			if instx, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
-				return nil, fmt.Errorf("tx %v have same input with instant tx %v", txHash, instx.Hash())
-			}
-		}
-	}
 
+	//check double spend with tx in lockpool
+	//if common tx is conflict with txlockpool ,we will reject the common tx(include common tx and instanttx not confirmed)
+	err=mp.checkTxWithLockPool(tx)
+	if err!=nil{
+		return nil,err
+	}
 	// Add to transaction pool.
 	mp.addTransaction(utxoView, tx, txType, bestHeight, txFee)
 
