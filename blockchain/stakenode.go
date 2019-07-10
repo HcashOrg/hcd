@@ -303,7 +303,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 			}
 
 			return node.aistakeNode, nil
-		} else {
+		} else if uint64(node.height) == wire.AI_UPDATE_HEIGHT{
 			var err error
 			if node.newAiTickets == nil {
 				node.newAiTickets, err = b.fetchNewAiTicketsForNode(node)

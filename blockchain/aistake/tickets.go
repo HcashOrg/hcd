@@ -492,7 +492,7 @@ func connectNode(node *Node, header wire.BlockHeader, ticketsSpentInBlock, revok
 	// We only have to deal with vote-related issues and expiry after
 	// StakeEnabledHeight.
 	var err error
-	if connectedNode.height >= uint32(connectedNode.params.StakeEnabledHeight) {
+	if connectedNode.height >= uint32(connectedNode.params.AIStakeEnabledHeight) {
 		// Basic sanity check.
 		for i := range ticketsSpentInBlock {
 			if !hashInSlice(ticketsSpentInBlock[i], node.nextWinners) {
