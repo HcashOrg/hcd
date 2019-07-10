@@ -5406,7 +5406,7 @@ func handleSearchRawTransactions(s *rpcServer, cmd interface{}, closeChan <-chan
 
 func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendInstantRawTransactionCmd)
-	//allowHighFees := *c.AllowHighFees
+	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
 	if len(hexStr)%2 != 0 {
 		hexStr = "0" + hexStr
@@ -5425,7 +5425,7 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	instantTx := hcutil.NewInstantTx(msgtx)
 
 	//check conflict with mempool
-	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, false)
+	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, allowHighFees)
 	if err != nil || len(missedParent) != 0 {
 		return nil, err
 	}
@@ -5458,8 +5458,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	msgInstantTxVote := wire.NewMsgInstantTxVote()
 	err = msgInstantTxVote.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {
-		return nil, rpcDeserializationError("Could not decode instanttx vote: %v",
-			err)
+		return nil, rpcDeserializationError("Could not decode instanttx vote: %v", err)
 	}
 
 	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
@@ -5513,29 +5512,12 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	//update lockpool
-	if instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
-
-		//check redundancy
-		for _, vote := range instantTxDesc.Votes {
-			if instantTxvote.Hash().IsEqual(vote.Hash()) {
-				return nil, fmt.Errorf("redundancy vote %v", instantTxvote.Hash().String())
-			}
-		}
-
-		//update
-		if len(instantTxDesc.Votes) < 5 {
-			s.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxvote)
-		}
-		//notify wallet to resend
-		if len(instantTxDesc.Votes) > 2 && !instantTxDesc.Send {
-			instantTxDesc.Send = true
-			//notify wallet to resend normal tx
-			s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
-			//remove from rebroadcastInventory
-			//iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
-			//s.server.RemoveRebroadcastInventory(iv)
-
-		}
+	err,reSendToMemPool:=s.server.txMemPool.ProcessInstantTxVote(instantTxvote,&instantTxHash)
+	if err!=nil{
+		return nil,err
+	}
+	if reSendToMemPool{
+		s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 	}
 
 	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
