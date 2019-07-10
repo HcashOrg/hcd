@@ -323,7 +323,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 	err = b.db.View(func(dbTx database.Tx) error {
 		for e := detachNodes.Front(); e != nil; e = e.Next() {
 			n := e.Value.(*blockNode)
-			if n.aistakeNode == nil {
+			if n.aistakeNode == nil  && uint64(current.height) >= wire.AI_UPDATE_HEIGHT{
 				var errLocal error
 				n.aistakeNode, errLocal =
 					current.aistakeNode.DisconnectNode(n.header,
@@ -344,7 +344,7 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 	// Detach the final block and get the filled in node for the fork
 	// point.
 	err = b.db.View(func(dbTx database.Tx) error {
-		if current.parent.aistakeNode == nil {
+		if current.parent.aistakeNode == nil  && uint64(current.height) >= wire.AI_UPDATE_HEIGHT{
 			var errLocal error
 			current.parent.aistakeNode, errLocal =
 				current.aistakeNode.DisconnectNode(current.parent.header,
@@ -387,11 +387,16 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 				}
 			}
 
-			n.aistakeNode, err = current.aistakeNode.ConnectNode(n.header,
-				n.aiTicketsSpent, n.aiTicketsRevoked, n.newAiTickets)
-			if err != nil {
-				return nil, err
+			if uint64(current.height) >= wire.AI_UPDATE_HEIGHT{
+				n.aistakeNode, err = current.aistakeNode.ConnectNode(n.header,
+					n.aiTicketsSpent, n.aiTicketsRevoked, n.newAiTickets)
+				if err != nil {
+					return nil, err
+				}
+			}else{
+				n.aistakeNode = aistake.NullNode(b.chainParams)
 			}
+
 		}
 
 		current = n
