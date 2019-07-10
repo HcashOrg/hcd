@@ -121,7 +121,7 @@ func (b *BlockChain) AiLiveTickets() ([]chainhash.Hash, error) {
 	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
 	if sn == nil{
-		return nil, nil
+		return []chainhash.Hash{}, nil
 	}
 	return sn.LiveTickets(), nil
 }
@@ -143,7 +143,7 @@ func (b *BlockChain) MissedAiTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RUnlock()
 
 	if sn == nil{
-		return nil, nil
+		return []chainhash.Hash{}, nil
 	}
 	return sn.MissedTickets(), nil
 }
