@@ -936,28 +936,13 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	}
 
 	//update lockpool
-	if instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(&instantTxHash); exist {
-
-		//check redundancy
-		for _, vote := range instantTxDesc.Votes {
-			if instantTxVote.Hash().IsEqual(vote.Hash()) {
-				bmgrLog.Errorf("redundancy vote &v", instantTxVote.Hash().String())
-				return
-			}
-		}
-		//update
-		if len(instantTxDesc.Votes) < 5 {
-			b.server.txMemPool.AppendInstantTxVote(&instantTxHash, instantTxVote)
-		}
-		//notify wallet to resend
-		if len(instantTxDesc.Votes) >= 2 && !instantTxDesc.Send {
-			instantTxDesc.Send = true
-			//notify wallet to resend
-			b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
-			//remove from rebroadcastInventory
-			//iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
-			//b.server.RemoveRebroadcastInventory(iv)
-		}
+	err,reSendToMemPool:=b.server.txMemPool.ProcessInstantTxVote(instantTxVote,&instantTxHash)
+	if err!=nil{
+		bmgrLog.Error(err)
+		return
+	}
+	if reSendToMemPool{
+		b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 	}
 
 	instantTxVotes := make([]*hcutil.InstantTxVote, 0)

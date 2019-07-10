@@ -1224,7 +1224,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 		if _, isInstantTx := txscript.IsInstantTx(msgTx); isInstantTx {
 			//check exist and vote number
 			if desc, exist := mp.getInstantTxDesc(txHash); exist {
-				if !desc.Send {
+				if !desc.Confirm {
 					return nil, fmt.Errorf("instanttx %v too few votes", txHash)
 				}
 			} else {

@@ -25,7 +25,7 @@ type InstantTxDesc struct {
 	// pool.
 	AddHeight int64
 	Votes     []*hcutil.InstantTxVote
-	Send      bool
+	Confirm   bool
 
 	MineHeight int64 //
 }
@@ -64,6 +64,37 @@ func (mp *TxPool) GetInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, e
 	return mp.getInstantTxDesc(hash)
 }
 
+func (mp *TxPool) ProcessInstantTxVote(instantTxVote *hcutil.InstantTxVote, instantTxHash *chainhash.Hash)(error, bool) {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
+
+	return mp.processInstantTxVote(instantTxVote, instantTxHash)
+}
+
+func (mp *TxPool) processInstantTxVote(instantTxVote *hcutil.InstantTxVote, instantTxHash *chainhash.Hash) (error, bool) {
+	if instantTxDesc, exist := mp.getInstantTxDesc(instantTxHash); exist {
+		//check redundancy
+		for _, vote := range instantTxDesc.Votes {
+			if instantTxVote.Hash().IsEqual(vote.Hash()) {
+				return fmt.Errorf("redundancy vote %v", instantTxVote.Hash().String()), false
+			}
+		}
+		//update
+		if len(instantTxDesc.Votes) < 5 {
+			mp.appendInstantTxVote(instantTxHash, instantTxVote)
+		}
+		//notify wallet to resend
+		if len(instantTxDesc.Votes) > 2 && !instantTxDesc.Confirm {
+			instantTxDesc.Confirm = true
+			return nil, true
+		}
+		return nil, false
+	} else {
+		return fmt.Errorf("failed to process instantTxVote %v , instantTx %v not exist",
+			instantTxVote.Hash().String(), instantTxHash.String()), false
+	}
+}
+
 func (mp *TxPool) getInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, exist bool) {
 	desc, exist = mp.txLockPool[*hash]
 	return
@@ -98,7 +129,7 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 		}
 
 		//rm unconfirmed unmined tx
-		if !desc.Send && desc.MineHeight == 0 && desc.AddHeight < height-defaultConfirmNum {
+		if !desc.Confirm && desc.MineHeight == 0 && desc.AddHeight < height-defaultConfirmNum {
 			// remove from txlockpool,because havn`t be voted for a long time
 
 			//remove vote index
@@ -140,7 +171,7 @@ func (mp *TxPool) IsInstantTxExistAndVoted(hash *chainhash.Hash) bool {
 
 //Is instant tx voted ?
 func (mp *TxPool) isInstantTxExistAndVoted(hash *chainhash.Hash) bool {
-	if desc, exists := mp.txLockPool[*hash]; exists && desc.Send {
+	if desc, exists := mp.txLockPool[*hash]; exists && desc.Confirm {
 		return true
 	}
 	return false
@@ -166,7 +197,7 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 			votesHash = append(votesHash, vote.Hash().String()+"-"+vote.MsgInstantTxVote().TicketHash.String())
 		}
 
-		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight, Votes: votesHash, Send: desc.Send}
+		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight, Votes: votesHash, Send: desc.Confirm}
 	}
 
 	return ret
@@ -208,7 +239,7 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 
 	retMsgTx := make([][]byte, 0)
 	for _, desc := range mp.txLockPool {
-		if desc.Send && desc.MineHeight == 0 && desc.AddHeight < minExpectHeight {
+		if desc.Confirm && desc.MineHeight == 0 && desc.AddHeight < minExpectHeight {
 			//voted but not be mine,it will be resend by wallet
 			bts, err := desc.Tx.MsgTx().Bytes()
 			if err == nil {
@@ -300,15 +331,14 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 	tx := instantTx.Tx
 	err := mp.checkTxWithLockPool(&tx)
 	if err != nil {
-		log.Error("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
+		log.Errorf("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
 			err)
 		return err
 	}
 	//check with mempool
 	_, err = mp.checkInstantTxWithMem(instantTx, isNew, rateLimit, allowHighFees)
 	if err != nil {
-		log.Error("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(),
-			err)
+		log.Errorf("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(), err)
 		return err
 	}
 
@@ -316,7 +346,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 	msgTx := instantTx.MsgTx()
 	_, isInstantTx := txscript.IsInstantTx(msgTx)
 	if !isInstantTx {
-		log.Error("Transaction %v is not instant instantTx ", instantTx.Hash())
+		log.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
 		return fmt.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
 	}
 	bestHeight := mp.cfg.BestHeight()
@@ -324,7 +354,7 @@ func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLim
 		Tx:         instantTx,
 		AddHeight:  bestHeight,
 		MineHeight: 0,
-		Send:       false,
+		Confirm:    false,
 		Votes:      make([]*hcutil.InstantTxVote, 0, 5)}
 
 	for _, txIn := range msgTx.TxIn {
@@ -466,46 +496,22 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 			// Prevent a panic in the logger by continuing here if the
 			// transaction input is nil.
 			if utxoEntry == nil {
-				log.Tracef("instant Transaction %v uses unknown input %v "+
+				log.Debugf("instant Transaction %v uses unknown input %v "+
 					"and will be considered an orphan", txHash,
 					txIn.PreviousOutPoint.Hash)
 				continue
 			}
 			if utxoEntry.IsOutputSpent(originIndex) {
-				log.Tracef("instant Transaction %v uses full spent input %v", txHash,
+				log.Debugf("instant Transaction %v uses full spent input %v", txHash,
 					txIn.PreviousOutPoint.Hash)
 			}
 		}
 
-		//
-		//entry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
-		//if entry == nil || entry.IsFullySpent() {
-		//	// Must make a copy of the hash here since the iterator
-		//	// is replaced and taking its address directly would
-		//	// result in all of the entries pointing to the same
-		//	// memory location and thus all be the final hash.
-		//	hashCopy := txIn.PreviousOutPoint.Hash
-		//	missingParents = append(missingParents, &hashCopy)
-		//
-		//	// Prevent a panic in the logger by continuing here if the
-		//	// transaction input is nil.
-		//	if entry == nil {
-		//		log.Tracef("Transaction %v uses unknown input %v "+
-		//			"and will be considered an orphan", txHash,
-		//			txIn.PreviousOutPoint.Hash)
-		//		continue
-		//	}
-		//	if entry.IsFullySpent() {
-		//		log.Tracef("Transaction %v uses full spent input %v "+
-		//			"and will be considered an orphan", txHash,
-		//			txIn.PreviousOutPoint.Hash)
-		//	}
-		//}
 	}
 
 	//instant tx don`t allow missing parents
 	if len(missingParents) > 0 {
-		return missingParents, txRuleError(wire.RejectNonstandard, "instant transaction inputs have been fully spent")
+		return missingParents, txRuleError(wire.RejectNonstandard, "some of instant transaction inputs have been  spent")
 	}
 
 	// Don't allow the transaction into the mempool unless its sequence
