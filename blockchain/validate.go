@@ -2497,7 +2497,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 			var haveChange bool = false
 			if lenOut > 2 {
 				_, addr, _, err := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, b.chainParams)
-				if err == nil || len(addr) > 0 {
+				if err == nil && len(addr) > 0 {
 					for _, txIn := range (tx.MsgTx().TxIn) {
 						utxoEntry, exists := utxoView.entries[txIn.PreviousOutPoint.Hash]
 						if !exists || utxoEntry == nil {
