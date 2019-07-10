@@ -1505,6 +1505,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 	}
 
 	ticketMaturity := int64(chainParams.TicketMaturity)
+	aiTicketMaturity := int64(chainParams.AiTicketMaturity)
 	stakeEnabledHeight := chainParams.StakeEnabledHeight
 	txHash := tx.Hash()
 	var totalAtomIn int64
@@ -1743,12 +1744,20 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// NOTE: You can only spend an OP_SSTX tagged output on the
 		// block AFTER the entire range of ticketMaturity has passed,
 		// hence <= instead of <.
-		if blocksSincePrev <= ticketMaturity {
+		if blocksSincePrev <= ticketMaturity  && isSSGen{
 			errStr := fmt.Sprintf("tried to spend sstx output "+
 				"from transaction %v from height %v at height"+
 				" %v before required ticket maturity of %v+1 "+
 				"blocks", sstxHash, originHeight, txHeight,
 				ticketMaturity)
+			return 0, ruleError(ErrSStxInImmature, errStr)
+		}
+		if blocksSincePrev <= aiTicketMaturity  && isAiSSGen{
+			errStr := fmt.Sprintf("tried to spend sstx output "+
+				"from transaction %v from height %v at height"+
+				" %v before required ticket maturity of %v+1 "+
+				"blocks", sstxHash, originHeight, txHeight,
+				aiTicketMaturity)
 			return 0, ruleError(ErrSStxInImmature, errStr)
 		}
 	}
