@@ -326,6 +326,9 @@ func (b *BlockChain) fetchAiStakeNode(node *blockNode, params *chaincfg.Params) 
 		return nil, err
 	}
 	current := b.bestNode
+	if current.aistakeNode == nil {
+		current.aistakeNode = aistake.NullNode(b.chainParams, uint32(current.height))
+	}
 
 	// Move backwards through the main chain, undoing the ticket
 	// treaps for each block.  The database is passed because the
