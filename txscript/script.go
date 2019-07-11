@@ -91,7 +91,7 @@ func IsPushOnlyScript(script []byte) bool {
 // HasP2SHScriptSigStakeOpCodes returns an error is the p2sh script has either
 // stake opcodes or if the pkscript cannot be retrieved.
 func HasP2SHScriptSigStakeOpCodes(version uint16, scriptSig,
-	scriptPubKey []byte) error {
+scriptPubKey []byte) error {
 	class := GetScriptClass(version, scriptPubKey)
 	if IsStakeOutput(scriptPubKey) {
 		class, _ = GetStakeOutSubclass(scriptPubKey)
@@ -149,7 +149,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 		case op.length == 1:
 			i++
 
-		// Data pushes of specific lengths -- OP_DATA_[1-75].
+			// Data pushes of specific lengths -- OP_DATA_[1-75].
 		case op.length > 1:
 			if len(script[i:]) < op.length {
 				return retScript, ErrStackShortScript
@@ -159,7 +159,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 			pop.data = script[i+1 : i+op.length]
 			i += op.length
 
-		// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
+			// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
 		case op.length < 0:
 			var l uint
 			off := i + 1
@@ -226,7 +226,7 @@ func parseScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode,
 		case op.length == 1:
 			i++
 
-		// Data pushes of specific lengths -- OP_DATA_[1-75].
+			// Data pushes of specific lengths -- OP_DATA_[1-75].
 		case op.length > 1:
 			if len(script[i:]) < op.length {
 				return retScript, ErrStackShortScript
@@ -236,7 +236,7 @@ func parseScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode,
 			pop.data = script[i+1 : i+op.length]
 			i += op.length
 
-		// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
+			// Data pushes with parsed lengths -- OP_PUSHDATAP{1,2,4}.
 		case op.length < 0:
 			var l uint
 			off := i + 1

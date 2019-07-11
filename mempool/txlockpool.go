@@ -246,7 +246,6 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 				retMsgTx = append(retMsgTx, bts)
 			}
 		}
-
 	}
 
 	return retMsgTx

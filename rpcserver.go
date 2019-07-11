@@ -5622,14 +5622,6 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 
 	tx := hcutil.NewTx(msgtx)
 
-	//check instantTx
-	if _, isInstantTx := txscript.IsInstantTx(msgtx); isInstantTx {
-		existAndVoted := s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash())
-		if !existAndVoted {
-			return handleSendInstantRawTransaction(s, cmd, closeChan)
-		}
-	}
-
 	acceptedTxs, err := s.server.blockManager.ProcessTransaction(tx, false,
 		false, allowHighFees)
 	if err != nil {
