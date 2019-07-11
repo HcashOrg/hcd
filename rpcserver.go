@@ -5424,6 +5424,13 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 
 	instantTx := hcutil.NewInstantTx(msgtx)
 
+	//check lotteryHash
+	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
+	tickets, err := s.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
+	if err != nil || len(tickets) < 3 {
+		return nil, fmt.Errorf("faield to lottery ticket use lottery hash %v ,err %v",lotteryHash.String(),err)
+	}
+
 	//check conflict with mempool
 	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, allowHighFees)
 	if err != nil || len(missedParent) != 0 {
@@ -5512,11 +5519,11 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 	}
 
 	//update lockpool
-	err,reSendToMemPool:=s.server.txMemPool.ProcessInstantTxVote(instantTxvote,&instantTxHash)
-	if err!=nil{
-		return nil,err
+	err, reSendToMemPool := s.server.txMemPool.ProcessInstantTxVote(instantTxvote, &instantTxHash)
+	if err != nil {
+		return nil, err
 	}
-	if reSendToMemPool{
+	if reSendToMemPool {
 		s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 	}
 
