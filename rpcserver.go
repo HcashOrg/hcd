@@ -5459,6 +5459,11 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	c := cmd.(*hcjson.SendInstantRawTransactionCmd)
 	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
+
+	return sendAiRawTransaction(s, hexStr, allowHighFees)
+}
+
+func sendAiRawTransaction(s *rpcServer, hexStr string, allowHighFees bool) (interface{}, error) {
 	if len(hexStr)%2 != 0 {
 		hexStr = "0" + hexStr
 	}
@@ -5503,6 +5508,7 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 
 	return instantTx.Hash().String(), nil
 }
+
 
 func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendInstantTxVoteCmd)
@@ -5629,7 +5635,7 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 	if _, isInstantTx := txscript.IsInstantTx(msgtx); isInstantTx {
 		existAndVoted := s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash())
 		if !existAndVoted {
-			return handleSendInstantRawTransaction(s, cmd, closeChan)
+			return sendAiRawTransaction(s, hexStr, allowHighFees)
 		}
 	}
 
