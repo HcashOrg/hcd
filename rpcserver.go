@@ -3869,6 +3869,57 @@ func handleGetRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan str
 	return *rawTxn, nil
 }
 
+func fetchTxInfo(s *rpcServer, txHash *chainhash.Hash) (*wire.MsgTx, error) {
+	// Try to fetch the transaction from the memory pool and if that fails,
+	// try the block database.
+	var mtx *wire.MsgTx
+
+	tx, err := s.server.txMemPool.FetchTransaction(txHash, true)
+	if err != nil {
+		txIndex := s.server.txIndex
+		if txIndex == nil {
+			return nil, rpcInternalError("The transaction index "+
+				"must be enabled to query the blockchain "+
+				"(specify --txindex)", "Configuration")
+		}
+
+		// Look up the location of the transaction.
+		blockRegion, err := txIndex.TxBlockRegion(*txHash)
+		if err != nil {
+			context := "Failed to retrieve transaction location"
+			return nil, rpcInternalError(err.Error(), context)
+		}
+		if blockRegion == nil {
+			return nil, rpcNoTxInfoError(txHash)
+		}
+
+		// Load the raw transaction bytes from the database.
+		var txBytes []byte
+		err = s.server.db.View(func(dbTx database.Tx) error {
+			var err error
+			txBytes, err = dbTx.FetchBlockRegion(blockRegion)
+			return err
+		})
+		if err != nil {
+			return nil, rpcNoTxInfoError(txHash)
+		}
+
+		// Deserialize the transaction
+		var msgTx wire.MsgTx
+		err = msgTx.Deserialize(bytes.NewReader(txBytes))
+		if err != nil {
+			context := "Failed to deserialize transaction"
+			return nil, rpcInternalError(err.Error(), context)
+		}
+		mtx = &msgTx
+	} else {
+
+		mtx = tx.MsgTx()
+	}
+
+	return mtx, nil
+}
+
 // handleGetStakeDifficulty implements the getstakedifficulty command.
 func handleGetStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	best := s.chain.BestSnapshot()
@@ -5428,7 +5479,7 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
 	tickets, err := s.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
 	if err != nil || len(tickets) < 3 {
-		return nil, fmt.Errorf("faield to lottery ticket use lottery hash %v ,err %v",lotteryHash.String(),err)
+		return nil, fmt.Errorf("faield to lottery ticket use lottery hash %v ,err %v", lotteryHash.String(), err)
 	}
 
 	//check conflict with mempool
@@ -5492,19 +5543,23 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 			err)
 	}
 
-	//check signature
-	//get address
-	entry, err := s.chain.FetchUtxoEntry(&ticketHash)
-
-	if err != nil || entry == nil {
-		return nil, fmt.Errorf("failed to get ticket  %v utxoentry ,err %v", ticketHash.String(), err)
+	ticketTx, err := fetchTxInfo(s, &ticketHash)
+	if err != nil || ticketTx == nil {
+		return nil, fmt.Errorf("failed to get ticketTx  %v ,err: %v", ticketHash.String(), err)
+	}
+	if ok, err := stake.IsAiSStx(ticketTx); !ok {
+		return nil, err
 	}
 
-	scriptVersion := entry.ScriptVersionByIndex(0)
-	pkScript := entry.PkScriptByIndex(0)
-	script := pkScript
-	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
-		script, s.server.chainParams)
+	ticketOutPuts := ticketTx.TxOut
+	if len(ticketOutPuts) == 0 {
+		return nil, fmt.Errorf("ticketTx  %v output number is zero", ticketHash.String())
+	}
+	version := ticketOutPuts[0].Version
+	pkScript := ticketOutPuts[0].PkScript
+
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(version,
+		pkScript, s.server.chainParams)
 
 	if err != nil || len(addrs) == 0 {
 		return nil, fmt.Errorf("failed to extractpkscriptaddrs of ticket  %v , err %v", ticketHash.String(), err)

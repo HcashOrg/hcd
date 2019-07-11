@@ -58,7 +58,7 @@ const (
 	defaultMaxOrphanTransactions = 1000
 	defaultMaxOrphanTxSize       = 5000
 	defaultSigCacheMaxSize       = 100000
-	defaultTxIndex               = false
+	defaultTxIndex               = true
 	defaultNoExistsAddrIndex     = false
 )
 

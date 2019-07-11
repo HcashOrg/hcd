@@ -854,7 +854,6 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 
 	err := b.server.txMemPool.MayBeAddToLockPool(instantTx, true, false, false)
 
-
 	delete(instantTxMsg.peer.requestedInstantTxs, *txHash)
 	delete(b.requestedInstantTxs, *txHash)
 
@@ -867,7 +866,6 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 		bmgrLog.Errorf("instant tx %v not failed to add lockpool", instantTx.Hash())
 		return
 	}
-
 
 	instantTxs := make([]*hcutil.InstantTx, 0)
 
@@ -906,22 +904,31 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 		return
 	}
 
-	//check signature
-	//get address
-	entry, err := b.chain.FetchUtxoEntry(&ticketHash)
 
-	if err != nil || entry == nil {
-		bmgrLog.Errorf("failed to fetch utxo  %v,err %v", ticketHash.String(), err)
+
+	ticketTx, err := fetchTxInfo(b.server.rpcServer, &ticketHash)
+	if err != nil || ticketTx == nil {
+		bmgrLog.Errorf("failed to get ticketTx  %v ,err: %v", ticketHash.String(), err)
 		return
 	}
 
-	scriptVersion := entry.ScriptVersionByIndex(0)
-	pkScript := entry.PkScriptByIndex(0)
-	script := pkScript
-	_, addrs, _, err := txscript.ExtractPkScriptAddrs(scriptVersion,
-		script, b.server.chainParams)
+	if ok, err := stake.IsAiSStx(ticketTx); !ok {
+		bmgrLog.Errorf("ticketTx %v is not aisstx,err %v", ticketHash.String(), err)
+		return
+	}
 
-	if err != nil {
+	ticketOutPuts := ticketTx.TxOut
+	if len(ticketOutPuts) == 0 {
+		bmgrLog.Errorf("ticketTx  %v output number is zero", ticketHash.String())
+		return
+	}
+	version := ticketOutPuts[0].Version
+	pkScript := ticketOutPuts[0].PkScript
+
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(version,
+		pkScript, b.server.chainParams)
+
+	if err != nil || len(addrs) == 0 {
 		bmgrLog.Errorf("failed to extractpkscript of ticket  %v,err %v", ticketHash.String(), err)
 		return
 	}
@@ -936,12 +943,12 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 	}
 
 	//update lockpool
-	err,reSendToMemPool:=b.server.txMemPool.ProcessInstantTxVote(instantTxVote,&instantTxHash)
-	if err!=nil{
+	err, reSendToMemPool := b.server.txMemPool.ProcessInstantTxVote(instantTxVote, &instantTxHash)
+	if err != nil {
 		bmgrLog.Error(err)
 		return
 	}
-	if reSendToMemPool{
+	if reSendToMemPool {
 		b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
 	}
 
@@ -1717,7 +1724,7 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
 	case wire.InvTypeInstantTxVote:
-		fmt.Println("8888888888888888888", invVect.Hash)
+		bmgrLog.Debugf("fetch invTypeInstantTxVote  %v", invVect.Hash)
 		_, err := b.server.txMemPool.FetchInstantTxVote(&invVect.Hash)
 		if err != nil {
 			return false, nil
@@ -2384,7 +2391,6 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 						BlockHeight: block.Height(),
 						Tickets:     wt,
 					}
-
 
 					//check conflict with txlockpool , if this block is conflict ,do not notify winningTickets to wallet
 					ok, _ := b.server.txMemPool.CheckBlkConflictWithTxLockPool(block)
