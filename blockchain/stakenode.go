@@ -113,7 +113,7 @@ func (b *BlockChain) fetchNewAiTicketsForNode(node *blockNode) ([]chainhash.Hash
 	// Calculate block number for where new tickets matured from and retrieve
 	// this block from DB or in memory if it's a sidechain.
 	matureNode, err := b.nodeAtHeightFromTopNode(node,
-		int64(b.chainParams.TicketMaturity))
+		int64(b.chainParams.AiTicketMaturity))
 	if err != nil {
 		return nil, err
 	}

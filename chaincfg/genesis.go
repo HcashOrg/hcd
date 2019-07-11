@@ -88,6 +88,7 @@ var genesisMerkleRoot = genesisCoinbaseTx.TxHashFull()
 //
 // The genesis block is valid by definition and none of the fields within
 // it are validated for correctness.
+/*
 var genesisBlock = wire.MsgBlock{
 	Header: wire.BlockHeader{
 		Version:      1,
@@ -96,6 +97,23 @@ var genesisBlock = wire.MsgBlock{
 		StakeRoot:    chainhash.Hash{},
 		Timestamp:    time.Unix(1533635700, 0), // Changed for dev use
 		Bits:         0x1b01ffff,               // Difficulty 32767
+		SBits:        2 * 1e8,                  // 2 Coin
+		AiSBits:        0,                  // 2 Coin
+		Nonce:        0x00000000,
+		StakeVersion: 0,
+	},
+	Transactions: []*wire.MsgTx{&genesisCoinbaseTx},
+}
+*/
+
+var genesisBlock = wire.MsgBlock{
+	Header: wire.BlockHeader{
+		Version:      1,
+		PrevBlock:    chainhash.Hash{},
+		MerkleRoot:   genesisMerkleRoot,
+		StakeRoot:    chainhash.Hash{},
+		Timestamp:    time.Unix(1533635700, 0), // Changed for dev use
+		Bits:         0x1f00ffff,               // Difficulty 32767
 		SBits:        2 * 1e8,                  // 2 Coin
 		AiSBits:        0,                  // 2 Coin
 		Nonce:        0x00000000,
