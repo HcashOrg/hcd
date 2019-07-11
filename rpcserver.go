@@ -5476,18 +5476,21 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	instantTx := hcutil.NewInstantTx(msgtx)
 
 	//check lotteryHash
-	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
+	lotteryHash, ok := txscript.IsInstantTx(instantTx.MsgTx())
+	if !ok || lotteryHash == nil{
+		return nil, fmt.Errorf("ai tx error")
+	}
 	tickets, err := s.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
 	if err != nil || len(tickets) < 3 {
 		return nil, fmt.Errorf("faield to lottery ticket use lottery hash %v ,err %v", lotteryHash.String(), err)
 	}
 
 	//check conflict with mempool
+
 	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, allowHighFees)
 	if err != nil || len(missedParent) != 0 {
 		return nil, err
 	}
-
 	instantTxs := make([]*hcutil.InstantTx, 0)
 	instantTxs = append(instantTxs, instantTx)
 
