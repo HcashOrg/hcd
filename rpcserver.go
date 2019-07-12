@@ -5466,8 +5466,14 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	if err != nil {
 		return nil, rpcDecodeHexError(hexStr)
 	}
+
+	return handleInstantTransaction(s,closeChan,serializedTx,allowHighFees)
+
+}
+
+func handleInstantTransaction(s *rpcServer, closeChan <-chan struct{},serializedTx []byte,allowHighFees bool)(interface{}, error){
 	msgtx := wire.NewMsgInstantTx()
-	err = msgtx.Deserialize(bytes.NewReader(serializedTx))
+	err := msgtx.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {
 		return nil, rpcDeserializationError("Could not decode instant Tx: %v",
 			err)
@@ -5499,7 +5505,10 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	s.server.AddRebroadcastInventory(iv, instantTx)
 
 	return instantTx.Hash().String(), nil
+
 }
+
+
 
 func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendInstantTxVoteCmd)
@@ -5621,6 +5630,14 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 	}
 
 	tx := hcutil.NewTx(msgtx)
+
+
+	//check instant
+	if _,isInstant:=txscript.IsInstantTx(msgtx);isInstant{
+		if !s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash()){
+			return handleInstantTransaction(s,closeChan,serializedTx,allowHighFees)
+		}
+	}
 
 	acceptedTxs, err := s.server.blockManager.ProcessTransaction(tx, false,
 		false, allowHighFees)
