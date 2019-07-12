@@ -602,6 +602,16 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	serializedSize := int64(msgTx.SerializeSize())
 	minFee := calcMinRequiredTxRelayFee(serializedSize,
 		mp.cfg.Policy.MinRelayTxFee)
+
+	if _, ok := txscript.IsInstantTx(msgTx); ok{
+		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
+			haveChange := mp.haveAiChange(tx)
+			minFee += msgTx.GetTxAiFee(haveChange)
+		}else{
+			return nil, fmt.Errorf("ai tx is refused for the insufficient block height")
+		}
+	}
+
 	if txType == stake.TxTypeRegular { // Non-stake only
 		if serializedSize >= (DefaultBlockPrioritySize-1000) &&
 			txFee < minFee {
@@ -662,6 +672,16 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	if !allowHighFees {
 		maxFee := calcMinRequiredTxRelayFee(serializedSize*maxRelayFeeMultiplier,
 			mp.cfg.Policy.MinRelayTxFee)
+
+		if _, ok := txscript.IsInstantTx(msgTx); ok{
+			if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
+				haveChange := mp.haveAiChange(tx)
+				maxFee += msgTx.GetTxAiFee(haveChange)
+			}else{
+				return nil, fmt.Errorf("ai tx is refused for the insufficient block height")
+			}
+		}
+
 		if txFee > maxFee {
 			err = fmt.Errorf("transaction %v has %v fee which is above the "+
 				"allowHighFee check threshold amount of %v", txHash,
