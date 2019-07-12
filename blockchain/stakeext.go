@@ -7,6 +7,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/hcutil"
@@ -102,6 +103,9 @@ func (b *BlockChain) LotteryAiDataForTxAndBlock(txHash *chainhash.Hash, blockHas
 	b.chainLock.Lock()
 	defer b.chainLock.Unlock()
 
+	if txHash == nil || blockHash == nil {
+		return []chainhash.Hash{}, fmt.Errorf("hash is nil in LotteryAiDataForTxAndBlock")
+	}
 	return b.lotteryAiDataForTxAndBlock(txHash, blockHash)
 }
 

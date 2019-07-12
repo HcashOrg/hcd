@@ -5459,6 +5459,11 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 	c := cmd.(*hcjson.SendInstantRawTransactionCmd)
 	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
+
+	return sendAiRawTransaction(s, hexStr, allowHighFees)
+}
+
+func sendAiRawTransaction(s *rpcServer, hexStr string, allowHighFees bool) (interface{}, error) {
 	if len(hexStr)%2 != 0 {
 		hexStr = "0" + hexStr
 	}
@@ -5482,18 +5487,21 @@ func handleInstantTransaction(s *rpcServer, closeChan <-chan struct{},serialized
 	instantTx := hcutil.NewInstantTx(msgtx)
 
 	//check lotteryHash
-	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
+	lotteryHash, ok := txscript.IsInstantTx(instantTx.MsgTx())
+	if !ok || lotteryHash == nil{
+		return nil, fmt.Errorf("ai tx error")
+	}
 	tickets, err := s.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
 	if err != nil || len(tickets) < 3 {
 		return nil, fmt.Errorf("faield to lottery ticket use lottery hash %v ,err %v", lotteryHash.String(), err)
 	}
 
 	//check conflict with mempool
+
 	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, allowHighFees)
 	if err != nil || len(missedParent) != 0 {
 		return nil, err
 	}
-
 	instantTxs := make([]*hcutil.InstantTx, 0)
 	instantTxs = append(instantTxs, instantTx)
 
@@ -5508,8 +5516,13 @@ func handleInstantTransaction(s *rpcServer, closeChan <-chan struct{},serialized
 
 }
 
+<<<<<<< .mine
 
 
+=======
+
+
+>>>>>>> .theirs
 func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendInstantTxVoteCmd)
 
@@ -5631,11 +5644,11 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 
 	tx := hcutil.NewTx(msgtx)
 
-
-	//check instant
-	if _,isInstant:=txscript.IsInstantTx(msgtx);isInstant{
-		if !s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash()){
-			return handleInstantTransaction(s,closeChan,serializedTx,allowHighFees)
+	//check instantTx
+	if _, isInstantTx := txscript.IsInstantTx(msgtx); isInstantTx {
+		existAndVoted := s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash())
+		if !existAndVoted {
+			return sendAiRawTransaction(s, hexStr, allowHighFees)
 		}
 	}
 
