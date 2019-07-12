@@ -246,7 +246,6 @@ func (mp *TxPool) FetchPendingLockTx(behindNums int64) [][]byte {
 				retMsgTx = append(retMsgTx, bts)
 			}
 		}
-
 	}
 
 	return retMsgTx
@@ -268,6 +267,7 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, err
 }
 
 //check the input double spent
+//return nil if ( exist && voted ) || ( !exist && vin not exist)
 func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
 	if !mp.isInstantTxExistAndVoted(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
