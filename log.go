@@ -15,6 +15,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/indexers"
 	"github.com/HcashOrg/hcd/blockchain/stake"
+	"github.com/HcashOrg/hcd/blockchain/aistake"
 	"github.com/HcashOrg/hcd/connmgr"
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/mempool"
@@ -73,6 +74,7 @@ var (
 	scrpLog = backendLog.Logger("SCRP")
 	srvrLog = backendLog.Logger("SRVR")
 	stkeLog = backendLog.Logger("STKE")
+	aistkeLog = backendLog.Logger("AISTKE")
 	txmpLog = backendLog.Logger("TXMP")
 )
 
@@ -86,6 +88,7 @@ func init() {
 	peer.UseLogger(peerLog)
 	txscript.UseLogger(scrpLog)
 	stake.UseLogger(stkeLog)
+	aistake.UseLogger(aistkeLog)
 	mempool.UseLogger(txmpLog)
 }
 
@@ -106,6 +109,7 @@ var subsystemLoggers = map[string]btclog.Logger{
 	"SCRP": scrpLog,
 	"SRVR": srvrLog,
 	"STKE": stkeLog,
+	"AISTKE": aistkeLog,
 	"TXMP": txmpLog,
 }
 
