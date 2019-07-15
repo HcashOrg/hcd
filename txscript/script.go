@@ -326,7 +326,7 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 	*/
 }
 
-func HasAiTxTag(pkScript []byte) (*chainhash.Hash, bool) {
+func HaveAiTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 	pops, err := parseScript(pkScript)
 	if err != nil || len(pops) != 2 {
 		return nil, false
@@ -334,27 +334,22 @@ func HasAiTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if len(data) != 16+32 {
+	if len(data) != 11+32 {
 		return nil, false
 	}
 	//68636173  68496e73 74616e74 53656e64
 	if opCode == OP_RETURN &&
-		data[0] == 0x68 &&
-		data[1] == 0x63 &&
-		data[2] == 0x61 &&
-		data[3] == 0x73 &&
-		data[4] == 0x68 &&
-		data[5] == 0x49 &&
-		data[6] == 0x6e &&
-		data[7] == 0x73 &&
-		data[8] == 0x74 &&
-		data[9] == 0x61 &&
-		data[10] == 0x6e &&
-		data[11] == 0x74 &&
-		data[12] == 0x53 &&
-		data[13] == 0x65 &&
-		data[14] == 0x6e &&
-		data[15] == 0x64 {
+		data[0] == 0x68 && //h
+		data[1] == 0x63 && //c
+		data[2] == 0x61 && //a
+		data[3] == 0x73 && //s
+		data[4] == 0x68 && //h
+		data[5] == 0x41 && //A
+		data[6] == 0x69 && //i
+		data[7] == 0x53 && // S
+		data[8] == 0x65 && //e
+		data[9] == 0x6e &&
+		data[10] == 0x64 {
 
 		hashBytes := data[16:]
 		hash, err := chainhash.NewHash(hashBytes)
@@ -367,7 +362,7 @@ func HasAiTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 }
 func IsAiTx(msgTx *wire.MsgTx) (*chainhash.Hash, bool) {
 	for _, txOut := range msgTx.TxOut {
-		if hash, has := HasAiTxTag(txOut.PkScript); has {
+		if hash, has := HaveAiTxTag(txOut.PkScript); has {
 			return hash, true
 		}
 	}
