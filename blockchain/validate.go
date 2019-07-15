@@ -179,7 +179,6 @@ func IsFinalzedTransaction(tx *hcutil.Tx, blockHeight int64, blockTime time.Time
 	return true
 }
 
-
 // CheckTransactionSanity performs some preliminary checks on a transaction to
 // ensure it is sane.  These checks are context free.
 func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
@@ -332,7 +331,7 @@ func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 	for _, staketx := range block.STransactions() {
 		msgTx := staketx.MsgTx()
 		isAiSStx, _ := aistake.IsAiSStx(msgTx)
-		if is, _ := stake.IsSStx(msgTx); is || isAiSStx{
+		if is, _ := stake.IsSStx(msgTx); is || isAiSStx {
 			commitValue := msgTx.TxOut[0].Value
 
 			if isAiSStx {
@@ -355,7 +354,7 @@ func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 						posAiLimit)
 					return ruleError(ErrStakeBelowMinimum, errStr)
 				}
-			}else{
+			} else {
 				// Check for underflow block sbits.
 				if commitValue < msgBlock.Header.SBits {
 					errStr := fmt.Sprintf("Stake tx %v has a "+
@@ -597,7 +596,7 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		}
 	}
 
-		// A block must not contain more than the maximum allowed number of
+	// A block must not contain more than the maximum allowed number of
 	// revocations.
 	if totalRevocations > maxRevocationsPerBlock {
 		errStr := fmt.Sprintf("block contains %d revocations which "+
@@ -614,7 +613,6 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		return ruleError(ErrTooManyRevocations, errStr)
 	}
 
-
 	if totalTickets != int(block.MsgBlock().Header.FreshStake) {
 		errStr := fmt.Sprintf("%v tickets found in block, while "+
 			"header reports %v", totalTickets,
@@ -628,7 +626,6 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		return ruleError(ErrFreshStakeMismatch, errStr)
 	}
 
-
 	// Not enough voters on this block.
 	if block.Height() >= chainParams.StakeValidationHeight &&
 		totalVotes <= int(chainParams.TicketsPerBlock)/2 {
@@ -638,7 +635,7 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
 	// Not enough ai voters on this block.
-	if block.Height() >= int64(chainParams.AIStakeEnabledHeight)&&
+	if block.Height() >= int64(chainParams.AIStakeEnabledHeight) &&
 		totalAiVotes <= int(chainParams.AiTicketsPerBlock)/2 {
 		errStr := fmt.Sprintf("block contained too few ai votes! %v "+
 			"votes but %v or more required", totalAiVotes,
@@ -1046,7 +1043,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
 		isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx)
 
-		if isSSGen || isAiSSGen{
+		if isSSGen || isAiSSGen {
 			ssGens++
 		}
 
@@ -1059,7 +1056,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		if (isSSGen && (block.Height() < stakeEnabledHeight)) ||
 			(isSSRtx && (block.Height() < stakeEnabledHeight)) ||
 			(isAiSSGen && (block.Height() < stakeEnabledHeight)) ||
-			(isAiSSRtx && (block.Height() < stakeEnabledHeight)){
+			(isAiSSRtx && (block.Height() < stakeEnabledHeight)) {
 			errStr := fmt.Sprintf("block contained SSGen or SSRtx "+
 				"transaction at idx %v, which was before stake"+
 				" voting was enabled; block height %v, stake "+
@@ -1101,7 +1098,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			"for block node %v: %v", node.hash, err)
 		return ruleError(ErrUnexpectedDifficulty, errStr)
 	}
-	if block.MsgBlock().Header.AiSBits != calcAiSBits  && uint64(block.Height()) >= chainParams.AIUpdateHeight{
+	if block.MsgBlock().Header.AiSBits != calcAiSBits && uint64(block.Height()) >= chainParams.AIUpdateHeight {
 		errStr := fmt.Sprintf("block had unexpected ai stake difficulty "+
 			"(%v given, %v expected)",
 			block.MsgBlock().Header.AiSBits, calcAiSBits)
@@ -1124,7 +1121,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
 
-		if is, _ := stake.IsSStx(msgTx); is{
+		if is, _ := stake.IsSStx(msgTx); is {
 			numSStxTx++
 			// 1. Make sure that we're committing enough coins.
 			// Checked already when we check stake difficulty, so
@@ -1137,7 +1134,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 					"value %v", txHash, sbits)
 				return ruleError(ErrNotEnoughStake, errStr)
 			}
-		}else if is, _ := stake.IsAiSStx(msgTx); is{
+		} else if is, _ := stake.IsAiSStx(msgTx); is {
 			numAiSStxTx++
 			// 1. Make sure that we're committing enough coins.
 			// Checked already when we check stake difficulty, so
@@ -1219,7 +1216,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 			blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
-	if msgBlock.Header.AiVoters == 0 && uint64(msgBlock.Header.Height) >= b.chainParams.AIStakeEnabledHeight{
+	if msgBlock.Header.AiVoters == 0 && uint64(msgBlock.Header.Height) >= b.chainParams.AIStakeEnabledHeight {
 		errStr := fmt.Sprintf("Error: no ai voters in block %v",
 			blockHash)
 		return ruleError(ErrNotEnoughVotes, errStr)
@@ -1233,7 +1230,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return ruleError(ErrNotEnoughVotes, errStr)
 	}
 	majorityAi := (chainParams.AiTicketsPerBlock / 2) + 1
-	if msgBlock.Header.AiVoters < majorityAi && uint64(msgBlock.Header.Height) >= b.chainParams.AIStakeEnabledHeight{
+	if msgBlock.Header.AiVoters < majorityAi && uint64(msgBlock.Header.Height) >= b.chainParams.AIStakeEnabledHeight {
 		errStr := fmt.Sprintf("Error in stake consensus: the number "+
 			"of ai voters is not in the majorityai as compared to "+
 			"potential ai votes for block %v", blockHash)
@@ -1297,10 +1294,10 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
 		isAiSSGen, _ := aistake.IsAiSSGen(msgTx);
-		if is, _ := stake.IsSSGen(msgTx); is || isAiSSGen{
+		if is, _ := stake.IsSSGen(msgTx); is || isAiSSGen {
 			if isAiSSGen {
 				numAiSSGenTx++
-			}else{
+			} else {
 				numSSGenTx++
 			}
 			// Check and store the vote for TxTreeRegular.
@@ -1408,10 +1405,10 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
 		isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx);
-		if is, _ := stake.IsSSRtx(msgTx); is || isAiSSRtx{
-			if isAiSSRtx{
+		if is, _ := stake.IsSSRtx(msgTx); is || isAiSSRtx {
+			if isAiSSRtx {
 				numAiSSRtxTx++
-			}else{
+			} else {
 				numSSRtxTx++
 			}
 			// Grab the input SStx hash from the inputs of the
@@ -1527,7 +1524,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 	//    the ticket are correctly calculated.
 	isSStx, _ := stake.IsSStx(msgTx)
 	isAiSStx, _ := aistake.IsAiSStx(msgTx)
-	if isSStx || isAiSStx{
+	if isSStx || isAiSStx {
 		sstxInAmts := make([]int64, len(msgTx.TxIn))
 
 		for idx, txIn := range msgTx.TxIn {
@@ -1660,7 +1657,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// While we're here, double check to make sure that the input
 		// is from an SStx.  By doing so, you also ensure the first
 		// output is OP_SSTX tagged.
-		if utxoEntrySstx.TransactionType() != stake.TxTypeSStx && utxoEntrySstx.TransactionType() != stake.TxTypeAiSStx{
+		if utxoEntrySstx.TransactionType() != stake.TxTypeSStx && utxoEntrySstx.TransactionType() != stake.TxTypeAiSStx {
 			errStr := fmt.Sprintf("Input transaction %v for SSGen"+
 				" was not an SStx tx (given input: %v)", txHash,
 				sstxHash)
@@ -1724,10 +1721,10 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		//    tagged output from the referenced SStx.
 		if txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
 			utxoEntrySstx.PkScriptByIndex(0)) !=
-			txscript.StakeSubmissionTy  &&
+			txscript.StakeSubmissionTy &&
 			txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
 				utxoEntrySstx.PkScriptByIndex(0)) !=
-				txscript.AiStakeSubmissionTy{
+				txscript.AiStakeSubmissionTy {
 			errStr := fmt.Sprintf("First SStx output in SStx %v "+
 				"referenced by SSGen %v should have been "+
 				"OP_SSTX tagged, but it was not", sstxHash,
@@ -1744,7 +1741,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// NOTE: You can only spend an OP_SSTX tagged output on the
 		// block AFTER the entire range of ticketMaturity has passed,
 		// hence <= instead of <.
-		if blocksSincePrev <= ticketMaturity  && isSSGen{
+		if blocksSincePrev <= ticketMaturity && isSSGen {
 			errStr := fmt.Sprintf("tried to spend sstx output "+
 				"from transaction %v from height %v at height"+
 				" %v before required ticket maturity of %v+1 "+
@@ -1752,7 +1749,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 				ticketMaturity)
 			return 0, ruleError(ErrSStxInImmature, errStr)
 		}
-		if blocksSincePrev <= aiTicketMaturity  && isAiSSGen{
+		if blocksSincePrev <= aiTicketMaturity && isAiSSGen {
 			errStr := fmt.Sprintf("tried to spend sstx output "+
 				"from transaction %v from height %v at height"+
 				" %v before required ticket maturity of %v+1 "+
@@ -1776,7 +1773,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 	isSSRtx, _ := stake.IsSSRtx(msgTx)
 	isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx)
 
-	if isSSRtx || isAiSSRtx{
+	if isSSRtx || isAiSSRtx {
 		// Cursory check to see if we've even reach stake-enabled
 		// height.  Note for an SSRtx to be valid a vote must be
 		// missed, so for SSRtx the height of allowance is +1.
@@ -1809,7 +1806,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// While we're here, double check to make sure that the input
 		// is from an SStx.  By doing so, you also ensure the first
 		// output is OP_SSTX tagged.
-		if utxoEntrySstx.TransactionType() != stake.TxTypeSStx && utxoEntrySstx.TransactionType() != stake.TxTypeAiSStx{
+		if utxoEntrySstx.TransactionType() != stake.TxTypeSStx && utxoEntrySstx.TransactionType() != stake.TxTypeAiSStx {
 			errStr := fmt.Sprintf("Input transaction %v for SSRtx"+
 				" %v was not an SStx tx", txHash, sstxHash)
 			return 0, ruleError(ErrInvalidSSRtxInput, errStr)
@@ -1865,7 +1862,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 			txscript.StakeSubmissionTy &&
 			txscript.GetScriptClass(utxoEntrySstx.ScriptVersionByIndex(0),
 				utxoEntrySstx.PkScriptByIndex(0)) !=
-				txscript.AiStakeSubmissionTy{
+				txscript.AiStakeSubmissionTy {
 			errStr := fmt.Sprintf("First SStx output in SStx %v "+
 				"referenced by SSGen %v should have been "+
 				"OP_SSTX tagged, but it was not", sstxHash,
@@ -1899,7 +1896,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 	// -------------------------------------------------------------------
 	for idx, txIn := range msgTx.TxIn {
 		// Inputs won't exist for stakebase tx, so ignore them.
-		if (isSSGen || isAiSSGen )&& idx == 0 {
+		if (isSSGen || isAiSSGen) && idx == 0 {
 			// However, do add the reward amount.
 			_, heightVotingOn, err := stake.SSGenBlockVotedOn(msgTx)
 			if err != nil {
@@ -2081,7 +2078,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// SStx change outputs may only be spent after sstx change
 		// maturity many blocks.
 		if scriptClass == txscript.StakeSubChangeTy ||
-		scriptClass == txscript.AiStakeSubChangeTy {
+			scriptClass == txscript.AiStakeSubChangeTy {
 			originHeight := utxoEntry.BlockHeight()
 			blocksSincePrev := txHeight - originHeight
 			if blocksSincePrev <
@@ -2140,7 +2137,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// transaction, that no outputs have OP code tags OP_SSTX,
 		// OP_SSRTX, OP_SSGEN, or OP_SSTX_CHANGE.
 		if !isSStx && !isSSGen && !isSSRtx &&
-			!isAiSStx && !isAiSSGen && !isAiSSRtx{
+			!isAiSStx && !isAiSSGen && !isAiSSRtx {
 			scriptClass := txscript.GetScriptClass(txOut.Version, txOut.PkScript)
 			if (scriptClass == txscript.StakeSubmissionTy) ||
 				(scriptClass == txscript.StakeGenTy) ||
@@ -2149,7 +2146,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 				(scriptClass == txscript.AiStakeSubmissionTy) ||
 				(scriptClass == txscript.AiStakeGenTy) ||
 				(scriptClass == txscript.AiStakeRevocationTy) ||
-				(scriptClass == txscript.AiStakeSubChangeTy){
+				(scriptClass == txscript.AiStakeSubChangeTy) {
 				errStr := fmt.Sprintf("Non-stake tx %v "+
 					"included stake output type %v at in "+
 					"txout at position %v", txHash,
@@ -2340,7 +2337,7 @@ func checkStakeBaseAmounts(subsidyCache *SubsidyCache, height int64, params *cha
 	for _, tx := range txs {
 		msgTx := tx.MsgTx()
 		isAi, _ := stake.IsAiSSGen(msgTx)
-		if is, _ := stake.IsSSGen(msgTx); is || isAi{
+		if is, _ := stake.IsSSGen(msgTx); is || isAi {
 			// Ensure the input is available.
 			txInHash := &msgTx.TxIn[1].PreviousOutPoint.Hash
 			utxoEntry, exists := utxoView.entries[*txInHash]
@@ -2387,7 +2384,7 @@ func getStakeBaseAmounts(txs []*hcutil.Tx, utxoView *UtxoViewpoint) (int64, erro
 	for _, tx := range txs {
 		msgTx := tx.MsgTx()
 		isAi, _ := stake.IsAiSSGen(msgTx)
-		if is, _ := stake.IsSSGen(msgTx); is || isAi{
+		if is, _ := stake.IsSSGen(msgTx); is || isAi {
 			// Ensure the input is available.
 			txInHash := &msgTx.TxIn[1].PreviousOutPoint.Hash
 			utxoEntry, exists := utxoView.entries[*txInHash]
@@ -2501,8 +2498,8 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 			return err
 		}
 
-		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok{
-			lenOut :=len(tx.MsgTx().TxOut)
+		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok {
+			lenOut := len(tx.MsgTx().TxOut)
 			var haveChange bool = false
 			if lenOut > 2 {
 				_, addr, _, err := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, b.chainParams)
@@ -2515,13 +2512,19 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 								txIn.PreviousOutPoint.Hash, txIn.PreviousOutPoint.Hash)
 							return ruleError(ErrMissingTx, str)
 						}
+
+						//check every input exist block
+						if utxoEntry.BlockHeight() > node.height-6 {
+							return ruleError(ErrMissingTx, "instant tx input have not been fully confirmed")
+						}
+
 						originTxIndex := txIn.PreviousOutPoint.Index
 						txInPkScript := utxoEntry.PkScriptByIndex(originTxIndex)
 						if txInPkScript != nil {
 							_, txInAddr, _, _ := txscript.ExtractPkScriptAddrs(0, txInPkScript, b.chainParams)
 							if len(txInAddr) > 0 && txInAddr[0].String() == addr[0].String() {
 								haveChange = true
-								break;
+								break
 							}
 						}
 					}
@@ -2559,10 +2562,10 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 	if txTree { //TxTreeRegular
 		// Apply penalty to fees if we're at stake validation height.
 		if node.height >= b.chainParams.StakeValidationHeight {
-			if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
+			if node.height >= int64(b.chainParams.AIStakeEnabledHeight) {
 				totalFees *= int64(node.header.Voters + node.header.AiVoters)
 				totalFees /= int64(b.chainParams.TicketsPerBlock + b.chainParams.AiTicketsPerBlock)
-			}else{
+			} else {
 				totalFees *= int64(node.header.Voters)
 				totalFees /= int64(b.chainParams.TicketsPerBlock)
 			}
@@ -2577,13 +2580,13 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height == 1 {
 			expAtomOut = subsidyCache.CalcBlockSubsidy(node.height)
 		} else {
-			if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
+			if node.height >= int64(b.chainParams.AIStakeEnabledHeight) {
 				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
-					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
+					node.height, node.header.Voters+node.header.AiVoters, b.chainParams)
 				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
-					node.height, node.header.Voters + node.header.AiVoters, b.chainParams)
+					node.height, node.header.Voters+node.header.AiVoters, b.chainParams)
 				expAtomOut = subsidyWork + subsidyTax + totalFees + totalAiFees
-			}else{
+			} else {
 				subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
 					node.height, node.header.Voters, b.chainParams)
 				subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
@@ -2613,25 +2616,25 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		}
 		//check ai vote fee subsidy
 
-		if totalAiFees == 0 || uint64(node.height) < b.chainParams.AIStakeEnabledHeight{
+		if totalAiFees == 0 || uint64(node.height) < b.chainParams.AIStakeEnabledHeight {
 			return nil
 		}
 		aiVoteFee := int64(0)
 		aiFeeReward := int64(0)
-		for _, txSSGen := range(stakeTxs) {
-			if ok, _ := stake.IsAiSSGen(txSSGen.MsgTx()); ok{
-				_,addrSSGen,_, err := txscript.ExtractPkScriptAddrs(0, txSSGen.MsgTx().TxOut[2].PkScript, b.chainParams)
+		for _, txSSGen := range (stakeTxs) {
+			if ok, _ := stake.IsAiSSGen(txSSGen.MsgTx()); ok {
+				_, addrSSGen, _, err := txscript.ExtractPkScriptAddrs(0, txSSGen.MsgTx().TxOut[2].PkScript, b.chainParams)
 				find := false
-				if len(addrSSGen) < 1 || err != nil{
+				if len(addrSSGen) < 1 || err != nil {
 					return fmt.Errorf("no AiSSGen addr ")
 				}
-				for _, txOut := range(txs[0].MsgTx().TxOut){
-					_,addr,_, err := txscript.ExtractPkScriptAddrs(0, txOut.PkScript, b.chainParams)
-					if err == nil && len(addr) > 0{
-						if addrSSGen[0].String() == addr[0].String(){
+				for _, txOut := range (txs[0].MsgTx().TxOut) {
+					_, addr, _, err := txscript.ExtractPkScriptAddrs(0, txOut.PkScript, b.chainParams)
+					if err == nil && len(addr) > 0 {
+						if addrSSGen[0].String() == addr[0].String() {
 							find = true
-							aiVoteFee +=  txOut.Value
-							if aiFeeReward != 0 && aiFeeReward != txOut.Value{
+							aiVoteFee += txOut.Value
+							if aiFeeReward != 0 && aiFeeReward != txOut.Value {
 								return fmt.Errorf("Ai reward must be the same value .")
 							}
 							aiFeeReward = txOut.Value
@@ -2639,7 +2642,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 						}
 					}
 				}
-				if find == false{
+				if find == false {
 					return fmt.Errorf("AiSSGen ticket has no reward .")
 				}
 			}
@@ -2675,11 +2678,11 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		if node.height >= b.chainParams.StakeValidationHeight {
 			// Subsidy aligns with the height we're voting on, not
 			// with the height of the current block.
-			if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
+			if node.height >= int64(b.chainParams.AIStakeEnabledHeight) {
 				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
 					node.height-1, b.chainParams) *
-					int64(node.header.Voters + node.header.AiVoters)
-			}else {
+					int64(node.header.Voters+node.header.AiVoters)
+			} else {
 				expAtomOut = CalcStakeVoteSubsidy(subsidyCache,
 					node.height-1, b.chainParams) *
 					int64(node.header.Voters)
@@ -2765,14 +2768,14 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block *hcutil.Block, utx
 			node.header.PrevBlock))
 	}
 
-	if node.height >= int64(b.chainParams.AIStakeEnabledHeight){
+	if node.height >= int64(b.chainParams.AIStakeEnabledHeight) {
 		// Check that the coinbase pays the tax, if applicable.
 		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
-			node.header.Height, node.header.Voters + node.header.AiVoters, b.chainParams)
+			node.header.Height, node.header.Voters+node.header.AiVoters, b.chainParams)
 		if err != nil {
 			return err
 		}
-	} else{
+	} else {
 		// Check that the coinbase pays the tax, if applicable.
 		err = CoinbasePaysTax(b.subsidyCache, block.Transactions()[0],
 			node.header.Height, node.header.Voters, b.chainParams)
@@ -3004,12 +3007,12 @@ func (b *BlockChain) CheckConnectBlock(block *hcutil.Block) error {
 		return ruleError(ErrMissingParent, err.Error())
 	}
 
-	ticket,aiT := ticketsSpentInBlock(block)
-	ticket_rv,aiRv := ticketsRevokedInBlock(block)
-	vote,aiV :=  voteBitsInBlock(block)
+	ticket, aiT := ticketsSpentInBlock(block)
+	ticket_rv, aiRv := ticketsRevokedInBlock(block)
+	vote, aiV := voteBitsInBlock(block)
 
 	newNode := newBlockNodeAi(&block.MsgBlock().Header,
-		ticket,aiT, ticket_rv, aiRv,vote, aiV)
+		ticket, aiT, ticket_rv, aiRv, vote, aiV)
 
 	newNode.parent = prevNode
 	newNode.workSum.Add(prevNode.workSum, newNode.workSum)

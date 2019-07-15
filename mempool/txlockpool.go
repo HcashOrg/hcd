@@ -64,7 +64,7 @@ func (mp *TxPool) GetInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, e
 	return mp.getInstantTxDesc(hash)
 }
 
-func (mp *TxPool) ProcessInstantTxVote(instantTxVote *hcutil.InstantTxVote, instantTxHash *chainhash.Hash)(error, bool) {
+func (mp *TxPool) ProcessInstantTxVote(instantTxVote *hcutil.InstantTxVote, instantTxHash *chainhash.Hash) (error, bool) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
@@ -259,7 +259,7 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, err
 	for _, tx := range block.Transactions() {
 		err := mp.checkTxWithLockPool(tx)
 		if err != nil {
-			log.Errorf("CheckBlkConflictWithTxLockPool failed , err: %v",err)
+			log.Errorf("CheckBlkConflictWithTxLockPool failed , err: %v", err)
 			return false, err
 		}
 	}
@@ -272,7 +272,7 @@ func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
 	if !mp.isInstantTxExistAndVoted(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
 			if instantTx, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
-				return fmt.Errorf("tx %v is conflict with  instanttx %v in lock pool", tx.Hash(),instantTx.Hash())
+				return fmt.Errorf("tx %v is conflict with  instanttx %v in lock pool", tx.Hash(), instantTx.Hash())
 			}
 		}
 	}
@@ -485,6 +485,12 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 		originHash := &txIn.PreviousOutPoint.Hash
 		originIndex := txIn.PreviousOutPoint.Index
 		utxoEntry := utxoView.LookupEntry(originHash)
+
+		//check every input exist block
+		if utxoEntry.BlockHeight() > bestHeight-defaultConfirmNum {
+			return nil, txRuleError(wire.RejectNonstandard, "instant tx input have not been fully confirmed")
+		}
+
 		//check every input index
 		if utxoEntry == nil || utxoEntry.IsOutputSpent(originIndex) {
 			// Must make a copy of the hash here since the iterator
@@ -603,11 +609,11 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	minFee := calcMinRequiredTxRelayFee(serializedSize,
 		mp.cfg.Policy.MinRelayTxFee)
 
-	if _, ok := txscript.IsInstantTx(msgTx); ok{
-		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
+	if _, ok := txscript.IsInstantTx(msgTx); ok {
+		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight {
 			haveChange := mp.haveAiChange(tx)
 			minFee += msgTx.GetTxAiFee(haveChange)
-		}else{
+		} else {
 			return nil, fmt.Errorf("ai tx is refused for the insufficient block height")
 		}
 	}
@@ -673,11 +679,11 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 		maxFee := calcMinRequiredTxRelayFee(serializedSize*maxRelayFeeMultiplier,
 			mp.cfg.Policy.MinRelayTxFee)
 
-		if _, ok := txscript.IsInstantTx(msgTx); ok{
-			if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
+		if _, ok := txscript.IsInstantTx(msgTx); ok {
+			if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight {
 				haveChange := mp.haveAiChange(tx)
 				maxFee += msgTx.GetTxAiFee(haveChange)
-			}else{
+			} else {
 				return nil, fmt.Errorf("ai tx is refused for the insufficient block height")
 			}
 		}
