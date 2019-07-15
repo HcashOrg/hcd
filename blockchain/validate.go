@@ -1054,14 +1054,23 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		// If we haven't reached the point in which staking is enabled,
 		// there should be absolutely no SSGen or SSRtx transactions.
 		if (isSSGen && (block.Height() < stakeEnabledHeight)) ||
-			(isSSRtx && (block.Height() < stakeEnabledHeight)) ||
-			(isAiSSGen && (block.Height() < stakeEnabledHeight)) ||
-			(isAiSSRtx && (block.Height() < stakeEnabledHeight)) {
+			(isSSRtx && (block.Height() < stakeEnabledHeight)){
 			errStr := fmt.Sprintf("block contained SSGen or SSRtx "+
 				"transaction at idx %v, which was before stake"+
 				" voting was enabled; block height %v, stake "+
 				"enabled height %v", i, block.Height(),
 				stakeEnabledHeight)
+			return ruleError(ErrInvalidEarlyStakeTx, errStr)
+		}
+		// If we haven't reached the point in which staking is enabled,
+		// there should be absolutely no SSGen or SSRtx transactions.
+		if 	(isAiSSGen && (uint64(block.Height()) < chainParams.AIStakeEnabledHeight)) ||
+			(isAiSSRtx && (uint64(block.Height()) < chainParams.AIStakeEnabledHeight)){
+			errStr := fmt.Sprintf("block contained AISSGen or AISSRtx "+
+				"transaction at idx %v, which was before stake"+
+				" voting was enabled; block height %v, stake "+
+				"enabled height %v", i, block.Height(),
+				chainParams.AIStakeEnabledHeight)
 			return ruleError(ErrInvalidEarlyStakeTx, errStr)
 		}
 	}
@@ -2628,17 +2637,21 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 				if len(addrSSGen) < 1 || err != nil {
 					return fmt.Errorf("no AiSSGen addr ")
 				}
-				for _, txOut := range (txs[0].MsgTx().TxOut) {
-					_, addr, _, err := txscript.ExtractPkScriptAddrs(0, txOut.PkScript, b.chainParams)
-					if err == nil && len(addr) > 0 {
+				for _, txOut := range(txs[0].MsgTx().TxOut){
+					_,addr,_, err := txscript.ExtractPkScriptAddrs(0, txOut.PkScript, b.chainParams)
+					if err == nil && len(addr) > 0{
 						if addrSSGen[0].String() == addr[0].String() {
-							find = true
-							aiVoteFee += txOut.Value
-							if aiFeeReward != 0 && aiFeeReward != txOut.Value {
-								return fmt.Errorf("Ai reward must be the same value .")
+							if txOut.Value == totalAiFees/int64(node.header.AiVoters){
+								find = true
+								aiVoteFee += txOut.Value
+								if aiFeeReward != 0 && aiFeeReward != txOut.Value {
+									return fmt.Errorf("Ai reward must be the same value .")
+								}
+								aiFeeReward = txOut.Value
+								break;
+							}else{
+								return fmt.Errorf("Ai reward must be the %d, but received %d", txOut.Value, totalAiFees/int64(node.header.AiVoters))
 							}
-							aiFeeReward = txOut.Value
-							break;
 						}
 					}
 				}
