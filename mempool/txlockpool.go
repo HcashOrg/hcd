@@ -487,7 +487,7 @@ func (mp *TxPool) checkAiTxWithMem(aiTx *hcutil.AiTx, isNew, rateLimit, allowHig
 		utxoEntry := utxoView.LookupEntry(originHash)
 
 		//check every input exist block
-		if utxoEntry.BlockHeight() > bestHeight-defaultConfirmNum {
+		if utxoEntry != nil && utxoEntry.BlockHeight() > bestHeight-defaultConfirmNum {
 			return nil, txRuleError(wire.RejectNonstandard, "ai tx input have not been fully confirmed")
 		}
 
