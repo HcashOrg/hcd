@@ -40,8 +40,8 @@ const (
 	CmdNotFound         = "notfound"
 	CmdBlock            = "block"
 	CmdTx               = "tx"
-	CmdInstantTx        = "instanttx"
-	CmdInstantTxVote    = "instantvote"
+	CmdAiTx        = "aitx"
+	CmdAiTxVote    = "aivote"
 	CmdGetHeaders       = "getheaders"
 	CmdHeaders          = "headers"
 	CmdPing             = "ping"
@@ -106,11 +106,11 @@ func makeEmptyMessage(command string) (Message, error) {
 
 	case CmdTx:
 		msg = &MsgTx{}
-	case CmdInstantTx:
-		msg = &MsgInstantTx{}
+	case CmdAiTx:
+		msg = &MsgAiTx{}
 
-	case CmdInstantTxVote:
-		msg = &MsgInstantTxVote{}
+	case CmdAiTxVote:
+		msg = &MsgAiTxVote{}
 
 	case CmdPing:
 		msg = &MsgPing{}

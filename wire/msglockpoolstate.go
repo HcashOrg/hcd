@@ -15,8 +15,8 @@ import (
 
 // MaxMSBlocksAtHeadPerMsg is the maximum number of block hashes allowed
 // per message.
-const MaxInstantTx = 20
-const MaxInstantTxVote = 100
+const MaxAiTx = 20
+const MaxAiTxVote = 100
 
 // MsgMiningState implements the Message interface and represents a mining state
 // message.  It is used to request a list of blocks located at the chain tip
@@ -24,31 +24,31 @@ const MaxInstantTxVote = 100
 // the maximum number of blocks per message and the maximum number of votes per
 // message.
 type MsgLockPoolState struct {
-	InstantTxHashes     []*chainhash.Hash
-	InstantTxVoteHashes []*chainhash.Hash
+	AiTxHashes     []*chainhash.Hash
+	AiTxVoteHashes []*chainhash.Hash
 }
 
 // AddBlockHash adds a new block hash to the message.
-func (msg *MsgLockPoolState) AddInstantTxHash(hash *chainhash.Hash) error {
-	if len(msg.InstantTxHashes)+1 > MaxInstantTx {
-		str := fmt.Sprintf("too many instanttx hashes for message [max %v]",
-			MaxInstantTx)
+func (msg *MsgLockPoolState) AddAiTxHash(hash *chainhash.Hash) error {
+	if len(msg.AiTxHashes)+1 > MaxAiTx {
+		str := fmt.Sprintf("too many aitx hashes for message [max %v]",
+			MaxAiTx)
 		return messageError("MsgLockPoolState.AddBlockHash", str)
 	}
 
-	msg.InstantTxHashes = append(msg.InstantTxHashes, hash)
+	msg.AiTxHashes = append(msg.AiTxHashes, hash)
 	return nil
 }
 
 // AddVoteHash adds a new vote hash to the message.
-func (msg *MsgLockPoolState) AddInstantTxVoteHash(hash *chainhash.Hash) error {
-	if len(msg.InstantTxVoteHashes)+1 > MaxInstantTxVote {
+func (msg *MsgLockPoolState) AddAiTxVoteHash(hash *chainhash.Hash) error {
+	if len(msg.AiTxVoteHashes)+1 > MaxAiTxVote {
 		str := fmt.Sprintf("too many vote hashes for message [max %v]",
-			MaxInstantTxVote)
+			MaxAiTxVote)
 		return messageError("MsgLockPoolState.AddVoteHash", str)
 	}
 
-	msg.InstantTxVoteHashes = append(msg.InstantTxVoteHashes, hash)
+	msg.AiTxVoteHashes = append(msg.AiTxVoteHashes, hash)
 	return nil
 }
 
@@ -60,20 +60,20 @@ func (msg *MsgLockPoolState) BtcDecode(r io.Reader, pver uint32) error {
 	if err != nil {
 		return err
 	}
-	if count > MaxInstantTx {
-		str := fmt.Sprintf("too many instantTx hashes for message "+
-			"[count %v, max %v]", count, MaxInstantTx)
+	if count > MaxAiTx {
+		str := fmt.Sprintf("too many aiTx hashes for message "+
+			"[count %v, max %v]", count, MaxAiTx)
 		return messageError("MsgLockPoolState.BtcDecode", str)
 	}
 
-	msg.InstantTxHashes = make([]*chainhash.Hash, 0, count)
+	msg.AiTxHashes = make([]*chainhash.Hash, 0, count)
 	for i := uint64(0); i < count; i++ {
 		hash := chainhash.Hash{}
 		err := readElement(r, &hash)
 		if err != nil {
 			return err
 		}
-		msg.AddInstantTxHash(&hash)
+		msg.AddAiTxHash(&hash)
 	}
 
 	// Read num vote hashes and limit to max.
@@ -81,20 +81,20 @@ func (msg *MsgLockPoolState) BtcDecode(r io.Reader, pver uint32) error {
 	if err != nil {
 		return err
 	}
-	if count > MaxInstantTxVote {
+	if count > MaxAiTxVote {
 		str := fmt.Sprintf("too many vote hashes for message "+
-			"[count %v, max %v]", count, MaxInstantTxVote)
+			"[count %v, max %v]", count, MaxAiTxVote)
 		return messageError("MsgLockPoolState.BtcDecode", str)
 	}
 
-	msg.InstantTxVoteHashes = make([]*chainhash.Hash, 0, count)
+	msg.AiTxVoteHashes = make([]*chainhash.Hash, 0, count)
 	for i := uint64(0); i < count; i++ {
 		hash := chainhash.Hash{}
 		err := readElement(r, &hash)
 		if err != nil {
 			return err
 		}
-		err = msg.AddInstantTxVoteHash(&hash)
+		err = msg.AddAiTxVoteHash(&hash)
 		if err != nil {
 			return err
 		}
@@ -107,10 +107,10 @@ func (msg *MsgLockPoolState) BtcDecode(r io.Reader, pver uint32) error {
 // This is part of the Message interface implementation.
 func (msg *MsgLockPoolState) BtcEncode(w io.Writer, pver uint32) error {
 	// Write block hashes.
-	count := len(msg.InstantTxHashes)
-	if count > MaxInstantTx {
-		str := fmt.Sprintf("too many instantTx hashes for message "+
-			"[count %v, max %v]", count, MaxInstantTx)
+	count := len(msg.AiTxHashes)
+	if count > MaxAiTx {
+		str := fmt.Sprintf("too many aiTx hashes for message "+
+			"[count %v, max %v]", count, MaxAiTx)
 		return messageError("MsgLockPoolState.BtcEncode", str)
 	}
 
@@ -119,7 +119,7 @@ func (msg *MsgLockPoolState) BtcEncode(w io.Writer, pver uint32) error {
 		return err
 	}
 
-	for _, hash := range msg.InstantTxHashes {
+	for _, hash := range msg.AiTxHashes {
 		err = writeElement(w, hash)
 		if err != nil {
 			return err
@@ -127,10 +127,10 @@ func (msg *MsgLockPoolState) BtcEncode(w io.Writer, pver uint32) error {
 	}
 
 	// Write vote hashes.
-	count = len(msg.InstantTxVoteHashes)
-	if count > MaxInstantTxVote {
+	count = len(msg.AiTxVoteHashes)
+	if count > MaxAiTxVote {
 		str := fmt.Sprintf("too many vote hashes for message "+
-			"[count %v, max %v]", count, MaxInstantTxVote)
+			"[count %v, max %v]", count, MaxAiTxVote)
 		return messageError("MsgLockPoolState.BtcEncode", str)
 	}
 
@@ -139,7 +139,7 @@ func (msg *MsgLockPoolState) BtcEncode(w io.Writer, pver uint32) error {
 		return err
 	}
 
-	for _, hash := range msg.InstantTxVoteHashes {
+	for _, hash := range msg.AiTxVoteHashes {
 		err = writeElement(w, hash)
 		if err != nil {
 			return err
@@ -160,8 +160,8 @@ func (msg *MsgLockPoolState) Command() string {
 func (msg *MsgLockPoolState) MaxPayloadLength(pver uint32) uint32 {
 	//  + num block hashes (varInt) +
 	// block hashes + num vote hashes (varInt) + vote hashes
-	return MaxVarIntPayload + (MaxInstantTx *
-		chainhash.HashSize) + MaxVarIntPayload + (MaxInstantTxVote *
+	return MaxVarIntPayload + (MaxAiTx *
+		chainhash.HashSize) + MaxVarIntPayload + (MaxAiTxVote *
 		chainhash.HashSize)
 }
 
@@ -169,7 +169,7 @@ func (msg *MsgLockPoolState) MaxPayloadLength(pver uint32) uint32 {
 // the Message interface using the defaults for the fields.
 func NewMsgLockPoolState() *MsgLockPoolState {
 	return &MsgLockPoolState{
-		InstantTxHashes:     make([]*chainhash.Hash, 0, MaxInstantTx),
-		InstantTxVoteHashes: make([]*chainhash.Hash, 0, MaxInstantTxVote),
+		AiTxHashes:     make([]*chainhash.Hash, 0, MaxAiTx),
+		AiTxVoteHashes: make([]*chainhash.Hash, 0, MaxAiTxVote),
 	}
 }

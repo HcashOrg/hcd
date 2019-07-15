@@ -203,7 +203,7 @@ func testJoinMempools(r *Harness, t *testing.T) {
 	nodeSlice := []*Harness{r, harness}
 
 	// Both mempools should be considered synced as they are empty.
-	// Therefore, this should return instantly.
+	// Therefore, this should return aily.
 	if err := JoinNodes(nodeSlice, Mempools); err != nil {
 		t.Fatalf("unable to join node on mempools: %v", err)
 	}

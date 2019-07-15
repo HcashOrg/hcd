@@ -72,8 +72,8 @@ var wsHandlersBeforeInit = map[string]wsCommandHandler{
 	"notifynewtickets":            handleNewTickets,
 	"notifystakedifficulty":       handleStakeDifficulty,
 	"notifynewtransactions":       handleNotifyNewTransactions,
-	"notifynewinstanttx":          handleNotifyNewInstantTx,
-	"stopnotifynewinstanttx":      handleStopNotifyNewInstantTx,
+	"notifynewaitx":          	   handleNotifyNewAiTx,
+	"stopnotifynewaitx":      handleStopNotifyNewAiTx,
 	"session":                     handleSession,
 	"help":                        handleWebsocketHelp,
 	"rescan":                      handleRescan,
@@ -301,7 +301,7 @@ func (m *wsNotificationManager) NotifyStakeDifficulty(
 
 // NotifyMempoolTx passes a transaction accepted by mempool to the
 // notification manager for transaction notification processing.  If
-// resend is true, the instantTx is is a new transaction, rather than one
+// resend is true, the aiTx is is a new transaction, rather than one
 // added to the mempool during a reorg.
 func (m *wsNotificationManager) NotifyMempoolTx(tx *hcutil.Tx, isNew bool) {
 	n := &notificationTxAcceptedByMempool{
@@ -320,16 +320,16 @@ func (m *wsNotificationManager) NotifyMempoolTx(tx *hcutil.Tx, isNew bool) {
 }
 
 //just notify wallet to sign
-func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instantTx *hcutil.InstantTx, resend bool) {
-	n := &notificationInstantTx{
+func (m *wsNotificationManager) NotifyAiTx(tickets []chainhash.Hash, aiTx *hcutil.AiTx, resend bool) {
+	n := &notificationAiTx{
 		resend:    resend,
-		instantTx: instantTx,
+		aiTx: aiTx,
 		tickets:   tickets,
 	}
 
-	rpcsLog.Debug("notificationInstantTx:", n.resend, n.instantTx.Hash())
+	rpcsLog.Debug("notificationAiTx:", n.resend, n.aiTx.Hash())
 
-	// As notificationInstantTx will be called by mempool and the RPC server
+	// As notificationAiTx will be called by mempool and the RPC server
 	// may no longer be running, use a select statement to unblock
 	// enqueuing the notification once the RPC server has begun
 	// shutting down.
@@ -339,9 +339,9 @@ func (m *wsNotificationManager) NotifyInstantTx(tickets []chainhash.Hash, instan
 	}
 }
 
-func (m *wsNotificationManager) NotifyInstantTxVote(vote *hcutil.InstantTxVote) {
+func (m *wsNotificationManager) NotifyAiTxVote(vote *hcutil.AiTxVote) {
 
-	n := notificationInstantTxVote(*vote)
+	n := notificationAiTxVote(*vote)
 
 	select {
 	case m.queueNotification <- &n:
@@ -526,9 +526,9 @@ func (f *wsClientFilter) removeUnspentOutPoint(op *wire.OutPoint) {
 	delete(f.unspent, *op)
 }
 
-type InstantTxNtfnData struct {
+type AiTxNtfnData struct {
 	resend    bool
-	instantTx *hcutil.InstantTx
+	aiTx 		*hcutil.AiTx
 	tickets   []chainhash.Hash
 }
 
@@ -544,8 +544,8 @@ type notificationTxAcceptedByMempool struct {
 	isNew bool
 	tx    *hcutil.Tx
 }
-type notificationInstantTx InstantTxNtfnData
-type notificationInstantTxVote hcutil.InstantTxVote
+type notificationAiTx AiTxNtfnData
+type notificationAiTxVote hcutil.AiTxVote
 
 // Notification control requests
 type notificationRegisterClient wsClient
@@ -562,8 +562,8 @@ type notificationRegisterStakeDifficulty wsClient
 type notificationUnregisterStakeDifficulty wsClient
 type notificationRegisterNewMempoolTxs wsClient
 type notificationUnregisterNewMempoolTxs wsClient
-type notificationRegisterInstantTxs wsClient
-type notificationUnregisterInstantTxs wsClient
+type notificationRegisterAiTxs wsClient
+type notificationUnregisterAiTxs wsClient
 
 // notificationHandler reads notifications and control messages from the queue
 // handler and processes one at a time.
@@ -585,8 +585,8 @@ func (m *wsNotificationManager) notificationHandler() {
 	stakeDifficultyNotifications := make(map[chan struct{}]*wsClient)
 	txNotifications := make(map[chan struct{}]*wsClient)
 
-	//TODO register fo instantTxnotifications
-	instantTxNotifications := make(map[chan struct{}]*wsClient)
+	//TODO register fo aiTxnotifications
+	aiTxNotifications := make(map[chan struct{}]*wsClient)
 
 out:
 	for {
@@ -600,7 +600,7 @@ out:
 			case *notificationBlockConnected:
 				block := (*hcutil.Block)(n)
 
-				// Skip iterating through all txs if no instantTx
+				// Skip iterating through all txs if no aiTx
 				// notification requests exist.
 				if len(blockNotifications) == 0 {
 					continue
@@ -637,10 +637,10 @@ out:
 					m.notifyForNewTx(txNotifications, n.tx)
 				}
 				m.notifyRelevantTxAccepted(n.tx, clients)
-			case *notificationInstantTx:
-				m.notifyForNewInstantTx(instantTxNotifications, (*InstantTxNtfnData)(n))
-			case *notificationInstantTxVote:
-				m.notifyForInstantTxVote(instantTxNotifications, (*hcutil.InstantTxVote)(n))
+			case *notificationAiTx:
+				m.notifyForNewAiTx(aiTxNotifications, (*AiTxNtfnData)(n))
+			case *notificationAiTxVote:
+				m.notifyForAiTxVote(aiTxNotifications, (*hcutil.AiTxVote)(n))
 			case *notificationRegisterBlocks:
 				wsc := (*wsClient)(n)
 				blockNotifications[wsc.quit] = wsc
@@ -700,12 +700,12 @@ out:
 			case *notificationUnregisterNewMempoolTxs:
 				wsc := (*wsClient)(n)
 				delete(txNotifications, wsc.quit)
-			case *notificationRegisterInstantTxs:
+			case *notificationRegisterAiTxs:
 				wsc := (*wsClient)(n)
-				instantTxNotifications[wsc.quit] = wsc
-			case *notificationUnregisterInstantTxs:
+				aiTxNotifications[wsc.quit] = wsc
+			case *notificationUnregisterAiTxs:
 				wsc := (*wsClient)(n)
-				delete(instantTxNotifications, wsc.quit)
+				delete(aiTxNotifications, wsc.quit)
 
 			default:
 				rpcsLog.Warn("Unhandled notification type")
@@ -751,7 +751,7 @@ func getPayLoadData(pkScript []byte) (bool, []byte) {
 }
 
 // subscribedClients returns the set of all websocket client quit channels that
-// are registered to receive notifications regarding instantTx, either due to instantTx
+// are registered to receive notifications regarding aiTx, either due to aiTx
 // spending a watched output or outputting to a watched address.  Matching
 // client's filters are updated based on this transaction's outputs and output
 // addresses that may be relevant for a client.
@@ -1091,12 +1091,12 @@ func (m *wsNotificationManager) UnregisterNewMempoolTxsUpdates(wsc *wsClient) {
 	m.queueNotification <- (*notificationUnregisterNewMempoolTxs)(wsc)
 }
 
-func (m *wsNotificationManager) RegisterNewInstantTxs(wsc *wsClient) {
-	m.queueNotification <- (*notificationRegisterInstantTxs)(wsc)
+func (m *wsNotificationManager) RegisterNewAiTxs(wsc *wsClient) {
+	m.queueNotification <- (*notificationRegisterAiTxs)(wsc)
 }
 
-func (m *wsNotificationManager) UnregisterNewInstantTxs(wsc *wsClient) {
-	m.queueNotification <- (*notificationUnregisterInstantTxs)(wsc)
+func (m *wsNotificationManager) UnregisterNewAiTxs(wsc *wsClient) {
+	m.queueNotification <- (*notificationUnregisterAiTxs)(wsc)
 }
 
 // notifyForNewTx notifies websocket clients that have registered for updates
@@ -1114,7 +1114,7 @@ func (m *wsNotificationManager) notifyForNewTx(clients map[chan struct{}]*wsClie
 		hcutil.Amount(amount).ToCoin())
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {
-		rpcsLog.Errorf("Failed to marshal instantTx notification: %s",
+		rpcsLog.Errorf("Failed to marshal aiTx notification: %s",
 			err.Error())
 		return
 	}
@@ -1139,7 +1139,7 @@ func (m *wsNotificationManager) notifyForNewTx(clients map[chan struct{}]*wsClie
 			marshalledJSONVerbose, err = hcjson.MarshalCmd(nil,
 				verboseNtfn)
 			if err != nil {
-				rpcsLog.Errorf("Failed to marshal verbose instantTx "+
+				rpcsLog.Errorf("Failed to marshal verbose aiTx "+
 					"notification: %s", err.Error())
 				return
 			}
@@ -1150,19 +1150,19 @@ func (m *wsNotificationManager) notifyForNewTx(clients map[chan struct{}]*wsClie
 	}
 }
 
-func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]*wsClient, instantTxNtfnData *InstantTxNtfnData) {
+func (m *wsNotificationManager) notifyForNewAiTx(clients map[chan struct{}]*wsClient, aiTxNtfnData *AiTxNtfnData) {
 	// Create a ticket map to export as JSON.
 	ticketMap := make(map[string]string)
-	for i, ticket := range instantTxNtfnData.tickets {
+	for i, ticket := range aiTxNtfnData.tickets {
 		ticketMap[strconv.Itoa(i)] = ticket.String()
 	}
 
-	msgTx := instantTxNtfnData.instantTx.MsgTx()
-	ntfn := hcjson.NewInstantTxNtfn(txHexString(msgTx), ticketMap, instantTxNtfnData.resend)
+	msgTx := aiTxNtfnData.aiTx.MsgTx()
+	ntfn := hcjson.NewAiTxNtfn(txHexString(msgTx), ticketMap, aiTxNtfnData.resend)
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {
-		rpcsLog.Errorf("Failed to marshal instantTx notification: %s",
+		rpcsLog.Errorf("Failed to marshal aiTx notification: %s",
 			err.Error())
 		return
 	}
@@ -1173,14 +1173,14 @@ func (m *wsNotificationManager) notifyForNewInstantTx(clients map[chan struct{}]
 	}
 }
 
-func (m *wsNotificationManager) notifyForInstantTxVote(clients map[chan struct{}]*wsClient, instantTxVote *hcutil.InstantTxVote) {
+func (m *wsNotificationManager) notifyForAiTxVote(clients map[chan struct{}]*wsClient, aiTxVote *hcutil.AiTxVote) {
 
-	ntfn := hcjson.NewInstantTxVoteNtfn(instantTxVote.Hash().String(), instantTxVote.MsgInstantTxVote().InstantTxHash.String(),
-		instantTxVote.MsgInstantTxVote().TicketHash.String(), instantTxVote.MsgInstantTxVote().Vote, hex.EncodeToString(instantTxVote.MsgInstantTxVote().Sig))
+	ntfn := hcjson.NewAiTxVoteNtfn(aiTxVote.Hash().String(), aiTxVote.MsgAiTxVote().AiTxHash.String(),
+	aiTxVote.MsgAiTxVote().TicketHash.String(), aiTxVote.MsgAiTxVote().Vote, hex.EncodeToString(aiTxVote.MsgAiTxVote().Sig))
 
 	marshalledJSON, err := hcjson.MarshalCmd(nil, ntfn)
 	if err != nil {
-		rpcsLog.Errorf("Failed to marshal instantTxVote notification: %s",
+		rpcsLog.Errorf("Failed to marshal aiTxVote notification: %s",
 			err.Error())
 		return
 	}
@@ -1967,17 +1967,17 @@ func handleStopNotifyNewTransactions(wsc *wsClient, icmd interface{}) (interface
 	return nil, nil
 }
 
-func handleNotifyNewInstantTx(wsc *wsClient, icmd interface{}) (interface{}, error) {
-	//cmd, ok := icmd.(*hcjson.NotifyNewInstantTxCmd)
+func handleNotifyNewAiTx(wsc *wsClient, icmd interface{}) (interface{}, error) {
+	//cmd, ok := icmd.(*hcjson.NotifyNewAiTxCmd)
 	//if !ok {
 	//	return nil, hcjson.ErrRPCInternal
 	//}
 	//
-	wsc.server.ntfnMgr.RegisterNewInstantTxs(wsc)
+	wsc.server.ntfnMgr.RegisterNewAiTxs(wsc)
 	return nil, nil
 }
-func handleStopNotifyNewInstantTx(wsc *wsClient, icmd interface{}) (interface{}, error) {
-	wsc.server.ntfnMgr.UnregisterNewInstantTxs(wsc)
+func handleStopNotifyNewAiTx(wsc *wsClient, icmd interface{}) (interface{}, error) {
+	wsc.server.ntfnMgr.UnregisterNewAiTxs(wsc)
 	return nil, nil
 }
 

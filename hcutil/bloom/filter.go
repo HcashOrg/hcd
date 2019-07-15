@@ -332,7 +332,7 @@ func (bf *Filter) matchTxAndUpdate(tx *hcutil.Tx) bool {
 	return false
 }
 
-func (bf *Filter) matchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
+func (bf *Filter) matchAiTxAndUpdate(tx *hcutil.AiTx) bool {
 	//TODO implement
 
 	return true
@@ -340,7 +340,7 @@ func (bf *Filter) matchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
 
 
 
-func (bf *Filter) matchInstantTxVoteAndUpdate(tx *hcutil.InstantTxVote) bool {
+func (bf *Filter) matchAiTxVoteAndUpdate(tx *hcutil.AiTxVote) bool {
 	//TODO implement
 
 	return true
@@ -359,16 +359,16 @@ func (bf *Filter) MatchTxAndUpdate(tx *hcutil.Tx) bool {
 	return match
 }
 
-func (bf *Filter) MatchInstantTxAndUpdate(tx *hcutil.InstantTx) bool {
+func (bf *Filter) MatchAiTxAndUpdate(tx *hcutil.AiTx) bool {
 	bf.mtx.Lock()
-	match := bf.matchInstantTxAndUpdate(tx)
+	match := bf.matchAiTxAndUpdate(tx)
 	bf.mtx.Unlock()
 	return match
 }
 
-func (bf *Filter) MatchInstantTxVoteAndUpdate(tx *hcutil.InstantTxVote) bool {
+func (bf *Filter) MatchAiTxVoteAndUpdate(tx *hcutil.AiTxVote) bool {
 	bf.mtx.Lock()
-	match := bf.matchInstantTxVoteAndUpdate(tx)
+	match := bf.matchAiTxVoteAndUpdate(tx)
 	bf.mtx.Unlock()
 	return match
 }

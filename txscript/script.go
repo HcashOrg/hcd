@@ -326,7 +326,7 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 	*/
 }
 
-func HasInstantTxTag(pkScript []byte) (*chainhash.Hash, bool) {
+func HasAiTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 	pops, err := parseScript(pkScript)
 	if err != nil || len(pops) != 2 {
 		return nil, false
@@ -365,9 +365,9 @@ func HasInstantTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 	}
 	return nil, false
 }
-func IsInstantTx(msgTx *wire.MsgTx) (*chainhash.Hash, bool) {
+func IsAiTx(msgTx *wire.MsgTx) (*chainhash.Hash, bool) {
 	for _, txOut := range msgTx.TxOut {
-		if hash, has := HasInstantTxTag(txOut.PkScript); has {
+		if hash, has := HasAiTxTag(txOut.PkScript); has {
 			return hash, true
 		}
 	}

@@ -1973,7 +1973,7 @@ mempoolLoop:
 			return nil, fmt.Errorf("couldn't find fee for tx %v",
 				*tx.Hash())
 		}
-		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok{
+		if _, ok := txscript.IsAiTx(tx.MsgTx()); ok{
 			haveChange := mp.HaveAiChange(tx)
 			aiFee := tx.MsgTx().GetTxAiFee(haveChange)
 			totalAiFees += aiFee

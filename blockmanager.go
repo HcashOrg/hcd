@@ -105,13 +105,13 @@ type txMsg struct {
 	peer *serverPeer
 }
 
-type instantTxMsg struct {
-	tx   *hcutil.InstantTx
+type aiTxMsg struct {
+	tx   *hcutil.AiTx
 	peer *serverPeer
 }
 
-type instantTxVoteMsg struct {
-	instantTxVote *hcutil.InstantTxVote
+type aiTxVoteMsg struct {
+	aiTxVote *hcutil.AiTxVote
 	peer          *serverPeer
 }
 
@@ -129,8 +129,8 @@ type requestFromPeerMsg struct {
 	peer         *serverPeer
 	blocks       []*chainhash.Hash
 	txs          []*chainhash.Hash
-	instantTxs   []*chainhash.Hash
-	instantVotes []*chainhash.Hash
+	aiTxs   []*chainhash.Hash
+	aiVotes []*chainhash.Hash
 	reply        chan requestFromPeerResponse
 }
 
@@ -269,7 +269,7 @@ type processTransactionResponse struct {
 	err         error
 }
 
-type processInstantTxResponse struct {
+type processAiTxResponse struct {
 	missedParent []*chainhash.Hash
 	err          error
 }
@@ -285,12 +285,12 @@ type processTransactionMsg struct {
 	reply         chan processTransactionResponse
 }
 
-type processInstantTxMsg struct {
-	tx            *hcutil.InstantTx
+type processAiTxMsg struct {
+	tx            *hcutil.AiTx
 	allowOrphans  bool
 	rateLimit     bool
 	allowHighFees bool
-	reply         chan processInstantTxResponse
+	reply         chan processAiTxResponse
 }
 
 // isCurrentMsg is a message type to be sent across the message channel for
@@ -460,10 +460,10 @@ type blockManager struct {
 	requestedBlocks     map[chainhash.Hash]struct{}
 	requestedEverBlocks map[chainhash.Hash]uint8
 
-	requestedInstantTxs       map[chainhash.Hash]struct{}
-	requestedEverInstantTxs   map[chainhash.Hash]uint8
-	requestedInstantVotes     map[chainhash.Hash]struct{}
-	requestedEverInstantVotes map[chainhash.Hash]uint8
+	requestedAiTxs       map[chainhash.Hash]struct{}
+	requestedEverAiTxs   map[chainhash.Hash]uint8
+	requestedAiVotes     map[chainhash.Hash]struct{}
+	requestedEverAiVotes map[chainhash.Hash]uint8
 
 	progressLogger *blockProgressLogger
 	syncPeer       *serverPeer
@@ -841,21 +841,21 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 	b.server.AnnounceNewTransactions(acceptedTxs)
 }
 
-func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
+func (b *blockManager) handleAiTxMsg(aiTxMsg *aiTxMsg) {
 	//TODO verify conflict with mempool
-	instantTx := instantTxMsg.tx
-	txHash := instantTx.Hash()
+	aiTx := aiTxMsg.tx
+	txHash := aiTx.Hash()
 
 	if _, exists := b.rejectedTxns[*txHash]; exists {
 		bmgrLog.Debugf("Ignoring unsolicited previously rejected "+
-			"transaction %v from %s", txHash, instantTxMsg.peer)
+			"transaction %v from %s", txHash, aiTxMsg.peer)
 		return
 	}
 
-	err := b.server.txMemPool.MayBeAddToLockPool(instantTx, true, false, false)
+	err := b.server.txMemPool.MayBeAddToLockPool(aiTx, true, false, false)
 
-	delete(instantTxMsg.peer.requestedInstantTxs, *txHash)
-	delete(b.requestedInstantTxs, *txHash)
+	delete(aiTxMsg.peer.requestedAiTxs, *txHash)
+	delete(b.requestedAiTxs, *txHash)
 
 	if err != nil {
 		// Do not request this transaction again until a new block
@@ -863,35 +863,35 @@ func (b *blockManager) handleInstantTxMsg(instantTxMsg *instantTxMsg) {
 		b.rejectedTxns[*txHash] = struct{}{}
 		b.limitMap(b.rejectedTxns, maxRejectedTxns)
 
-		bmgrLog.Errorf("instant tx %v not failed to add lockpool", instantTx.Hash())
+		bmgrLog.Errorf("ai tx %v not failed to add lockpool", aiTx.Hash())
 		return
 	}
 
-	instantTxs := make([]*hcutil.InstantTx, 0)
+	aiTxs := make([]*hcutil.AiTx, 0)
 
-	instantTxs = append(instantTxs, instantTx)
+	aiTxs = append(aiTxs, aiTx)
 
 	//notify wallet and peers
-	b.server.AnnounceNewInstantTx(instantTxs)
+	b.server.AnnounceNewAiTx(aiTxs)
 }
 
-//deal instantxvote from peers
-func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
+//deal aixvote from peers
+func (b *blockManager) handleAiTxVoteMsg(msg *aiTxVoteMsg) {
 
-	instantTxVote := msg.instantTxVote
-	instantTxHash := instantTxVote.MsgInstantTxVote().InstantTxHash
-	ticketHash := instantTxVote.MsgInstantTxVote().TicketHash
+	aiTxVote := msg.aiTxVote
+	aiTxHash := aiTxVote.MsgAiTxVote().AiTxHash
+	ticketHash := aiTxVote.MsgAiTxVote().TicketHash
 
-	instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(&instantTxHash)
+	aiTxDesc, exist := b.server.txMemPool.GetAiTxDesc(&aiTxHash)
 	if !exist {
-		bmgrLog.Errorf("instant tx %v not exist in lock pool", instantTxHash)
+		bmgrLog.Errorf("ai tx %v not exist in lock pool", aiTxHash)
 		return
 	}
-	instantTx := instantTxDesc.Tx
+	aiTx := aiTxDesc.Tx
 
 	//check ticket selected
-	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
-	tickets, err := b.chain.LotteryAiDataForTxAndBlock(&instantTxHash, lotteryHash)
+	lotteryHash, _ := txscript.IsAiTx(aiTx.MsgTx())
+	tickets, err := b.chain.LotteryAiDataForTxAndBlock(&aiTxHash, lotteryHash)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
@@ -900,7 +900,7 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 		}
 	}
 	if !ticketExist {
-		bmgrLog.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxVote.Hash())
+		bmgrLog.Errorf("aitx ticket not exist ,aivote %v: %v", aiTxVote.Hash())
 		return
 	}
 
@@ -933,29 +933,29 @@ func (b *blockManager) handleInstantTxVoteMsg(msg *instantTxVoteMsg) {
 		return
 	}
 
-	sigMsg := instantTxHash.String() + ticketHash.String()
+	sigMsg := aiTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxVote.MsgInstantTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], aiTxVote.MsgAiTxVote().Sig)
 	if !verified {
-		bmgrLog.Errorf("failed  verify signature ,instantvote %v,err: %v", instantTxVote.Hash(), err)
+		bmgrLog.Errorf("failed  verify signature ,aivote %v,err: %v", aiTxVote.Hash(), err)
 		return
 	}
 
 	//update lockpool
-	err, reSendToMemPool := b.server.txMemPool.ProcessInstantTxVote(instantTxVote, &instantTxHash)
+	err, reSendToMemPool := b.server.txMemPool.ProcessAiTxVote(aiTxVote, &aiTxHash)
 	if err != nil {
 		bmgrLog.Error(err)
 		return
 	}
 	if reSendToMemPool {
-		b.server.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+		b.server.rpcServer.ntfnMgr.NotifyAiTx(tickets, aiTx, true)
 	}
 
-	instantTxVotes := make([]*hcutil.InstantTxVote, 0)
-	instantTxVotes = append(instantTxVotes, instantTxVote)
+	aiTxVotes := make([]*hcutil.AiTxVote, 0)
+	aiTxVotes = append(aiTxVotes, aiTxVote)
 	//notify wallet vote and rely to other peers
-	b.server.AnnounceNewInstantTxVote(instantTxVotes)
+	b.server.AnnounceNewAiTxVote(aiTxVotes)
 }
 
 // current returns true if we believe we are synced with our peers, false if we
@@ -1708,8 +1708,8 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 			return false, err
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
-	case wire.InvTypeInstantTx:
-		if b.server.txMemPool.IsInstantTxExist(&invVect.Hash) {
+	case wire.InvTypeAiTx:
+		if b.server.txMemPool.IsAiTxExist(&invVect.Hash) {
 			return true, nil
 		}
 		if b.server.txMemPool.HaveTransaction(&invVect.Hash) {
@@ -1723,9 +1723,9 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 			return false, err
 		}
 		return entry != nil && !entry.IsFullySpent(), nil
-	case wire.InvTypeInstantTxVote:
-		bmgrLog.Debugf("fetch invTypeInstantTxVote  %v", invVect.Hash)
-		_, err := b.server.txMemPool.FetchInstantTxVote(&invVect.Hash)
+	case wire.InvTypeAiTxVote:
+		bmgrLog.Debugf("fetch invTypeAiTxVote  %v", invVect.Hash)
+		_, err := b.server.txMemPool.FetchAiTxVote(&invVect.Hash)
 		if err != nil {
 			return false, nil
 		}
@@ -1782,7 +1782,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 	// we already have and request more blocks to prevent them.
 	for i, iv := range invVects {
 		// Ignore unsupported inventory types.
-		if iv.Type != wire.InvTypeBlock && iv.Type != wire.InvTypeTx && iv.Type != wire.InvTypeInstantTx && iv.Type != wire.InvTypeInstantTxVote {
+		if iv.Type != wire.InvTypeBlock && iv.Type != wire.InvTypeTx && iv.Type != wire.InvTypeAiTx && iv.Type != wire.InvTypeAiTxVote {
 			continue
 		}
 
@@ -1804,7 +1804,7 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 			continue
 		}
 		if !haveInv {
-			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeInstantTx || iv.Type == wire.InvTypeInstantTxVote {
+			if iv.Type == wire.InvTypeTx || iv.Type == wire.InvTypeAiTx || iv.Type == wire.InvTypeAiTxVote {
 				// Skip the transaction if it has already been
 				// rejected.
 				if _, exists := b.rejectedTxns[iv.Hash]; exists {
@@ -1900,21 +1900,21 @@ func (b *blockManager) handleInvMsg(imsg *invMsg) {
 				gdmsg.AddInvVect(iv)
 				numRequested++
 			}
-		case wire.InvTypeInstantTx:
-			if _, exists := b.requestedInstantTxs[iv.Hash]; !exists {
-				b.requestedInstantTxs[iv.Hash] = struct{}{}
-				b.requestedEverInstantTxs[iv.Hash] = 0
-				b.limitMap(b.requestedInstantTxs, maxRequestedTxns)
-				imsg.peer.requestedInstantTxs[iv.Hash] = struct{}{}
+		case wire.InvTypeAiTx:
+			if _, exists := b.requestedAiTxs[iv.Hash]; !exists {
+				b.requestedAiTxs[iv.Hash] = struct{}{}
+				b.requestedEverAiTxs[iv.Hash] = 0
+				b.limitMap(b.requestedAiTxs, maxRequestedTxns)
+				imsg.peer.requestedAiTxs[iv.Hash] = struct{}{}
 				gdmsg.AddInvVect(iv)
 				numRequested++
 			}
-		case wire.InvTypeInstantTxVote:
-			if _, exists := b.requestedInstantVotes[iv.Hash]; !exists {
-				b.requestedInstantVotes[iv.Hash] = struct{}{}
-				b.requestedEverInstantVotes[iv.Hash] = 0
-				b.limitMap(b.requestedInstantVotes, maxRequestedTxns)
-				imsg.peer.requestedInstantVotes[iv.Hash] = struct{}{}
+		case wire.InvTypeAiTxVote:
+			if _, exists := b.requestedAiVotes[iv.Hash]; !exists {
+				b.requestedAiVotes[iv.Hash] = struct{}{}
+				b.requestedEverAiVotes[iv.Hash] = 0
+				b.limitMap(b.requestedAiVotes, maxRequestedTxns)
+				imsg.peer.requestedAiVotes[iv.Hash] = struct{}{}
 				gdmsg.AddInvVect(iv)
 				numRequested++
 			}
@@ -1967,12 +1967,12 @@ out:
 			case *txMsg:
 				b.handleTxMsg(msg)
 				msg.peer.txProcessed <- struct{}{}
-			case *instantTxMsg:
-				b.handleInstantTxMsg(msg)
-				msg.peer.instantTxProcessed <- struct{}{}
-			case *instantTxVoteMsg:
-				b.handleInstantTxVoteMsg(msg)
-				msg.peer.instantTxVoteProcessed <- struct{}{}
+			case *aiTxMsg:
+				b.handleAiTxMsg(msg)
+				msg.peer.aiTxProcessed <- struct{}{}
+			case *aiTxVoteMsg:
+				b.handleAiTxVoteMsg(msg)
+				msg.peer.aiTxVoteProcessed <- struct{}{}
 			case *blockMsg:
 				b.handleBlockMsg(msg)
 				msg.peer.blockProcessed <- struct{}{}
@@ -1990,7 +1990,7 @@ out:
 				msg.reply <- b.syncPeer
 
 			case requestFromPeerMsg:
-				err := b.requestFromPeer(msg.peer, msg.blocks, msg.txs, msg.instantTxs, msg.instantVotes)
+				err := b.requestFromPeer(msg.peer, msg.blocks, msg.txs, msg.aiTxs, msg.aiVotes)
 				msg.reply <- requestFromPeerResponse{
 					err: err,
 				}
@@ -2286,9 +2286,9 @@ out:
 					err:         err,
 				}
 
-			case processInstantTxMsg: //handle rpc instanttx
+			case processAiTxMsg: //handle rpc aitx
 				err := b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
-				msg.reply <- processInstantTxResponse{
+				msg.reply <- processAiTxResponse{
 					missedParent: nil,
 					err:          err,
 				}
@@ -2469,14 +2469,14 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 			//block connect success,we can believe parent are voted successfully,
 			//now we update the locktx height in the lockpool
-			b.server.txMemPool.ModifyInstantTxHeight(tx, parentBlock.Height())
+			b.server.txMemPool.ModifyAiTxHeight(tx, parentBlock.Height())
 
 			//parent block are voted successfully ,now we can remove doubleSpends tx
 			// conflict with parent block from lockPool
-			b.server.txMemPool.RemoveInstantTxDoubleSpends(tx)
+			b.server.txMemPool.RemoveAiTxDoubleSpends(tx)
 		}
-		//remove old instant tx
-		b.server.txMemPool.RemoveConfirmedInstantTx(parentBlock.Height())
+		//remove old ai tx
+		b.server.txMemPool.RemoveConfirmedAiTx(parentBlock.Height())
 
 		for _, stx := range block.STransactions()[0:] {
 			b.server.txMemPool.RemoveTransaction(stx, false)
@@ -2493,12 +2493,12 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			if txTreeRegularValid {
 				for _, tx := range parentBlock.Transactions()[1:] {
 					var iv *wire.InvVect
-					if _, is := txscript.IsInstantTx(tx.MsgTx()); is {
-						iv = wire.NewInvVect(wire.InvTypeInstantTx, tx.Hash())
+					if _, is := txscript.IsAiTx(tx.MsgTx()); is {
+						iv = wire.NewInvVect(wire.InvTypeAiTx, tx.Hash())
 						//remove txvote rebroadcast
-						if instantTxDesc, exist := b.server.txMemPool.GetInstantTxDesc(tx.Hash()); exist {
-							for _, vote := range instantTxDesc.Votes {
-								ivVote := wire.NewInvVect(wire.InvTypeInstantTxVote, vote.Hash())
+						if aiTxDesc, exist := b.server.txMemPool.GetAiTxDesc(tx.Hash()); exist {
+							for _, vote := range aiTxDesc.Votes {
+								ivVote := wire.NewInvVect(wire.InvTypeAiTxVote, vote.Hash())
 								b.server.RemoveRebroadcastInventory(ivVote)
 							}
 						}
@@ -2648,24 +2648,24 @@ func (b *blockManager) QueueTx(tx *hcutil.Tx, sp *serverPeer) {
 	b.msgChan <- &txMsg{tx: tx, peer: sp}
 }
 
-func (b *blockManager) QueueInstantTx(instantTx *hcutil.InstantTx, sp *serverPeer) {
+func (b *blockManager) QueueAiTx(aiTx *hcutil.AiTx, sp *serverPeer) {
 	// Don't accept more transactions if we're shutting down.
 	if atomic.LoadInt32(&b.shutdown) != 0 {
-		sp.instantTxProcessed <- struct{}{}
+		sp.aiTxProcessed <- struct{}{}
 		return
 	}
 
-	b.msgChan <- &instantTxMsg{tx: instantTx, peer: sp}
+	b.msgChan <- &aiTxMsg{tx: aiTx, peer: sp}
 }
 
-func (b *blockManager) QueueInstantTxVote(instantTxVote *hcutil.InstantTxVote, sp *serverPeer) {
+func (b *blockManager) QueueAiTxVote(aiTxVote *hcutil.AiTxVote, sp *serverPeer) {
 	// Don't accept more transactions if we're shutting down.
 	if atomic.LoadInt32(&b.shutdown) != 0 {
-		sp.instantTxVoteProcessed <- struct{}{}
+		sp.aiTxVoteProcessed <- struct{}{}
 		return
 	}
 
-	b.msgChan <- &instantTxVoteMsg{instantTxVote: instantTxVote, peer: sp}
+	b.msgChan <- &aiTxVoteMsg{aiTxVote: aiTxVote, peer: sp}
 }
 
 // QueueBlock adds the passed block message and peer to the block handling queue.
@@ -2749,16 +2749,16 @@ func (b *blockManager) SyncPeer() *serverPeer {
 // RequestFromPeer allows an outside caller to request blocks or transactions
 // from a peer. The requests are logged in the blockmanager's internal map of
 // requests so they do not later ban the peer for sending the respective data.
-func (b *blockManager) RequestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash, instantTxs []*chainhash.Hash, instantVotes []*chainhash.Hash) error {
+func (b *blockManager) RequestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash, aiTxs []*chainhash.Hash, aiVotes []*chainhash.Hash) error {
 	reply := make(chan requestFromPeerResponse)
-	b.msgChan <- requestFromPeerMsg{peer: p, blocks: blocks, txs: txs, instantTxs: instantTxs, instantVotes: instantVotes,
+	b.msgChan <- requestFromPeerMsg{peer: p, blocks: blocks, txs: txs, aiTxs: aiTxs, aiVotes: aiVotes,
 		reply: reply}
 	response := <-reply
 
 	return response.err
 }
 
-func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash, instantTxs []*chainhash.Hash, instantVotes []*chainhash.Hash) error {
+func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.Hash, aiTxs []*chainhash.Hash, aiVotes []*chainhash.Hash) error {
 	msgResp := wire.NewMsgGetData()
 
 	// Add the blocks to the request.
@@ -2830,10 +2830,10 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 		b.requestedEverTxns[*vh] = 0
 	}
 
-	for _, instantTx := range instantTxs {
+	for _, aiTx := range aiTxs {
 		// If we've already requested this transaction, skip it.
-		_, alreadyReqP := p.requestedInstantTxs[*instantTx]
-		_, alreadyReqB := b.requestedInstantTxs[*instantTx]
+		_, alreadyReqP := p.requestedAiTxs[*aiTx]
+		_, alreadyReqB := b.requestedAiTxs[*aiTx]
 
 		if alreadyReqP || alreadyReqB {
 			continue
@@ -2841,11 +2841,11 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 
 		// Ask the transaction lock pool if the transaction is known
 		// to it
-		if b.server.txMemPool.IsInstantTxExist(instantTx) {
+		if b.server.txMemPool.IsAiTxExist(aiTx) {
 			continue
 		}
 
-		entry, err := b.chain.FetchUtxoEntry(instantTx)
+		entry, err := b.chain.FetchUtxoEntry(aiTx)
 		if err != nil {
 			return err
 		}
@@ -2853,21 +2853,21 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 			continue
 		}
 
-		err = msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeInstantTx, instantTx))
+		err = msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeAiTx, aiTx))
 		if err != nil {
 			return fmt.Errorf("unexpected error encountered building request "+
-				"for instanttx %v: %v",
-				instantTx, err.Error())
+				"for aitx %v: %v",
+				aiTx, err.Error())
 		}
-		p.requestedInstantTxs[*instantTx] = struct{}{}
-		b.requestedInstantTxs[*instantTx] = struct{}{}
-		b.requestedEverInstantTxs[*instantTx] = 0
+		p.requestedAiTxs[*aiTx] = struct{}{}
+		b.requestedAiTxs[*aiTx] = struct{}{}
+		b.requestedEverAiTxs[*aiTx] = 0
 	}
 
-	for _, instantVote := range instantVotes {
-		// If we've already requested this instantvote, skip it.
-		_, alreadyReqP := p.requestedInstantVotes[*instantVote]
-		_, alreadyReqB := b.requestedInstantVotes[*instantVote]
+	for _, aiVote := range aiVotes {
+		// If we've already requested this aivote, skip it.
+		_, alreadyReqP := p.requestedAiVotes[*aiVote]
+		_, alreadyReqB := b.requestedAiVotes[*aiVote]
 
 		if alreadyReqP || alreadyReqB {
 			continue
@@ -2875,19 +2875,19 @@ func (b *blockManager) requestFromPeer(p *serverPeer, blocks, txs []*chainhash.H
 
 		// Ask the transaction lock pool if the vote is known
 		// to it
-		if _, err := b.server.txMemPool.FetchInstantTxVote(instantVote); err == nil {
+		if _, err := b.server.txMemPool.FetchAiTxVote(aiVote); err == nil {
 			continue
 		}
 
-		err := msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeInstantTxVote, instantVote))
+		err := msgResp.AddInvVect(wire.NewInvVect(wire.InvTypeAiTxVote, aiVote))
 		if err != nil {
 			return fmt.Errorf("unexpected error encountered building request "+
-				"for instanttxvote %v: %v",
-				instantVote, err.Error())
+				"for aitxvote %v: %v",
+				aiVote, err.Error())
 		}
-		p.requestedInstantVotes[*instantVote] = struct{}{}
-		b.requestedInstantVotes[*instantVote] = struct{}{}
-		b.requestedEverInstantVotes[*instantVote] = 0
+		p.requestedAiVotes[*aiVote] = struct{}{}
+		b.requestedAiVotes[*aiVote] = struct{}{}
+		b.requestedEverAiVotes[*aiVote] = 0
 	}
 
 	if len(msgResp.InvList) > 0 {
@@ -3008,10 +3008,10 @@ func (b *blockManager) ProcessTransaction(tx *hcutil.Tx, allowOrphans bool,
 	return response.acceptedTxs, response.err
 }
 
-func (b *blockManager) ProcessInstantTx(tx *hcutil.InstantTx, allowOrphans bool,
+func (b *blockManager) ProcessAiTx(tx *hcutil.AiTx, allowOrphans bool,
 	rateLimit bool, allowHighFees bool) ([]*chainhash.Hash, error) {
-	reply := make(chan processInstantTxResponse, 1)
-	b.msgChan <- processInstantTxMsg{tx, allowOrphans, rateLimit,
+	reply := make(chan processAiTxResponse, 1)
+	b.msgChan <- processAiTxMsg{tx, allowOrphans, rateLimit,
 		allowHighFees, reply}
 	response := <-reply
 	return response.missedParent, response.err
@@ -3083,10 +3083,10 @@ func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockMan
 		requestedEverTxns:         make(map[chainhash.Hash]uint8),
 		requestedBlocks:           make(map[chainhash.Hash]struct{}),
 		requestedEverBlocks:       make(map[chainhash.Hash]uint8),
-		requestedInstantTxs:       make(map[chainhash.Hash]struct{}),
-		requestedEverInstantTxs:   make(map[chainhash.Hash]uint8),
-		requestedInstantVotes:     make(map[chainhash.Hash]struct{}),
-		requestedEverInstantVotes: make(map[chainhash.Hash]uint8),
+		requestedAiTxs:       make(map[chainhash.Hash]struct{}),
+		requestedEverAiTxs:   make(map[chainhash.Hash]uint8),
+		requestedAiVotes:     make(map[chainhash.Hash]struct{}),
+		requestedEverAiVotes: make(map[chainhash.Hash]uint8),
 		progressLogger:            newBlockProgressLogger("Processed", bmgrLog),
 		msgChan:                   make(chan interface{}, cfg.MaxPeers*3),
 		headerList:                list.New(),

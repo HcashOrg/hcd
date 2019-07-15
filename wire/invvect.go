@@ -31,16 +31,16 @@ const (
 	InvTypeTx            InvType = 1
 	InvTypeBlock         InvType = 2
 	InvTypeFilteredBlock InvType = 3
-	InvTypeInstantTx     InvType = 4
-	InvTypeInstantTxVote InvType = 5
+	InvTypeAiTx     InvType = 4
+	InvTypeAiTxVote InvType = 5
 )
 
 // Map of service flags back to their constant names for pretty printing.
 var ivStrings = map[InvType]string{
 	InvTypeError:         "ERROR",
 	InvTypeTx:            "MSG_TX",
-	InvTypeInstantTx:     "MSG_INSTANT_TX",
-	InvTypeInstantTxVote: "MSG_INSTANT_TX_VOTE",
+	InvTypeAiTx:     "MSG_AI_TX",
+	InvTypeAiTxVote: "MSG_AI_TX_VOTE",
 	InvTypeBlock:         "MSG_BLOCK",
 	InvTypeFilteredBlock: "MSG_FILTERED_BLOCK",
 }

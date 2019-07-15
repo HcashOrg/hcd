@@ -2507,7 +2507,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 			return err
 		}
 
-		if _, ok := txscript.IsInstantTx(tx.MsgTx()); ok {
+		if _, ok := txscript.IsAiTx(tx.MsgTx()); ok {
 			lenOut := len(tx.MsgTx().TxOut)
 			var haveChange bool = false
 			if lenOut > 2 {
@@ -2524,7 +2524,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 
 						//check every input exist block
 						if utxoEntry.BlockHeight() > node.height-6 {
-							return ruleError(ErrMissingTx, "instant tx input have not been fully confirmed")
+							return ruleError(ErrMissingTx, "ai tx input have not been fully confirmed")
 						}
 
 						originTxIndex := txIn.PreviousOutPoint.Index

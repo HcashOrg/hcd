@@ -36,8 +36,8 @@ const (
 	// from the chain server that inform a client that a relevant
 	// transaction was accepted by the mempool.
 	RelevantTxAcceptedNtfnMethod = "relevanttxaccepted"
-	InstantTxNtfnMethod          = "InstantTxNtfn"
-	InstantTxVoteNtfnMethod      = "InstantTxVoteNtfn"
+	AiTxNtfnMethod          = "AiTxNtfn"
+	AiTxVoteNtfnMethod      = "AiTxVoteNtfn"
 )
 
 // BlockConnectedNtfn defines the blockconnected JSON-RPC notification.
@@ -122,28 +122,28 @@ type RelevantTxAcceptedNtfn struct {
 	Transaction string `json:"transaction"`
 }
 
-type InstantTxNtfn struct {
-	InstantTx string
+type AiTxNtfn struct {
+	AiTx string
 	Tickets   map[string]string
 	Resend    bool
 }
 
-type InstantTxVoteNtfn struct {
-	InstantTxVoteHash string
-	InstantTxHash     string
+type AiTxVoteNtfn struct {
+	AiTxVoteHash string
+	AiTxHash     string
 	TicketHash        string
 	Vote              bool
 	Sig               string
 }
 
-func NewInstantTxNtfn(instantTx string, tickets map[string]string, resend bool) *InstantTxNtfn {
-	return &InstantTxNtfn{InstantTx: instantTx, Tickets: tickets, Resend: resend}
+func NewAiTxNtfn(aiTx string, tickets map[string]string, resend bool) *AiTxNtfn {
+	return &AiTxNtfn{AiTx: aiTx, Tickets: tickets, Resend: resend}
 }
 
-func NewInstantTxVoteNtfn(instantTxVoteHash string, instantTxHash string, tickeHash string, vote bool, sig string) *InstantTxVoteNtfn {
-	return &InstantTxVoteNtfn{
-		InstantTxVoteHash: instantTxVoteHash,
-		InstantTxHash:     instantTxHash,
+func NewAiTxVoteNtfn(aiTxVoteHash string, aiTxHash string, tickeHash string, vote bool, sig string) *AiTxVoteNtfn {
+	return &AiTxVoteNtfn{
+		AiTxVoteHash: aiTxVoteHash,
+		AiTxHash:     aiTxHash,
 		TicketHash:        tickeHash,
 		Vote:              vote,
 		Sig:               sig,
@@ -167,6 +167,6 @@ func init() {
 	MustRegisterCmd(TxAcceptedNtfnMethod, (*TxAcceptedNtfn)(nil), flags)
 	MustRegisterCmd(TxAcceptedVerboseNtfnMethod, (*TxAcceptedVerboseNtfn)(nil), flags)
 	MustRegisterCmd(RelevantTxAcceptedNtfnMethod, (*RelevantTxAcceptedNtfn)(nil), flags)
-	MustRegisterCmd(InstantTxNtfnMethod, (*InstantTxNtfn)(nil), flags)
-	MustRegisterCmd(InstantTxVoteNtfnMethod, (*InstantTxVoteNtfn)(nil), flags)
+	MustRegisterCmd(AiTxNtfnMethod, (*AiTxNtfn)(nil), flags)
+	MustRegisterCmd(AiTxVoteNtfnMethod, (*AiTxVoteNtfn)(nil), flags)
 }

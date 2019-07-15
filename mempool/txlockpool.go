@@ -19,95 +19,95 @@ const (
 	defaultBehindNums = 10
 )
 
-type InstantTxDesc struct {
-	Tx *hcutil.InstantTx
+type AiTxDesc struct {
+	Tx *hcutil.AiTx
 	// Height is the block height when the entry was added to the source
 	// pool.
 	AddHeight int64
-	Votes     []*hcutil.InstantTxVote
+	Votes     []*hcutil.AiTxVote
 	Confirm   bool
 
 	MineHeight int64 //
 }
 
 type lockPool struct {
-	txLockPool     map[chainhash.Hash]*InstantTxDesc        //  lock tx pool
-	lockOutpoints  map[wire.OutPoint]*hcutil.InstantTx      //output index
-	instantTxVotes map[chainhash.Hash]*hcutil.InstantTxVote //vote index
+	txLockPool     map[chainhash.Hash]*AiTxDesc        //  lock tx pool
+	lockOutpoints  map[wire.OutPoint]*hcutil.AiTx      //output index
+	aiTxVotes map[chainhash.Hash]*hcutil.AiTxVote //vote index
 }
 
 //update inistant tx state according the mined height
-func (mp *TxPool) modifyInstantTxHeight(tx *hcutil.Tx, height int64) {
+func (mp *TxPool) modifyAiTxHeight(tx *hcutil.Tx, height int64) {
 	if desc, exist := mp.txLockPool[*tx.Hash()]; exist {
 		desc.MineHeight = height
 	}
 }
 
-func (mp *TxPool) AppendInstantTxVote(hash *chainhash.Hash, vote *hcutil.InstantTxVote) {
+func (mp *TxPool) AppendAiTxVote(hash *chainhash.Hash, vote *hcutil.AiTxVote) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	mp.appendInstantTxVote(hash, vote)
+	mp.appendAiTxVote(hash, vote)
 }
 
-func (mp *TxPool) appendInstantTxVote(hash *chainhash.Hash, vote *hcutil.InstantTxVote) {
+func (mp *TxPool) appendAiTxVote(hash *chainhash.Hash, vote *hcutil.AiTxVote) {
 	if desc, exist := mp.txLockPool[*hash]; exist && vote != nil {
 		desc.Votes = append(desc.Votes, vote)
 
-		mp.instantTxVotes[*vote.Hash()] = vote
+		mp.aiTxVotes[*vote.Hash()] = vote
 	}
 }
 
-func (mp *TxPool) GetInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, exist bool) {
+func (mp *TxPool) GetAiTxDesc(hash *chainhash.Hash) (desc *AiTxDesc, exist bool) {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 
-	return mp.getInstantTxDesc(hash)
+	return mp.getAiTxDesc(hash)
 }
 
-func (mp *TxPool) ProcessInstantTxVote(instantTxVote *hcutil.InstantTxVote, instantTxHash *chainhash.Hash) (error, bool) {
+func (mp *TxPool) ProcessAiTxVote(aiTxVote *hcutil.AiTxVote, aiTxHash *chainhash.Hash) (error, bool) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
-	return mp.processInstantTxVote(instantTxVote, instantTxHash)
+	return mp.processAiTxVote(aiTxVote, aiTxHash)
 }
 
-func (mp *TxPool) processInstantTxVote(instantTxVote *hcutil.InstantTxVote, instantTxHash *chainhash.Hash) (error, bool) {
-	if instantTxDesc, exist := mp.getInstantTxDesc(instantTxHash); exist {
+func (mp *TxPool) processAiTxVote(aiTxVote *hcutil.AiTxVote, aiTxHash *chainhash.Hash) (error, bool) {
+	if aiTxDesc, exist := mp.getAiTxDesc(aiTxHash); exist {
 		//check redundancy
-		for _, vote := range instantTxDesc.Votes {
-			if instantTxVote.Hash().IsEqual(vote.Hash()) {
-				return fmt.Errorf("redundancy vote %v", instantTxVote.Hash().String()), false
+		for _, vote := range aiTxDesc.Votes {
+			if aiTxVote.Hash().IsEqual(vote.Hash()) {
+				return fmt.Errorf("redundancy vote %v", aiTxVote.Hash().String()), false
 			}
 		}
 		//update
-		if len(instantTxDesc.Votes) < 5 {
-			mp.appendInstantTxVote(instantTxHash, instantTxVote)
+		if len(aiTxDesc.Votes) < 5 {
+			mp.appendAiTxVote(aiTxHash, aiTxVote)
 		}
 		//notify wallet to resend
-		if len(instantTxDesc.Votes) > 2 && !instantTxDesc.Confirm {
-			instantTxDesc.Confirm = true
+		if len(aiTxDesc.Votes) > 2 && !aiTxDesc.Confirm {
+			aiTxDesc.Confirm = true
 			return nil, true
 		}
 		return nil, false
 	} else {
-		return fmt.Errorf("failed to process instantTxVote %v , instantTx %v not exist",
-			instantTxVote.Hash().String(), instantTxHash.String()), false
+		return fmt.Errorf("failed to process aiTxVote %v , aiTx %v not exist",
+		aiTxVote.Hash().String(), aiTxHash.String()), false
 	}
 }
 
-func (mp *TxPool) getInstantTxDesc(hash *chainhash.Hash) (desc *InstantTxDesc, exist bool) {
+func (mp *TxPool) getAiTxDesc(hash *chainhash.Hash) (desc *AiTxDesc, exist bool) {
 	desc, exist = mp.txLockPool[*hash]
 	return
 }
 
-func (mp *TxPool) ModifyInstantTxHeight(tx *hcutil.Tx, height int64) {
+func (mp *TxPool) ModifyAiTxHeight(tx *hcutil.Tx, height int64) {
 	// Protect concurrent access.
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	mp.modifyInstantTxHeight(tx, height)
+	mp.modifyAiTxHeight(tx, height)
 }
 
-func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
+func (mp *TxPool) RemoveConfirmedAiTx(height int64) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
@@ -116,10 +116,10 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 		if desc.MineHeight != 0 && desc.MineHeight < height-defaultConfirmNum {
 			//remove vote index
 			for _, vote := range desc.Votes {
-				delete(mp.instantTxVotes, *vote.Hash())
+				delete(mp.aiTxVotes, *vote.Hash())
 			}
 
-			//remove instantTx
+			//remove aiTx
 			delete(mp.txLockPool, hash)
 
 			//remove tx output index
@@ -134,10 +134,10 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 
 			//remove vote index
 			for _, vote := range desc.Votes {
-				delete(mp.instantTxVotes, *vote.Hash())
+				delete(mp.aiTxVotes, *vote.Hash())
 			}
 
-			//remove instantTx
+			//remove aiTx
 			delete(mp.txLockPool, hash)
 
 			//remove tx output index
@@ -150,27 +150,27 @@ func (mp *TxPool) RemoveConfirmedInstantTx(height int64) {
 	}
 }
 
-func (mp *TxPool) IsInstantTxExist(hash *chainhash.Hash) bool {
+func (mp *TxPool) IsAiTxExist(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.isInstantTxExist(hash)
+	return mp.isAiTxExist(hash)
 }
 
-func (mp *TxPool) isInstantTxExist(hash *chainhash.Hash) bool {
+func (mp *TxPool) isAiTxExist(hash *chainhash.Hash) bool {
 	if _, exists := mp.txLockPool[*hash]; exists {
 		return true
 	}
 	return false
 }
 
-func (mp *TxPool) IsInstantTxExistAndVoted(hash *chainhash.Hash) bool {
+func (mp *TxPool) IsAiTxExistAndVoted(hash *chainhash.Hash) bool {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.isInstantTxExistAndVoted(hash)
+	return mp.isAiTxExistAndVoted(hash)
 }
 
-//Is instant tx voted ?
-func (mp *TxPool) isInstantTxExistAndVoted(hash *chainhash.Hash) bool {
+//Is ai tx voted ?
+func (mp *TxPool) isAiTxExistAndVoted(hash *chainhash.Hash) bool {
 	if desc, exists := mp.txLockPool[*hash]; exists && desc.Confirm {
 		return true
 	}
@@ -178,7 +178,7 @@ func (mp *TxPool) isInstantTxExistAndVoted(hash *chainhash.Hash) bool {
 }
 
 //Is txVin  in locked?
-func (mp *TxPool) isInstantTxInputExist(outPoint *wire.OutPoint) (*hcutil.InstantTx, bool) {
+func (mp *TxPool) isAiTxInputExist(outPoint *wire.OutPoint) (*hcutil.AiTx, bool) {
 	if txLock, exists := mp.lockOutpoints[*outPoint]; exists {
 		return txLock, true
 	}
@@ -194,7 +194,7 @@ func (mp *TxPool) TxLockPoolInfo() map[string]*hcjson.TxLockInfo {
 	for hash, desc := range mp.txLockPool {
 		votesHash := make([]string, 0, 5)
 		for _, vote := range desc.Votes {
-			votesHash = append(votesHash, vote.Hash().String()+"-"+vote.MsgInstantTxVote().TicketHash.String())
+			votesHash = append(votesHash, vote.Hash().String()+"-"+vote.MsgAiTxVote().TicketHash.String())
 		}
 
 		ret[hash.String()] = &hcjson.TxLockInfo{AddHeight: desc.AddHeight, MineHeight: desc.MineHeight, Votes: votesHash, Send: desc.Confirm}
@@ -210,20 +210,20 @@ func (mp *TxPool) FetchLockPoolState() ([]*chainhash.Hash, []*chainhash.Hash) {
 }
 
 func (mp *TxPool) fetchLockPoolState() ([]*chainhash.Hash, []*chainhash.Hash) {
-	instantTxHashes := make([]*chainhash.Hash, 0, len(mp.txLockPool))
-	instantTxVoteHashes := make([]*chainhash.Hash, 0, len(mp.instantTxVotes))
+	aiTxHashes := make([]*chainhash.Hash, 0, len(mp.txLockPool))
+	aiTxVoteHashes := make([]*chainhash.Hash, 0, len(mp.aiTxVotes))
 
-	for instantTxHash := range mp.txLockPool {
-		copy := instantTxHash
-		instantTxHashes = append(instantTxHashes, &copy)
+	for aiTxHash := range mp.txLockPool {
+		copy := aiTxHash
+		aiTxHashes = append(aiTxHashes, &copy)
 	}
 
-	for instantTxVoteHash := range mp.instantTxVotes {
-		copy := instantTxVoteHash
-		instantTxVoteHashes = append(instantTxVoteHashes, &copy)
+	for aiTxVoteHash := range mp.aiTxVotes {
+		copy := aiTxVoteHash
+		aiTxVoteHashes = append(aiTxVoteHashes, &copy)
 	}
 
-	return instantTxHashes, instantTxVoteHashes
+	return aiTxHashes, aiTxVoteHashes
 }
 
 //fetch confirmed unmined tx
@@ -269,10 +269,10 @@ func (mp *TxPool) CheckBlkConflictWithTxLockPool(block *hcutil.Block) (bool, err
 //check the input double spent
 //return nil if ( exist && voted ) || ( !exist && vin not exist)
 func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
-	if !mp.isInstantTxExistAndVoted(tx.Hash()) {
+	if !mp.isAiTxExistAndVoted(tx.Hash()) {
 		for _, txIn := range tx.MsgTx().TxIn {
-			if instantTx, exist := mp.isInstantTxInputExist(&txIn.PreviousOutPoint); exist {
-				return fmt.Errorf("tx %v is conflict with  instanttx %v in lock pool", tx.Hash(), instantTx.Hash())
+			if aiTx, exist := mp.isAiTxInputExist(&txIn.PreviousOutPoint); exist {
+				return fmt.Errorf("tx %v is conflict with  aitx %v in lock pool", tx.Hash(), aiTx.Hash())
 			}
 		}
 	}
@@ -280,27 +280,27 @@ func (mp *TxPool) checkTxWithLockPool(tx *hcutil.Tx) error {
 }
 
 //remove txlock which is conflict with tx
-func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
+func (mp *TxPool) RemoveAiTxDoubleSpends(tx *hcutil.Tx) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 
 	//if is the same tx and voted,just return
-	if mp.isInstantTxExistAndVoted(tx.Hash()) {
+	if mp.isAiTxExistAndVoted(tx.Hash()) {
 		return
 	}
 
 	//if tx in is conflict with txlock ,just remove txlock and lockOutpoint
 	for _, invalue := range tx.MsgTx().TxIn {
-		if txLock, exist := mp.isInstantTxInputExist(&invalue.PreviousOutPoint); exist {
-			instantTxdesc, exist := mp.txLockPool[*txLock.Hash()]
+		if txLock, exist := mp.isAiTxInputExist(&invalue.PreviousOutPoint); exist {
+			aiTxdesc, exist := mp.txLockPool[*txLock.Hash()]
 
-			if !exist || instantTxdesc == nil {
+			if !exist || aiTxdesc == nil {
 				continue
 			}
 			//remove all information about this txlock
 			//vote
-			for _, vote := range instantTxdesc.Votes {
-				delete(mp.instantTxVotes, *vote.Hash())
+			for _, vote := range aiTxdesc.Votes {
+				delete(mp.aiTxVotes, *vote.Hash())
 			}
 
 			//lockpool
@@ -316,56 +316,56 @@ func (mp *TxPool) RemoveInstantTxDoubleSpends(tx *hcutil.Tx) {
 
 }
 
-func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error {
+func (mp *TxPool) MayBeAddToLockPool(tx *hcutil.AiTx, isNew, rateLimit, allowHighFees bool) error {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
 	return mp.maybeAddtoLockPool(tx, isNew, rateLimit, allowHighFees)
 }
 
 //this is called before inserting to mempool,must be called with lock
-func (mp *TxPool) maybeAddtoLockPool(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) error {
+func (mp *TxPool) maybeAddtoLockPool(aiTx *hcutil.AiTx, isNew, rateLimit, allowHighFees bool) error {
 	//if exist just return ,or will rewrite the state of this txlock
-	if mp.isInstantTxExist(instantTx.Hash()) {
-		return fmt.Errorf("instant tx %v already exists", instantTx.Hash())
+	if mp.isAiTxExist(aiTx.Hash()) {
+		return fmt.Errorf("ai tx %v already exists", aiTx.Hash())
 	}
 	//check with lockpool
-	tx := instantTx.Tx
+	tx := aiTx.Tx
 	err := mp.checkTxWithLockPool(&tx)
 	if err != nil {
-		log.Errorf("instant Transaction %v is conflict with lockpool : %v", instantTx.Hash(),
+		log.Errorf("ai Transaction %v is conflict with lockpool : %v", aiTx.Hash(),
 			err)
 		return err
 	}
 	//check with mempool
-	_, err = mp.checkInstantTxWithMem(instantTx, isNew, rateLimit, allowHighFees)
+	_, err = mp.checkAiTxWithMem(aiTx, isNew, rateLimit, allowHighFees)
 	if err != nil {
-		log.Errorf("instant Transaction %v is conflict with mempool : %v", instantTx.Hash(), err)
+		log.Errorf("ai Transaction %v is conflict with mempool : %v", aiTx.Hash(), err)
 		return err
 	}
 
-	//check instant tag
-	msgTx := instantTx.MsgTx()
-	_, isInstantTx := txscript.IsInstantTx(msgTx)
-	if !isInstantTx {
-		log.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
-		return fmt.Errorf("Transaction %v is not instant instantTx ", instantTx.Hash())
+	//check ai tag
+	msgTx := aiTx.MsgTx()
+	_, isAiTx := txscript.IsAiTx(msgTx)
+	if !isAiTx {
+		log.Errorf("Transaction %v is not ai aiTx ", aiTx.Hash())
+		return fmt.Errorf("Transaction %v is not ai aiTx ", aiTx.Hash())
 	}
 	bestHeight := mp.cfg.BestHeight()
-	mp.txLockPool[*instantTx.Hash()] = &InstantTxDesc{
-		Tx:         instantTx,
+	mp.txLockPool[*aiTx.Hash()] = &AiTxDesc{
+		Tx:         aiTx,
 		AddHeight:  bestHeight,
 		MineHeight: 0,
 		Confirm:    false,
-		Votes:      make([]*hcutil.InstantTxVote, 0, 5)}
+		Votes:      make([]*hcutil.AiTxVote, 0, 5)}
 
 	for _, txIn := range msgTx.TxIn {
-		mp.lockOutpoints[txIn.PreviousOutPoint] = instantTx
+		mp.lockOutpoints[txIn.PreviousOutPoint] = aiTx
 	}
 	return nil
 }
 
-func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rateLimit, allowHighFees bool) ([]*chainhash.Hash, error) {
-	tx := &instantTx.Tx
+func (mp *TxPool) checkAiTxWithMem(aiTx *hcutil.AiTx, isNew, rateLimit, allowHighFees bool) ([]*chainhash.Hash, error) {
+	tx := &aiTx.Tx
 	msgTx := tx.MsgTx()
 	txHash := tx.Hash()
 	// Don't accept the transaction if it already exists in the pool.  This
@@ -417,7 +417,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	if txType == stake.TxTypeRegular {
 		tx.SetTree(wire.TxTreeRegular)
 	} else {
-		return nil, txRuleError(wire.RejectNonstandard, "instant transaction  type must be regular")
+		return nil, txRuleError(wire.RejectNonstandard, "ai transaction  type must be regular")
 	}
 
 	// Don't allow non-standard transactions if the network parameters
@@ -488,7 +488,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 
 		//check every input exist block
 		if utxoEntry.BlockHeight() > bestHeight-defaultConfirmNum {
-			return nil, txRuleError(wire.RejectNonstandard, "instant tx input have not been fully confirmed")
+			return nil, txRuleError(wire.RejectNonstandard, "ai tx input have not been fully confirmed")
 		}
 
 		//check every input index
@@ -503,22 +503,22 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 			// Prevent a panic in the logger by continuing here if the
 			// transaction input is nil.
 			if utxoEntry == nil {
-				log.Debugf("instant Transaction %v uses unknown input %v "+
+				log.Debugf("ai Transaction %v uses unknown input %v "+
 					"and will be considered an orphan", txHash,
 					txIn.PreviousOutPoint.Hash)
 				continue
 			}
 			if utxoEntry.IsOutputSpent(originIndex) {
-				log.Debugf("instant Transaction %v uses full spent input %v", txHash,
+				log.Debugf("ai Transaction %v uses full spent input %v", txHash,
 					txIn.PreviousOutPoint.Hash)
 			}
 		}
 
 	}
 
-	//instant tx don`t allow missing parents
+	//ai tx don`t allow missing parents
 	if len(missingParents) > 0 {
-		return missingParents, txRuleError(wire.RejectNonstandard, "some of instant transaction inputs have been  spent")
+		return missingParents, txRuleError(wire.RejectNonstandard, "some of ai transaction inputs have been  spent")
 	}
 
 	// Don't allow the transaction into the mempool unless its sequence
@@ -609,7 +609,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	minFee := calcMinRequiredTxRelayFee(serializedSize,
 		mp.cfg.Policy.MinRelayTxFee)
 
-	if _, ok := txscript.IsInstantTx(msgTx); ok {
+	if _, ok := txscript.IsAiTx(msgTx); ok {
 		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight {
 			haveChange := mp.haveAiChange(tx)
 			minFee += msgTx.GetTxAiFee(haveChange)
@@ -679,7 +679,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 		maxFee := calcMinRequiredTxRelayFee(serializedSize*maxRelayFeeMultiplier,
 			mp.cfg.Policy.MinRelayTxFee)
 
-		if _, ok := txscript.IsInstantTx(msgTx); ok {
+		if _, ok := txscript.IsAiTx(msgTx); ok {
 			if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight {
 				haveChange := mp.haveAiChange(tx)
 				maxFee += msgTx.GetTxAiFee(haveChange)
@@ -714,7 +714,7 @@ func (mp *TxPool) checkInstantTxWithMem(instantTx *hcutil.InstantTx, isNew, rate
 	return nil, nil
 }
 
-func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool) (*hcutil.InstantTx, error) {
+func (mp *TxPool) FetchAiTx(txHash *chainhash.Hash, includeRecentBlock bool) (*hcutil.AiTx, error) {
 	// Protect concurrent access.
 	mp.mtx.RLock()
 	txDesc, exists := mp.txLockPool[*txHash]
@@ -728,24 +728,24 @@ func (mp *TxPool) FetchInstantTx(txHash *chainhash.Hash, includeRecentBlock bool
 	if err != nil {
 		return nil, err
 	}
-	msgInstantTx := wire.NewMsgInstantTx()
-	msgInstantTx.MsgTx = *tx.MsgTx()
-	instantTx := hcutil.NewInstantTx(msgInstantTx)
-	instantTx.SetTree(tx.Tree())
-	instantTx.SetIndex(tx.Index())
+	msgAiTx := wire.NewMsgAiTx()
+	msgAiTx.MsgTx = *tx.MsgTx()
+	aiTx := hcutil.NewAiTx(msgAiTx)
+	aiTx.SetTree(tx.Tree())
+	aiTx.SetIndex(tx.Index())
 
-	return instantTx, nil
+	return aiTx, nil
 }
 
-func (mp *TxPool) FetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote, error) {
+func (mp *TxPool) FetchAiTxVote(txVoteHash *chainhash.Hash) (*hcutil.AiTxVote, error) {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.fetchInstantTxVote(txVoteHash)
+	return mp.fetchAiTxVote(txVoteHash)
 }
 
-func (mp *TxPool) fetchInstantTxVote(txVoteHash *chainhash.Hash) (*hcutil.InstantTxVote, error) {
-	if instantTxVote, exist := mp.instantTxVotes[*txVoteHash]; exist {
-		return instantTxVote, nil
+func (mp *TxPool) fetchAiTxVote(txVoteHash *chainhash.Hash) (*hcutil.AiTxVote, error) {
+	if aiTxVote, exist := mp.aiTxVotes[*txVoteHash]; exist {
+		return aiTxVote, nil
 	}
-	return nil, errors.New("instantTxVote not exist ")
+	return nil, errors.New("aiTxVote not exist ")
 }

@@ -366,7 +366,7 @@ func (p *poolHarness) CreateLockTxChain(firstOutput spendableOutput, numTxns uin
 			Value:    int64(spendableAmount),
 		})
 
-		payLoadScript, err := txscript.GenerateProvablyPruneableOut([]byte("hcashInstantSend"))
+		payLoadScript, err := txscript.GenerateProvablyPruneableOut([]byte("hcashAiSend"))
 		payLoadTx := &wire.TxOut{
 			Value:    int64(0),
 			PkScript: payLoadScript,

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestInstantTx(t *testing.T) {
+func TestAiTx(t *testing.T) {
 	pver := ProtocolVersion
 
 	// Block 100000 hash.
@@ -16,8 +16,8 @@ func TestInstantTx(t *testing.T) {
 	//}
 
 	// Ensure the command is expected value.
-	wantCmd := "instanttx"
-	msg := NewMsgInstantTx()
+	wantCmd := "aitx"
+	msg := NewMsgAiTx()
 	if cmd := msg.Command(); cmd != wantCmd {
 		t.Errorf("NewMsgAddr: wrong command - got %v want %v",
 			cmd, wantCmd)
@@ -43,15 +43,15 @@ func TestInstantTx(t *testing.T) {
 	}
 }
 
-func TestInstantTxDecode(t *testing.T) {
-	msg := NewMsgInstantTx()
+func TestAiTxDecode(t *testing.T) {
+	msg := NewMsgAiTx()
 	var buf bytes.Buffer
 	err := msg.BtcEncode(&buf, ProtocolVersion)
 	if err != nil {
 		t.Errorf("BtcEncode error %v", err)
 	}
 
-	var msg2 MsgInstantTx
+	var msg2 MsgAiTx
 	rbuf := bytes.NewReader(buf.Bytes())
 	err = msg2.BtcDecode(rbuf, ProtocolVersion)
 	if err != nil {
@@ -59,15 +59,15 @@ func TestInstantTxDecode(t *testing.T) {
 	}
 }
 
-func TestInstantTxVoteDecode(t *testing.T) {
-	msg:=NewMsgInstantTxVote()
+func TestAiTxVoteDecode(t *testing.T) {
+	msg:=NewMsgAiTxVote()
 	var buf bytes.Buffer
 	err := msg.BtcEncode(&buf, ProtocolVersion)
 	if err != nil {
 		t.Errorf("BtcEncode error %v", err)
 	}
 
-	var msg2 MsgInstantTxVote
+	var msg2 MsgAiTxVote
 	rbuf := bytes.NewReader(buf.Bytes())
 	err = msg2.BtcDecode(rbuf, ProtocolVersion)
 	if err != nil {

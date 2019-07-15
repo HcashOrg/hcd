@@ -6,24 +6,24 @@
 
 package wire
 
-type MsgInstantTx struct {
+type MsgAiTx struct {
 	MsgTx
 }
 
-func NewMsgInstantTx() *MsgInstantTx {
-	return &MsgInstantTx{
+func NewMsgAiTx() *MsgAiTx {
+	return &MsgAiTx{
 		MsgTx: *NewMsgTx(),
 	}
 }
 
-func NewMsgInstantTxFromMsgTx(msgTx *MsgTx) *MsgInstantTx {
-	return &MsgInstantTx{
+func NewMsgAiTxFromMsgTx(msgTx *MsgTx) *MsgAiTx {
+	return &MsgAiTx{
 		MsgTx: *msgTx,
 	}
 }
 
 
-func (msg *MsgInstantTx) Command() string {
-	return CmdInstantTx
+func (msg *MsgAiTx) Command() string {
+	return CmdAiTx
 }
 

@@ -130,8 +130,8 @@ type MessageListeners struct {
 	// OnTx is invoked when a peer receives a tx wire message.
 	OnTx func(p *Peer, msg *wire.MsgTx)
 
-	OnInstantTx     func(p *Peer, msg *wire.MsgInstantTx)
-	OnInstantTxVote func(p *Peer, msg *wire.MsgInstantTxVote)
+	OnAiTx     func(p *Peer, msg *wire.MsgAiTx)
+	OnAiTxVote func(p *Peer, msg *wire.MsgAiTxVote)
 
 	// OnBlock is invoked when a peer receives a block wire message.
 	OnBlock func(p *Peer, msg *wire.MsgBlock, buf []byte)
@@ -1208,8 +1208,8 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 		pendingResponses[wire.CmdBlock] = deadline
 		pendingResponses[wire.CmdTx] = deadline
 		pendingResponses[wire.CmdNotFound] = deadline
-		pendingResponses[wire.CmdInstantTx] = deadline
-		pendingResponses[wire.CmdInstantTxVote] = deadline
+		pendingResponses[wire.CmdAiTx] = deadline
+		pendingResponses[wire.CmdAiTxVote] = deadline
 
 	case wire.CmdGetHeaders:
 		// Expects a headers message.  Use a longer deadline since it
@@ -1271,16 +1271,16 @@ out:
 					fallthrough
 				case wire.CmdTx:
 					fallthrough
-				case wire.CmdInstantTx:
+				case wire.CmdAiTx:
 					fallthrough
-				case wire.CmdInstantTxVote:
+				case wire.CmdAiTxVote:
 					fallthrough
 				case wire.CmdNotFound:
 					delete(pendingResponses, wire.CmdBlock)
 					delete(pendingResponses, wire.CmdTx)
 					delete(pendingResponses, wire.CmdNotFound)
-					delete(pendingResponses, wire.CmdInstantTx)
-					delete(pendingResponses, wire.CmdInstantTxVote)
+					delete(pendingResponses, wire.CmdAiTx)
+					delete(pendingResponses, wire.CmdAiTxVote)
 
 				default:
 					delete(pendingResponses, msgCmd)
@@ -1500,14 +1500,14 @@ out:
 			if p.cfg.Listeners.OnTx != nil {
 				p.cfg.Listeners.OnTx(p, msg)
 			}
-		case *wire.MsgInstantTx:
-			if p.cfg.Listeners.OnInstantTx != nil {
-				p.cfg.Listeners.OnInstantTx(p, msg)
+		case *wire.MsgAiTx:
+			if p.cfg.Listeners.OnAiTx != nil {
+				p.cfg.Listeners.OnAiTx(p, msg)
 			}
 
-		case *wire.MsgInstantTxVote:
-			if p.cfg.Listeners.OnInstantTxVote != nil {
-				p.cfg.Listeners.OnInstantTxVote(p, msg)
+		case *wire.MsgAiTxVote:
+			if p.cfg.Listeners.OnAiTxVote != nil {
+				p.cfg.Listeners.OnAiTxVote(p, msg)
 			}
 
 		case *wire.MsgBlock:

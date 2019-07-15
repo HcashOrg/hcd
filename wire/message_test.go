@@ -63,9 +63,9 @@ func TestMessage(t *testing.T) {
 	//msgGetData := NewMsgGetData()
 	//msgNotFound := NewMsgNotFound()
 	//msgTx := NewMsgTx()
-	msgInstantVote:=NewMsgInstantTxVote()
-	msgInstantVote.Sig=[]byte{1}
-	msgInstantVote.PubKey=[]byte{2}
+	msgAiVote:=NewMsgAiTxVote()
+	msgAiVote.Sig=[]byte{1}
+	msgAiVote.PubKey=[]byte{2}
 	//
 	//msgPing := NewMsgPing(123123)
 	//msgPong := NewMsgPong(123123)
@@ -115,7 +115,7 @@ func TestMessage(t *testing.T) {
 		//{msgGetData, msgGetData, pver, MainNet, 25},          // [7]
 		//{msgNotFound, msgNotFound, pver, MainNet, 25},        // [8]
 		//{msgTx, msgTx, pver, MainNet, 39},                    // [9]
-		{msgInstantVote, msgInstantVote, pver, MainNet, msgInstantVote.SerializeSize()},                    // [9]
+		{msgAiVote, msgAiVote, pver, MainNet, msgAiVote.SerializeSize()},                    // [9]
 		//{msgPing, msgPing, pver, MainNet, 32},                // [10]
 		//{msgPong, msgPong, pver, MainNet, 32},                // [11]
 		//{msgGetHeaders, msgGetHeaders, pver, MainNet, 61},    // [12]

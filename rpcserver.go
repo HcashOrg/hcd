@@ -242,8 +242,8 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"rebroadcastmissed":         handleRebroadcastMissed,
 	"rebroadcastwinners":        handleRebroadcastWinners,
 	"sendrawtransaction":        handleSendRawTransaction,
-	"sendinstantrawtransaction": handleSendInstantRawTransaction,
-	"sendinstanttxvote":         handleSendInstantTxVote,
+	"sendairawtransaction": 	handleSendAiRawTransaction,
+	"sendaitxvote":         	handleSendAiTxVote,
 	"setgenerate":               handleSetGenerate,
 	"stop":                      handleStop,
 	"submitblock":               handleSubmitBlock,
@@ -954,7 +954,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later for
-	// the generation of the SSGen instantTx outputs.
+	// the generation of the SSGen aiTx outputs.
 	//
 	// Convert the provided transaction hash hex to a chainhash.Hash.
 	txHash, err := chainhash.NewHashFromStr(c.Inputs[0].Txid)
@@ -1054,7 +1054,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 		}
 
 		// Create a new script which pays to the provided address
-		// specified in the original ticket instantTx.
+		// specified in the original ticket aiTx.
 		var ssgenOut []byte
 		switch ssgenPayTypes[i] {
 		case false: // P2PKH
@@ -1073,7 +1073,7 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 			}
 		}
 
-		// Add the txout to our SSGen instantTx.
+		// Add the txout to our SSGen aiTx.
 		txOut := wire.NewTxOut(ssgenCalcAmts[i], ssgenOut)
 		mtx.AddTxOut(txOut)
 	}
@@ -1114,7 +1114,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	}
 
 	// 1. Fetch the SStx, then calculate all the values we'll need later
-	// for the generation of the SSGen instantTx outputs.
+	// for the generation of the SSGen aiTx outputs.
 	//
 	// Convert the provided transaction hash hex to a chainhash.Hash.
 	txHash, err := chainhash.NewHashFromStr(c.Inputs[0].Txid)
@@ -1178,7 +1178,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		}
 
 		// Create a new script which pays to the provided address specified in
-		// the original ticket instantTx.
+		// the original ticket aiTx.
 		var ssrtxOutScript []byte
 		switch ssrtxPayTypes[i] {
 		case false: // P2PKH
@@ -1195,7 +1195,7 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 			}
 		}
 
-		// Add the txout to our SSGen instantTx.
+		// Add the txout to our SSGen aiTx.
 		amt := ssrtxCalcAmts[i]
 		if !feeApplied && int64(feeAmt) < amt {
 			amt -= int64(feeAmt)
@@ -1304,7 +1304,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 				chainParams)
 			if err != nil {
 				rpcsLog.Warnf("failed to decode ticket "+
-					"commitment addr output for instantTx hash "+
+					"commitment addr output for aiTx hash "+
 					"%v, output idx %v", mtx.TxHash(), i)
 			} else {
 				addrs = []hcutil.Address{addr}
@@ -1312,7 +1312,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 			amt, err := stake.AmountFromSStxPkScrCommitment(v.PkScript)
 			if err != nil {
 				rpcsLog.Warnf("failed to decode ticket "+
-					"commitment amt output for instantTx hash %v"+
+					"commitment amt output for aiTx hash %v"+
 					", output idx %v", mtx.TxHash(), i)
 			} else {
 				commitAmt = &amt
@@ -1615,7 +1615,7 @@ func handleEstimateAiStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan s
 	// User-specified stake difficulty, if they asked for one.
 	var userEstFltPtr *float64
 	if c.AiTickets != nil {
-		userEst, err := chain.EstimateNextStakeDifficulty(int64(*c.AiTickets),
+		userEst, err := chain.EstimateNextAiStakeDifficulty(int64(*c.AiTickets),
 			false)
 		if err != nil {
 			return nil, rpcInternalError(err.Error(), "Could not "+
@@ -4336,7 +4336,7 @@ func handleGetTxOut(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		return nil, rpcDecodeHexError(c.Txid)
 	}
 
-	// If requested and the instantTx is available in the mempool try to fetch it
+	// If requested and the aiTx is available in the mempool try to fetch it
 	// from there, otherwise attempt to fetch from the block database.
 	var bestBlockHash string
 	var confirmations int64
@@ -4960,7 +4960,7 @@ func fetchInputTxos(s *rpcServer, tx *wire.MsgTx) (map[wire.OutPoint]wire.TxOut,
 	voteTx, _ := stake.IsSSGen(tx)
 	aiVoteTx, _ := stake.IsAiSSGen(tx)
 	for txInIndex, txIn := range tx.TxIn {
-		// vote instantTx have null input for vin[0],
+		// vote aiTx have null input for vin[0],
 		// skip since it resolvces to an invalid transaction
 		if (voteTx || aiVoteTx) && txInIndex == 0 {
 			continue
@@ -5455,8 +5455,8 @@ func handleSearchRawTransactions(s *rpcServer, cmd interface{}, closeChan <-chan
 	return srtList, nil
 }
 
-func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
-	c := cmd.(*hcjson.SendInstantRawTransactionCmd)
+func handleSendAiRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.SendAiRawTransactionCmd)
 	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
 	if len(hexStr)%2 != 0 {
@@ -5467,54 +5467,54 @@ func handleSendInstantRawTransaction(s *rpcServer, cmd interface{}, closeChan <-
 		return nil, rpcDecodeHexError(hexStr)
 	}
 
-	return handleInstantTransaction(s,closeChan,serializedTx,allowHighFees)
+	return handleAiTransaction(s,closeChan,serializedTx,allowHighFees)
 
 }
 
-func handleInstantTransaction(s *rpcServer, closeChan <-chan struct{},serializedTx []byte,allowHighFees bool)(interface{}, error){
-	msgtx := wire.NewMsgInstantTx()
+func handleAiTransaction(s *rpcServer, closeChan <-chan struct{},serializedTx []byte,allowHighFees bool)(interface{}, error){
+	msgtx := wire.NewMsgAiTx()
 	err := msgtx.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {
-		return nil, rpcDeserializationError("Could not decode instant Tx: %v",
+		return nil, rpcDeserializationError("Could not decode ai Tx: %v",
 			err)
 	}
 
-	instantTx := hcutil.NewInstantTx(msgtx)
+	aiTx := hcutil.NewAiTx(msgtx)
 
 	//check lotteryHash
-	lotteryHash, ok := txscript.IsInstantTx(instantTx.MsgTx())
+	lotteryHash, ok := txscript.IsAiTx(aiTx.MsgTx())
 	if !ok || lotteryHash == nil{
 		return nil, fmt.Errorf("ai tx error")
 	}
-	tickets, err := s.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
+	tickets, err := s.chain.LotteryAiDataForTxAndBlock(aiTx.Hash(), lotteryHash)
 	if err != nil || len(tickets) < 3 {
 		return nil, fmt.Errorf("faield to lottery ticket use lottery hash %v ,err %v", lotteryHash.String(), err)
 	}
 
 	//check conflict with mempool
-	missedParent, err := s.server.blockManager.ProcessInstantTx(instantTx, false, false, allowHighFees)
+	missedParent, err := s.server.blockManager.ProcessAiTx(aiTx, false, false, allowHighFees)
 	if err != nil || len(missedParent) != 0 {
 		return nil, err
 	}
 
-	instantTxs := make([]*hcutil.InstantTx, 0)
-	instantTxs = append(instantTxs, instantTx)
+	aiTxs := make([]*hcutil.AiTx, 0)
+	aiTxs = append(aiTxs, aiTx)
 
-	s.server.AnnounceNewInstantTx(instantTxs)
+	s.server.AnnounceNewAiTx(aiTxs)
 
 	// Keep track of all the sendrawtransaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
-	iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
-	s.server.AddRebroadcastInventory(iv, instantTx)
+	iv := wire.NewInvVect(wire.InvTypeAiTx, aiTx.Hash())
+	s.server.AddRebroadcastInventory(iv, aiTx)
 
-	return instantTx.Hash().String(), nil
+	return aiTx.Hash().String(), nil
 
 }
 
 
 
-func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
-	c := cmd.(*hcjson.SendInstantTxVoteCmd)
+func handleSendAiTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.SendAiTxVoteCmd)
 
 	hexTxVote := c.HexTxVote
 	if len(hexTxVote)%2 != 0 {
@@ -5525,24 +5525,24 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 		return nil, rpcDecodeHexError(hexTxVote)
 	}
 
-	msgInstantTxVote := wire.NewMsgInstantTxVote()
-	err = msgInstantTxVote.Deserialize(bytes.NewReader(serializedTx))
+	msgAiTxVote := wire.NewMsgAiTxVote()
+	err = msgAiTxVote.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {
-		return nil, rpcDeserializationError("Could not decode instanttx vote: %v", err)
+		return nil, rpcDeserializationError("Could not decode aitx vote: %v", err)
 	}
 
-	instantTxvote := hcutil.NewInstantTxVote(msgInstantTxVote)
-	instantTxHash := msgInstantTxVote.InstantTxHash
-	ticketHash := msgInstantTxVote.TicketHash
+	aiTxvote := hcutil.NewAiTxVote(msgAiTxVote)
+	aiTxHash := msgAiTxVote.AiTxHash
+	ticketHash := msgAiTxVote.TicketHash
 
-	instantTxDesc, exist := s.server.txMemPool.GetInstantTxDesc(&instantTxHash)
+	aiTxDesc, exist := s.server.txMemPool.GetAiTxDesc(&aiTxHash)
 	if !exist {
-		return nil, fmt.Errorf("instant tx %v not exist in lock pool", instantTxHash)
+		return nil, fmt.Errorf("ai tx %v not exist in lock pool", aiTxHash)
 	}
-	instantTx := instantTxDesc.Tx
+	aiTx := aiTxDesc.Tx
 	//check ticket selected
-	lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
-	tickets, err := s.chain.LotteryAiDataForTxAndBlock(&instantTxHash, lotteryHash)
+	lotteryHash, _ := txscript.IsAiTx(aiTx.MsgTx())
+	tickets, err := s.chain.LotteryAiDataForTxAndBlock(&aiTxHash, lotteryHash)
 	ticketExist := false
 	for _, t := range tickets {
 		if t.IsEqual(&ticketHash) {
@@ -5551,7 +5551,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 		}
 	}
 	if !ticketExist {
-		return nil, fmt.Errorf("instanttx ticket not exist ,instantvote %v: %v", instantTxvote.Hash(),
+		return nil, fmt.Errorf("aitx ticket not exist ,aivote %v: %v", aiTxvote.Hash(),
 			err)
 	}
 
@@ -5577,35 +5577,35 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 		return nil, fmt.Errorf("failed to extractpkscriptaddrs of ticket  %v , err %v", ticketHash.String(), err)
 	}
 
-	sigMsg := instantTxHash.String() + ticketHash.String()
+	sigMsg := aiTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], instantTxvote.MsgInstantTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], aiTxvote.MsgAiTxVote().Sig)
 	if !verified {
-		return nil, fmt.Errorf("failed to verify signature ,instantvote %v , err %v", instantTxvote.Hash(), err)
+		return nil, fmt.Errorf("failed to verify signature ,aivote %v , err %v", aiTxvote.Hash(), err)
 	}
 
 	//update lockpool
-	err, reSendToMemPool := s.server.txMemPool.ProcessInstantTxVote(instantTxvote, &instantTxHash)
+	err, reSendToMemPool := s.server.txMemPool.ProcessAiTxVote(aiTxvote, &aiTxHash)
 	if err != nil {
 		return nil, err
 	}
 	if reSendToMemPool {
-		s.ntfnMgr.NotifyInstantTx(tickets, instantTx, true)
+		s.ntfnMgr.NotifyAiTx(tickets, aiTx, true)
 	}
 
-	instantTxvotes := make([]*hcutil.InstantTxVote, 0)
-	instantTxvotes = append(instantTxvotes, instantTxvote)
+	aiTxvotes := make([]*hcutil.AiTxVote, 0)
+	aiTxvotes = append(aiTxvotes, aiTxvote)
 
 	//notify wallet  vote info and rely to other peers
-	s.server.AnnounceNewInstantTxVote(instantTxvotes)
+	s.server.AnnounceNewAiTxVote(aiTxvotes)
 
 	// Keep track of all the sendrawtransaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
 
-	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxvote.Hash())
+	iv := wire.NewInvVect(wire.InvTypeAiTxVote, aiTxvote.Hash())
 
-	s.server.AddRebroadcastInventory(iv, instantTxvote)
+	s.server.AddRebroadcastInventory(iv, aiTxvote)
 
 	return nil, nil
 
@@ -5614,7 +5614,7 @@ func handleSendInstantTxVote(s *rpcServer, cmd interface{}, closeChan <-chan str
 // handleSendRawTransaction implements the sendrawtransaction command.
 func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendRawTransactionCmd)
-	// Deserialize and send off to instantTx relay
+	// Deserialize and send off to aiTx relay
 
 	allowHighFees := *c.AllowHighFees
 	hexStr := c.HexTx
@@ -5635,10 +5635,10 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 	tx := hcutil.NewTx(msgtx)
 
 
-	//check instant
-	if _,isInstant:=txscript.IsInstantTx(msgtx);isInstant{
-		if !s.server.txMemPool.IsInstantTxExistAndVoted(tx.Hash()){
-			return handleInstantTransaction(s,closeChan,serializedTx,allowHighFees)
+	//check ai
+	if _,isAi:=txscript.IsAiTx(msgtx);isAi{
+		if !s.server.txMemPool.IsAiTxExistAndVoted(tx.Hash()){
+			return handleAiTransaction(s,closeChan,serializedTx,allowHighFees)
 		}
 	}
 
@@ -5823,7 +5823,7 @@ func stdDev(s []hcutil.Amount) hcutil.Amount {
 	return amt
 }
 
-// feeInfoForMempool returns the fee information for the passed instantTx type in the
+// feeInfoForMempool returns the fee information for the passed aiTx type in the
 // memory pool.
 func feeInfoForMempool(s *rpcServer, txType stake.TxType) *hcjson.FeeInfoMempool {
 	txDs := s.server.txMemPool.TxDescs()
@@ -5861,7 +5861,7 @@ func calcFeePerKb(tx *hcutil.Tx) hcutil.Amount {
 	return ((in - out) * 1000) / hcutil.Amount(tx.MsgTx().SerializeSize())
 }
 
-// feeInfoForBlock fetches the ticket fee information for a given instantTx type in a
+// feeInfoForBlock fetches the ticket fee information for a given aiTx type in a
 // block.
 func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*hcjson.FeeInfoBlock, error) {
 	bl, err := s.chain.BlockByHeight(height)

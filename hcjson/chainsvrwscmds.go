@@ -140,14 +140,14 @@ func NewNotifyNewTransactionsCmd(verbose *bool) *NotifyNewTransactionsCmd {
 }
 
 
-type NotifyNewInstantTxCmd struct {}
-type StopNotifyNewInstantTxCmd struct {}
+type NotifyNewAiTxCmd struct {}
+type StopNotifyNewAiTxCmd struct {}
 
-func NewNotifyInstantTxCmd() *NotifyNewInstantTxCmd {
-	return &NotifyNewInstantTxCmd{}
+func NewNotifyAiTxCmd() *NotifyNewAiTxCmd {
+	return &NotifyNewAiTxCmd{}
 }
-func NewStopNotifyInstantTxCmd() *StopNotifyNewInstantTxCmd {
-	return &StopNotifyNewInstantTxCmd{}
+func NewStopNotifyAiTxCmd() *StopNotifyNewAiTxCmd {
+	return &StopNotifyNewAiTxCmd{}
 }
 
 // SessionCmd defines the session JSON-RPC command.
@@ -192,8 +192,8 @@ func init() {
 	MustRegisterCmd("setParams", (*SetHcdParmasCmd)(nil), flags)
 	MustRegisterCmd("notifyblocks", (*NotifyBlocksCmd)(nil), flags)
 	MustRegisterCmd("notifynewtransactions", (*NotifyNewTransactionsCmd)(nil), flags)
-	MustRegisterCmd("notifynewinstanttx", (*NotifyNewInstantTxCmd)(nil), flags)
-	MustRegisterCmd("stopnotifynewinstanttx", (*StopNotifyNewInstantTxCmd)(nil), flags)
+	MustRegisterCmd("notifynewaitx", (*NotifyNewAiTxCmd)(nil), flags)
+	MustRegisterCmd("stopnotifynewaitx", (*StopNotifyNewAiTxCmd)(nil), flags)
 	MustRegisterCmd("notifynewtickets", (*NotifyNewTicketsCmd)(nil), flags)
 	MustRegisterCmd("notifyspentandmissedtickets",
 		(*NotifySpentAndMissedTicketsCmd)(nil), flags)

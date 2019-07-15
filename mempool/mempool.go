@@ -1109,7 +1109,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	minFee := calcMinRequiredTxRelayFee(serializedSize,
 		mp.cfg.Policy.MinRelayTxFee)
 
-	if _, ok := txscript.IsInstantTx(msgTx); ok{
+	if _, ok := txscript.IsAiTx(msgTx); ok{
 		if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
 			haveChange := mp.haveAiChange(tx)
 			minFee += msgTx.GetTxAiFee(haveChange)
@@ -1196,7 +1196,7 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 		maxFee := calcMinRequiredTxRelayFee(serializedSize*maxRelayFeeMultiplier,
 			mp.cfg.Policy.MinRelayTxFee)
 
-		if _, ok := txscript.IsInstantTx(msgTx); ok{
+		if _, ok := txscript.IsAiTx(msgTx); ok{
 			if uint64(nextBlockHeight) >= mp.cfg.ChainParams.AIStakeEnabledHeight{
 				haveChange := mp.haveAiChange(tx)
 				maxFee += msgTx.GetTxAiFee(haveChange)
@@ -1229,22 +1229,22 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	}
 
 	//check  with lockpool
-	//instanttx type must be regular
+	//aitx type must be regular
 	if txType == stake.TxTypeRegular {
-		if _, isInstantTx := txscript.IsInstantTx(msgTx); isInstantTx {
+		if _, isAiTx := txscript.IsAiTx(msgTx); isAiTx {
 			//check exist and vote number
-			if desc, exist := mp.getInstantTxDesc(txHash); exist {
+			if desc, exist := mp.getAiTxDesc(txHash); exist {
 				if !desc.Confirm {
-					return nil, fmt.Errorf("instanttx %v too few votes", txHash)
+					return nil, fmt.Errorf("aitx %v too few votes", txHash)
 				}
 			} else {
-				return nil, fmt.Errorf("instanttx %v not exist in lockpool", txHash)
+				return nil, fmt.Errorf("aitx %v not exist in lockpool", txHash)
 			}
 		}
 	}
 
 	//check double spend with tx in lockpool
-	//if common tx is conflict with txlockpool ,we will reject the common tx(include common tx and instanttx not confirmed)
+	//if common tx is conflict with txlockpool ,we will reject the common tx(include common tx and aitx not confirmed)
 	err=mp.checkTxWithLockPool(tx)
 	if err!=nil{
 		return nil,err
@@ -1706,9 +1706,9 @@ func New(cfg *Config) *TxPool {
 		outpoints:     make(map[wire.OutPoint]*hcutil.Tx),
 		votes:         make(map[chainhash.Hash][]VoteTx),
 		lockPool: lockPool{
-			txLockPool:     make(map[chainhash.Hash]*InstantTxDesc),
-			lockOutpoints:  make(map[wire.OutPoint]*hcutil.InstantTx),
-			instantTxVotes: make(map[chainhash.Hash]*hcutil.InstantTxVote),
+			txLockPool:     make(map[chainhash.Hash]*AiTxDesc),
+			lockOutpoints:  make(map[wire.OutPoint]*hcutil.AiTx),
+			aiTxVotes: make(map[chainhash.Hash]*hcutil.AiTxVote),
 		},
 	}
 }

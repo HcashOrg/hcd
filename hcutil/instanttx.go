@@ -9,47 +9,47 @@ import (
 
 
 
-type InstantTxVote struct {
-	msgInstantTxVote *wire.MsgInstantTxVote
+type AiTxVote struct {
+	msgAiTxVote *wire.MsgAiTxVote
 }
 
-func NewInstantTxVote(vote *wire.MsgInstantTxVote) *InstantTxVote {
-	return &InstantTxVote{
-		msgInstantTxVote: vote,
+func NewAiTxVote(vote *wire.MsgAiTxVote) *AiTxVote {
+	return &AiTxVote{
+		msgAiTxVote: vote,
 	}
 }
 
-func (instantTxVote *InstantTxVote) Hash() *chainhash.Hash {
-	return instantTxVote.msgInstantTxVote.Hash()
+func (aiTxVote *AiTxVote) Hash() *chainhash.Hash {
+	return aiTxVote.msgAiTxVote.Hash()
 }
 
-func (instantTxVote *InstantTxVote) MsgInstantTxVote() *wire.MsgInstantTxVote {
-	return instantTxVote.msgInstantTxVote
+func (aiTxVote *AiTxVote) MsgAiTxVote() *wire.MsgAiTxVote {
+	return aiTxVote.msgAiTxVote
 }
 
-type InstantTx struct {
+type AiTx struct {
 	Tx
 }
 
 // MsgTx returns the underlying wire.MsgTx for the transaction.
-func (t *InstantTx) MsgInstantTx() *wire.MsgInstantTx {
+func (t *AiTx) MsgAiTx() *wire.MsgAiTx {
 	// Return the cached transaction.
-	return wire.NewMsgInstantTxFromMsgTx(t.msgTx)
+	return wire.NewMsgAiTxFromMsgTx(t.msgTx)
 }
 
-func NewInstantTx(msgInstantTx *wire.MsgInstantTx) *InstantTx {
-	return &InstantTx{
+func NewAiTx(msgAiTx *wire.MsgAiTx) *AiTx {
+	return &AiTx{
 		Tx: Tx{
-			hash:    msgInstantTx.TxHash(),
-			msgTx:   &msgInstantTx.MsgTx,
+			hash:    msgAiTx.TxHash(),
+			msgTx:   &msgAiTx.MsgTx,
 			txTree:  wire.TxTreeUnknown,
 			txIndex: TxIndexUnknown,
 		},
 	}
 }
 
-func NewInstantTxFromTx(tx *Tx) *InstantTx {
-	return &InstantTx{
+func NewAiTxFromTx(tx *Tx) *AiTx {
+	return &AiTx{
 		Tx: *tx,
 	}
 }

@@ -198,9 +198,9 @@ type serverPeer struct {
 	requestQueue    []*wire.InvVect
 	requestedTxns   map[chainhash.Hash]struct{}
 	requestedBlocks map[chainhash.Hash]struct{}
-	//instant tx
-	requestedInstantTxs   map[chainhash.Hash]struct{}
-	requestedInstantVotes map[chainhash.Hash]struct{}
+	//ai tx
+	requestedAiTxs   map[chainhash.Hash]struct{}
+	requestedAiVotes map[chainhash.Hash]struct{}
 
 	filter         *bloom.Filter
 	knownAddresses map[string]struct{}
@@ -215,8 +215,8 @@ type serverPeer struct {
 	getLockPoolStateSent bool
 	// The following chans are used to sync blockmanager and server.
 	txProcessed            chan struct{}
-	instantTxProcessed     chan struct{}
-	instantTxVoteProcessed chan struct{}
+	aiTxProcessed     chan struct{}
+	aiTxVoteProcessed chan struct{}
 	blockProcessed         chan struct{}
 }
 
@@ -236,14 +236,14 @@ func newServerPeer(s *server, isPersistent bool) *serverPeer {
 		persistent:             isPersistent,
 		requestedTxns:          make(map[chainhash.Hash]struct{}),
 		requestedBlocks:        make(map[chainhash.Hash]struct{}),
-		requestedInstantTxs:    make(map[chainhash.Hash]struct{}),
-		requestedInstantVotes:  make(map[chainhash.Hash]struct{}),
+		requestedAiTxs:    make(map[chainhash.Hash]struct{}),
+		requestedAiVotes:  make(map[chainhash.Hash]struct{}),
 		filter:                 bloom.LoadFilter(nil),
 		knownAddresses:         make(map[string]struct{}),
 		quit:                   make(chan struct{}),
 		txProcessed:            make(chan struct{}, 1),
-		instantTxProcessed:     make(chan struct{}, 1),
-		instantTxVoteProcessed: make(chan struct{}, 1),
+		aiTxProcessed:     make(chan struct{}, 1),
+		aiTxVoteProcessed: make(chan struct{}, 1),
 		blockProcessed:         make(chan struct{}, 1),
 	}
 }
@@ -531,23 +531,23 @@ func (sp *serverPeer) OnMemPool(p *peer.Peer, msg *wire.MsgMemPool) {
 	}
 }
 
-func (sp *serverPeer) pushLockPoolMsg(instantTxHashs []*chainhash.Hash, instantTxVoteHashs []*chainhash.Hash) error {
-	if len(instantTxHashs) == 0 {
+func (sp *serverPeer) pushLockPoolMsg(aiTxHashs []*chainhash.Hash, aiTxVoteHashs []*chainhash.Hash) error {
+	if len(aiTxHashs) == 0 {
 		return nil
 	}
 
 	msg := wire.NewMsgLockPoolState()
 
-	for i := range instantTxHashs {
-		err := msg.AddInstantTxHash(instantTxHashs[i])
+	for i := range aiTxHashs {
+		err := msg.AddAiTxHash(aiTxHashs[i])
 
 		if err != nil {
 			return err
 		}
 	}
 
-	for i := range instantTxVoteHashs {
-		err := msg.AddInstantTxVoteHash(instantTxVoteHashs[i])
+	for i := range aiTxVoteHashs {
+		err := msg.AddAiTxVoteHash(aiTxVoteHashs[i])
 		if err != nil {
 			return err
 		}
@@ -603,8 +603,8 @@ func (sp *serverPeer) OnGetLockPoolState(p *peer.Peer, msg *wire.MsgGetLockPoolS
 		return
 	}
 
-	instantTxHashs, instantTxVoteHashs := mp.FetchLockPoolState()
-	err := sp.pushLockPoolMsg(instantTxHashs, instantTxVoteHashs)
+	aiTxHashs, aiTxVoteHashs := mp.FetchLockPoolState()
+	err := sp.pushLockPoolMsg(aiTxHashs, aiTxVoteHashs)
 
 	if err != nil {
 		peerLog.Warnf("unexpected error while pushing data for "+
@@ -682,7 +682,7 @@ func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState
 }
 
 func (sp *serverPeer) OnLockPoolState(p *peer.Peer, msg *wire.MsgLockPoolState) {
-	err := sp.server.blockManager.RequestFromPeer(sp, nil, nil, msg.InstantTxHashes, msg.InstantTxVoteHashes)
+	err := sp.server.blockManager.RequestFromPeer(sp, nil, nil, msg.AiTxHashes, msg.AiTxVoteHashes)
 	if err != nil {
 		peerLog.Warnf("couldn't handle lockpool state message: %v",
 			err.Error())
@@ -700,13 +700,13 @@ func (sp *serverPeer) OnMiningState(p *peer.Peer, msg *wire.MsgMiningState) {
 	}
 }
 
-// OnTx is invoked when a peer receives a instantTx wire message.  It blocks until the
+// OnTx is invoked when a peer receives a aiTx wire message.  It blocks until the
 // transaction has been fully processed.  Unlock the block handler this does not
 // serialize all transactions through a single thread transactions don't rely on
 // the previous one in a linear fashion like blocks.
 func (sp *serverPeer) OnTx(p *peer.Peer, msg *wire.MsgTx) {
 	if cfg.BlocksOnly {
-		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
+		peerLog.Tracef("Ignoring aiTx %v from %v - blocksonly enabled",
 			msg.TxHash(), p)
 		return
 	}
@@ -727,19 +727,19 @@ func (sp *serverPeer) OnTx(p *peer.Peer, msg *wire.MsgTx) {
 	<-sp.txProcessed
 }
 
-func (sp *serverPeer) OnInstantTx(p *peer.Peer, msg *wire.MsgInstantTx) {
+func (sp *serverPeer) OnAiTx(p *peer.Peer, msg *wire.MsgAiTx) {
 	if cfg.BlocksOnly {
-		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
+		peerLog.Tracef("Ignoring aiTx %v from %v - blocksonly enabled",
 			msg.TxHash(), p)
 		return
 	}
 
-	// Add the instant transaction to the known inventory for the peer.
-	// Convert the raw msgTx to a hcutil.InstantTx which provides some convenience
+	// Add the ai transaction to the known inventory for the peer.
+	// Convert the raw msgTx to a hcutil.AiTx which provides some convenience
 	// methods and things such as hash caching.
-	//TODO check this instant instantTx inventory implement
-	instantTx := hcutil.NewInstantTx(msg)
-	iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
+	//TODO check this ai aiTx inventory implement
+	aiTx := hcutil.NewAiTx(msg)
+	iv := wire.NewInvVect(wire.InvTypeAiTx, aiTx.Hash())
 	p.AddKnownInventory(iv)
 
 	// Queue the transaction up to be handled by the block manager and
@@ -747,25 +747,25 @@ func (sp *serverPeer) OnInstantTx(p *peer.Peer, msg *wire.MsgInstantTx) {
 	// processed and known good or bad.  This helps prevent a malicious peer
 	// from queuing up a bunch of bad transactions before disconnecting (or
 	// being disconnected) and wasting memory.
-	sp.server.blockManager.QueueInstantTx(instantTx, sp)
-	<-sp.instantTxProcessed
+	sp.server.blockManager.QueueAiTx(aiTx, sp)
+	<-sp.aiTxProcessed
 }
 
-//deal with instanttxvote from peers
-func (sp *serverPeer) OnInstantTxVote(p *peer.Peer, msg *wire.MsgInstantTxVote) {
+//deal with aitxvote from peers
+func (sp *serverPeer) OnAiTxVote(p *peer.Peer, msg *wire.MsgAiTxVote) {
 	if cfg.BlocksOnly {
-		peerLog.Tracef("Ignoring instantTx %v from %v - blocksonly enabled",
+		peerLog.Tracef("Ignoring aiTx %v from %v - blocksonly enabled",
 			msg.Hash(), p)
 		return
 	}
 
-	// Add the instant transaction to the known inventory for the peer.
-	// Convert the raw msgTx to a hcutil.InstantTx which provides some convenience
+	// Add the ai transaction to the known inventory for the peer.
+	// Convert the raw msgTx to a hcutil.AiTx which provides some convenience
 	// methods and things such as hash caching.
-	//TODO check this instant instantTxvote inventory implement
-	instantTxVote := hcutil.NewInstantTxVote(msg)
+	//TODO check this ai aiTxvote inventory implement
+	aiTxVote := hcutil.NewAiTxVote(msg)
 
-	iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
+	iv := wire.NewInvVect(wire.InvTypeAiTxVote, aiTxVote.Hash())
 	p.AddKnownInventory(iv)
 
 	// Queue the transaction up to be handled by the block manager and
@@ -773,8 +773,8 @@ func (sp *serverPeer) OnInstantTxVote(p *peer.Peer, msg *wire.MsgInstantTxVote) 
 	// processed and known good or bad.  This helps prevent a malicious peer
 	// from queuing up a bunch of bad transactions before disconnecting (or
 	// being disconnected) and wasting memory.
-	sp.server.blockManager.QueueInstantTxVote(instantTxVote, sp)
-	<-sp.instantTxVoteProcessed
+	sp.server.blockManager.QueueAiTxVote(aiTxVote, sp)
+	<-sp.aiTxVoteProcessed
 }
 
 // OnBlock is invoked when a peer receives a block wire message.  It blocks
@@ -882,10 +882,10 @@ func (sp *serverPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 			err = sp.server.pushTxMsg(sp, &iv.Hash, c, waitChan)
 		case wire.InvTypeBlock:
 			err = sp.server.pushBlockMsg(sp, &iv.Hash, c, waitChan)
-		case wire.InvTypeInstantTx:
-			err = sp.server.pushInstantTxMsg(sp, &iv.Hash, c, waitChan)
-		case wire.InvTypeInstantTxVote:
-			err = sp.server.pushInstantTxVoteMsg(sp, &iv.Hash, c, waitChan)
+		case wire.InvTypeAiTx:
+			err = sp.server.pushAiTxMsg(sp, &iv.Hash, c, waitChan)
+		case wire.InvTypeAiTxVote:
+			err = sp.server.pushAiTxVoteMsg(sp, &iv.Hash, c, waitChan)
 		default:
 			peerLog.Warnf("Unknown type in inventory request %d",
 				iv.Type)
@@ -1333,52 +1333,52 @@ func (s *server) AnnounceNewTransactions(newTxs []*hcutil.Tx) {
 	}
 }
 
-func (s *server) AnnounceNewInstantTx(newInstantTxs []*hcutil.InstantTx) {
+func (s *server) AnnounceNewAiTx(newAiTxs []*hcutil.AiTx) {
 	// Generate and relay inventory vectors for all newly accepted
 	// transactions into the memory pool due to the original being
 	// accepted.
-	for _, instantTx := range newInstantTxs {
+	for _, aiTx := range newAiTxs {
 		// Generate the inventory vector and relay it.
-		//TODO check instant instantTx invvect
-		iv := wire.NewInvVect(wire.InvTypeInstantTx, instantTx.Hash())
-		s.RelayInventory(iv, instantTx)
+		//TODO check ai aiTx invvect
+		iv := wire.NewInvVect(wire.InvTypeAiTx, aiTx.Hash())
+		s.RelayInventory(iv, aiTx)
 
 		if s.rpcServer != nil {
-			//deal with instant instantTx,
+			//deal with ai aiTx,
 			// just send to wallet to sign
-			lotteryHash, _ := txscript.IsInstantTx(instantTx.MsgTx())
-			tickets, err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(instantTx.Hash(), lotteryHash)
+			lotteryHash, _ := txscript.IsAiTx(aiTx.MsgTx())
+			tickets, err := s.rpcServer.chain.LotteryAiDataForTxAndBlock(aiTx.Hash(), lotteryHash)
 			if err != nil {
-				srvrLog.Errorf("LotteryAiDataForTx %v loggeryHash %v err:%v", instantTx.Hash().String(), lotteryHash.String(), err)
+				srvrLog.Errorf("LotteryAiDataForTx %v loggeryHash %v err:%v", aiTx.Hash().String(), lotteryHash.String(), err)
 				return
 			}
 
-			s.rpcServer.ntfnMgr.NotifyInstantTx(tickets, instantTx, false)
+			s.rpcServer.ntfnMgr.NotifyAiTx(tickets, aiTx, false)
 		}
 	}
 }
 
 //after accept this vote ,notify wallet and relay to otherpeers
-func (s *server) AnnounceNewInstantTxVote(newInstantTxVotes []*hcutil.InstantTxVote) {
+func (s *server) AnnounceNewAiTxVote(newAiTxVotes []*hcutil.AiTxVote) {
 	// Generate and relay inventory vectors for all newly accepted
 	// transactions into the memory pool due to the original being
 	// accepted.
 
-	for _, instantTxVote := range newInstantTxVotes {
+	for _, aiTxVote := range newAiTxVotes {
 		// Generate the inventory vector and relay it.
-		//TODO check instant instantTxvote invvect
-		//relay instantvote
-		iv := wire.NewInvVect(wire.InvTypeInstantTxVote, instantTxVote.Hash())
-		s.RelayInventory(iv, instantTxVote)
+		//TODO check ai aiTxvote invvect
+		//relay aivote
+		iv := wire.NewInvVect(wire.InvTypeAiTxVote, aiTxVote.Hash())
+		s.RelayInventory(iv, aiTxVote)
 
 		if s.rpcServer != nil {
 			//todo notify wallet
-			s.rpcServer.ntfnMgr.NotifyInstantTxVote(instantTxVote)
+			s.rpcServer.ntfnMgr.NotifyAiTxVote(aiTxVote)
 		}
 	}
 }
 
-// pushTxMsg sends a instantTx message for the provided transaction hash to the
+// pushTxMsg sends a aiTx message for the provided transaction hash to the
 // connected peer.  An error is returned if the transaction hash is not known.
 func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
@@ -1389,7 +1389,7 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 	// to the authenticated RPC only.
 	tx, err := s.txMemPool.FetchTransaction(hash, false)
 	if err != nil {
-		peerLog.Tracef("Unable to fetch instantTx %v from transaction "+
+		peerLog.Tracef("Unable to fetch aiTx %v from transaction "+
 			"pool: %v", hash, err)
 
 		if doneChan != nil {
@@ -1408,7 +1408,7 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 	return nil
 }
 
-func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
+func (s *server) pushAiTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
 	// call could be made to check for existence first, but simply trying
 	// to fetch a missing transaction results in the same behavior.
@@ -1416,9 +1416,9 @@ func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan
 	// but are unconfirmed, as they may be expensive. Restrict that
 	// to the authenticated RPC only.
 
-	instantTx, err := s.txMemPool.FetchInstantTx(hash, false)
+	aiTx, err := s.txMemPool.FetchAiTx(hash, false)
 	if err != nil {
-		peerLog.Tracef("Unable to fetch instantTx %v from tx lock "+
+		peerLog.Tracef("Unable to fetch aiTx %v from tx lock "+
 			"pool: %v", hash, err)
 
 		if doneChan != nil {
@@ -1432,12 +1432,12 @@ func (s *server) pushInstantTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan
 		<-waitChan
 	}
 
-	sp.QueueMessage(instantTx.MsgInstantTx(), doneChan)
+	sp.QueueMessage(aiTx.MsgAiTx(), doneChan)
 
 	return nil
 }
 
-func (s *server) pushInstantTxVoteMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
+func (s *server) pushAiTxVoteMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
 	// call could be made to check for existence first, but simply trying
 	// to fetch a missing transaction results in the same behavior.
@@ -1445,9 +1445,9 @@ func (s *server) pushInstantTxVoteMsg(sp *serverPeer, hash *chainhash.Hash, done
 	// but are unconfirmed, as they may be expensive. Restrict that
 	// to the authenticated RPC only.
 
-	instantTxVote, err := s.txMemPool.FetchInstantTxVote(hash)
+	aiTxVote, err := s.txMemPool.FetchAiTxVote(hash)
 	if err != nil {
-		peerLog.Tracef("Unable to fetch instantTxVote %v from lock "+
+		peerLog.Tracef("Unable to fetch aiTxVote %v from lock "+
 			"pool: %v", hash, err)
 
 		if doneChan != nil {
@@ -1461,7 +1461,7 @@ func (s *server) pushInstantTxVoteMsg(sp *serverPeer, hash *chainhash.Hash, done
 		<-waitChan
 	}
 
-	sp.QueueMessage(instantTxVote.MsgInstantTxVote(), doneChan)
+	sp.QueueMessage(aiTxVote.MsgAiTxVote(), doneChan)
 
 	return nil
 }
@@ -1691,7 +1691,7 @@ func (s *server) handleRelayInvMsg(state *peerState, msg relayMsg) {
 			if sp.filter.IsLoaded() {
 				tx, ok := msg.data.(*hcutil.Tx)
 				if !ok {
-					peerLog.Warnf("Underlying data for instantTx" +
+					peerLog.Warnf("Underlying data for aiTx" +
 						" inv relay is not a transaction")
 					return
 				}
@@ -1702,11 +1702,11 @@ func (s *server) handleRelayInvMsg(state *peerState, msg relayMsg) {
 			}
 		}
 
-		if msg.invVect.Type == wire.InvTypeInstantTx {
+		if msg.invVect.Type == wire.InvTypeAiTx {
 
 		}
 
-		if msg.invVect.Type == wire.InvTypeInstantTxVote {
+		if msg.invVect.Type == wire.InvTypeAiTxVote {
 
 		}
 
@@ -1915,8 +1915,8 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 			OnMiningState:      sp.OnMiningState,
 			OnLockPoolState:    sp.OnLockPoolState,
 			OnTx:               sp.OnTx,
-			OnInstantTx:        sp.OnInstantTx,
-			OnInstantTxVote:    sp.OnInstantTxVote,
+			OnAiTx:        sp.OnAiTx,
+			OnAiTxVote:    sp.OnAiTxVote,
 			OnBlock:            sp.OnBlock,
 			OnInv:              sp.OnInv,
 			OnHeaders:          sp.OnHeaders,
@@ -2247,7 +2247,7 @@ func (s *server) UpdatePeerHeights(latestBlkHash *chainhash.Hash, latestHeight i
 // sent out but have not yet made it into a block. We periodically rebroadcast
 // them in case our peers restarted or otherwise lost track of them.
 func (s *server) rebroadcastHandler() {
-	// Wait 5 min before first instantTx rebroadcast.
+	// Wait 5 min before first aiTx rebroadcast.
 	timer := time.NewTimer(5 * time.Minute)
 	pendingInvs := make(map[wire.InvVect]interface{})
 
@@ -2326,7 +2326,7 @@ func (s *server) Start() {
 	if !cfg.DisableRPC {
 		s.wg.Add(1)
 
-		// Start the rebroadcastHandler, which ensures user instantTx received by
+		// Start the rebroadcastHandler, which ensures user aiTx received by
 		// the RPC server are rebroadcast until being included in a block.
 		go s.rebroadcastHandler()
 
