@@ -351,7 +351,7 @@ func HaveAiTxTag(pkScript []byte) (*chainhash.Hash, bool) {
 		data[9] == 0x6e &&
 		data[10] == 0x64 {
 
-		hashBytes := data[16:]
+		hashBytes := data[11:]
 		hash, err := chainhash.NewHash(hashBytes)
 		if err != nil {
 			return nil, false
