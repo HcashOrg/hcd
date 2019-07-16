@@ -863,7 +863,7 @@ func (b *blockManager) handleAiTxMsg(aiTxMsg *aiTxMsg) {
 		b.rejectedTxns[*txHash] = struct{}{}
 		b.limitMap(b.rejectedTxns, maxRejectedTxns)
 
-		bmgrLog.Errorf("ai tx %v not failed to add lockpool", aiTx.Hash())
+		bmgrLog.Errorf("ai tx %v is failed to add lockpool : %s", aiTx.Hash(), err.Error())
 		return
 	}
 
