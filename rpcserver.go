@@ -177,85 +177,85 @@ type commandHandler func(*rpcServer, interface{}, <-chan struct{}) (interface{},
 // a dependency loop.
 var rpcHandlers map[string]commandHandler
 var rpcHandlersBeforeInit = map[string]commandHandler{
-	"addnode":                   handleAddNode,
-	"createrawsstx":             handleCreateRawSStx,
-	"createrawssgentx":          handleCreateRawSSGenTx,
-	"createrawssrtx":            handleCreateRawSSRtx,
-	"createrawtransaction":      handleCreateRawTransaction,
-	"debuglevel":                handleDebugLevel,
-	"decoderawtransaction":      handleDecodeRawTransaction,
-	"decodescript":              handleDecodeScript,
-	"estimatefee":               handleEstimateFee,
-	"estimatestakediff":         handleEstimateStakeDiff,
-	"existsaddress":             handleExistsAddress,
-	"existsaddresses":           handleExistsAddresses,
-	"existsmissedtickets":       handleExistsMissedTickets,
-	"existsexpiredtickets":      handleExistsExpiredTickets,
-	"existsexpiredaitickets":    handleExistsExpiredAiTickets,
-	"existsliveticket":          handleExistsLiveTicket,
-	"existsliveaiticket":        handleExistsLiveAiTicket,
-	"existslivetickets":         handleExistsLiveTickets,
-	"existsliveaitickets":       handleExistsLiveAiTickets,
-	"existsmempooltxs":          handleExistsMempoolTxs,
-	"generate":                  handleGenerate,
-	"getaddednodeinfo":          handleGetAddedNodeInfo,
-	"getbestblock":              handleGetBestBlock,
-	"getbestblockhash":          handleGetBestBlockHash,
-	"getblock":                  handleGetBlock,
-	"getblockcount":             handleGetBlockCount,
-	"getblockhash":              handleGetBlockHash,
-	"getblockheader":            handleGetBlockHeader,
-	"getblocksubsidy":           handleGetBlockSubsidy,
-	"getcoinsupply":             handleGetCoinSupply,
-	"getconnectioncount":        handleGetConnectionCount,
-	"getcurrentnet":             handleGetCurrentNet,
-	"getdifficulty":             handleGetDifficulty,
-	"getgenerate":               handleGetGenerate,
-	"gethashespersec":           handleGetHashesPerSec,
-	"getheaders":                handleGetHeaders,
-	"getinfo":                   handleGetInfo,
-	"getblockchaininfo":         handleGetBlockchainInfo,
-	"getmempoolinfo":            handleGetMempoolInfo,
-	"gettxlockpoolinfo":         handleGetTxLockpoolInfo,
-	"fetchpendinglocktx":        handleFetchPendingLockTx,
-	"getmininginfo":             handleGetMiningInfo,
-	"getnettotals":              handleGetNetTotals,
-	"getnetworkhashps":          handleGetNetworkHashPS,
-	"getpeerinfo":               handleGetPeerInfo,
-	"getrawmempool":             handleGetRawMempool,
-	"getrawtransaction":         handleGetRawTransaction,
-	"getstakedifficulty":        handleGetStakeDifficulty,
-	"getaistakedifficulty":      handleGetAiStakeDifficulty,
-	"getstakeversioninfo":       handleGetStakeVersionInfo,
-	"getstakeversions":          handleGetStakeVersions,
-	"getticketpoolvalue":        handleGetTicketPoolValue,
-	"getvoteinfo":               handleGetVoteInfo,
-	"gettxout":                  handleGetTxOut,
-	"getwork":                   handleGetWork,
-	"help":                      handleHelp,
-	"livetickets":               handleLiveTickets,
-	"ailivetickets":             handleAiLiveTickets,
-	"missedtickets":             handleMissedTickets,
-	"node":                      handleNode,
-	"ping":                      handlePing,
-	"searchrawtransactions":     handleSearchRawTransactions,
-	"rebroadcastmissed":         handleRebroadcastMissed,
-	"rebroadcastwinners":        handleRebroadcastWinners,
-	"sendrawtransaction":        handleSendRawTransaction,
-	"sendairawtransaction": 	handleSendAiRawTransaction,
-	"sendaitxvote":         	handleSendAiTxVote,
-	"setgenerate":               handleSetGenerate,
-	"stop":                      handleStop,
-	"submitblock":               handleSubmitBlock,
-	"ticketfeeinfo":             handleTicketFeeInfo,
-	"ticketsforaddress":         handleTicketsForAddress,
-	"ticketvwap":                handleTicketVWAP,
-	"txfeeinfo":                 handleTxFeeInfo,
-	"validateaddress":           handleValidateAddress,
-	"verifychain":               handleVerifyChain,
-	"verifymessage":             handleVerifyMessage,
-	"verifyblissmessage":        handleVerifyBlissMessage,
-	"version":                   handleVersion,
+	"addnode":                handleAddNode,
+	"createrawsstx":          handleCreateRawSStx,
+	"createrawssgentx":       handleCreateRawSSGenTx,
+	"createrawssrtx":         handleCreateRawSSRtx,
+	"createrawtransaction":   handleCreateRawTransaction,
+	"debuglevel":             handleDebugLevel,
+	"decoderawtransaction":   handleDecodeRawTransaction,
+	"decodescript":           handleDecodeScript,
+	"estimatefee":            handleEstimateFee,
+	"estimatestakediff":      handleEstimateStakeDiff,
+	"existsaddress":          handleExistsAddress,
+	"existsaddresses":        handleExistsAddresses,
+	"existsmissedtickets":    handleExistsMissedTickets,
+	"existsexpiredtickets":   handleExistsExpiredTickets,
+	"existsexpiredaitickets": handleExistsExpiredAiTickets,
+	"existsliveticket":       handleExistsLiveTicket,
+	"existsliveaiticket":     handleExistsLiveAiTicket,
+	"existslivetickets":      handleExistsLiveTickets,
+	"existsliveaitickets":    handleExistsLiveAiTickets,
+	"existsmempooltxs":       handleExistsMempoolTxs,
+	"generate":               handleGenerate,
+	"getaddednodeinfo":       handleGetAddedNodeInfo,
+	"getbestblock":           handleGetBestBlock,
+	"getbestblockhash":       handleGetBestBlockHash,
+	"getblock":               handleGetBlock,
+	"getblockcount":          handleGetBlockCount,
+	"getblockhash":           handleGetBlockHash,
+	"getblockheader":         handleGetBlockHeader,
+	"getblocksubsidy":        handleGetBlockSubsidy,
+	"getcoinsupply":          handleGetCoinSupply,
+	"getconnectioncount":     handleGetConnectionCount,
+	"getcurrentnet":          handleGetCurrentNet,
+	"getdifficulty":          handleGetDifficulty,
+	"getgenerate":            handleGetGenerate,
+	"gethashespersec":        handleGetHashesPerSec,
+	"getheaders":             handleGetHeaders,
+	"getinfo":                handleGetInfo,
+	"getblockchaininfo":      handleGetBlockchainInfo,
+	"getmempoolinfo":         handleGetMempoolInfo,
+	"gettxlockpoolinfo":      handleGetTxLockpoolInfo,
+	"fetchpendinglocktx":     handleFetchPendingLockTx,
+	"getmininginfo":          handleGetMiningInfo,
+	"getnettotals":           handleGetNetTotals,
+	"getnetworkhashps":       handleGetNetworkHashPS,
+	"getpeerinfo":            handleGetPeerInfo,
+	"getrawmempool":          handleGetRawMempool,
+	"getrawtransaction":      handleGetRawTransaction,
+	"getstakedifficulty":     handleGetStakeDifficulty,
+	"getaistakedifficulty":   handleGetAiStakeDifficulty,
+	"getstakeversioninfo":    handleGetStakeVersionInfo,
+	"getstakeversions":       handleGetStakeVersions,
+	"getticketpoolvalue":     handleGetTicketPoolValue,
+	"getvoteinfo":            handleGetVoteInfo,
+	"gettxout":               handleGetTxOut,
+	"getwork":                handleGetWork,
+	"help":                   handleHelp,
+	"livetickets":            handleLiveTickets,
+	"ailivetickets":          handleAiLiveTickets,
+	"missedtickets":          handleMissedTickets,
+	"node":                   handleNode,
+	"ping":                   handlePing,
+	"searchrawtransactions":  handleSearchRawTransactions,
+	"rebroadcastmissed":      handleRebroadcastMissed,
+	"rebroadcastwinners":     handleRebroadcastWinners,
+	"sendrawtransaction":     handleSendRawTransaction,
+	"sendairawtransaction":   handleSendAiRawTransaction,
+	"sendaitxvote":           handleSendAiTxVote,
+	"setgenerate":            handleSetGenerate,
+	"stop":                   handleStop,
+	"submitblock":            handleSubmitBlock,
+	"ticketfeeinfo":          handleTicketFeeInfo,
+	"ticketsforaddress":      handleTicketsForAddress,
+	"ticketvwap":             handleTicketVWAP,
+	"txfeeinfo":              handleTxFeeInfo,
+	"validateaddress":        handleValidateAddress,
+	"verifychain":            handleVerifyChain,
+	"verifymessage":          handleVerifyMessage,
+	"verifyblissmessage":     handleVerifyBlissMessage,
+	"version":                handleVersion,
 }
 
 // list of commands that we recognize, but for which hcd has no support because
@@ -306,6 +306,8 @@ var rpcAskWallet = map[string]struct{}{
 	"walletlock":              {},
 	"walletpassphrase":        {},
 	"walletpassphrasechange":  {},
+	"registerainode":          {},
+	"unregisterainode":        {},
 }
 
 // Commands that are currently unimplemented, but should ultimately be.
@@ -472,14 +474,14 @@ type gbtWorkState struct {
 	minTimestamp  time.Time
 	template      *BlockTemplate
 	notifyMap     map[chainhash.Hash]map[int64]chan struct{}
-	timeSource blockchain.MedianTimeSource
+	timeSource    blockchain.MedianTimeSource
 }
 
 // newGbtWorkState returns a new instance of a gbtWorkState with all internal
 // fields initialized and ready to use.
 func newGbtWorkState(timeSource blockchain.MedianTimeSource) *gbtWorkState {
 	return &gbtWorkState{
-		notifyMap: make(map[chainhash.Hash]map[int64]chan struct{}),
+		notifyMap:  make(map[chainhash.Hash]map[int64]chan struct{}),
 		timeSource: timeSource,
 	}
 }
@@ -2489,7 +2491,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 	if template == nil || state.prevHash == nil ||
 		!state.prevHash.IsEqual(latestHash) ||
 		(state.lastTxUpdate != lastTxUpdate &&
-			time.Now().After(state.lastGenerated.Add(time.Second *
+			time.Now().After(state.lastGenerated.Add(time.Second*
 				gbtRegenerateSeconds))) {
 
 		// Reset the previous best hash the block template was generated
@@ -5467,11 +5469,11 @@ func handleSendAiRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 		return nil, rpcDecodeHexError(hexStr)
 	}
 
-	return handleAiTransaction(s,closeChan,serializedTx,allowHighFees)
+	return handleAiTransaction(s, closeChan, serializedTx, allowHighFees)
 
 }
 
-func handleAiTransaction(s *rpcServer, closeChan <-chan struct{},serializedTx []byte,allowHighFees bool)(interface{}, error){
+func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx []byte, allowHighFees bool) (interface{}, error) {
 	msgtx := wire.NewMsgAiTx()
 	err := msgtx.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {
@@ -5483,7 +5485,7 @@ func handleAiTransaction(s *rpcServer, closeChan <-chan struct{},serializedTx []
 
 	//check lotteryHash
 	lotteryHash, ok := txscript.IsAiTx(aiTx.MsgTx())
-	if !ok || lotteryHash == nil{
+	if !ok || lotteryHash == nil {
 		return nil, fmt.Errorf("ai tx error")
 	}
 	tickets, err := s.chain.LotteryAiDataForTxAndBlock(aiTx.Hash(), lotteryHash)
@@ -5510,8 +5512,6 @@ func handleAiTransaction(s *rpcServer, closeChan <-chan struct{},serializedTx []
 	return aiTx.Hash().String(), nil
 
 }
-
-
 
 func handleSendAiTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendAiTxVoteCmd)
@@ -5634,11 +5634,10 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 
 	tx := hcutil.NewTx(msgtx)
 
-
 	//check ai
-	if _,isAi:=txscript.IsAiTx(msgtx);isAi{
-		if !s.server.txMemPool.IsAiTxExistAndVoted(tx.Hash()){
-			return handleAiTransaction(s,closeChan,serializedTx,allowHighFees)
+	if _, isAi := txscript.IsAiTx(msgtx); isAi {
+		if !s.server.txMemPool.IsAiTxExistAndVoted(tx.Hash()) {
+			return handleAiTransaction(s, closeChan, serializedTx, allowHighFees)
 		}
 	}
 
