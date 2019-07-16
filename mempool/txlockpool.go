@@ -350,6 +350,53 @@ func (mp *TxPool) maybeAddtoLockPool(aiTx *hcutil.AiTx, isNew, rateLimit, allowH
 		log.Errorf("Transaction %v is not ai aiTx ", aiTx.Hash())
 		return fmt.Errorf("Transaction %v is not ai aiTx ", aiTx.Hash())
 	}
+
+	utxoView, err := mp.fetchInputUtxos(&tx)
+	if err != nil {
+		return fmt.Errorf("utxoView is not found. %v ", aiTx.Hash())
+	}
+
+	lenOut :=len(tx.MsgTx().TxOut)
+	var haveChange bool = false
+	var amountIn int64
+	var amountOut int64
+	var changeAddr string
+	if lenOut > 1 {
+		_, addr, _, _ := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, mp.cfg.ChainParams)
+		if len(addr) > 0 {
+			changeAddr = addr[0].String()
+		}
+		for _, txIn := range (tx.MsgTx().TxIn) {
+			utxoEntry := utxoView.LookupEntry(&txIn.PreviousOutPoint.Hash)
+			if utxoEntry == nil {
+				return fmt.Errorf("utxoView is not found. %v ", aiTx.Hash())
+			}
+			originTxIndex := txIn.PreviousOutPoint.Index
+			txInPkScript := utxoEntry.PkScriptByIndex(originTxIndex)
+			amountIn += utxoEntry.AmountByIndex(originTxIndex)
+			if txInPkScript != nil {
+				_, txInAddr,_,_:= txscript.ExtractPkScriptAddrs(0, txInPkScript, mp.cfg.ChainParams)
+				if len(txInAddr) > 0 && txInAddr[0].String() == changeAddr {
+					haveChange = true
+//					break;
+				}
+			}
+		}
+		for _, txOut := range (tx.MsgTx().TxOut){
+			amountOut += txOut.Value
+		}
+	}
+
+	serializedSize := int64(msgTx.SerializeSize())
+	minFee := calcMinRequiredTxRelayFee(serializedSize,
+		mp.cfg.Policy.MinRelayTxFee)
+
+	if _, ok := txscript.IsAiTx(tx.MsgTx()); ok {
+		aiFee := tx.MsgTx().GetTxAiFee(haveChange)
+		if amountIn - amountOut < aiFee + minFee{
+			return fmt.Errorf("ai fee is too low")
+		}
+	}
 	bestHeight := mp.cfg.BestHeight()
 	mp.txLockPool[*aiTx.Hash()] = &AiTxDesc{
 		Tx:         aiTx,
