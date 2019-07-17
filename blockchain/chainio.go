@@ -286,7 +286,7 @@ type spentTxOut struct {
 // determining the serialization size.
 func spentTxOutSerializeSize(stxo *spentTxOut) int {
 	flags := encodeFlags(stxo.isCoinBase, stxo.hasExpiry, stxo.txType,
-		stxo.txFullySpent, uint64(stxo.height))
+		stxo.txFullySpent)
 	size := serializeSizeVLQ(uint64(flags))
 
 	// false below indicates that the txOut does not specify an amount.
@@ -311,7 +311,7 @@ func spentTxOutSerializeSize(stxo *spentTxOut) int {
 // spentTxOutSerializeSize function or it will panic.
 func putSpentTxOut(target []byte, stxo *spentTxOut) int {
 	flags := encodeFlags(stxo.isCoinBase, stxo.hasExpiry, stxo.txType,
-		stxo.txFullySpent, uint64(stxo.height))
+		stxo.txFullySpent)
 	offset := putVLQ(target, uint64(flags))
 
 	// false below indicates that the txOut does not specify an amount.
@@ -358,8 +358,8 @@ func decodeSpentTxOut(serialized []byte, stxo *spentTxOut, amount int64,
 
 	// Decode the flags. If the flags are non-zero, it means that the
 	// transaction was fully spent at this spend.
-	if decodeFlagsFullySpent(byte(flags), uint64(height)) {
-		isCoinBase, hasExpiry, txType, _ := decodeFlags(byte(flags), uint64(height))
+	if decodeFlagsFullySpent(byte(flags)) {
+		isCoinBase, hasExpiry, txType, _ := decodeFlags(byte(flags))
 
 		stxo.isCoinBase = isCoinBase
 		stxo.hasExpiry = hasExpiry
@@ -387,7 +387,7 @@ func decodeSpentTxOut(serialized []byte, stxo *spentTxOut, amount int64,
 
 	// Deserialize the containing transaction if the flags indicate that
 	// the transaction has been fully spent.
-	if decodeFlagsFullySpent(byte(flags), uint64(height)) {
+	if decodeFlagsFullySpent(byte(flags)) {
 		txVersion, bytesRead := deserializeVLQ(serialized[offset:])
 		offset += bytesRead
 		if offset == 0 || offset > len(serialized) {
@@ -715,7 +715,7 @@ func serializeUtxoEntry(entry *UtxoEntry) ([]byte, error) {
 	}
 
 	// Calculate the size needed to serialize the entry.
-	flags := encodeFlags(entry.isCoinBase, entry.hasExpiry, entry.txType, false, uint64(entry.height))
+	flags := encodeFlags(entry.isCoinBase, entry.hasExpiry, entry.txType, false)
 	size := serializeSizeVLQ(uint64(entry.txVersion)) +
 		serializeSizeVLQ(uint64(entry.height)) +
 		serializeSizeVLQ(uint64(entry.index)) +
@@ -808,7 +808,7 @@ func deserializeUtxoEntry(serialized []byte) (*UtxoEntry, error) {
 	if offset >= len(serialized) {
 		return nil, errDeserialize("unexpected end of data after flags")
 	}
-	isCoinBase, hasExpiry, txType, _ := decodeFlags(byte(flags), blockHeight)
+	isCoinBase, hasExpiry, txType, _ := decodeFlags(byte(flags))
 
 	// Deserialize the header code.
 	code, bytesRead := deserializeVLQ(serialized[offset:])
