@@ -1985,17 +1985,33 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// Ensure that the transaction is not spending coins from a
 		// transaction that included an expiry but which has not yet
 		// reached coinbase maturity many blocks.
-		if utxoEntry.HasExpiry() {
-			originHeight := utxoEntry.BlockHeight()
-			blocksSincePrev := txHeight - originHeight
-			if blocksSincePrev < coinbaseMaturity {
-				str := fmt.Sprintf("tx %v tried to spend "+
-					"transaction %v including an expiry "+
-					"from height %v at height %v before "+
-					"required maturity of %v blocks",
-					txHash, txInHash, originHeight,
-					txHeight, coinbaseMaturity)
-				return 0, ruleError(ErrExpiryTxSpentEarly, str)
+		if isAiSSGen || isAiSSRtx || isAiSStx{
+			if utxoEntry.HasExpiry() {
+				originHeight := utxoEntry.BlockHeight()
+				blocksSincePrev := txHeight - originHeight
+				if blocksSincePrev < int64(chainParams.AiTicketMaturity) {
+					str := fmt.Sprintf("ai tx %v tried to spend "+
+						"transaction %v including an expiry "+
+						"from height %v at height %v before "+
+						"required maturity of %v blocks",
+						txHash, txInHash, originHeight,
+						txHeight, chainParams.AiTicketMaturity)
+					return 0, ruleError(ErrExpiryTxSpentEarly, str)
+				}
+			}
+		}else{
+			if utxoEntry.HasExpiry() {
+				originHeight := utxoEntry.BlockHeight()
+				blocksSincePrev := txHeight - originHeight
+				if blocksSincePrev < coinbaseMaturity {
+					str := fmt.Sprintf("tx %v tried to spend "+
+						"transaction %v including an expiry "+
+						"from height %v at height %v before "+
+						"required maturity of %v blocks",
+						txHash, txInHash, originHeight,
+						txHeight, coinbaseMaturity)
+					return 0, ruleError(ErrExpiryTxSpentEarly, str)
+				}
 			}
 		}
 
