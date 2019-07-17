@@ -262,6 +262,22 @@ func (b *BlockChain) CheckMissedTickets(hashes []chainhash.Hash) []bool {
 	return existsSlice
 }
 
+func (b *BlockChain) CheckMissedAiTickets(hashes []chainhash.Hash) []bool {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
+	b.chainLock.RUnlock()
+
+	existsSlice := make([]bool, len(hashes))
+	if sn == nil{
+		return existsSlice
+	}
+	for i := range hashes {
+		existsSlice[i] = sn.ExistsMissedTicket(hashes[i])
+	}
+
+	return existsSlice
+}
+
 // CheckExpiredTicket returns whether or not a ticket was ever expired.
 //
 // This function is safe for concurrent access.
@@ -270,6 +286,17 @@ func (b *BlockChain) CheckExpiredTicket(hash chainhash.Hash) bool {
 	sn := b.bestNode.stakeNode
 	b.chainLock.RUnlock()
 
+	return sn.ExistsExpiredTicket(hash)
+}
+
+func (b *BlockChain) CheckExpiredAiTicket(hash chainhash.Hash) bool {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
+	b.chainLock.RUnlock()
+
+	if sn == nil {
+		return false
+	}
 	return sn.ExistsExpiredTicket(hash)
 }
 

@@ -1429,6 +1429,8 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 			if parentStakeNode.ExistsMissedTicket(sstxHash) {
 				ticketMissed = true
+			}else if parentAiStakeNode.ExistsMissedTicket(sstxHash) {
+				ticketMissed = true
 			}
 
 			if !ticketMissed {
