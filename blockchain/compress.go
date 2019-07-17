@@ -6,8 +6,6 @@ package blockchain
 
 import (
 	"fmt"
-	"github.com/HcashOrg/hcd/wire"
-
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/crypto/bliss"
@@ -778,12 +776,21 @@ func decodeCompressedTxOut(serialized []byte, compressionVersion uint32,
 //
 // -----------------------------------------------------------------------------
 
+// version 3
+/*						bit 5	3	2
+	TxTypeRegular			0	0	0
+	TxTypeSStx				0	0	1
+	TxTypeSSGen				0	1	0
+	TxTypeSSRtx				0	1	1
+	TxTypeAiSStx			1	0	1
+	TxTypeAiSSGen			1	1	0
+	TxTypeAiSSRtx			1	1	1
+*/
+
 const (
 	// txTypeBitmask describes the bitmask that yields the 3rd and 4th bits
 	// from the flags byte.
-//	txTypeBitmask = 0x0c
-	txTypeBitmaskOld = 0x0c
-	txTypeBitmask = 0x1c
+	txTypeBitmask = 0x0c
 
 	// txTypeShift is the number of bits to shift falgs to the right to yield the
 	// correct integer value after applying the bitmask with AND.
@@ -792,8 +799,8 @@ const (
 
 // encodeFlags encodes transaction flags into a single byte.
 func encodeFlags(isCoinBase bool, hasExpiry bool, txType stake.TxType,
-	fullySpent bool, height uint64) byte {
-
+	fullySpent bool) byte {
+/*
 	if height >= wire.AI_UPDATE_HEIGHT{
 		b := uint8(txType)
 		b <<= txTypeShift
@@ -824,12 +831,33 @@ func encodeFlags(isCoinBase bool, hasExpiry bool, txType stake.TxType,
 		}
 		return b
 	}
+	*/
+	b := uint8(txType)
+	if txType == stake.TxTypeAiSStx || txType == stake.TxTypeAiSSGen || txType == stake.TxTypeAiSSRtx {
+		b = (b - 3) << txTypeShift
+		b |= 0x20 // and set bit 5
+	}else{
+		b <<= txTypeShift
+	}
+
+
+
+	if isCoinBase {
+		b |= 0x01 // Set bit 0
+	}
+	if hasExpiry {
+		b |= 0x02 // Set bit 1
+	}
+	if fullySpent {
+		b |= 0x10 // Set bit 4
+	}
+	return b
 }
 
 // decodeFlags decodes transaction flags from a single byte into their respective
 // data types.
-func decodeFlags(b byte, height uint64) (bool, bool, stake.TxType, bool) {
-
+func decodeFlags(b byte) (bool, bool, stake.TxType, bool) {
+/*
 	if height >= wire.AI_UPDATE_HEIGHT{
 		isCoinBase := b&0x01 != 0
 		hasExpiry := b&(1<<1) != 0
@@ -845,15 +873,26 @@ func decodeFlags(b byte, height uint64) (bool, bool, stake.TxType, bool) {
 
 		return isCoinBase, hasExpiry, txType, fullySpent
 	}
+	*/
+	isCoinBase := b&0x01 != 0
+	hasExpiry := b&(1<<1) != 0
+	fullySpent := b&(1<<4) != 0
+	txType := stake.TxType((b & txTypeBitmask) >> txTypeShift)
+	if b&(1<<5) != 0{//for ai bit
+		txType += 3
+	}
+	return isCoinBase, hasExpiry, txType, fullySpent
 }
 
 // decodeFlagsFullySpent decodes whether or not a transaction was fully spent.
-func decodeFlagsFullySpent(b byte, height uint64) bool {
+func decodeFlagsFullySpent(b byte) bool {
+/*
 	if height >= wire.AI_UPDATE_HEIGHT{
 		return b&(1<<5) != 0
 	}else{//old version
 		return b&(1<<4) != 0
 	}
-	//return b&(1<<4) != 0
+*/
+	return b&(1<<4) != 0
 
 }
