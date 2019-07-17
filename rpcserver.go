@@ -235,27 +235,30 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"help":                   handleHelp,
 	"livetickets":            handleLiveTickets,
 	"ailivetickets":          handleAiLiveTickets,
-	"missedtickets":          handleMissedTickets,
-	"node":                   handleNode,
-	"ping":                   handlePing,
-	"searchrawtransactions":  handleSearchRawTransactions,
-	"rebroadcastmissed":      handleRebroadcastMissed,
-	"rebroadcastwinners":     handleRebroadcastWinners,
-	"sendrawtransaction":     handleSendRawTransaction,
-	"sendairawtransaction":   handleSendAiRawTransaction,
-	"sendaitxvote":           handleSendAiTxVote,
-	"setgenerate":            handleSetGenerate,
-	"stop":                   handleStop,
-	"submitblock":            handleSubmitBlock,
-	"ticketfeeinfo":          handleTicketFeeInfo,
-	"ticketsforaddress":      handleTicketsForAddress,
-	"ticketvwap":             handleTicketVWAP,
-	"txfeeinfo":              handleTxFeeInfo,
-	"validateaddress":        handleValidateAddress,
-	"verifychain":            handleVerifyChain,
-	"verifymessage":          handleVerifyMessage,
-	"verifyblissmessage":     handleVerifyBlissMessage,
-	"version":                handleVersion,
+
+	"missedtickets":   handleMissedTickets,
+	"aimissedtickets": handleAiMissedTickets,
+
+	"node":                  handleNode,
+	"ping":                  handlePing,
+	"searchrawtransactions": handleSearchRawTransactions,
+	"rebroadcastmissed":     handleRebroadcastMissed,
+	"rebroadcastwinners":    handleRebroadcastWinners,
+	"sendrawtransaction":    handleSendRawTransaction,
+	"sendairawtransaction":  handleSendAiRawTransaction,
+	"sendaitxvote":          handleSendAiTxVote,
+	"setgenerate":           handleSetGenerate,
+	"stop":                  handleStop,
+	"submitblock":           handleSubmitBlock,
+	"ticketfeeinfo":         handleTicketFeeInfo,
+	"ticketsforaddress":     handleTicketsForAddress,
+	"ticketvwap":            handleTicketVWAP,
+	"txfeeinfo":             handleTxFeeInfo,
+	"validateaddress":       handleValidateAddress,
+	"verifychain":           handleVerifyChain,
+	"verifymessage":         handleVerifyMessage,
+	"verifyblissmessage":    handleVerifyBlissMessage,
+	"version":               handleVersion,
 }
 
 // list of commands that we recognize, but for which hcd has no support because
@@ -4849,6 +4852,21 @@ func handleAiLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 // handleMissedTickets implements the missedtickets command.
 func handleMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	mt, err := s.server.blockManager.chain.MissedTickets()
+	if err != nil {
+		return nil, rpcInternalError("Could not get missed tickets "+
+			err.Error(), "")
+	}
+
+	mtString := make([]string, len(mt))
+	for i, hash := range mt {
+		mtString[i] = hash.String()
+	}
+
+	return hcjson.MissedTicketsResult{Tickets: mtString}, nil
+}
+
+func handleAiMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	mt, err := s.server.blockManager.chain.MissedAiTickets()
 	if err != nil {
 		return nil, rpcInternalError("Could not get missed tickets "+
 			err.Error(), "")
