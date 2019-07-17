@@ -1840,7 +1840,7 @@ mempoolLoop:
 				continue
 			}
 
-			if isSStx{
+			if isSStx && freshStake < int(server.chainParams.MaxFreshStakePerBlock) {
 				// Quick check for difficulty here.
 				if msgTx.TxOut[0].Value >= reqStakeDifficulty {
 					txCopy := hcutil.NewTxDeepTxIns(msgTx)
@@ -1849,7 +1849,7 @@ mempoolLoop:
 						freshStake++
 					}
 				}
-			}else if isAiSStx{
+			}else if isAiSStx && aiFreshStake < int(server.chainParams.AiMaxFreshStakePerBlock){
 				// Quick check for difficulty here.
 				if msgTx.TxOut[0].Value >= reqAiStakeDifficulty {
 					txCopy := hcutil.NewTxDeepTxIns(msgTx)
@@ -1863,15 +1863,26 @@ mempoolLoop:
 		}
 
 		if nextBlockHeight >= int64(server.chainParams.AIUpdateHeight) {
+			if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) && freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
+				break
+			}
+		}else{
+			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
+				break
+			}
+		}
+		/*
+		if nextBlockHeight >= int64(server.chainParams.AIUpdateHeight) {
 			// Don't let this overflow.
 			if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
-				break
+				continue
 			}
 		}
 		// Don't let this overflow.
 		if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
-			break
+			continue
 		}
+		*/
 	}
 
 	// Get the ticket revocations (SSRtx tx) and store them and their number.

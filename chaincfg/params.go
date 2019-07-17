@@ -28,7 +28,7 @@ var (
 	// mainPowLimit is the highest proof of work value a Hcd block can
 	// have for the main network.  It is the value 2^224 - 1.
 	//mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 240), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a Hcd block
 	// can have for the test network.  It is the value 2^232 - 1.
@@ -484,13 +484,11 @@ var MainNetParams = Params{
 	Net:         wire.MainNet,
 	DefaultPort: "14008",
 	DNSSeeds: []string{
-		/*
 		"mainnet1.h.cash",
 		"mainnet2.h.cash",
 		"mainnet3.h.cash",
 		"mainnet4.h.cash",
 		"mainnet5.h.cash",
-		*/
 	},
 
 	// Chain parameters
@@ -504,11 +502,11 @@ var MainNetParams = Params{
 	MaximumBlockSizes:        []int{1000000},
 	MaxTxSize:                1000000,
 	//TargetTimePerBlock:       time.Second * 150,
-	TargetTimePerBlock:       time.Second * 4,
+	TargetTimePerBlock:       time.Second * 150,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       288,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Second * 4 * 288, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 150 * 288, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -646,7 +644,7 @@ var TestNet2Params = Params{
 	StakeRewardProportion:    3,
 	AiStakeRewardProportion:    3,
 	BlockTaxProportion:       1,
-	AiSendConfirmationsRequired: 2,
+	AiSendConfirmationsRequired: 6,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -785,12 +783,12 @@ var SimNetParams = Params{
 	MaximumBlockSizes:        []int{1000000, 1310720},
 	MaxTxSize:                2048000,
 	//TargetTimePerBlock:       time.Second * 10,
-	TargetTimePerBlock:       time.Second*2,
+	TargetTimePerBlock:       time.Second*10,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       8,
 	WorkDiffWindows:          4,
 	//TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
-	TargetTimespan:           time.Second * 16, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Second * 80, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -889,8 +887,8 @@ var SimNetParams = Params{
 	//ai PoS parameters
 	AiTicketPoolSize:          256,//64 + 32,
 	AiTicketsPerBlock:         5,//5 + 5,
-	AiTicketMaturity:          16,
-	AiTicketExpiry:            384, // 6*AiTicketPoolSize
+	AiTicketMaturity:          8,
+	AiTicketExpiry:            192, // 6*AiTicketPoolSize
 
 	CoinbaseMaturity:        16,
 	SStxChangeMaturity:      1,

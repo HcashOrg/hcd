@@ -1328,6 +1328,21 @@ func PayToSSRtxPKHDirect(pkh []byte, alType int) ([]byte, error) {
 		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
 }
 
+func PayToAiSSRtxPKHDirect(pkh []byte, alType int) ([]byte, error) {
+	if pkh == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	if !(alType == chainec.ECTypeSecp256k1 || alType == bs.BSTypeBliss) {
+		return nil, ErrUnsupportedAddress
+	}
+	sigType := []byte{byte(alType)}
+
+	return NewScriptBuilder().AddOp(OP_AISSRTX).AddOp(OP_DUP).
+		AddOp(OP_HASH160).AddData(pkh).AddOp(OP_EQUALVERIFY).
+		AddData(sigType).AddOp(OP_CHECKSIGALT).Script()
+}
+
 // PayToSSRtxSHDirect creates a new script to pay a transaction output to a
 // script hash, but tags the output with OP_SSRTX. For use in constructing
 // valid SSRtx. Unlike PayToSSRtx, this function directly uses the HASH160
@@ -1338,6 +1353,15 @@ func PayToSSRtxSHDirect(sh []byte, _ int) ([]byte, error) {
 	}
 
 	return NewScriptBuilder().AddOp(OP_SSRTX).AddOp(OP_HASH160).
+		AddData(sh).AddOp(OP_EQUAL).Script()
+}
+
+func PayToAiSSRtxSHDirect(sh []byte, _ int) ([]byte, error) {
+	if sh == nil {
+		return nil, ErrUnsupportedAddress
+	}
+
+	return NewScriptBuilder().AddOp(OP_AISSRTX).AddOp(OP_HASH160).
 		AddData(sh).AddOp(OP_EQUAL).Script()
 }
 

@@ -393,6 +393,14 @@ func NewRevokeTicketsCmd() *RevokeTicketsCmd {
 	return &RevokeTicketsCmd{}
 }
 
+type RevokeAiTicketsCmd struct {
+}
+
+// NewRevokeTicketsCmd creates a new RevokeTicketsCmd.
+func NewRevokeAiTicketsCmd() *RevokeAiTicketsCmd {
+	return &RevokeAiTicketsCmd{}
+}
+
 type GetStraightPubKeyCmd struct {
 	SrcAddress string
 }
@@ -611,6 +619,7 @@ func init() {
 	MustRegisterCmd("redeemmultisigouts", (*RedeemMultiSigOutsCmd)(nil), flags)
 	MustRegisterCmd("rescanwallet", (*RescanWalletCmd)(nil), flags)
 	MustRegisterCmd("revoketickets", (*RevokeTicketsCmd)(nil), flags)
+	MustRegisterCmd("revokeaitickets", (*RevokeAiTicketsCmd)(nil), flags)
 	MustRegisterCmd("getstraightpubkey", (*GetStraightPubKeyCmd)(nil), flags)
 	MustRegisterCmd("sendtomultisig", (*SendToMultiSigCmd)(nil), flags)
 	MustRegisterCmd("sendtosstx", (*SendToSStxCmd)(nil), flags)

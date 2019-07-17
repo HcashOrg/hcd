@@ -112,7 +112,7 @@ type aiTxMsg struct {
 
 type aiTxVoteMsg struct {
 	aiTxVote *hcutil.AiTxVote
-	peer          *serverPeer
+	peer     *serverPeer
 }
 
 // getSyncPeerMsg is a message type to be sent across the message channel for
@@ -126,12 +126,12 @@ type getSyncPeerMsg struct {
 // this through the block manager so the block manager doesn't ban the peer
 // when it sends this information back.
 type requestFromPeerMsg struct {
-	peer         *serverPeer
-	blocks       []*chainhash.Hash
-	txs          []*chainhash.Hash
+	peer    *serverPeer
+	blocks  []*chainhash.Hash
+	txs     []*chainhash.Hash
 	aiTxs   []*chainhash.Hash
 	aiVotes []*chainhash.Hash
-	reply        chan requestFromPeerResponse
+	reply   chan requestFromPeerResponse
 }
 
 // requestFromPeerResponse is a response sent to the reply channel of a
@@ -698,8 +698,11 @@ func (b *blockManager) syncLockPoolStateAfterSync(sp *serverPeer) {
 				return
 			}
 			if b.IsCurrent() {
-				msg := wire.NewMsgGetLockPoolState()
-				sp.QueueMessage(msg, nil)
+				_, height := b.chainState.Best()
+				if uint64(height) > sp.server.chainParams.AIUpdateHeight {
+					msg := wire.NewMsgGetLockPoolState()
+					sp.QueueMessage(msg, nil)
+				}
 				return
 			}
 		}
@@ -903,8 +906,6 @@ func (b *blockManager) handleAiTxVoteMsg(msg *aiTxVoteMsg) {
 		bmgrLog.Errorf("aitx ticket not exist ,aivote %v: %v", aiTxVote.Hash())
 		return
 	}
-
-
 
 	ticketTx, err := fetchTxInfo(b.server.rpcServer, &ticketHash)
 	if err != nil || ticketTx == nil {
@@ -3077,21 +3078,21 @@ func (b *blockManager) SetParentTemplate(bt *BlockTemplate) {
 // Use Start to begin processing asynchronous block and inv updates.
 func newBlockManager(s *server, indexManager blockchain.IndexManager) (*blockManager, error) {
 	bm := blockManager{
-		server:                    s,
-		rejectedTxns:              make(map[chainhash.Hash]struct{}),
-		requestedTxns:             make(map[chainhash.Hash]struct{}),
-		requestedEverTxns:         make(map[chainhash.Hash]uint8),
-		requestedBlocks:           make(map[chainhash.Hash]struct{}),
-		requestedEverBlocks:       make(map[chainhash.Hash]uint8),
+		server:               s,
+		rejectedTxns:         make(map[chainhash.Hash]struct{}),
+		requestedTxns:        make(map[chainhash.Hash]struct{}),
+		requestedEverTxns:    make(map[chainhash.Hash]uint8),
+		requestedBlocks:      make(map[chainhash.Hash]struct{}),
+		requestedEverBlocks:  make(map[chainhash.Hash]uint8),
 		requestedAiTxs:       make(map[chainhash.Hash]struct{}),
 		requestedEverAiTxs:   make(map[chainhash.Hash]uint8),
 		requestedAiVotes:     make(map[chainhash.Hash]struct{}),
 		requestedEverAiVotes: make(map[chainhash.Hash]uint8),
-		progressLogger:            newBlockProgressLogger("Processed", bmgrLog),
-		msgChan:                   make(chan interface{}, cfg.MaxPeers*3),
-		headerList:                list.New(),
-		AggressiveMining:          !cfg.NonAggressive,
-		quit:                      make(chan struct{}),
+		progressLogger:       newBlockProgressLogger("Processed", bmgrLog),
+		msgChan:              make(chan interface{}, cfg.MaxPeers*3),
+		headerList:           list.New(),
+		AggressiveMining:     !cfg.NonAggressive,
+		quit:                 make(chan struct{}),
 	}
 
 	// Create a new block chain instance with the appropriate configuration.
