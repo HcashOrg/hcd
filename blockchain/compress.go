@@ -840,8 +840,6 @@ func encodeFlags(isCoinBase bool, hasExpiry bool, txType stake.TxType,
 		b <<= txTypeShift
 	}
 
-
-
 	if isCoinBase {
 		b |= 0x01 // Set bit 0
 	}

@@ -887,8 +887,8 @@ var SimNetParams = Params{
 	//ai PoS parameters
 	AiTicketPoolSize:          256,//64 + 32,
 	AiTicketsPerBlock:         5,//5 + 5,
-	AiTicketMaturity:          16,
-	AiTicketExpiry:            384, // 6*AiTicketPoolSize
+	AiTicketMaturity:          8,
+	AiTicketExpiry:            192, // 6*AiTicketPoolSize
 
 	CoinbaseMaturity:        16,
 	SStxChangeMaturity:      1,
