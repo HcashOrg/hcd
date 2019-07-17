@@ -61,6 +61,10 @@ type GetTicketsResult struct {
 	Hashes []string `json:"hashes"`
 }
 
+type GetAiTicketsResult struct {
+	Hashes []string `json:"hashes"`
+}
+
 // VoteChoice models the data for a vote choice in the getvotechoices result.
 type VoteChoice struct {
 	AgendaID          string `json:"agendaid"`

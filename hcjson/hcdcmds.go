@@ -253,11 +253,15 @@ func NewAiLiveTicketsCmd() *AiLiveTicketsCmd {
 // MissedTicketsCmd is a type handling custom marshaling and
 // unmarshaling of missedtickets JSON RPC commands.
 type MissedTicketsCmd struct{}
+type AiMissedTicketsCmd struct{}
 
 // NewMissedTicketsCmd returns a new instance which can be used to issue a JSON-RPC
 // missedtickets command.
 func NewMissedTicketsCmd() *MissedTicketsCmd {
 	return &MissedTicketsCmd{}
+}
+func NewAiMissedTicketsCmd() *AiMissedTicketsCmd {
+	return &AiMissedTicketsCmd{}
 }
 
 // RebroadcastMissedCmd is a type handling custom marshaling and
@@ -402,6 +406,8 @@ func init() {
 	MustRegisterCmd("ailivetickets", (*AiLiveTicketsCmd)(nil), flags)
 
 	MustRegisterCmd("missedtickets", (*MissedTicketsCmd)(nil), flags)
+	MustRegisterCmd("aimissedtickets", (*AiMissedTicketsCmd)(nil), flags)
+
 	MustRegisterCmd("rebroadcastmissed", (*RebroadcastMissedCmd)(nil), flags)
 	MustRegisterCmd("rebroadcastwinners", (*RebroadcastWinnersCmd)(nil), flags)
 	MustRegisterCmd("ticketfeeinfo", (*TicketFeeInfoCmd)(nil), flags)
