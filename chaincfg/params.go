@@ -644,7 +644,7 @@ var TestNet2Params = Params{
 	StakeRewardProportion:    3,
 	AiStakeRewardProportion:    3,
 	BlockTaxProportion:       1,
-	AiSendConfirmationsRequired: 2,
+	AiSendConfirmationsRequired: 6,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
