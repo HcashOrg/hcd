@@ -8,3 +8,4 @@ vendor/
 glide.lock
 debug
 *.exe
+/.idea/vcs.xml
