@@ -591,6 +591,11 @@ func NewWalletInfoCmd() *WalletInfoCmd {
 	return &WalletInfoCmd{}
 }
 
+type RegisterAiNode struct {
+}
+type UnRegisterAiNode struct {
+}
+
 func init() {
 	// The commands in this file are only usable with a wallet
 	// server.
@@ -632,4 +637,8 @@ func init() {
 	MustRegisterCmd("signrawtransactions", (*SignRawTransactionsCmd)(nil), flags)
 	MustRegisterCmd("stakepooluserinfo", (*StakePoolUserInfoCmd)(nil), flags)
 	MustRegisterCmd("walletinfo", (*WalletInfoCmd)(nil), flags)
+
+	MustRegisterCmd("registerainode", (*RegisterAiNode)(nil), flags)
+	MustRegisterCmd("unregisterainode", (*UnRegisterAiNode)(nil), flags)
+
 }
