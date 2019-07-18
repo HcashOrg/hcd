@@ -22,6 +22,9 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -698,8 +701,50 @@ func (b *blockManager) syncLockPoolStateAfterSync(sp *serverPeer) {
 				return
 			}
 			if b.IsCurrent() {
-				_, height := b.chainState.Best()
-				if uint64(height) > sp.server.chainParams.AIUpdateHeight {
+				var valid = regexp.MustCompile("hcd:[0-9]*.[0-9]*.[0-9]*")
+				val := valid.FindAllStringSubmatch(sp.UserAgent(), 1)
+				if !(len(val) != 0 && len(val[0]) != 0) {
+					peerLog.Warnf("peer has no hcd agentVersion %s ", sp)
+					sp.server.BanPeer(sp)
+					sp.Disconnect()
+					return
+				}
+
+				receiveVerisonStr := strings.TrimLeft(val[0][0], "hcd:")
+				versionArray := strings.Split(receiveVerisonStr, ".")
+				if len(versionArray) != 3 {
+					peerLog.Warnf("parser remote app version %s fail", sp)
+					sp.server.BanPeer(sp)
+					sp.Disconnect()
+					return
+				}
+
+				oldAppMajor, err := strconv.ParseInt(versionArray[0], 10, 32)
+				if err != nil {
+					peerLog.Warnf("parser remote app version %s fail", sp)
+					sp.server.BanPeer(sp)
+					sp.Disconnect()
+					return
+				}
+				oldAppMinor, err := strconv.ParseInt(versionArray[1], 10, 32)
+				if err != nil {
+					peerLog.Warnf("parser remote app version %s fail", sp)
+					sp.server.BanPeer(sp)
+					sp.Disconnect()
+					return
+				}
+				oldAppPatch, err := strconv.ParseInt(versionArray[2], 10, 32)
+				if err != nil {
+					peerLog.Warnf("parser remote app version %s fail", sp)
+					sp.server.BanPeer(sp)
+					sp.Disconnect()
+					return
+				}
+
+				oldVersion := int32(1000000*oldAppMajor + 10000*oldAppMinor + 100*oldAppPatch)
+				//currVersion := int32(1000000*appMajor + 10000*appMinor + 100*appPatch)
+
+				if oldVersion >= 3000000 {
 					msg := wire.NewMsgGetLockPoolState()
 					sp.QueueMessage(msg, nil)
 				}
