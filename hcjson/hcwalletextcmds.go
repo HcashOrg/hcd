@@ -595,6 +595,8 @@ type RegisterAiNode struct {
 }
 type UnRegisterAiNode struct {
 }
+type IfAiNodeRegisted struct {
+}
 
 func init() {
 	// The commands in this file are only usable with a wallet
@@ -640,5 +642,6 @@ func init() {
 
 	MustRegisterCmd("registerainode", (*RegisterAiNode)(nil), flags)
 	MustRegisterCmd("unregisterainode", (*UnRegisterAiNode)(nil), flags)
+	MustRegisterCmd("ifainoderegisted", (*IfAiNodeRegisted)(nil), flags)
 
 }
