@@ -187,7 +187,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"decodescript":           handleDecodeScript,
 	"estimatefee":            handleEstimateFee,
 	"estimatestakediff":      handleEstimateStakeDiff,
-	"estimateaistakediff":      handleEstimateAiStakeDiff,
+	"estimateaistakediff":    handleEstimateAiStakeDiff,
 	"existsaddress":          handleExistsAddress,
 	"existsaddresses":        handleExistsAddresses,
 	"existsmissedtickets":    handleExistsMissedTickets,
@@ -231,7 +231,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getstakeversioninfo":    handleGetStakeVersionInfo,
 	"getstakeversions":       handleGetStakeVersions,
 	"getticketpoolvalue":     handleGetTicketPoolValue,
-	"getaiticketpoolvalue":     handleGetAiTicketPoolValue,
+	"getaiticketpoolvalue":   handleGetAiTicketPoolValue,
 	"getvoteinfo":            handleGetVoteInfo,
 	"gettxout":               handleGetTxOut,
 	"getwork":                handleGetWork,
@@ -254,10 +254,10 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"stop":                  handleStop,
 	"submitblock":           handleSubmitBlock,
 	"ticketfeeinfo":         handleTicketFeeInfo,
-	"aiticketfeeinfo":         handleAiTicketFeeInfo,
+	"aiticketfeeinfo":       handleAiTicketFeeInfo,
 	"ticketsforaddress":     handleTicketsForAddress,
 	"ticketvwap":            handleTicketVWAP,
-	"aiticketvwap":            handleAiTicketVWAP,
+	"aiticketvwap":          handleAiTicketVWAP,
 	"txfeeinfo":             handleTxFeeInfo,
 	"validateaddress":       handleValidateAddress,
 	"verifychain":           handleVerifyChain,
@@ -318,6 +318,7 @@ var rpcAskWallet = map[string]struct{}{
 	"registerainode":          {},
 	"unregisterainode":        {},
 	"ifainoderegisted":        {},
+	"getconfigfile":           {},
 }
 
 // Commands that are currently unimplemented, but should ultimately be.
@@ -4258,7 +4259,6 @@ func handleGetAiTicketPoolValue(s *rpcServer, cmd interface{}, closeChan <-chan 
 	return amt.ToCoin(), nil
 }
 
-
 // handleGetVoteInfo implements the getvoteinfo command.
 func handleGetVoteInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c, ok := cmd.(*hcjson.GetVoteInfoCmd)
@@ -6204,7 +6204,6 @@ func handleAiTicketFeeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struc
 		AiFeeInfoWindows: feeInfoWindows,
 	}, nil
 }
-
 
 // handleTicketsForAddress implements the ticketsforaddress command.
 func handleTicketsForAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
