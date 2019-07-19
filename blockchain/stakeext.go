@@ -120,7 +120,7 @@ func (b *BlockChain) LiveTickets() ([]chainhash.Hash, error) {
 	return sn.LiveTickets(), nil
 }
 
-func (b *BlockChain) AiLiveTickets() ([]chainhash.Hash, error) {
+func (b *BlockChain) LiveAiTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.aistakeNode
 	b.chainLock.RUnlock()
@@ -395,6 +395,32 @@ func (b *BlockChain) TicketPoolValue() (hcutil.Amount, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
 	b.chainLock.RUnlock()
+
+	var amt int64
+	err := b.db.View(func(dbTx database.Tx) error {
+		for _, hash := range sn.LiveTickets() {
+			utxo, err := dbFetchUtxoEntry(dbTx, &hash)
+			if err != nil {
+				return err
+			}
+
+			amt += utxo.sparseOutputs[0].amount
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return hcutil.Amount(amt), nil
+}
+
+func (b *BlockChain) AiTicketPoolValue() (hcutil.Amount, error) {
+	b.chainLock.RLock()
+	sn := b.bestNode.aistakeNode
+	b.chainLock.RUnlock()
+	if sn == nil {
+		return 0,nil
+	}
 
 	var amt int64
 	err := b.db.View(func(dbTx database.Tx) error {

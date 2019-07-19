@@ -105,9 +105,20 @@ type EstimateStakeDiffResult struct {
 	User     *float64 `json:"user,omitempty"`
 }
 
+type EstimateAiStakeDiffResult struct {
+	Min      float64  `json:"min"`
+	Max      float64  `json:"max"`
+	Expected float64  `json:"expected"`
+	User     *float64 `json:"user,omitempty"`
+}
+
 // LiveTicketsResult models the data returned from the livetickets
 // command.
 type LiveTicketsResult struct {
+	Tickets []string `json:"tickets"`
+}
+
+type LiveAiTicketsResult struct {
 	Tickets []string `json:"tickets"`
 }
 
@@ -117,8 +128,16 @@ type MissedTicketsResult struct {
 	Tickets []string `json:"tickets"`
 }
 
+type MissedAiTicketsResult struct {
+	Tickets []string `json:"tickets"`
+}
 // Ticket is the structure representing a ticket.
 type Ticket struct {
+	Hash  string `json:"hash"`
+	Owner string `json:"owner"`
+}
+
+type AiTicket struct {
 	Hash  string `json:"hash"`
 	Owner string `json:"owner"`
 }

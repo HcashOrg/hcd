@@ -3087,6 +3087,10 @@ func (b *blockManager) TicketPoolValue() (hcutil.Amount, error) {
 	return b.chain.TicketPoolValue()
 }
 
+func (b *blockManager) AiTicketPoolValue() (hcutil.Amount, error) {
+	return b.chain.AiTicketPoolValue()
+}
+
 // GetCurrentTemplate gets the current block template for mining.
 func (b *blockManager) GetCurrentTemplate() *BlockTemplate {
 	reply := make(chan getCurrentTemplateResponse)

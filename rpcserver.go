@@ -187,6 +187,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"decodescript":           handleDecodeScript,
 	"estimatefee":            handleEstimateFee,
 	"estimatestakediff":      handleEstimateStakeDiff,
+	"estimateaistakediff":      handleEstimateAiStakeDiff,
 	"existsaddress":          handleExistsAddress,
 	"existsaddresses":        handleExistsAddresses,
 	"existsmissedtickets":    handleExistsMissedTickets,
@@ -230,15 +231,16 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getstakeversioninfo":    handleGetStakeVersionInfo,
 	"getstakeversions":       handleGetStakeVersions,
 	"getticketpoolvalue":     handleGetTicketPoolValue,
+	"getaiticketpoolvalue":     handleGetAiTicketPoolValue,
 	"getvoteinfo":            handleGetVoteInfo,
 	"gettxout":               handleGetTxOut,
 	"getwork":                handleGetWork,
 	"help":                   handleHelp,
 	"livetickets":            handleLiveTickets,
-	"ailivetickets":          handleAiLiveTickets,
+	"liveaitickets":          handleLiveAiTickets,
 
 	"missedtickets":   handleMissedTickets,
-	"aimissedtickets": handleAiMissedTickets,
+	"missedaitickets": handleMissedAiTickets,
 
 	"node":                  handleNode,
 	"ping":                  handlePing,
@@ -252,8 +254,10 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"stop":                  handleStop,
 	"submitblock":           handleSubmitBlock,
 	"ticketfeeinfo":         handleTicketFeeInfo,
+	"aiticketfeeinfo":         handleAiTicketFeeInfo,
 	"ticketsforaddress":     handleTicketsForAddress,
 	"ticketvwap":            handleTicketVWAP,
+	"aiticketvwap":            handleAiTicketVWAP,
 	"txfeeinfo":             handleTxFeeInfo,
 	"validateaddress":       handleValidateAddress,
 	"verifychain":           handleVerifyChain,
@@ -4229,6 +4233,18 @@ func handleGetTicketPoolValue(s *rpcServer, cmd interface{}, closeChan <-chan st
 	return amt.ToCoin(), nil
 }
 
+// handleGetAiTicketPoolValue implements the getaiticketpoolvalue command.
+func handleGetAiTicketPoolValue(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	amt, err := s.server.blockManager.TicketPoolValue()
+	if err != nil {
+		return nil, rpcInternalError(err.Error(),
+			"Could not obtain ticket pool value")
+	}
+
+	return amt.ToCoin(), nil
+}
+
+
 // handleGetVoteInfo implements the getvoteinfo command.
 func handleGetVoteInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c, ok := cmd.(*hcjson.GetVoteInfoCmd)
@@ -4861,8 +4877,8 @@ func handleLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 
 	return hcjson.LiveTicketsResult{Tickets: ltString}, nil
 }
-func handleAiLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
-	lt, err := s.server.blockManager.chain.AiLiveTickets()
+func handleLiveAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	lt, err := s.server.blockManager.chain.LiveAiTickets()
 	if err != nil {
 		return nil, rpcInternalError("Could not get live tickets "+
 			err.Error(), "")
@@ -4892,7 +4908,7 @@ func handleMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	return hcjson.MissedTicketsResult{Tickets: mtString}, nil
 }
 
-func handleAiMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+func handleMissedAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	mt, err := s.server.blockManager.chain.MissedAiTickets()
 	if err != nil {
 		return nil, rpcInternalError("Could not get missed tickets "+
@@ -4904,7 +4920,7 @@ func handleAiMissedTickets(s *rpcServer, cmd interface{}, closeChan <-chan struc
 		mtString[i] = hash.String()
 	}
 
-	return hcjson.MissedTicketsResult{Tickets: mtString}, nil
+	return hcjson.MissedAiTicketsResult{Tickets: mtString}, nil
 }
 
 // handlePing implements the ping command.
@@ -6092,6 +6108,89 @@ func handleTicketFeeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		FeeInfoWindows: feeInfoWindows,
 	}, nil
 }
+
+func handleAiTicketFeeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	c := cmd.(*hcjson.AiTicketFeeInfoCmd)
+
+	s.server.blockManager.chainState.Lock()
+	bestHeight := s.server.blockManager.chainState.newestHeight
+	s.server.blockManager.chainState.Unlock()
+
+	// Memory pool first.
+	feeInfoMempool := feeInfoForMempool(s, stake.TxTypeAiSStx)
+
+	// Blocks requested, descending from the chain tip.
+	var feeInfoBlocks []hcjson.FeeInfoBlock
+	blocks := uint32(0)
+	if c.Blocks != nil {
+		blocks = *c.Blocks
+	}
+	if blocks > 0 {
+		start := bestHeight
+		end := bestHeight - int64(blocks)
+
+		for i := start; i > end; i-- {
+			feeInfo, err := ticketFeeInfoForBlock(s, i, stake.TxTypeAiSStx)
+			if err != nil {
+				return nil, rpcInternalError(err.Error(),
+					"Could not obtain ticket fee info")
+			}
+			feeInfoBlocks = append(feeInfoBlocks, *feeInfo)
+		}
+	}
+
+	var feeInfoWindows []hcjson.FeeInfoWindow
+	windows := uint32(0)
+	if c.Windows != nil {
+		windows = *c.Windows
+	}
+	if windows > 0 {
+		// The first window is special because it may not be finished.
+		// Perform this first and return if it's the only window the
+		// user wants. Otherwise, append and continue.
+		winLen := s.server.chainParams.StakeDiffWindowSize
+		lastChange := (bestHeight / winLen) * winLen
+
+		feeInfo, err := ticketFeeInfoForRange(s, lastChange, bestHeight+1,
+			stake.TxTypeAiSStx)
+		if err != nil {
+			return nil, rpcInternalError(err.Error(),
+				"Could not obtain ticket fee info")
+		}
+		feeInfoWindows = append(feeInfoWindows, *feeInfo)
+
+		// We need data on windows from before this. Start from
+		// the last adjustment and move backwards through window
+		// lengths, calulating the fees data and appending it
+		// each time.
+		if windows > 1 {
+			// Go down to the last height requested, except
+			// in the case that the user has specified to
+			// many windows. In that case, just proceed to the
+			// first block.
+			end := int64(-1)
+			if lastChange-int64(windows)*winLen > end {
+				end = lastChange - int64(windows)*winLen
+			}
+			for i := lastChange; i > end+winLen; i -= winLen {
+				feeInfo, err := ticketFeeInfoForRange(s, i-winLen, i,
+					stake.TxTypeAiSStx)
+				if err != nil {
+					return nil, rpcInternalError(err.Error(),
+						"Could not obtain ticket fee info")
+				}
+				feeInfoWindows = append(feeInfoWindows, *feeInfo)
+			}
+		}
+	}
+
+	return &hcjson.AiTicketFeeInfoResult{
+		AiFeeInfoMempool: *feeInfoMempool,
+		AiFeeInfoBlocks:  feeInfoBlocks,
+		AiFeeInfoWindows: feeInfoWindows,
+	}, nil
+}
+
 
 // handleTicketsForAddress implements the ticketsforaddress command.
 func handleTicketsForAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {

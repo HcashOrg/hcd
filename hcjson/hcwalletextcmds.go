@@ -526,6 +526,18 @@ func NewSetTicketFeeCmd(fee float64) *SetTicketFeeCmd {
 	}
 }
 
+type SetAiTicketFeeCmd struct {
+	Fee float64
+}
+
+// NewSetTicketFeeCmd creates a new instance of the setticketfee
+// command.
+func NewSetAiTicketFeeCmd(fee float64) *SetAiTicketFeeCmd {
+	return &SetAiTicketFeeCmd{
+		Fee: fee,
+	}
+}
+
 // SetTicketMaxPriceCmd is a type handling custom marshaling and
 // unmarshaling of setticketmaxprice JSON RPC commands.
 type SetTicketMaxPriceCmd struct {
@@ -632,6 +644,7 @@ func init() {
 	MustRegisterCmd("sendtossrtx", (*SendToSSRtxCmd)(nil), flags)
 	MustRegisterCmd("setbalancetomaintain", (*SetBalanceToMaintainCmd)(nil), flags)
 	MustRegisterCmd("setticketfee", (*SetTicketFeeCmd)(nil), flags)
+	MustRegisterCmd("setaiticketfee", (*SetAiTicketFeeCmd)(nil), flags)
 	MustRegisterCmd("setticketmaxprice", (*SetTicketMaxPriceCmd)(nil), flags)
 	MustRegisterCmd("setvotechoice", (*SetVoteChoiceCmd)(nil), flags)
 	MustRegisterCmd("signrawtransactions", (*SignRawTransactionsCmd)(nil), flags)

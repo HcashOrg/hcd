@@ -24,6 +24,13 @@ func NewEstimateStakeDiffCmd(tickets *uint32) *EstimateStakeDiffCmd {
 	}
 }
 
+// NewEstimateAiStakeDiffCmd defines the estaistakedifficulty JSON-RPC command.
+func NewEstimateAiStakeDiffCmd(tickets *uint32) *EstimateAiStakeDiffCmd {
+	return &EstimateAiStakeDiffCmd{
+		AiTickets: tickets,
+	}
+}
+
 // ExistsAddressCmd defines the existsaddress JSON-RPC command.
 type ExistsAddressCmd struct {
 	Address string
@@ -222,6 +229,15 @@ func NewGetTicketPoolValueCmd() *GetTicketPoolValueCmd {
 	return &GetTicketPoolValueCmd{}
 }
 
+// GetTicketPoolValueCmd defines the getticketpoolvalue JSON-RPC command.
+type GetAiTicketPoolValueCmd struct{}
+
+// NewGetTicketPoolValueCmd returns a new instance which can be used to issue a
+// getticketpoolvalue JSON-RPC command.
+func NewGetAiTicketPoolValueCmd() *GetAiTicketPoolValueCmd {
+	return &GetAiTicketPoolValueCmd{}
+}
+
 // GetVoteInfoCmd returns voting results over a range of blocks.  Count
 // indicates how many blocks are walked backwards.
 type GetVoteInfoCmd struct {
@@ -239,29 +255,29 @@ func NewGetVoteInfoCmd(version uint32) *GetVoteInfoCmd {
 // LiveTicketsCmd is a type handling custom marshaling and
 // unmarshaling of livetickets JSON RPC commands.
 type LiveTicketsCmd struct{}
-type AiLiveTicketsCmd struct{}
+type LiveAiTicketsCmd struct{}
 
 // NewLiveTicketsCmd returns a new instance which can be used to issue a JSON-RPC
 // livetickets command.
 func NewLiveTicketsCmd() *LiveTicketsCmd {
 	return &LiveTicketsCmd{}
 }
-func NewAiLiveTicketsCmd() *AiLiveTicketsCmd {
-	return &AiLiveTicketsCmd{}
+func NewLiveAiTicketsCmd() *LiveAiTicketsCmd {
+	return &LiveAiTicketsCmd{}
 }
 
 // MissedTicketsCmd is a type handling custom marshaling and
 // unmarshaling of missedtickets JSON RPC commands.
 type MissedTicketsCmd struct{}
-type AiMissedTicketsCmd struct{}
+type MissedAiTicketsCmd struct{}
 
 // NewMissedTicketsCmd returns a new instance which can be used to issue a JSON-RPC
 // missedtickets command.
 func NewMissedTicketsCmd() *MissedTicketsCmd {
 	return &MissedTicketsCmd{}
 }
-func NewAiMissedTicketsCmd() *AiMissedTicketsCmd {
-	return &AiMissedTicketsCmd{}
+func NewMissedAiTicketsCmd() *MissedAiTicketsCmd {
+	return &MissedAiTicketsCmd{}
 }
 
 // RebroadcastMissedCmd is a type handling custom marshaling and
@@ -351,6 +367,14 @@ func NewTicketVWAPCmd(start *uint32, end *uint32) *TicketVWAPCmd {
 	}
 }
 
+func NewAiTicketVWAPCmd(start *uint32, end *uint32) *AiTicketVWAPCmd {
+	return &AiTicketVWAPCmd{
+		Start: start,
+		End:   end,
+	}
+}
+
+
 // TxFeeInfoCmd defines the ticketsfeeinfo JSON-RPC command.
 type TxFeeInfoCmd struct {
 	Blocks     *uint32
@@ -380,6 +404,7 @@ func init() {
 	flags := UsageFlag(0)
 
 	MustRegisterCmd("estimatestakediff", (*EstimateStakeDiffCmd)(nil), flags)
+	MustRegisterCmd("estimateaistakediff", (*EstimateAiStakeDiffCmd)(nil), flags)
 	MustRegisterCmd("existsaddress", (*ExistsAddressCmd)(nil), flags)
 	MustRegisterCmd("existsaddresses", (*ExistsAddressesCmd)(nil), flags)
 
@@ -401,12 +426,13 @@ func init() {
 	MustRegisterCmd("getstakeversioninfo", (*GetStakeVersionInfoCmd)(nil), flags)
 	MustRegisterCmd("getstakeversions", (*GetStakeVersionsCmd)(nil), flags)
 	MustRegisterCmd("getticketpoolvalue", (*GetTicketPoolValueCmd)(nil), flags)
+	MustRegisterCmd("getaiticketpoolvalue", (*GetAiTicketPoolValueCmd)(nil), flags)
 	MustRegisterCmd("getvoteinfo", (*GetVoteInfoCmd)(nil), flags)
 	MustRegisterCmd("livetickets", (*LiveTicketsCmd)(nil), flags)
-	MustRegisterCmd("ailivetickets", (*AiLiveTicketsCmd)(nil), flags)
+	MustRegisterCmd("liveaitickets", (*LiveAiTicketsCmd)(nil), flags)
 
 	MustRegisterCmd("missedtickets", (*MissedTicketsCmd)(nil), flags)
-	MustRegisterCmd("aimissedtickets", (*AiMissedTicketsCmd)(nil), flags)
+	MustRegisterCmd("missedaitickets", (*MissedAiTicketsCmd)(nil), flags)
 
 	MustRegisterCmd("rebroadcastmissed", (*RebroadcastMissedCmd)(nil), flags)
 	MustRegisterCmd("rebroadcastwinners", (*RebroadcastWinnersCmd)(nil), flags)
@@ -415,6 +441,7 @@ func init() {
 	MustRegisterCmd("ticketsforaddress", (*TicketsForAddressCmd)(nil), flags)
 	MustRegisterCmd("aiticketsforaddress", (*AiTicketsForAddressCmd)(nil), flags)
 	MustRegisterCmd("ticketvwap", (*TicketVWAPCmd)(nil), flags)
+	MustRegisterCmd("aiticketvwap", (*AiTicketVWAPCmd)(nil), flags)
 	MustRegisterCmd("txfeeinfo", (*TxFeeInfoCmd)(nil), flags)
 	MustRegisterCmd("version", (*VersionCmd)(nil), flags)
 }
