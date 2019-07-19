@@ -58,7 +58,7 @@ const (
 
 	// maxRevocationsPerBlock is the maximum number of revocations that are
 	// allowed per block.
-	maxAiRevocationsPerBlock = 50
+	maxAiRevocationsPerBlock = 255
 )
 
 var (
