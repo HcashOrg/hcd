@@ -190,7 +190,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"existsaddress":          handleExistsAddress,
 	"existsaddresses":        handleExistsAddresses,
 	"existsmissedtickets":    handleExistsMissedTickets,
-	"existsmissedaitickets":    handleExistsMissedAiTickets,
+	"existsmissedaitickets":  handleExistsMissedAiTickets,
 	"existsexpiredtickets":   handleExistsExpiredTickets,
 	"existsexpiredaitickets": handleExistsExpiredAiTickets,
 	"existsliveticket":       handleExistsLiveTicket,
@@ -298,7 +298,7 @@ var rpcAskWallet = map[string]struct{}{
 	"lockunspent":             {},
 	"rescanwallet":            {},
 	"revoketickets":           {},
-	"revokeaitickets":           {},
+	"revokeaitickets":         {},
 	"sendfrom":                {},
 	"sendmany":                {},
 	"sendtoaddress":           {},
@@ -313,6 +313,7 @@ var rpcAskWallet = map[string]struct{}{
 	"walletpassphrasechange":  {},
 	"registerainode":          {},
 	"unregisterainode":        {},
+	"ifainoderegisted":        {},
 }
 
 // Commands that are currently unimplemented, but should ultimately be.
