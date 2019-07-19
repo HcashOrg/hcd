@@ -214,10 +214,10 @@ type serverPeer struct {
 	getMiningStateSent   bool
 	getLockPoolStateSent bool
 	// The following chans are used to sync blockmanager and server.
-	txProcessed            chan struct{}
+	txProcessed       chan struct{}
 	aiTxProcessed     chan struct{}
 	aiTxVoteProcessed chan struct{}
-	blockProcessed         chan struct{}
+	blockProcessed    chan struct{}
 }
 
 // Only respond with addresses once per connection
@@ -232,19 +232,19 @@ type serverPeer struct {
 // the caller.
 func newServerPeer(s *server, isPersistent bool) *serverPeer {
 	return &serverPeer{
-		server:                 s,
-		persistent:             isPersistent,
-		requestedTxns:          make(map[chainhash.Hash]struct{}),
-		requestedBlocks:        make(map[chainhash.Hash]struct{}),
+		server:            s,
+		persistent:        isPersistent,
+		requestedTxns:     make(map[chainhash.Hash]struct{}),
+		requestedBlocks:   make(map[chainhash.Hash]struct{}),
 		requestedAiTxs:    make(map[chainhash.Hash]struct{}),
 		requestedAiVotes:  make(map[chainhash.Hash]struct{}),
-		filter:                 bloom.LoadFilter(nil),
-		knownAddresses:         make(map[string]struct{}),
-		quit:                   make(chan struct{}),
-		txProcessed:            make(chan struct{}, 1),
+		filter:            bloom.LoadFilter(nil),
+		knownAddresses:    make(map[string]struct{}),
+		quit:              make(chan struct{}),
+		txProcessed:       make(chan struct{}, 1),
 		aiTxProcessed:     make(chan struct{}, 1),
 		aiTxVoteProcessed: make(chan struct{}, 1),
-		blockProcessed:         make(chan struct{}, 1),
+		blockProcessed:    make(chan struct{}, 1),
 	}
 }
 
@@ -427,14 +427,14 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	oldVersion := int32(1000000*oldAppMajor + 10000*oldAppMinor + 100*oldAppPatch)
 	currVersion := int32(1000000*appMajor + 10000*appMinor + 100*appPatch)
 
-	if uint64(p.LastBlock()) < sp.server.chainParams.AIUpdateHeight{
-		if oldVersion < currVersion && oldVersion != 2000300{
+	if uint64(p.LastBlock()) < sp.server.chainParams.AIUpdateHeight {
+		if oldVersion < currVersion && oldVersion != 2000300 {
 			peerLog.Warnf("too old version peer %s ", sp)
 			sp.server.BanPeer(sp)
 			sp.Disconnect()
 			return
 		}
-	}else{
+	} else {
 		if oldVersion < currVersion {
 			peerLog.Warnf("too old version peer %s ", sp)
 			sp.server.BanPeer(sp)
@@ -443,12 +443,12 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 		}
 	}
 	/*
-	if oldVersion < currVersion {
-		peerLog.Warnf("too old version peer %s ", sp)
-		sp.server.BanPeer(sp)
-		sp.Disconnect()
-		return
-	}
+		if oldVersion < currVersion {
+			peerLog.Warnf("too old version peer %s ", sp)
+			sp.server.BanPeer(sp)
+			sp.Disconnect()
+			return
+		}
 	*/
 
 	// Choose whether or not to relay transactions before a filter command
@@ -1915,8 +1915,8 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 			OnMiningState:      sp.OnMiningState,
 			OnLockPoolState:    sp.OnLockPoolState,
 			OnTx:               sp.OnTx,
-			OnAiTx:        sp.OnAiTx,
-			OnAiTxVote:    sp.OnAiTxVote,
+			OnAiTx:             sp.OnAiTx,
+			OnAiTxVote:         sp.OnAiTxVote,
 			OnBlock:            sp.OnBlock,
 			OnInv:              sp.OnInv,
 			OnHeaders:          sp.OnHeaders,
