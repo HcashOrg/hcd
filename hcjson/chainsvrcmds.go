@@ -60,6 +60,7 @@ type CreateRawTransactionCmd struct {
 	Amounts  map[string]float64 `jsonrpcusage:"{\"address\":amount,...}"` // In HC
 	LockTime *int64
 	PayLoad  *string
+	PayLoad2 *string
 }
 
 // NewCreateRawTransactionCmd returns a new instance which can be used to issue

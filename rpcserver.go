@@ -191,7 +191,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"existsaddress":          handleExistsAddress,
 	"existsaddresses":        handleExistsAddresses,
 	"existsmissedtickets":    handleExistsMissedTickets,
-	"existsmissedaitickets":    handleExistsMissedAiTickets,
+	"existsmissedaitickets":  handleExistsMissedAiTickets,
 	"existsexpiredtickets":   handleExistsExpiredTickets,
 	"existsexpiredaitickets": handleExistsExpiredAiTickets,
 	"existsliveticket":       handleExistsLiveTicket,
@@ -302,7 +302,7 @@ var rpcAskWallet = map[string]struct{}{
 	"lockunspent":             {},
 	"rescanwallet":            {},
 	"revoketickets":           {},
-	"revokeaitickets":           {},
+	"revokeaitickets":         {},
 	"sendfrom":                {},
 	"sendmany":                {},
 	"sendtoaddress":           {},
@@ -317,6 +317,7 @@ var rpcAskWallet = map[string]struct{}{
 	"walletpassphrasechange":  {},
 	"registerainode":          {},
 	"unregisterainode":        {},
+	"ifainoderegisted":        {},
 }
 
 // Commands that are currently unimplemented, but should ultimately be.
@@ -725,6 +726,19 @@ func handleCreateRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 	if c.PayLoad != nil && (*c.PayLoad) != "" {
 		payLoad, _ := hex.DecodeString(*c.PayLoad)
 		payLoadScript, err := txscript.GenerateProvablyPruneableOut(payLoad)
+		if err == nil {
+			payLoadTx := &wire.TxOut{
+				Value:    int64(0),
+				PkScript: payLoadScript,
+			}
+			mtx.AddTxOut(payLoadTx)
+			//unsignedTransaction.TxOut = append(unsignedTransaction.TxOut, payLoadTx)
+		}
+	}
+
+	if c.PayLoad2 != nil && (*c.PayLoad2) != "" {
+		payLoad2, _ := hex.DecodeString(*c.PayLoad2)
+		payLoadScript, err := txscript.GenerateProvablyPruneableOut(payLoad2)
 		if err == nil {
 			payLoadTx := &wire.TxOut{
 				Value:    int64(0),
