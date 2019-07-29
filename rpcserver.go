@@ -4703,6 +4703,12 @@ func handleGetWorkSubmission(s *rpcServer, hexData string) (interface{}, error) 
 	if err != nil {
 		return false, rpcDecodeHexError(hexData)
 	}
+
+	var hash chainhash.Hash
+	if len(data) == 192 {
+		data = append(data, hash[:]...)
+		data = append(data, hash[:]...)
+	}
 	if len(data) != getworkDataLen {
 		return nil, rpcInvalidError("Argument must be %d bytes (not "+
 			"%d)", getworkDataLen, len(data))
