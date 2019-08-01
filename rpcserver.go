@@ -1837,7 +1837,7 @@ func handleExistsLiveTicket(s *rpcServer, cmd interface{}, closeChan <-chan stru
 
 // handleExistsLiveTicket implements the existsliveticket command.
 func handleExistsLiveAiTicket(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
-	c := cmd.(*hcjson.ExistsLiveTicketCmd)
+	c := cmd.(*hcjson.ExistsLiveAiTicketCmd)
 
 	hash, err := chainhash.NewHashFromStr(c.TxHash)
 	if err != nil {
