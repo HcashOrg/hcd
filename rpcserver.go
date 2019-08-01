@@ -4250,7 +4250,7 @@ func handleGetTicketPoolValue(s *rpcServer, cmd interface{}, closeChan <-chan st
 
 // handleGetAiTicketPoolValue implements the getaiticketpoolvalue command.
 func handleGetAiTicketPoolValue(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
-	amt, err := s.server.blockManager.TicketPoolValue()
+	amt, err := s.server.blockManager.AiTicketPoolValue()
 	if err != nil {
 		return nil, rpcInternalError(err.Error(),
 			"Could not obtain ticket pool value")
