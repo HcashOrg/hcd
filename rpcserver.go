@@ -4657,6 +4657,12 @@ func handleGetWorkRequest(s *rpcServer) (interface{}, error) {
 	// data[116] --> nBits
 	// data[136] --> Timestamp
 	// data[140] --> nonce
+
+	//version 3.0.0
+	// data[116] --> nBits
+	// data[200] --> Timestamp
+	// data[204] --> nonce
+
 	data := make([]byte, 0, getworkDataLen)
 	buf := bytes.NewBuffer(data)
 	err := msgBlock.Header.Serialize(buf)
