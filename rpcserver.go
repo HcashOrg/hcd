@@ -5561,6 +5561,15 @@ func handleSendAiRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 }
 
 func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx []byte, allowHighFees bool) (interface{}, error) {
+
+	bestShot:=s.chain.BestSnapshot()
+	if bestShot!=nil{
+		height:=uint64(bestShot.Height)
+		if height<s.server.chainParams.AIStakeEnabledHeight{
+			return nil, errors.New(fmt.Sprintf("Ai stake enable  height is too low, want %d, but get %d", s.server.chainParams.AIStakeEnabledHeight, height))
+		}
+	}
+
 	msgtx := wire.NewMsgAiTx()
 	err := msgtx.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {
