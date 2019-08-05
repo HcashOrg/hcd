@@ -5,6 +5,7 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/wire"
+	bs "github.com/HcashOrg/hcd/crypto/bliss"
 )
 
 
@@ -25,6 +26,10 @@ func (aiTxVote *AiTxVote) Hash() *chainhash.Hash {
 
 func (aiTxVote *AiTxVote) MsgAiTxVote() *wire.MsgAiTxVote {
 	return aiTxVote.msgAiTxVote
+}
+
+func (aiTxVote *AiTxVote) GetPubKey() []byte{
+	return aiTxVote.msgAiTxVote.PubKey
 }
 
 type AiTx struct {
@@ -56,7 +61,7 @@ func NewAiTxFromTx(tx *Tx) *AiTx {
 
 
 
-func VerifyMessage(msg string, addr Address, sig []byte) (bool, error) {
+func VerifyMessage(msg string, addr Address, sig []byte, pubKey []byte) (bool, error) {
 	// Validate the signature - this just shows that it was valid for any pubkey
 	// at all. Whether the pubkey matches is checked below.
 	var buf bytes.Buffer
@@ -66,7 +71,17 @@ func VerifyMessage(msg string, addr Address, sig []byte) (bool, error) {
 	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,
 		expectedMessageHash)
 	if err != nil {
-		return false, err
+		//maby bliss address
+		pSig, err := bs.BlissDSA.ParseDERSignature(sig)
+		if err != nil {
+			return false, err
+		}
+
+		restoredPK, err := bs.Bliss.ParsePubKey(pubKey)
+		if err != nil{
+			return false, err
+		}
+		return bs.Bliss.Verify(restoredPK, expectedMessageHash, pSig), nil
 	}
 
 	// Reconstruct the address from the recovered pubkey.
@@ -80,7 +95,7 @@ func VerifyMessage(msg string, addr Address, sig []byte) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 	// Return whether addresses match.
 	return recoveredAddr.EncodeAddress() == addr.EncodeAddress(), nil
+	//ok := bs.Bliss.Verify(pubKey, hash, signature)
 }

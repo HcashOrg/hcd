@@ -114,7 +114,7 @@ type aiTxMsg struct {
 }
 
 type aiTxVoteMsg struct {
-	aiTxVote *hcutil.AiTxVote
+	AiTxVote *hcutil.AiTxVote
 	peer     *serverPeer
 }
 
@@ -926,7 +926,7 @@ func (b *blockManager) handleAiTxMsg(aiTxMsg *aiTxMsg) {
 //deal aixvote from peers
 func (b *blockManager) handleAiTxVoteMsg(msg *aiTxVoteMsg) {
 
-	aiTxVote := msg.aiTxVote
+	aiTxVote := msg.AiTxVote
 	aiTxHash := aiTxVote.MsgAiTxVote().AiTxHash
 	ticketHash := aiTxVote.MsgAiTxVote().TicketHash
 
@@ -982,7 +982,7 @@ func (b *blockManager) handleAiTxVoteMsg(msg *aiTxVoteMsg) {
 	sigMsg := aiTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], aiTxVote.MsgAiTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], aiTxVote.MsgAiTxVote().Sig, aiTxVote.MsgAiTxVote().PubKey)
 	if !verified {
 		bmgrLog.Errorf("failed  verify signature ,aivote %v,err: %v", aiTxVote.Hash(), err)
 		return
@@ -2711,7 +2711,7 @@ func (b *blockManager) QueueAiTxVote(aiTxVote *hcutil.AiTxVote, sp *serverPeer) 
 		return
 	}
 
-	b.msgChan <- &aiTxVoteMsg{aiTxVote: aiTxVote, peer: sp}
+	b.msgChan <- &aiTxVoteMsg{AiTxVote: aiTxVote, peer: sp}
 }
 
 // QueueBlock adds the passed block message and peer to the block handling queue.

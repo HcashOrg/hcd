@@ -5676,7 +5676,7 @@ func handleSendAiTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}
 	sigMsg := aiTxHash.String() + ticketHash.String()
 
 	//verifymessage
-	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], aiTxvote.MsgAiTxVote().Sig)
+	verified, err := hcutil.VerifyMessage(sigMsg, addrs[0], aiTxvote.MsgAiTxVote().Sig, msgAiTxVote.PubKey)
 	if !verified {
 		return nil, fmt.Errorf("failed to verify signature ,aivote %v , err %v", aiTxvote.Hash(), err)
 	}
