@@ -2188,7 +2188,11 @@ func (b *BlockChain) isCurrent() bool {
 	//
 	// The chain appears to be current if none of the checks reported
 	// otherwise.
-	minus24Hours := b.timeSource.AdjustedTime().Add(-24 * 7 * time.Hour)
+	if b.chainParams.Net ==  wire.MainNet{
+		minus24Hours := b.timeSource.AdjustedTime().Add(-24 * 7 * time.Hour)
+		return !b.bestNode.header.Timestamp.Before(minus24Hours)
+	}
+	minus24Hours := b.timeSource.AdjustedTime().Add(-24 * 90 * time.Hour)
 	return !b.bestNode.header.Timestamp.Before(minus24Hours)
 }
 
