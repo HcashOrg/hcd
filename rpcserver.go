@@ -4674,21 +4674,27 @@ func handleGetWorkRequest(s *rpcServer) (interface{}, error) {
 		headerBuffer,_ := msgBlock.Header.Bytes()
 		hashPre := chainhash.HashH(headerBuffer[:64])
 		copy(msgBlock.Header.RingSignHash[:], hashPre[:])
-	}
 
+		err = msgBlock.Header.Serialize(buf)
+		if err != nil {
+			errStr := fmt.Sprintf("Failed to serialize data: %v", err)
+			return nil, rpcInternalError(errStr, "")
+		}
+	}
 	// Expand the data slice to include the full data buffer and apply the
 	// internal blake256 padding.  This makes the data ready for callers to
 	// make use of only the final chunk along with the midstate for the
 	// rest.
 	data = data[:getworkDataLen]
-	if uint64(msgBlock.Header.Height) < wire.AI_UPDATE_HEIGHT {
+	copy(data[wire.MaxBlockHeaderPayload:], blake256Pad)
+/*	if uint64(msgBlock.Header.Height) < wire.AI_UPDATE_HEIGHT {
 		copy(data[wire.MaxBlockHeaderPayloadOld:], blake256Pad)
 		data = data[:192]
 	}else{
 		copy(data[wire.MaxBlockHeaderPayload:], blake256Pad)
 		data = data[64:]
 	}
-
+*/
 	// The final result reverses each of the fields to little endian.  In
 	// particular, the data, hash1, and midstate fields are treated as
 	// arrays of uint32s (per the internal sha256 hashing state) which are
