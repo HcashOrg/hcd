@@ -122,9 +122,20 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 	// encode could fail except being out of memory which would cause a
 	// run-time panic.
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
-	_ = writeBlockHeader(buf, 0, h)
+	if uint64(h.Height) >= AI_UPDATE_HEIGHT {
+		bufPre := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+		_ = writeBlockHeader(bufPre, 0, h)
+		hashPre := chainhash.HashH(bufPre.Bytes()[:64])
+		copy(h.RingSignHash[:], hashPre[:])
 
-	return chainhash.HashH(buf.Bytes())
+	}
+
+	_ = writeBlockHeader(buf, 0, h)
+	if uint64(h.Height) < AI_UPDATE_HEIGHT {
+		return chainhash.HashH(buf.Bytes())
+	}else{
+		return chainhash.HashH(buf.Bytes()[64:])
+	}
 }
 
 // BtcDecode decodes r using the bitcoin protocol encoding into the receiver.
