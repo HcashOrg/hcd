@@ -600,6 +600,8 @@ func loadConfig() (*config, []string, error) {
 		cfg.DisableDNSSeed = true
 	}
 	wire.AI_UPDATE_HEIGHT = activeNetParams.AIUpdateHeight
+	fmt.Println("hcd AI update height", wire.AI_UPDATE_HEIGHT)
+
 	if numNets > 1 {
 		str := "%s: the testnet and simnet params can't be " +
 			"used together -- choose one of the three"
