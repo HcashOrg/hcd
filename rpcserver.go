@@ -5587,6 +5587,11 @@ func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx [
 		}
 	}
 
+	if len(s.server.Peers())==0{
+		return nil, errors.New(fmt.Sprintf("please send Ai tx after  having peers"))
+	}
+
+
 	msgtx := wire.NewMsgAiTx()
 	err := msgtx.Deserialize(bytes.NewReader(serializedTx))
 	if err != nil {

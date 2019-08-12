@@ -9,6 +9,7 @@ package main
 import (
 	"container/list"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/HcashOrg/hcd/blockchain"
 	"github.com/HcashOrg/hcd/blockchain/stake"
@@ -900,7 +901,26 @@ func (b *blockManager) handleAiTxMsg(aiTxMsg *aiTxMsg) {
 		return
 	}
 
-	err := b.server.txMemPool.MayBeAddToLockPool(aiTx, true, false, false)
+	lotteryHash,is:=txscript.IsAiTx(aiTx.MsgTx())
+	if !is{
+		bmgrLog.Errorf("Ignoring not reqular aitx")
+		return
+	}
+	height,err:=b.chain.BlockHeightByHash(lotteryHash)
+	if err!=nil{
+		bmgrLog.Errorf("Ignoring lotteryHash err "+
+			"transaction %v lotteryHash %v,err %v", txHash, lotteryHash,err)
+		return
+	}
+
+	if height+int64(b.server.chainParams.AiSendConfirmationsRequired)*2<b.chain.BestSnapshot().Height{
+		bmgrLog.Errorf("Ignoring lotteryHash  "+
+			"transaction %v lotteryHash %v,height %d", txHash, lotteryHash,height)
+		return
+	}
+
+
+	err = b.server.txMemPool.MayBeAddToLockPool(aiTx, true, false, false)
 
 	delete(aiTxMsg.peer.requestedAiTxs, *txHash)
 	delete(b.requestedAiTxs, *txHash)
@@ -2333,7 +2353,37 @@ out:
 				}
 
 			case processAiTxMsg: //handle rpc aitx
-				err := b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
+
+				lotteryHash,is:=txscript.IsAiTx(msg.tx.MsgTx())
+				if !is{
+					bmgrLog.Errorf("Ignoring not reqular aitx")
+					msg.reply <- processAiTxResponse{
+						missedParent: nil,
+						err:          errors.New("Ignoring not reqular aitx"),
+					}
+					continue
+				}
+				height,err:=b.chain.BlockHeightByHash(lotteryHash)
+				if err!=nil{
+					bmgrLog.Errorf("Ignoring lotteryHash err "+
+						"transaction %v lotteryHash %v,err %v", msg.tx.Hash(), lotteryHash,err)
+					msg.reply <- processAiTxResponse{
+						missedParent: nil,
+						err:          err,
+					}
+					continue
+				}
+
+				if height+int64(b.server.chainParams.AiSendConfirmationsRequired)*2<b.chain.BestSnapshot().Height{
+					bmgrLog.Errorf("Ignoring lotteryHash too old "+
+						"transaction %v lotteryHash %v,height %d", msg.tx.Hash(), lotteryHash,height)
+					msg.reply <- processAiTxResponse{
+						missedParent: nil,
+						err:          errors.New("Ignoring lotteryHash too old"),
+					}
+					continue
+				}
+				err = b.server.txMemPool.MayBeAddToLockPool(msg.tx, true, msg.rateLimit, msg.allowHighFees)
 				msg.reply <- processAiTxResponse{
 					missedParent: nil,
 					err:          err,
