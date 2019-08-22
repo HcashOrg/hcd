@@ -124,7 +124,7 @@ func TestDbInfoDeserializeErrors(t *testing.T) {
 		ticketDBErr, ok := err.(DBError)
 		if !ok {
 			t.Errorf("couldn't convert deserializeDatabaseInfo error "+
-				"to ticket db error (err: %v)", err)
+				"to ai ticket db error (err: %v)", err)
 			continue
 		}
 		if ticketDBErr.GetCode() != test.errCode {
@@ -218,7 +218,7 @@ func TestBestChainStateDeserializeErrors(t *testing.T) {
 		ticketDBErr, ok := err.(DBError)
 		if !ok {
 			t.Errorf("couldn't convert deserializeBestChainState error "+
-				"to ticket db error (err: %v)", err)
+				"to ai ticket db error (err: %v)", err)
 			continue
 		}
 		if ticketDBErr.GetCode() != test.errCode {
@@ -241,7 +241,7 @@ func TestBlockUndoDataSerializing(t *testing.T) {
 		serialized []byte
 	}{
 		{
-			name: "two ticket datas",
+			name: "two ai ticket datas",
 			utds: []UndoTicketData{{
 				TicketHash:   chainhash.HashH([]byte{0x00}),
 				TicketHeight: 123456,
@@ -317,7 +317,7 @@ func TestBlockUndoDataDeserializingErrors(t *testing.T) {
 		ticketDBErr, ok := err.(DBError)
 		if !ok {
 			t.Errorf("couldn't convert deserializeBlockUndoData error "+
-				"to ticket db error (err: %v)", err)
+				"to ai ticket db error (err: %v)", err)
 			continue
 		}
 		if ticketDBErr.GetCode() != test.errCode {
@@ -330,7 +330,7 @@ func TestBlockUndoDataDeserializingErrors(t *testing.T) {
 }
 
 // TestTicketHashesSerializing ensures serializing and deserializing the
-// ticket hashes works as expected.
+// ai ticket hashes works as expected.
 func TestTicketHashesSerializing(t *testing.T) {
 	t.Parallel()
 	hash1 := chainhash.HashH([]byte{0x00})
