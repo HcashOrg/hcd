@@ -24,7 +24,7 @@ import (
 	"github.com/HcashOrg/hcd/wire"
 )
 
-// TxType indicates the type of tx (regular or stake type).
+// TxType indicates the type of tx (regular or ai stake type).
 type TxType int
 
 // Possible TxTypes.  Statically declare these so that they might be used in

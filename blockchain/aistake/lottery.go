@@ -1,9 +1,9 @@
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-// Contains useful functions for lottery winner and ticket number determination.
+// Contains useful functions for lottery winner and ai ticket number determination.
 
 package aistake
 
@@ -162,7 +162,7 @@ func FindTicketIdxs(size int, n uint16, prng *Hash256PRNG) ([]int, error) {
 	return findTicketIdxs(size, n, prng)
 }
 
-// fetchWinners is a ticket database specific function which iterates over the
+// fetchWinners is a ai ticket database specific function which iterates over the
 // entire treap and finds winners at selected indexes.  These are returned
 // as a slice of pointers to keys, which can be recast as []*chainhash.Hash.
 // Importantly, it maintains the list of winners in the same order as specified
@@ -246,8 +246,8 @@ func fetchWinners(idxs []int, t *tickettreap.Immutable) ([]*tickettreap.Key, err
 	return winners, nil
 }
 
-// fetchExpired is a ticket database specific function which iterates over the
-// entire treap and finds tickets that are equal or less than the given height.
+// fetchExpired is a ai ticket database specific function which iterates over the
+// entire treap and finds ai tickets that are equal or less than the given height.
 // These are returned as a slice of pointers to keys, which can be recast as
 // []*chainhash.Hash.
 func fetchExpired(height uint32, t *tickettreap.Immutable) []*tickettreap.Key {
