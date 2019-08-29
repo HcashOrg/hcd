@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -31,6 +31,7 @@ type GetBlockHeaderVerboseResult struct {
 	Time          int64   `json:"time"`
 	Nonce         uint32  `json:"nonce"`
 	StakeVersion  uint32  `json:"stakeversion"`
+	ChainWork     string  `json:"chainwork"`
 	Difficulty    float64 `json:"difficulty"`
 	NextHash      string  `json:"nextblockhash,omitempty"`
 }
@@ -509,6 +510,13 @@ type SearchRawTransactionsResult struct {
 	Confirmations uint64       `json:"confirmations,omitempty"`
 	Time          int64        `json:"time,omitempty"`
 	Blocktime     int64        `json:"blocktime,omitempty"`
+}
+
+type GetChainTipsResult struct {
+	Height    int64  `json:"height"`
+	Hash      string `json:"hash"`
+	BranchLen int64  `json:"branchlen"`
+	Status    string `json:"status"`
 }
 
 // TxRawDecodeResult models the data from the decoderawtransaction command.

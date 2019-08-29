@@ -463,14 +463,14 @@ type gbtWorkState struct {
 	minTimestamp  time.Time
 	template      *BlockTemplate
 	notifyMap     map[chainhash.Hash]map[int64]chan struct{}
-	timeSource blockchain.MedianTimeSource
+	timeSource    blockchain.MedianTimeSource
 }
 
 // newGbtWorkState returns a new instance of a gbtWorkState with all internal
 // fields initialized and ready to use.
 func newGbtWorkState(timeSource blockchain.MedianTimeSource) *gbtWorkState {
 	return &gbtWorkState{
-		notifyMap: make(map[chainhash.Hash]map[int64]chan struct{}),
+		notifyMap:  make(map[chainhash.Hash]map[int64]chan struct{}),
 		timeSource: timeSource,
 	}
 }
@@ -2104,6 +2104,11 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		confirmations = 1 + best.Height - height
 	}
 
+	chainWork, err := s.chain.ChainWork(hash)
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Failed to retrieve work")
+	}
+
 	blockHeaderReply := hcjson.GetBlockHeaderVerboseResult{
 		Hash:          c.Hash,
 		Confirmations: confirmations,
@@ -2124,6 +2129,7 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		Time:          blockHeader.Timestamp.Unix(),
 		Nonce:         blockHeader.Nonce,
 		StakeVersion:  blockHeader.StakeVersion,
+		ChainWork:     fmt.Sprintf("%064x", chainWork),
 		Difficulty:    getDifficultyRatio(blockHeader.Bits),
 		NextHash:      nextHashString,
 	}
@@ -2331,7 +2337,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 	if template == nil || state.prevHash == nil ||
 		!state.prevHash.IsEqual(latestHash) ||
 		(state.lastTxUpdate != lastTxUpdate &&
-			time.Now().After(state.lastGenerated.Add(time.Second *
+			time.Now().After(state.lastGenerated.Add(time.Second*
 				gbtRegenerateSeconds))) {
 
 		// Reset the previous best hash the block template was generated
