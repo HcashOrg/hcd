@@ -2104,11 +2104,6 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		confirmations = 1 + best.Height - height
 	}
 
-	chainWork, err := s.chain.ChainWork(hash)
-	if err != nil {
-		return nil, rpcInternalError(err.Error(), "Failed to retrieve work")
-	}
-
 	blockHeaderReply := hcjson.GetBlockHeaderVerboseResult{
 		Hash:          c.Hash,
 		Confirmations: confirmations,
@@ -2129,7 +2124,6 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		Time:          blockHeader.Timestamp.Unix(),
 		Nonce:         blockHeader.Nonce,
 		StakeVersion:  blockHeader.StakeVersion,
-		ChainWork:     fmt.Sprintf("%064x", chainWork),
 		Difficulty:    getDifficultyRatio(blockHeader.Bits),
 		NextHash:      nextHashString,
 	}
