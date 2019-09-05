@@ -66,8 +66,8 @@ func (msg *MsgAiTxVote) MaxPayloadLength(pver uint32) uint32 {
 	return MaxBlockPayload
 }
 
-// serialize returns the serialization of the transaction for the provided
-// serialization type without modifying the original transaction.
+// serialize returns the serialization of the aitxvote for the provided
+// serialization type without modifying the original aitxvote.
 func (msg *MsgAiTxVote) serialize() ([]byte, error) {
 	// Shallow copy so the serialization type can be changed without
 	// modifying the original transaction.
@@ -91,8 +91,8 @@ func (msg *MsgAiTxVote) Serialize(w io.Writer) error {
 	return msg.BtcEncode(w, 0)
 }
 
-// mustSerialize returns the serialization of the transaction for the provided
-// serialization type without modifying the original transaction.  It will panic
+// mustSerialize returns the serialization of the aitxvote for the provided
+// serialization type without modifying the original aitxvote.  It will panic
 // if any errors occur.
 func (msg *MsgAiTxVote) MustSerialize() []byte {
 	serialized, err := msg.serialize()
