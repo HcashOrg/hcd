@@ -270,7 +270,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 			return ruleError(ErrBadCoinbaseScriptLen, str)
 		}
 	} else if isSSGen || isAiSSGen {
-		// Check script length of stake base signature.
+		// Check script length of stake and aitstake base signature.
 		slen := len(tx.TxIn[0].SignatureScript)
 		if slen < MinCoinbaseScriptLen || slen > MaxCoinbaseScriptLen {
 			str := fmt.Sprintf("stakebase transaction script "+
@@ -281,7 +281,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 		}
 
 		// The script must be set to the one specified by the network.
-		// Check script length of stake base signature.
+		// Check script length of stake and aistake base signature.
 		if !bytes.Equal(tx.TxIn[0].SignatureScript,
 			params.StakeBaseSigScript) {
 			str := fmt.Sprintf("stakebase transaction signature "+
@@ -300,7 +300,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 	} else {
 		// Previous transaction outputs referenced by the inputs to
 		// this transaction must not be null except in the case of
-		// stake bases for SSGen tx.
+		// stake bases for SSGen tx and AiSSGen
 		for _, txIn := range tx.TxIn {
 			prevOut := &txIn.PreviousOutPoint
 			if isNullOutpoint(prevOut) {
@@ -324,7 +324,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 	return nil
 }
 
-// checkProofOfStake checks to see that all new SStx tx in a block are actually
+// checkProofOfStake checks to see that all new SStx tx and AiSSTx in a block are actually
 // at the network stake target.
 func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 	msgBlock := block.MsgBlock()
@@ -1054,7 +1054,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		// If we haven't reached the point in which staking is enabled,
 		// there should be absolutely no SSGen or SSRtx transactions.
 		if (isSSGen && (block.Height() < stakeEnabledHeight)) ||
-			(isSSRtx && (block.Height() < stakeEnabledHeight)){
+			(isSSRtx && (block.Height() < stakeEnabledHeight)) {
 			errStr := fmt.Sprintf("block contained SSGen or SSRtx "+
 				"transaction at idx %v, which was before stake"+
 				" voting was enabled; block height %v, stake "+
@@ -1064,8 +1064,8 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		}
 		// If we haven't reached the point in which staking is enabled,
 		// there should be absolutely no SSGen or SSRtx transactions.
-		if 	(isAiSSGen && (uint64(block.Height()) < chainParams.AIStakeEnabledHeight)) ||
-			(isAiSSRtx && (uint64(block.Height()) < chainParams.AIStakeEnabledHeight)){
+		if (isAiSSGen && (uint64(block.Height()) < chainParams.AIStakeEnabledHeight)) ||
+			(isAiSSRtx && (uint64(block.Height()) < chainParams.AIStakeEnabledHeight)) {
 			errStr := fmt.Sprintf("block contained AISSGen or AISSRtx "+
 				"transaction at idx %v, which was before stake"+
 				" voting was enabled; block height %v, stake "+
@@ -1302,7 +1302,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
-		isAiSSGen, _ := aistake.IsAiSSGen(msgTx);
+		isAiSSGen, _ := aistake.IsAiSSGen(msgTx)
 		if is, _ := stake.IsSSGen(msgTx); is || isAiSSGen {
 			if isAiSSGen {
 				numAiSSGenTx++
@@ -1413,7 +1413,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	numAiSSRtxTx := 0
 	for _, staketx := range stakeTransactions {
 		msgTx := staketx.MsgTx()
-		isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx);
+		isAiSSRtx, _ := aistake.IsAiSSRtx(msgTx)
 		if is, _ := stake.IsSSRtx(msgTx); is || isAiSSRtx {
 			if isAiSSRtx {
 				numAiSSRtxTx++
@@ -1429,7 +1429,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 
 			if parentStakeNode.ExistsMissedTicket(sstxHash) {
 				ticketMissed = true
-			}else if parentAiStakeNode.ExistsMissedTicket(sstxHash) {
+			} else if parentAiStakeNode.ExistsMissedTicket(sstxHash) {
 				ticketMissed = true
 			}
 
@@ -1987,7 +1987,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 		// Ensure that the transaction is not spending coins from a
 		// transaction that included an expiry but which has not yet
 		// reached coinbase maturity many blocks.
-		if isAiSSGen || isAiSSRtx || isAiSStx{
+		if isAiSSGen || isAiSSRtx || isAiSStx {
 			if utxoEntry.HasExpiry() {
 				originHeight := utxoEntry.BlockHeight()
 				blocksSincePrev := txHeight - originHeight
@@ -2001,7 +2001,7 @@ func CheckTransactionInputs(subsidyCache *SubsidyCache, tx *hcutil.Tx, txHeight 
 					return 0, ruleError(ErrExpiryTxSpentEarly, str)
 				}
 			}
-		}else{
+		} else {
 			if utxoEntry.HasExpiry() {
 				originHeight := utxoEntry.BlockHeight()
 				blocksSincePrev := txHeight - originHeight
@@ -2531,7 +2531,7 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 			if lenOut > 2 {
 				_, addr, _, err := txscript.ExtractPkScriptAddrs(0, tx.MsgTx().TxOut[lenOut-1].PkScript, b.chainParams)
 				if err == nil && len(addr) > 0 {
-					for _, txIn := range (tx.MsgTx().TxIn) {
+					for _, txIn := range tx.MsgTx().TxIn {
 						utxoEntry, exists := utxoView.entries[txIn.PreviousOutPoint.Hash]
 						if !exists || utxoEntry == nil {
 							str := fmt.Sprintf("unable to find input "+
@@ -2648,26 +2648,26 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		}
 		aiVoteFee := int64(0)
 		aiFeeReward := int64(0)
-		for _, txSSGen := range (stakeTxs) {
+		for _, txSSGen := range stakeTxs {
 			if ok, _ := stake.IsAiSSGen(txSSGen.MsgTx()); ok {
 				_, addrSSGen, _, err := txscript.ExtractPkScriptAddrs(0, txSSGen.MsgTx().TxOut[2].PkScript, b.chainParams)
 				find := false
 				if len(addrSSGen) < 1 || err != nil {
 					return fmt.Errorf("no AiSSGen addr ")
 				}
-				for _, txOut := range(txs[0].MsgTx().TxOut){
-					_,addr,_, err := txscript.ExtractPkScriptAddrs(0, txOut.PkScript, b.chainParams)
-					if err == nil && len(addr) > 0{
+				for _, txOut := range txs[0].MsgTx().TxOut {
+					_, addr, _, err := txscript.ExtractPkScriptAddrs(0, txOut.PkScript, b.chainParams)
+					if err == nil && len(addr) > 0 {
 						if addrSSGen[0].String() == addr[0].String() {
-							if txOut.Value == totalAiFees/int64(node.header.AiVoters){
+							if txOut.Value == totalAiFees/int64(node.header.AiVoters) {
 								find = true
 								aiVoteFee += txOut.Value
 								if aiFeeReward != 0 && aiFeeReward != txOut.Value {
 									return fmt.Errorf("Ai reward must be the same value .")
 								}
 								aiFeeReward = txOut.Value
-								break;
-							}else{
+								break
+							} else {
 								return fmt.Errorf("Ai reward must be the %d, but received %d", txOut.Value, totalAiFees/int64(node.header.AiVoters))
 							}
 						}
