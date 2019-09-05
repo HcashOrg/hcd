@@ -10,8 +10,8 @@ import (
 	"io"
 )
 
-// MsgGetMiningState implements the Message interface and represents a
-// getminingstate message.  It is used to request the current mining state
+// MsgGetLockPoolState implements the Message interface and represents a
+// GetLockPoolState message.  It is used to request the current mining state
 // from a peer.
 type MsgGetLockPoolState struct{}
 
@@ -39,8 +39,8 @@ func (msg *MsgGetLockPoolState) MaxPayloadLength(pver uint32) uint32 {
 	return 0
 }
 
-// NewMsgGetMiningState returns a new hcd pong message that conforms to the Message
-// interface.  See MsgPong for details.
+// MsgGetLockPoolState returns a new hcd GetLockPoolState message that conforms to the Message
+// interface.  See MsgGetLockPoolState for details.
 func NewMsgGetLockPoolState() *MsgGetLockPoolState {
 	return &MsgGetLockPoolState{}
 }
