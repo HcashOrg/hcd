@@ -335,7 +335,7 @@ func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 			commitValue := msgTx.TxOut[0].Value
 
 			if isAiSStx {
-				// Check for underflow block sbits.
+				// Check for underflow block sbits and AiSBits.
 				if commitValue < msgBlock.Header.AiSBits {
 					errStr := fmt.Sprintf("Stake tx %v has a "+
 						"commitment value less than the "+
@@ -345,7 +345,7 @@ func checkProofOfStake(block *hcutil.Block, posLimit, posAiLimit int64) error {
 					return ruleError(ErrNotEnoughStake, errStr)
 				}
 
-				// Check if it's above the PoS limit.
+				// Check if it's above the AI PoS limit.
 				if commitValue < posAiLimit {
 					errStr := fmt.Sprintf("Stake tx %v has a "+
 						"commitment value less than the "+
@@ -1100,7 +1100,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 		return ruleError(ErrUnexpectedDifficulty, errStr)
 	}
 
-	// Check the stake difficulty.
+	// Check the ai stake difficulty.
 	calcAiSBits, err := b.calcNextRequiredAiStakeDifficulty(node.parent)
 	if err != nil {
 		errStr := fmt.Sprintf("couldn't calculate ai stake difficulty "+
@@ -1115,7 +1115,7 @@ func (b *BlockChain) CheckBlockStakeSanity(stakeValidationHeight int64, node *bl
 	}
 
 	// --------------------------------------------------------------------
-	// SStx Tx Handling
+	// SStx Tx Handling and AiSStx Handling
 	// --------------------------------------------------------------------
 	// PER SSTX
 	// 1. Check to make sure that the amount committed with the SStx is
