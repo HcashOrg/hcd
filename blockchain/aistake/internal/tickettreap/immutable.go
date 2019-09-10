@@ -364,7 +364,7 @@ func (t *Immutable) FetchWinnersAndExpired(idxs []int, height uint32) ([]*Key, [
 	sortedIdxs := sort.IntSlice(idxs)
 	sort.Sort(sortedIdxs)
 
-	// TODO buffer winners according to the TicketsPerBlock value from
+	// TODO buffer winners according to the AiTicketsPerBlock value from
 	// chaincfg?
 	idx := 0
 	var winners []*Key

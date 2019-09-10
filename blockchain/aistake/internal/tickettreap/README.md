@@ -1,4 +1,4 @@
-tickettreap
+aitickettreap
 ===========
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
@@ -6,7 +6,7 @@ tickettreap
 (http://godoc.org/github.com/HcashOrg/hcd/blockchain/aistake/internal/tickettreap)
 
 Package tickettreap implements a treap data structure that is used to hold
-live tickets ordered by their key along with some associated data using a
+live ai tickets ordered by their key along with some associated data using a
 combination of binary search tree and heap semantics.  It is a self-organizing
 and randomized data structure that doesn't require complex operations to
 maintain balance.  Search, insert, and delete operations are all O(log n).
@@ -29,7 +29,7 @@ nodes only remain allocated until there are no longer any references to them.
 
 ## Usage
 
-This package is only used internally in the stake code and as such is not
+This package is only used internally in the ai stake code and as such is not
 available for use outside of it.
 
 ## License

@@ -14,7 +14,7 @@ import (
 const numTicketKeys = 42500
 
 var (
-	// generatedTicketKeys is used to store ticket keys generated for use
+	// generatedTicketKeys is used to store ai ticket keys generated for use
 	// in the benchmarks so that they only need to be generatd once for all
 	// benchmarks that use them.
 	genTicketKeysLock   sync.Mutex

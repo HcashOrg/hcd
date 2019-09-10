@@ -26,21 +26,21 @@ var (
 	LiveTicketsBucketName = []byte("ailivetickets")
 
 	// MissedTicketsBucketName is the name of the db bucket used to house the
-	// list of missed tickets keyed to their entry height.
+	// list of missed ai tickets keyed to their entry height.
 	MissedTicketsBucketName = []byte("aimissedtickets")
 
 	// RevokedTicketsBucketName is the name of the db bucket used to house the
-	// list of revoked tickets keyed to their entry height.
+	// list of revoked ai tickets keyed to their entry height.
 	RevokedTicketsBucketName = []byte("airevokedtickets")
 
 	// StakeBlockUndoDataBucketName is the name of the db bucket used to house the
 	// information used to roll back the three main databases when regressing
-	// backwards through the blockchain and restoring the stake information
+	// backwards through the blockchain and restoring the ai stake information
 	// to that of an earlier height. It is keyed to a mainchain height.
 	StakeBlockUndoDataBucketName = []byte("aistakeblockundo")
 
 	// TicketsInBlockBucketName is the name of the db bucket used to house the
-	// list of tickets in a block added to the mainchain, so that it can be
-	// looked up later to insert new tickets into the live ticket database.
+	// list of ai tickets in a block added to the mainchain, so that it can be
+	// looked up later to insert new ai tickets into the live ai ticket database.
 	TicketsInBlockBucketName = []byte("aiticketsinblock")
 )

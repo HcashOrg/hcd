@@ -104,34 +104,10 @@ func TestTxLockPool(t *testing.T) {
 		t.Fatalf("RemoveAiTxDoubleSpends err")
 	}
 
-	for _, tx := range chainedTxns[:] {
-		//t.Log(tx.MsgTx().TxIn[0].PreviousOutPoint.String())
-		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
-			0, 0)
-	}
-
-	if len(harness.txPool.txLockPool) != txLen {
-		t.Fatalf("maybeAddtoLockPool err")
-	}
-	t.Log(harness.txPool.TxLockPoolInfo())
-
 	for _, tx := range chainedTxns[:txLen/2] {
 		harness.txPool.ModifyLockTransaction(tx, 45668)
 	}
 
-
-	t.Log(harness.txPool.TxLockPoolInfo())
-	for _, tx := range chainedTxns[:] {
-
-		chainedTxns2, _ := harness.CreateTxChain(spendableOutput{tx.MsgTx().TxIn[0].PreviousOutPoint, 0}, 1)
-
-		harness.txPool.RemoveAiTxDoubleSpends(chainedTxns2[0])
-		//t.Log(harness.txPool.TxLockPoolInfo())
-	}
-
-	if len(harness.txPool.txLockPool) != 0 || len(harness.txPool.lockOutpoints) != 0 {
-		t.Fatalf("RemoveAiTxDoubleSpends err")
-	}
 
 	t.Log(harness.txPool.TxLockPoolInfo())
 }

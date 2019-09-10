@@ -86,7 +86,7 @@ func (sn *Node) SpentByBlock() []chainhash.Hash {
 	return spent
 }
 
-// MissedByBlock returns the tickets that were missed in this block.
+// MissedByBlock returns the ai tickets that were missed in this block.
 func (sn *Node) MissedByBlock() []chainhash.Hash {
 	var missed []chainhash.Hash
 	for _, undo := range sn.databaseUndoUpdate {
@@ -286,8 +286,8 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 	}
 
 	var state ticketdb.BestChainState
-	if uint64(height) >= params.AIUpdateHeight{
-	// Compare the tip and make sure it matches.
+	if uint64(height) >= params.AIUpdateHeight {
+		// Compare the tip and make sure it matches.
 		state, err = ticketdb.DbFetchBestState(dbTx)
 		if err != nil {
 			return nil, err
@@ -348,7 +348,7 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 
 		// Restore the next winners for the node.
 		node.nextWinners = make([]chainhash.Hash, 0)
-	//if node.height >= uint32(node.params.AIStakeEnabledHeight-1) {
+		//if node.height >= uint32(node.params.AIStakeEnabledHeight-1) {
 		node.nextWinners = make([]chainhash.Hash, len(state.NextWinners))
 		for i := range state.NextWinners {
 			node.nextWinners[i] = state.NextWinners[i]
@@ -376,14 +376,14 @@ func LoadBestNode(dbTx database.Tx, height uint32, blockHash chainhash.Hash, hea
 			copy(node.finalState[:], chainhash.HashB(stateBuffer)[0:6])
 		}
 		log.Infof("Stake database version %v loaded", info.Version)
-	}else{
-		node.liveTickets=          &tickettreap.Immutable{}
-		node.missedTickets=        &tickettreap.Immutable{}
-		node.revokedTickets=       &tickettreap.Immutable{}
-		node.databaseUndoUpdate=   make([]ticketdb.UndoTicketData, 0)
-		node.databaseBlockTickets= make(ticketdb.TicketHashes, 0)
-		node.nextWinners=          make([]chainhash.Hash, 0)
-		node.params=               params
+	} else {
+		node.liveTickets = &tickettreap.Immutable{}
+		node.missedTickets = &tickettreap.Immutable{}
+		node.revokedTickets = &tickettreap.Immutable{}
+		node.databaseUndoUpdate = make([]ticketdb.UndoTicketData, 0)
+		node.databaseBlockTickets = make(ticketdb.TicketHashes, 0)
+		node.nextWinners = make([]chainhash.Hash, 0)
+		node.params = params
 	}
 	return node, nil
 }
@@ -1248,7 +1248,7 @@ func WriteDisconnectedBestNode(dbTx database.Tx, node *Node, hash chainhash.Hash
 
 }
 
-func NullNode(params *chaincfg.Params, h uint32)  (*Node) {
+func NullNode(params *chaincfg.Params, h uint32) *Node {
 	// Write the new block undo and new tickets data to the
 	// database for the genesis block.
 	return &Node{
