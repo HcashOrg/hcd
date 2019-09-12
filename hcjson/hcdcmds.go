@@ -269,6 +269,9 @@ func NewLiveAiTicketsCmd() *LiveAiTicketsCmd {
 // MissedTicketsCmd is a type handling custom marshaling and
 // unmarshaling of missedtickets JSON RPC commands.
 type MissedTicketsCmd struct{}
+
+// MissedAiTicketsCmd is a type handling custom marshaling and
+// unmarshaling of missedaitickets JSON RPC commands.
 type MissedAiTicketsCmd struct{}
 
 // NewMissedTicketsCmd returns a new instance which can be used to issue a JSON-RPC
@@ -276,6 +279,9 @@ type MissedAiTicketsCmd struct{}
 func NewMissedTicketsCmd() *MissedTicketsCmd {
 	return &MissedTicketsCmd{}
 }
+
+// NewMissedAiTicketsCmd returns a new instance which can be used to issue a JSON-RPC
+// missedaitickets command.
 func NewMissedAiTicketsCmd() *MissedAiTicketsCmd {
 	return &MissedAiTicketsCmd{}
 }
@@ -315,6 +321,8 @@ func NewTicketFeeInfoCmd(blocks *uint32, windows *uint32) *TicketFeeInfoCmd {
 	}
 }
 
+// NewAiTicketFeeInfoCmd returns a new instance which can be used to issue a
+// JSON-RPC ticket fee info command.
 func NewAiTicketFeeInfoCmd(blocks *uint32, windows *uint32) *AiTicketFeeInfoCmd {
 	return &AiTicketFeeInfoCmd{
 		Blocks:  blocks,
@@ -332,6 +340,7 @@ type TicketsForAddressCmd struct {
 	Address string
 }
 
+// AiTicketsForAddressCmd defines the aiticketsforbucket JSON-RPC command.
 type AiTicketsForAddressCmd struct {
 	Address string
 }
@@ -342,6 +351,8 @@ func NewTicketsForAddressCmd(addr string) *TicketsForAddressCmd {
 	return &TicketsForAddressCmd{addr}
 }
 
+// NewAiTicketsForAddressCmd returns a new instance which can be used to issue a
+// JSON-RPC tickets for bucket command.
 func NewAiTicketsForAddressCmd(addr string) *AiTicketsForAddressCmd {
 	return &AiTicketsForAddressCmd{addr}
 }
@@ -352,7 +363,7 @@ type TicketVWAPCmd struct {
 	End   *uint32
 }
 
-// TicketVWAPCmd defines the ticketvwap JSON-RPC command.
+// AiTicketVWAPCmd defines the ticketvwap JSON-RPC command.
 type AiTicketVWAPCmd struct {
 	Start *uint32
 	End   *uint32
@@ -373,7 +384,6 @@ func NewAiTicketVWAPCmd(start *uint32, end *uint32) *AiTicketVWAPCmd {
 		End:   end,
 	}
 }
-
 
 // TxFeeInfoCmd defines the ticketsfeeinfo JSON-RPC command.
 type TxFeeInfoCmd struct {
