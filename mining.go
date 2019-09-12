@@ -2010,11 +2010,12 @@ mempoolLoop:
 			return nil, fmt.Errorf("couldn't find fee for stx %v",
 				*tx.Hash())
 		}
-		if ok,_ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0  && uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight{
+		if ok,_ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0  && uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
+			length := len(tx.MsgTx().TxOut)
 			_, addrs, _, _ :=
 				txscript.ExtractPkScriptAddrs(txscript.DefaultScriptVersion,
-					tx.MsgTx().TxOut[2].PkScript, server.chainParams)
-			if len(addrs) > 0{
+					tx.MsgTx().TxOut[length-1].PkScript, server.chainParams)
+			if len(addrs) > 0 {
 				aiSSGenAddrs = append(aiSSGenAddrs, addrs[0])
 			}
 		}
