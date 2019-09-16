@@ -13,12 +13,12 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 )
 
-// MaxMSBlocksAtHeadPerMsg is the maximum number of block hashes allowed
+// MsgLockPoolState is the maximum number of block hashes allowed
 // per message.
 const MaxAiTx = 20
 const MaxAiTxVote = 100
 
-// MsgMiningState implements the Message interface and represents a mining state
+// MsgLockPoolState implements the Message interface and represents a mining state
 // message.  It is used to request a list of blocks located at the chain tip
 // along with all votes for those blocks.  The list is returned is limited by
 // the maximum number of blocks per message and the maximum number of votes per
@@ -28,7 +28,7 @@ type MsgLockPoolState struct {
 	AiTxVoteHashes []*chainhash.Hash
 }
 
-// AddBlockHash adds a new block hash to the message.
+// AddAiTxHash adds a new AiTx hash to the message.
 func (msg *MsgLockPoolState) AddAiTxHash(hash *chainhash.Hash) error {
 	if len(msg.AiTxHashes)+1 > MaxAiTx {
 		str := fmt.Sprintf("too many aitx hashes for message [max %v]",
@@ -165,7 +165,7 @@ func (msg *MsgLockPoolState) MaxPayloadLength(pver uint32) uint32 {
 		chainhash.HashSize)
 }
 
-// NewMsgMiningState returns a new hcd MsgLockPoolState message that conforms to
+// NewMsgLockPoolState returns a new hcd MsgLockPoolState message that conforms to
 // the Message interface using the defaults for the fields.
 func NewMsgLockPoolState() *MsgLockPoolState {
 	return &MsgLockPoolState{
