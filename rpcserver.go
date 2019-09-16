@@ -4253,7 +4253,7 @@ func handleGetAiTicketPoolValue(s *rpcServer, cmd interface{}, closeChan <-chan 
 	amt, err := s.server.blockManager.AiTicketPoolValue()
 	if err != nil {
 		return nil, rpcInternalError(err.Error(),
-			"Could not obtain ticket pool value")
+			"Could not obtain ai ticket pool value")
 	}
 
 	return amt.ToCoin(), nil
@@ -4670,8 +4670,8 @@ func handleGetWorkRequest(s *rpcServer) (interface{}, error) {
 		errStr := fmt.Sprintf("Failed to serialize data: %v", err)
 		return nil, rpcInternalError(errStr, "")
 	}
-	if uint64(msgBlock.Header.Height) >= wire.AI_UPDATE_HEIGHT{
-		headerBuffer,_ := msgBlock.Header.Bytes()
+	if uint64(msgBlock.Header.Height) >= wire.AI_UPDATE_HEIGHT {
+		headerBuffer, _ := msgBlock.Header.Bytes()
 		hashPre := chainhash.HashH(headerBuffer[:64])
 		copy(msgBlock.Header.RingSignHash[:], hashPre[:])
 
@@ -4687,14 +4687,14 @@ func handleGetWorkRequest(s *rpcServer) (interface{}, error) {
 	// rest.
 	data = data[:getworkDataLen]
 	copy(data[wire.MaxBlockHeaderPayload:], blake256Pad)
-/*	if uint64(msgBlock.Header.Height) < wire.AI_UPDATE_HEIGHT {
-		copy(data[wire.MaxBlockHeaderPayloadOld:], blake256Pad)
-		data = data[:192]
-	}else{
-		copy(data[wire.MaxBlockHeaderPayload:], blake256Pad)
-		data = data[64:]
-	}
-*/
+	/*	if uint64(msgBlock.Header.Height) < wire.AI_UPDATE_HEIGHT {
+			copy(data[wire.MaxBlockHeaderPayloadOld:], blake256Pad)
+			data = data[:192]
+		}else{
+			copy(data[wire.MaxBlockHeaderPayload:], blake256Pad)
+			data = data[64:]
+		}
+	*/
 	// The final result reverses each of the fields to little endian.  In
 	// particular, the data, hash1, and midstate fields are treated as
 	// arrays of uint32s (per the internal sha256 hashing state) which are
@@ -4920,6 +4920,8 @@ func handleLiveTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 
 	return hcjson.LiveTicketsResult{Tickets: ltString}, nil
 }
+
+// handleLiveTickets implements the ailivetickets command.
 func handleLiveAiTickets(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	lt, err := s.server.blockManager.chain.LiveAiTickets()
 	if err != nil {
@@ -5579,18 +5581,17 @@ func handleSendAiRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 
 func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx []byte, allowHighFees bool) (interface{}, error) {
 
-	bestShot:=s.chain.BestSnapshot()
-	if bestShot!=nil{
-		height:=uint64(bestShot.Height)
-		if height<s.server.chainParams.AIStakeEnabledHeight{
+	bestShot := s.chain.BestSnapshot()
+	if bestShot != nil {
+		height := uint64(bestShot.Height)
+		if height < s.server.chainParams.AIStakeEnabledHeight {
 			return nil, errors.New(fmt.Sprintf("Ai stake enable  height is too low, want %d, but get %d", s.server.chainParams.AIStakeEnabledHeight, height))
 		}
 	}
 
-	if len(s.server.Peers())==0{
+	if len(s.server.Peers()) == 0 {
 		return nil, errors.New(fmt.Sprintf("please send Ai tx after  having peers"))
 	}
-
 
 	msgtx := wire.NewMsgAiTx()
 	err := msgtx.Deserialize(bytes.NewReader(serializedTx))
