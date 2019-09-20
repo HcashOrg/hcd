@@ -5579,6 +5579,8 @@ func handleSendAiRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 
 }
 
+
+//deal with ai transaction from rpc
 func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx []byte, allowHighFees bool) (interface{}, error) {
 
 	bestShot := s.chain.BestSnapshot()
@@ -5623,7 +5625,7 @@ func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx [
 
 	s.server.AnnounceNewAiTx(aiTxs)
 
-	// Keep track of all the sendrawtransaction request txns so that they
+	// Keep track of all the ai transaction request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
 	iv := wire.NewInvVect(wire.InvTypeAiTx, aiTx.Hash())
 	s.server.AddRebroadcastInventory(iv, aiTx)
@@ -5632,6 +5634,7 @@ func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx [
 
 }
 
+//deal with ai vote from rpc
 func handleSendAiTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SendAiTxVoteCmd)
 
@@ -5719,7 +5722,7 @@ func handleSendAiTxVote(s *rpcServer, cmd interface{}, closeChan <-chan struct{}
 	//notify wallet  vote info and rely to other peers
 	s.server.AnnounceNewAiTxVote(aiTxvotes)
 
-	// Keep track of all the sendrawtransaction request txns so that they
+	// Keep track of all the ai vote request txns so that they
 	// can be rebroadcast if they don't make their way into a block.
 
 	iv := wire.NewInvVect(wire.InvTypeAiTxVote, aiTxvote.Hash())
