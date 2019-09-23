@@ -36,9 +36,9 @@ type AiTx struct {
 	Tx
 }
 
-// MsgTx returns the underlying wire.MsgTx for the transaction.
+// MsgAiTx returns the underlying wire.MsgAiTx for the transaction.
 func (t *AiTx) MsgAiTx() *wire.MsgAiTx {
-	// Return the cached transaction.
+	// Return transaction.
 	return wire.NewMsgAiTxFromMsgTx(t.msgTx)
 }
 
