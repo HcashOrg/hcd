@@ -7,7 +7,7 @@ import (
 
 func TestTxLockPool(t *testing.T) {
 	t.Parallel()
-	var txLen = 10
+	var txLen = 8
 	harness, spendableOuts, err := newPoolHarness(&chaincfg.MainNetParams)
 	for _, v := range spendableOuts {
 		t.Log(v.outPoint.String())
@@ -34,7 +34,7 @@ func TestTxLockPool(t *testing.T) {
 		t.Fatalf("maybeAddtoLockPool err")
 	}
 	harness.chain.currentHeight=45888
-	t.Log(harness.txPool.FetchPendingLockTx(1))
+	t.Log(harness.txPool.FetchPendingLockTx(6))
 
 	t.Log(harness.txPool.TxLockPoolInfo())
 
@@ -49,6 +49,7 @@ func TestTxLockPool(t *testing.T) {
 	}
 
 	t.Log(harness.txPool.TxLockPoolInfo())
+	
 	for _, tx := range chainedTxns[:] {
 		harness.txPool.ModifyLockTransaction(tx, 0)
 
@@ -65,6 +66,7 @@ func TestTxLockPool(t *testing.T) {
 	for _, tx := range chainedTxns[:] {
 		harness.txPool.ModifyLockTransaction(tx, 45668)
 	}
+	
 	for _, desc := range harness.txPool.txLockPool {
 		if len(harness.txPool.txLockPool) != txLen || desc.MineHeight != 45668 {
 			t.Fatalf("ModifyLockTransaction 45668 err")
@@ -81,7 +83,6 @@ func TestTxLockPool(t *testing.T) {
 
 
 	for _, tx := range chainedTxns[:] {
-		
 		harness.txPool.maybeAddtoLockPool(nil, tx, 0,
 			0, 0)
 	}
@@ -90,6 +91,7 @@ func TestTxLockPool(t *testing.T) {
 	if len(harness.txPool.txLockPool) != txLen {
 		t.Fatalf("maybeAddtoLockPool err")
 	}
+	
 	t.Log(harness.txPool.TxLockPoolInfo())
 
 	for _, tx := range chainedTxns[:] {
@@ -106,7 +108,6 @@ func TestTxLockPool(t *testing.T) {
 	for _, tx := range chainedTxns[:txLen/2] {
 		harness.txPool.ModifyLockTransaction(tx, 45668)
 	}
-
 
 	t.Log(harness.txPool.TxLockPoolInfo())
 }
