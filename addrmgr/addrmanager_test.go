@@ -21,7 +21,7 @@ import (
 // method.
 var naTests = make([]naTest, 0)
 
-// Put some IP in here for convenience. Points to google.
+// Put some IP in here for convenience. Points to google. add test
 var someIP = "173.194.115.66"
 
 // naTest is used to describe a test to be performed against the NetAddressKey
