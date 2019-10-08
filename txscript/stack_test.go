@@ -13,6 +13,25 @@ import (
 	"testing"
 )
 
+//  swaps the top  items on the stack with those below them
+func (s *stack) SwapNTest(n int32) error {
+	if n < 1 {
+		return ErrStackInvalidArgs
+	}
+
+	entry := 2*n - 1
+	for i := n; i > 0; i-- {
+		// Swap 2n-1th entry to top.
+		so, err := s.nipN(entry)
+		if err != nil {
+			return err
+		}
+
+		s.PushByteArray(so)
+	}
+	return nil
+}
+
 // TestStack tests that all of the stack operations work as expected.
 func TestStack(t *testing.T) {
 	t.Parallel()
