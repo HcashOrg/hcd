@@ -628,6 +628,16 @@ func NewWalletPassphraseChangeCmd(oldPassphrase, newPassphrase string) *WalletPa
 	}
 }
 
+type WalletIsPosCmd struct {
+	IsPos bool
+}
+
+func NewWalletIsPosCmd(ispos bool) *WalletIsPosCmd {
+	return &WalletIsPosCmd{
+		IsPos: ispos,
+	}
+}
+
 func init() {
 	// The commands in this file are only usable with a wallet server.
 	flags := UFWalletOnly
@@ -668,4 +678,5 @@ func init() {
 	MustRegisterCmd("walletlock", (*WalletLockCmd)(nil), flags)
 	MustRegisterCmd("walletpassphrase", (*WalletPassphraseCmd)(nil), flags)
 	MustRegisterCmd("walletpassphrasechange", (*WalletPassphraseChangeCmd)(nil), flags)
+	MustRegisterCmd("walletispos", (*WalletIsPosCmd)(nil), flags)
 }

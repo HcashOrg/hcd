@@ -319,6 +319,7 @@ var rpcAskWallet = map[string]struct{}{
 	"unregisterainode":        {},
 	"ifainoderegisted":        {},
 	"getconfigfile":           {},
+	"walletispos":             {},
 }
 
 // Commands that are currently unimplemented, but should ultimately be.
@@ -5578,7 +5579,6 @@ func handleSendAiRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 	return handleAiTransaction(s, closeChan, serializedTx, allowHighFees)
 
 }
-
 
 //deal with ai transaction from rpc
 func handleAiTransaction(s *rpcServer, closeChan <-chan struct{}, serializedTx []byte, allowHighFees bool) (interface{}, error) {
