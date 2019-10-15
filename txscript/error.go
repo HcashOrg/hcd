@@ -136,6 +136,11 @@ var (
 	// is set and the script contains push operations that do not use
 	// the minimal opcode required.
 	ErrStackMinimalData = errors.New("non-minimally encoded script number")
+
+	// errMinimalData is returned when the ScriptVerifyMinimalData flag
+	// is set and the script contains push operations that do not use
+	// the minimal opcode required.
+	errMinimalData = errors.New("non-minimally encoded script number")
 )
 
 // Engine script errors.
