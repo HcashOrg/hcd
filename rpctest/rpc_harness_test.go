@@ -159,6 +159,36 @@ func testTearDownAll(t *testing.T) {
 
 }
 
+
+
+func testConnectMultiNode(rs []*Harness, t *testing.T) {
+	// Create a fresh test harness.
+	harness, err := New(&chaincfg.SimNetParams, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := harness.SetUp(false, 0); err != nil {
+		t.Fatalf("unable to complete rpctest setup: %v", err)
+	}
+	defer harness.TearDown()
+
+	// Establish a p2p connection from our new local harness to the main
+	// harness.
+	
+	for _,r:=range rs{
+		if err := ConnectNode(harness, r); err != nil {
+			t.Fatalf("unable to connect local to main harness: %v", err)
+		}
+	}
+
+	// The main harness should show up in our local harness' peer's list,
+	// and vice verse.
+	for _,r:=range rs{
+		assertConnectedTo(t, harness, r)
+	}
+	
+}
+
 func testActiveHarnesses(r *Harness, t *testing.T) {
 	numInitialHarnesses := len(ActiveHarnesses())
 

@@ -157,7 +157,7 @@ const (
 	votePriority
 )
 
-// stakePriority assigns a stake priority based on a transaction type.
+// stakePriority assigns a stake priority or aistake prioritybased on a transaction type.
 func txStakePriority(txType stake.TxType) stakePriority {
 	prio := regOrRevocPriority
 	switch txType {
@@ -318,7 +318,7 @@ func SortParentsByVotes(height uint64, mp *mempool.TxPool, currentTopBlock chain
 
 	// Fetch the vote metadata for the provided block hashes from the
 	// mempool and filter out any blocks that do not have the minimum
-	// required number of votes.
+	// required number of votes and aiVotes.
 	minVotesRequired := (params.TicketsPerBlock / 2) + 1
 	if height >= params.AIStakeEnabledHeight {
 		minVotesRequired = (params.AiTicketsPerBlock / 2) + 1
@@ -495,7 +495,6 @@ func (bt *BlockTemplate) getCoinbaseExtranonces() []uint64 {
 	return ens
 }
 
-
 // UpdateExtraNonce updates the extra nonce in the coinbase script of the passed
 // block by regenerating the coinbase script with the passed value and block
 // height.  It also recalculates and updates the new merkle root that results
@@ -587,11 +586,11 @@ func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache,
 	// Create a coinbase with correct block subsidy and extranonce.
 	subsidy := blockchain.CalcBlockWorkSubsidy(subsidyCache,
 		nextBlockHeight,
-		voters +aiVoters,
+		voters+aiVoters,
 		activeNetParams.Params)
 	tax := blockchain.CalcBlockTaxSubsidy(subsidyCache,
 		nextBlockHeight,
-		voters +aiVoters,
+		voters+aiVoters,
 		activeNetParams.Params)
 
 	// Tax output.
@@ -1189,7 +1188,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server,
 	//			mempoolTx.SSGenParseBlockHeader() == blockHeaderHash:
 	//			map[blockHeaderHash].append(mempoolTx)
 	// 4. Check len of each map entry and store.
-	// 5. Query the ticketdb and check how many eligible ticket holders there are
+	// 5. Query the ticketdb and aiticketdb then check how many eligible ticket and aiticket holders there are
 	//    for the given block you are voting on.
 	// 6. Divide #ofvotes (len(map entry)) / totalPossibleVotes --> penalty ratio
 	// 7. Store penalty ratios for all block candidates.
@@ -1338,7 +1337,7 @@ mempoolLoop:
 		}
 
 		// Need this for a check below for stake base input, and to check
-		// the ticket number.
+		// the ticket number and aiticket number.
 		isSSGen := txDesc.Type == stake.TxTypeSSGen
 		isAiSSGen := txDesc.Type == stake.TxTypeAiSSGen
 		if isSSGen || isAiSSGen {
@@ -1491,7 +1490,7 @@ mempoolLoop:
 		// Grab the list of transactions which depend on this one (if any).
 		deps := dependers[*tx.Hash()]
 
-		if isAiSStx && uint64(nextBlockHeight) < server.chainParams.AIUpdateHeight{
+		if isAiSStx && uint64(nextBlockHeight) < server.chainParams.AIUpdateHeight {
 			continue
 		}
 		if isAiSStx && (numAiSStx >=
@@ -1524,7 +1523,7 @@ mempoolLoop:
 			if !hashInSlice(*ticketHash, missedTickets) {
 				continue
 			}
-		}else if isAiSSRtx {
+		} else if isAiSSRtx {
 			ticketHash := &tx.MsgTx().TxIn[0].PreviousOutPoint.Hash
 			if !hashInSlice(*ticketHash, missedTickets) {
 				continue
@@ -1576,7 +1575,7 @@ mempoolLoop:
 
 		// Check to see if the SSGen tx actually uses a ticket that is
 		// valid for the next block.
-		if isSSGen || isAiSSGen{
+		if isSSGen || isAiSSGen {
 			if foundWinningTickets[tx.MsgTx().TxIn[1].PreviousOutPoint.Hash] {
 				continue
 			}
@@ -1684,7 +1683,7 @@ mempoolLoop:
 		} else if isAiSStx {
 			numAiSStx++
 		}
-		if isSSGen || isAiSSGen{
+		if isSSGen || isAiSSGen {
 			foundWinningTickets[tx.MsgTx().TxIn[1].PreviousOutPoint.Hash] = true
 		}
 
@@ -1727,7 +1726,7 @@ mempoolLoop:
 		}
 
 		isAiSSGen, _ := stake.IsAiSSGen(msgTx)
-		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen{
+		if isSSGen, _ := stake.IsSSGen(msgTx); isSSGen || isAiSSGen {
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				vb := stake.SSGenVoteBits(txCopy.MsgTx())
@@ -1735,7 +1734,7 @@ mempoolLoop:
 				blockTxnsStake = append(blockTxnsStake, txCopy)
 				if isAiSSGen {
 					aiVoters++
-				}else{
+				} else {
 					voters++
 				}
 			}
@@ -1849,7 +1848,7 @@ mempoolLoop:
 						freshStake++
 					}
 				}
-			}else if isAiSStx && aiFreshStake < int(server.chainParams.AiMaxFreshStakePerBlock){
+			} else if isAiSStx && aiFreshStake < int(server.chainParams.AiMaxFreshStakePerBlock) {
 				// Quick check for difficulty here.
 				if msgTx.TxOut[0].Value >= reqAiStakeDifficulty {
 					txCopy := hcutil.NewTxDeepTxIns(msgTx)
@@ -1866,22 +1865,22 @@ mempoolLoop:
 			if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) && freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
 				break
 			}
-		}else{
+		} else {
 			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
 				break
 			}
 		}
 		/*
-		if nextBlockHeight >= int64(server.chainParams.AIUpdateHeight) {
+			if nextBlockHeight >= int64(server.chainParams.AIUpdateHeight) {
+				// Don't let this overflow.
+				if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
+					continue
+				}
+			}
 			// Don't let this overflow.
-			if aiFreshStake >= int(server.chainParams.AiMaxFreshStakePerBlock) {
+			if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
 				continue
 			}
-		}
-		// Don't let this overflow.
-		if freshStake >= int(server.chainParams.MaxFreshStakePerBlock) {
-			continue
-		}
 		*/
 	}
 
@@ -1896,13 +1895,13 @@ mempoolLoop:
 		msgTx := tx.MsgTx()
 		isSSRtx, _ := stake.IsSSRtx(msgTx)
 		isAiSSRtx, _ := stake.IsAiSSRtx(msgTx)
-		if tx.Tree() == wire.TxTreeStake && (isSSRtx ||isAiSSRtx) {
+		if tx.Tree() == wire.TxTreeStake && (isSSRtx || isAiSSRtx) {
 			txCopy := hcutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, treeValid) {
 				blockTxnsStake = append(blockTxnsStake, txCopy)
-				if isAiSSRtx{
+				if isAiSSRtx {
 					aiRevocations++
-				}else{
+				} else {
 					revocations++
 				}
 			}
@@ -1984,13 +1983,13 @@ mempoolLoop:
 			return nil, fmt.Errorf("couldn't find fee for tx %v",
 				*tx.Hash())
 		}
-		if _, ok := txscript.IsAiTx(tx.MsgTx()); ok{
+		if _, ok := txscript.IsAiTx(tx.MsgTx()); ok {
 			haveChange := mp.HaveAiChange(tx)
 			aiFee := tx.MsgTx().GetTxAiFee(haveChange)
 			totalAiFees += aiFee
 			totalFees += fee - aiFee
-			txFees = append(txFees, fee - aiFee)
-		} else{
+			txFees = append(txFees, fee-aiFee)
+		} else {
 			totalFees += fee
 			txFees = append(txFees, fee)
 		}
@@ -2010,11 +2009,12 @@ mempoolLoop:
 			return nil, fmt.Errorf("couldn't find fee for stx %v",
 				*tx.Hash())
 		}
-		if ok,_ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0  && uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight{
+		if ok, _ := stake.IsAiSSGen(tx.MsgTx()); ok && totalAiFees > 0 && uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
+			length := len(tx.MsgTx().TxOut)
 			_, addrs, _, _ :=
 				txscript.ExtractPkScriptAddrs(txscript.DefaultScriptVersion,
-					tx.MsgTx().TxOut[2].PkScript, server.chainParams)
-			if len(addrs) > 0{
+					tx.MsgTx().TxOut[length-1].PkScript, server.chainParams)
+			if len(addrs) > 0 {
 				aiSSGenAddrs = append(aiSSGenAddrs, addrs[0])
 			}
 		}
@@ -2035,7 +2035,7 @@ mempoolLoop:
 	totalFees *= int64(voters + aiVoters)
 	if uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
 		totalFees /= int64(server.chainParams.TicketsPerBlock + server.chainParams.AiTicketsPerBlock)
-	}else{
+	} else {
 		totalFees /= int64(server.chainParams.TicketsPerBlock)
 	}
 
@@ -2044,18 +2044,18 @@ mempoolLoop:
 	// the total fees accordingly.
 	if nextBlockHeight > 1 {
 		blockSize -= wire.MaxVarIntPayload -
-			uint32(wire.VarIntSerializeSize(uint64(len(blockTxnsRegular)) +
+			uint32(wire.VarIntSerializeSize(uint64(len(blockTxnsRegular))+
 				uint64(len(blockTxnsStake))))
 		coinbaseTx.MsgTx().TxOut[2].Value += totalFees
 		txFees[0] = -totalFees
-		for i := 0; i< len(aiSSGenAddrs); i++{
+		for i := 0; i < len(aiSSGenAddrs); i++ {
 			pk, err := txscript.PayToAddrScript(aiSSGenAddrs[i])
-			if err != nil{
-				continue;
+			if err != nil {
+				continue
 			}
 			coinbaseTx.MsgTx().AddTxOut(&wire.TxOut{
 				Value:    totalAiFees / int64(len(aiSSGenAddrs)),
-				PkScript:pk,
+				PkScript: pk,
 			})
 		}
 
@@ -2081,12 +2081,12 @@ mempoolLoop:
 	if uint64(nextBlockHeight) >= server.chainParams.AIStakeEnabledHeight {
 		minimumVotesRequired += int((server.chainParams.AiTicketsPerBlock / 2) + 1)
 		if nextBlockHeight >= stakeValidationHeight &&
-			voters +aiVoters < minimumVotesRequired {
+			voters+aiVoters < minimumVotesRequired {
 			minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")
 			return handleTooFewVoters(subsidyCache, nextBlockHeight, payToAddress,
 				server.blockManager)
 		}
-	}else{
+	} else {
 		if nextBlockHeight >= stakeValidationHeight &&
 			voters < minimumVotesRequired {
 			minrLog.Warnf("incongruent number of voters in mempool vs mempool.voters; not enough voters found")
@@ -2186,27 +2186,27 @@ mempoolLoop:
 
 	var msgBlock wire.MsgBlock
 	msgBlock.Header = wire.BlockHeader{
-		Version:      blockVersion,
-		PrevBlock:    *prevHash,
-		MerkleRoot:   *merkles[len(merkles)-1],
-		StakeRoot:    *merklesStake[len(merklesStake)-1],
-		VoteBits:     votebits,
-		FinalState:   finalState,
-		AiFinalState:   aiFinalState,
-		Voters:       uint16(voters),
-		AiVoters:       uint16(aiVoters),
-		FreshStake:   uint8(freshStake),
-		AiFreshStake:   uint8(aiFreshStake),
-		Revocations:  uint8(revocations),
-		AiRevocations:  uint8(aiRevocations),
-		PoolSize:     poolSize,
-		AiPoolSize:   aiPoolSize,
-		Timestamp:    ts,
-		SBits:        reqStakeDifficulty,
-		AiSBits:        reqAiStakeDifficulty,
-		Bits:         reqDifficulty,
-		StakeVersion: generatedStakeVersion,
-		Height:       uint32(nextBlockHeight),
+		Version:       blockVersion,
+		PrevBlock:     *prevHash,
+		MerkleRoot:    *merkles[len(merkles)-1],
+		StakeRoot:     *merklesStake[len(merklesStake)-1],
+		VoteBits:      votebits,
+		FinalState:    finalState,
+		AiFinalState:  aiFinalState,
+		Voters:        uint16(voters),
+		AiVoters:      uint16(aiVoters),
+		FreshStake:    uint8(freshStake),
+		AiFreshStake:  uint8(aiFreshStake),
+		Revocations:   uint8(revocations),
+		AiRevocations: uint8(aiRevocations),
+		PoolSize:      poolSize,
+		AiPoolSize:    aiPoolSize,
+		Timestamp:     ts,
+		SBits:         reqStakeDifficulty,
+		AiSBits:       reqAiStakeDifficulty,
+		Bits:          reqDifficulty,
+		StakeVersion:  generatedStakeVersion,
+		Height:        uint32(nextBlockHeight),
 		// Size declared below
 	}
 

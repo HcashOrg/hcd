@@ -2650,7 +2650,8 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		aiFeeReward := int64(0)
 		for _, txSSGen := range stakeTxs {
 			if ok, _ := stake.IsAiSSGen(txSSGen.MsgTx()); ok {
-				_, addrSSGen, _, err := txscript.ExtractPkScriptAddrs(0, txSSGen.MsgTx().TxOut[2].PkScript, b.chainParams)
+				length := len(txSSGen.MsgTx().TxOut)
+				_, addrSSGen, _, err := txscript.ExtractPkScriptAddrs(0, txSSGen.MsgTx().TxOut[length -1].PkScript, b.chainParams)
 				find := false
 				if len(addrSSGen) < 1 || err != nil {
 					return fmt.Errorf("no AiSSGen addr ")

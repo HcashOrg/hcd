@@ -889,7 +889,7 @@ func (b *blockManager) handleTxMsg(tmsg *txMsg) {
 
 	b.server.AnnounceNewTransactions(acceptedTxs)
 }
-
+//deal with aitx from peers
 func (b *blockManager) handleAiTxMsg(aiTxMsg *aiTxMsg) {
 	//TODO verify conflict with mempool
 	aiTx := aiTxMsg.tx
@@ -2743,7 +2743,8 @@ func (b *blockManager) QueueTx(tx *hcutil.Tx, sp *serverPeer) {
 
 	b.msgChan <- &txMsg{tx: tx, peer: sp}
 }
-
+// QueueAiTx adds the passed ai transaction message and peer to the block handling
+// queue.
 func (b *blockManager) QueueAiTx(aiTx *hcutil.AiTx, sp *serverPeer) {
 	// Don't accept more transactions if we're shutting down.
 	if atomic.LoadInt32(&b.shutdown) != 0 {
@@ -2753,7 +2754,8 @@ func (b *blockManager) QueueAiTx(aiTx *hcutil.AiTx, sp *serverPeer) {
 
 	b.msgChan <- &aiTxMsg{tx: aiTx, peer: sp}
 }
-
+// Queue ai Tx vote adds the passed ai vote message and peer to the block handling
+// queue.
 func (b *blockManager) QueueAiTxVote(aiTxVote *hcutil.AiTxVote, sp *serverPeer) {
 	// Don't accept more transactions if we're shutting down.
 	if atomic.LoadInt32(&b.shutdown) != 0 {
