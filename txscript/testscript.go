@@ -12,3 +12,10 @@ func TstCheckPubKeyEncoding(pubKey []byte, flag ScriptFlags) error {
 	eg := Engine{flags: flag}
 	return eg.checkPubKeyEncoding(pubKey)
 }
+
+// TstCheckSignatureEncoding returns whether or not the passed signature adheres to
+// the strict encoding requirements if enabled.
+func TstCheckSignatureEncoding(testsign []byte, flag ScriptFlags) error {
+	eg := Engine{flags: flag}
+	return eg.checkSignatureEncoding(testsign)
+}
