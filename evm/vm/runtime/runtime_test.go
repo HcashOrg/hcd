@@ -133,9 +133,6 @@ func benchmarkEVM_Create(bench *testing.B, code string) {
 		Coinbase:    common.Address{},
 		BlockNumber: new(big.Int).SetUint64(1),
 		ChainConfig: &params.ChainConfig{
-			EIP150Block:         new(big.Int),
-			EIP155Block:         new(big.Int),
-			EIP158Block:         new(big.Int),
 		},
 		EVMConfig: vm.Config{},
 	}
