@@ -7,3 +7,5 @@ vendor/
 .DS_Store
 glide.lock
 debug
+.idea/
+*.exe
