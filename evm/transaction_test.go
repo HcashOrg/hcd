@@ -103,3 +103,56 @@ func TestDeploy(t *testing.T) {
 
 
 }
+
+
+func TestCall(t *testing.T) {
+	db,err:=rawdb.NewLevelDBDatabase("testdata",5,5,"world")
+	if err!=nil{
+		t.Error(err)
+	}
+	stateDb, err := state.New(common.HexToHash("f3fcb0147e3619a53dd99f62842a627430400266a59e6816431ffcae8c5b10b8"), state.NewDatabaseWithCache(db, 0))
+
+	balance:=stateDb.GetBalance(common.BytesToAddress([]byte("bob")))
+
+	t.Log("balance",balance)
+
+	chainConfig := params.ChainConfig{
+	}
+
+	author:=common.BytesToAddress([]byte("author"))
+	header:=types.Header{Number:big.NewInt(5),Difficulty:big.NewInt(5),GasLimit:50000000}
+
+	tx:=types.NewTransaction(
+		0,
+		common.BytesToAddress([]byte("bob")),
+		common.HexToAddress("68656B2f7AC1b9f532101b0dA5348518e680D762"),
+		big.NewInt(0),
+		uint64(6000000),
+		big.NewInt(1),
+		common.Hex2Bytes("6d4ce63c"),
+	)
+
+
+	gasPool := new(GasPool).AddGas(header.GasLimit)
+	vmConfig:=vm.Config{}
+	if err!=nil{
+		t.Error(err)
+	}
+
+	chainContext:= chainContextTest{}
+
+	usedGas:=uint64(50)
+
+	stateDb.Prepare(tx.Hash(), common.Hash{}, 0) //记录当前处理的tx信息，addlog 的时候会用到
+	receipt,err:=ApplyTransaction(&chainConfig,chainContext,&author,gasPool,stateDb,&header,tx,&usedGas,vmConfig)
+	if err!=nil{
+		t.Fatal(err)
+	}
+	root:=stateDb.IntermediateRoot(false)
+	t.Log("root",root.String())
+	stateDb.Commit(false)
+	stateDb.Database().TrieDB().Commit(root,true)
+	t.Log(receipt)
+	t.Log(receipt.ContractAddress.String())
+
+}
