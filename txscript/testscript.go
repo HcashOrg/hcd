@@ -19,3 +19,10 @@ func TstCheckSignatureEncoding(testsign []byte, flag ScriptFlags) error {
 	eg := Engine{flags: flag}
 	return eg.checkSignatureEncoding(testsign)
 }
+
+// TestSetPC allows the test modules to set the program counter to whatever they
+// want.
+func (vm *Engine) TstSetPC(script, off int) {
+	vm.scriptIdx = script
+	vm.scriptOff = off
+}
