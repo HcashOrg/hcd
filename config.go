@@ -97,6 +97,7 @@ type config struct {
 	ConnectPeers         []string      `long:"connect" description:"Connect only to the specified peers at startup"`
 	DisableListen        bool          `long:"nolisten" description:"Disable listening for incoming connections -- NOTE: Listening is automatically disabled if the --connect or --proxy options are used without also specifying listen interfaces via --listen"`
 	Listeners            []string      `long:"listen" description:"Add an interface/port to listen for connections (default all interfaces port: 9108, testnet: 19108)"`
+	WitnessListeners     []string      `long:"witnesslisten" description:"Add an interface/port to listen for witness connections (default all interfaces port: 9109, testnet: 19109)"`
 	MaxPeers             int           `long:"maxpeers" description:"Max number of inbound and outbound peers"`
 	DisableBanning       bool          `long:"nobanning" description:"Disable banning of misbehaving peers"`
 	BanDuration          time.Duration `long:"banduration" description:"How long to ban misbehaving peers.  Valid time units are {s, m, h}.  Minimum 1 second"`
@@ -639,7 +640,7 @@ func loadConfig() (*config, []string, error) {
 	var oldTestNets []string
 	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet"))
 	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet2"))
-	
+
 	cfg.DataDir = filepath.Join(cfg.DataDir, netName(activeNetParams))
 
 	// Append the network type to the log directory so it is "namespaced"
@@ -770,6 +771,12 @@ func loadConfig() (*config, []string, error) {
 	if len(cfg.Listeners) == 0 {
 		cfg.Listeners = []string{
 			net.JoinHostPort("", activeNetParams.DefaultPort),
+		}
+	}
+
+	if len(cfg.WitnessListeners) == 0 {
+		cfg.WitnessListeners = []string{
+			net.JoinHostPort("", activeNetParams.DefaultWitnessPort),
 		}
 	}
 

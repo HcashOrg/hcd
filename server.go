@@ -2243,13 +2243,14 @@ func standardScriptVerifyFlags(chain *blockchain.BlockChain) (txscript.ScriptFla
 // newServer returns a new hcd server configured to listen on addr for the
 // hcd network type specified by chainParams.  Use start to begin accepting
 // connections from peers.
-func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Params) (*server, error) {
+func newServer(listenAddrs []string,witnessListenAddrs []string, db database.DB, chainParams *chaincfg.Params) (*server, error) {
 	services := defaultServices
 	if cfg.NoPeerBloomFilters {
 		services &^= wire.SFNodeBloom
 	}
 
 	amgr := addrmgr.New(cfg.DataDir, hcdLookup)
+
 
 	var listeners []net.Listener
 	var nat NAT

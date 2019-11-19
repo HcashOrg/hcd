@@ -167,7 +167,7 @@ func hcdMain(serverChan chan<- *server) error {
 
 	// Create server and start it.
 	lifetimeNotifier.notifyStartupEvent(lifetimeEventP2PServer)
-	server, err := newServer(cfg.Listeners, db, activeNetParams.Params)
+	server, err := newServer(cfg.Listeners,cfg.WitnessListeners, db, activeNetParams.Params)
 	if err != nil {
 		// TODO(oga) this logging could do with some beautifying.
 		hcdLog.Errorf("Unable to start server on %v: %v",

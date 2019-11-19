@@ -200,6 +200,8 @@ type Params struct {
 	// DefaultPort defines the default peer-to-peer port for the network.
 	DefaultPort string
 
+	DefaultWitnessPort string
+
 	// DNSSeeds defines a list of DNS seeds for the network that are used
 	// as one method to discover peers.
 	DNSSeeds []string
@@ -456,6 +458,7 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "14008",
+	DefaultWitnessPort:"14009",
 	DNSSeeds: []string{
 		"mainnet1.h.cash",
 		"mainnet2.h.cash",
@@ -569,6 +572,7 @@ var TestNet2Params = Params{
 	Name:        "testnet2",
 	Net:         wire.TestNet2,
 	DefaultPort: "12008",
+	DefaultWitnessPort:"12009",
 	DNSSeeds: []string{
 		//"testnet1.h.cash",
 		//"testnet2.h.cash",
@@ -715,6 +719,7 @@ var SimNetParams = Params{
 	Name:        "simnet",
 	Net:         wire.SimNet,
 	DefaultPort: "13008",
+	DefaultWitnessPort:"13009",
 	DNSSeeds:    []string{}, // NOTE: There must NOT be any seeds.
 
 	// Chain parameters
