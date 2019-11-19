@@ -172,6 +172,7 @@ type server struct {
 	wg                   sync.WaitGroup
 	quit                 chan struct{}
 	nat                  NAT
+	witnessNat           NAT
 	db                   database.DB
 	timeSource           blockchain.MedianTimeSource
 	services             wire.ServiceFlag
@@ -214,6 +215,7 @@ type serverPeer struct {
 	txProcessed    chan struct{}
 	blockProcessed chan struct{}
 }
+
 // Only respond with addresses once per connection
 //if sp.addrsSent {
 //	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
@@ -336,13 +338,11 @@ func (sp *serverPeer) addBanScore(persistent, transient uint32, reason string) {
 	}
 }
 
-
 // hasServices returns whether or not the provided advertised service flags have
 // all of the provided desired service flags set.
 func hasServices(advertised, desired wire.ServiceFlag) bool {
 	return advertised&desired == desired
 }
-
 
 // OnVersion is invoked when a peer receives a version wire message and is used
 // to negotiate the protocol version details as well as kick start the
@@ -359,7 +359,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// it is updated regardless in the case a new minimum protocol version is
 	// enforced and the remote node has not upgraded yet.
 	addrManager := sp.server.addrManager
-	isInbound:=sp.Inbound()
+	isInbound := sp.Inbound()
 	remoteAddr := sp.NA()
 	if !cfg.SimNet && !isInbound {
 		addrManager.SetServices(remoteAddr, msg.Services)
@@ -367,7 +367,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// Ignore peers that have a protcol version that is too old.  The peer
 	// negotiation logic will disconnect it after this callback returns.
 	if msg.ProtocolVersion < int32(wire.InitialProcotolVersion) {
-		return 
+		return
 	}
 	// Add the remote peer time as a sample for creating an offset against
 	// the local clock to keep the network time in sync.
@@ -798,7 +798,6 @@ func (sp *serverPeer) OnGetBlocks(p *peer.Peer, msg *wire.MsgGetBlocks) {
 		}
 	}
 
-	
 	// Use the block after the genesis block if no other blocks in the
 	// provided locator are known.  This does mean the client will start
 	// over with the genesis block if unknown block locators are provided.
@@ -1104,7 +1103,7 @@ func (sp *serverPeer) OnAddr(p *peer.Peer, msg *wire.MsgAddr) {
 		// Set the timestamp to 5 days ago if it's more than 24 hours
 		// in the future so this address is one of the first to be
 		// removed when space is needed.
-		
+
 		if na.Timestamp.After(now.Add(time.Minute * 10)) {
 			na.Timestamp = now.Add(-1 * time.Hour * 24 * 5)
 		}
@@ -1594,7 +1593,7 @@ func (s *server) handleQuery(state *peerState, querymsg interface{}) {
 		} else {
 			msg.reply <- 0
 		}
-	// Request a list of the persistent (added) peers.
+		// Request a list of the persistent (added) peers.
 	case getAddedNodesMsg:
 		// Respond with a slice of the relavent peers.
 		peers := make([]*serverPeer, 0, len(state.persistentPeers))
@@ -1781,24 +1780,24 @@ out:
 		case p := <-s.newPeers:
 			s.handleAddPeerMsg(state, p)
 
-		// Disconnected peers.
+			// Disconnected peers.
 		case p := <-s.donePeers:
 			s.handleDonePeerMsg(state, p)
 
-		// Block accepted in mainchain or orphan, update peer height.
+			// Block accepted in mainchain or orphan, update peer height.
 		case umsg := <-s.peerHeightsUpdate:
 			s.handleUpdatePeerHeights(state, umsg)
 
-		// Peer to ban.
+			// Peer to ban.
 		case p := <-s.banPeers:
 			s.handleBanPeerMsg(state, p)
 
-		// New inventory to potentially be relayed to other peers.
+			// New inventory to potentially be relayed to other peers.
 		case invMsg := <-s.relayInv:
 			s.handleRelayInvMsg(state, invMsg)
 
-		// Message to broadcast to all connected peers except those
-		// which are excluded by the message.
+			// Message to broadcast to all connected peers except those
+			// which are excluded by the message.
 		case bmsg := <-s.broadcast:
 			s.handleBroadcastMsg(state, &bmsg)
 
@@ -2011,8 +2010,8 @@ out:
 				srvrLog.Debugf("Add inventory : %v", msg.invVect)
 				pendingInvs[*msg.invVect] = msg.data
 
-			// When an InvVect has been added to a block, we can
-			// now remove it, if it was present.
+				// When an InvVect has been added to a block, we can
+				// now remove it, if it was present.
 			case broadcastInventoryDel:
 				if _, ok := pendingInvs[*msg]; ok {
 					srvrLog.Debugf("Remove inventory : %v", msg)
@@ -2119,8 +2118,6 @@ func (s *server) Stop() error {
 func (s *server) WaitForShutdown() {
 	s.wg.Wait()
 }
-
-
 
 // parseListeners splits the list of listen addresses passed in addrs into
 // IPv4 and IPv6 slices and returns them.  This allows easy creation of the
@@ -2243,7 +2240,7 @@ func standardScriptVerifyFlags(chain *blockchain.BlockChain) (txscript.ScriptFla
 // newServer returns a new hcd server configured to listen on addr for the
 // hcd network type specified by chainParams.  Use start to begin accepting
 // connections from peers.
-func newServer(listenAddrs []string,witnessListenAddrs []string, db database.DB, chainParams *chaincfg.Params) (*server, error) {
+func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB, chainParams *chaincfg.Params) (*server, error) {
 	services := defaultServices
 	if cfg.NoPeerBloomFilters {
 		services &^= wire.SFNodeBloom
@@ -2251,9 +2248,12 @@ func newServer(listenAddrs []string,witnessListenAddrs []string, db database.DB,
 
 	amgr := addrmgr.New(cfg.DataDir, hcdLookup)
 
+	witnessAmgr := addrmgr.NewWitnessAddrManager(cfg.DataDir, hcdLookup)
 
 	var listeners []net.Listener
+	var witnessListeners []net.Listener
 	var nat NAT
+	var witnessNat NAT
 	if !cfg.DisableListen {
 		ipv4Addrs, ipv6Addrs, wildcard, err :=
 			parseListeners(listenAddrs)
@@ -2376,9 +2376,132 @@ func newServer(listenAddrs []string,witnessListenAddrs []string, db database.DB,
 		}
 	}
 
+	if !cfg.DisableWitnessListen {
+		ipv4Addrs, ipv6Addrs, wildcard, err :=
+			parseListeners(witnessListenAddrs)
+		if err != nil {
+			return nil, err
+		}
+		witnessListeners = make([]net.Listener, 0, len(ipv4Addrs)+len(ipv6Addrs))
+		discover := true
+		if len(cfg.ExternalIPs) != 0 {
+			discover = false
+			// if this fails we have real issues.
+			port, _ := strconv.ParseUint(
+				activeNetParams.DefaultPort, 10, 16)
+
+			for _, sip := range cfg.ExternalIPs {
+				eport := uint16(port)
+				host, portstr, err := net.SplitHostPort(sip)
+				if err != nil {
+					// no port, use default.
+					host = sip
+				} else {
+					port, err := strconv.ParseUint(
+						portstr, 10, 16)
+					if err != nil {
+						srvrLog.Warnf("Can not parse "+
+							"port from %s for "+
+							"externalip: %v", sip,
+							err)
+						continue
+					}
+					eport = uint16(port)
+				}
+				na, err := witnessAmgr.HostToNetAddress(host, eport,
+					services)
+				if err != nil {
+					srvrLog.Warnf("Not adding %s as "+
+						"externalip: %v", sip, err)
+					continue
+				}
+
+				err = witnessAmgr.AddLocalAddress(na, addrmgr.ManualPrio)
+				if err != nil {
+					amgrLog.Warnf("Skipping specified external IP: %v", err)
+				}
+			}
+		} else if discover && cfg.Upnp {
+			witnessNat, err = Discover()
+			if err != nil {
+				srvrLog.Warnf("Can't discover upnp: %v", err)
+			}
+			// nil witnessNat here is fine, just means no upnp on network.
+		}
+
+		// TODO(oga) nonstandard port...
+		if wildcard {
+			port, err :=
+				strconv.ParseUint(activeNetParams.DefaultPort,
+					10, 16)
+			if err != nil {
+				// I can't think of a cleaner way to do this...
+				goto nowcw
+			}
+			addrs, err := net.InterfaceAddrs()
+			for _, a := range addrs {
+				ip, _, err := net.ParseCIDR(a.String())
+				if err != nil {
+					continue
+				}
+				na := wire.NewNetAddressIPPort(ip,
+					uint16(port), services)
+				if discover {
+					err = witnessAmgr.AddLocalAddress(na, addrmgr.InterfacePrio)
+					if err != nil {
+						amgrLog.Debugf("Skipping local address: %v", err)
+					}
+				}
+			}
+		}
+	nowcw:
+
+		for _, addr := range ipv4Addrs {
+			listener, err := net.Listen("tcp4", addr)
+			if err != nil {
+				srvrLog.Warnf("Can't listen on %s: %v", addr,
+					err)
+				continue
+			}
+			witnessListeners = append(witnessListeners, listener)
+
+			if discover {
+				if na, err := witnessAmgr.DeserializeNetAddress(addr); err == nil {
+					err = witnessAmgr.AddLocalAddress(na, addrmgr.BoundPrio)
+					if err != nil {
+						amgrLog.Warnf("Skipping bound address: %v", err)
+					}
+				}
+			}
+		}
+
+		for _, addr := range ipv6Addrs {
+			listener, err := net.Listen("tcp6", addr)
+			if err != nil {
+				srvrLog.Warnf("Can't listen on %s: %v", addr,
+					err)
+				continue
+			}
+			witnessListeners = append(witnessListeners, listener)
+			if discover {
+				if na, err := witnessAmgr.DeserializeNetAddress(addr); err == nil {
+					err = witnessAmgr.AddLocalAddress(na, addrmgr.BoundPrio)
+					if err != nil {
+						amgrLog.Debugf("Skipping bound address: %v", err)
+					}
+				}
+			}
+		}
+
+		if len(witnessListeners) == 0 {
+			return nil, errors.New("no valid listen address")
+		}
+	}
+
 	s := server{
 		chainParams:          chainParams,
 		addrManager:          amgr,
+		witnessAddrManager:   witnessAmgr,
 		newPeers:             make(chan *serverPeer, cfg.MaxPeers),
 		donePeers:            make(chan *serverPeer, cfg.MaxPeers),
 		banPeers:             make(chan *serverPeer, cfg.MaxPeers),
@@ -2389,6 +2512,7 @@ func newServer(listenAddrs []string,witnessListenAddrs []string, db database.DB,
 		modifyRebroadcastInv: make(chan interface{}),
 		peerHeightsUpdate:    make(chan updatePeerHeightsMsg),
 		nat:                  nat,
+		witnessNat:           witnessNat,
 		db:                   db,
 		timeSource:           blockchain.NewMedianTime(),
 		services:             services,
@@ -2547,6 +2671,7 @@ func newServer(listenAddrs []string,witnessListenAddrs []string, db database.DB,
 	if err != nil {
 		return nil, err
 	}
+
 	s.connManager = cmgr
 
 	// Start up persistent peers.
@@ -2612,7 +2737,6 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 		Port: port,
 	}, nil
 }
-
 
 // isWhitelisted returns whether the IP address is included in the whitelisted
 // networks and IPs.
