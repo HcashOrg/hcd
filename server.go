@@ -153,7 +153,9 @@ type server struct {
 
 	chainParams          *chaincfg.Params
 	addrManager          *addrmgr.AddrManager
+	witnessAddrManager   *addrmgr.AddrManager
 	connManager          *connmgr.ConnManager
+	witnessConnManager   *connmgr.ConnManager
 	sigCache             *txscript.SigCache
 	rpcServer            *rpcServer
 	blockManager         *blockManager
