@@ -147,6 +147,8 @@ type server struct {
 	// Putting the uint64s first makes them 64-bit aligned for 32-bit systems.
 	bytesReceived uint64 // Total bytes received from all peers since start.
 	bytesSent     uint64 // Total bytes sent by all peers since start.
+	bytesWitnessSent uint64
+	bytesWitnessReceived uint64
 	started       int32
 	shutdown      int32
 	shutdownSched int32
@@ -162,12 +164,19 @@ type server struct {
 	txMemPool            *mempool.TxPool
 	cpuMiner             *CPUMiner
 	modifyRebroadcastInv chan interface{}
+	modifyRebroadcastWitnessInv chan interface{}
 	newPeers             chan *serverPeer
 	donePeers            chan *serverPeer
 	banPeers             chan *serverPeer
+	newWitnessPeers             chan *serverWitnessPeer
+	doneWitnessPeers            chan *serverWitnessPeer
+	banWitnessPeers             chan *serverWitnessPeer
 	query                chan interface{}
+	queryWitness         chan interface{}
 	relayInv             chan relayMsg
+	relayWitnessInv      chan relayMsg
 	broadcast            chan broadcastMsg
+	broadcastWitness     chan broadcastWitnessMsg
 	peerHeightsUpdate    chan updatePeerHeightsMsg
 	wg                   sync.WaitGroup
 	quit                 chan struct{}
@@ -1227,6 +1236,7 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 	return nil
 }
 
+
 // pushBlockMsg sends a block message for the provided block hash to the
 // connected peer.  An error is returned if the block hash is not known.
 func (s *server) pushBlockMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
@@ -1846,6 +1856,8 @@ func (s *server) AddPeer(sp *serverPeer) {
 func (s *server) BanPeer(sp *serverPeer) {
 	s.banPeers <- sp
 }
+
+
 
 // RelayInventory relays the passed inventory vector to all connected peers
 // that are not already known to have it.

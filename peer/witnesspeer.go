@@ -11,6 +11,10 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/chaincfg"
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/HcashOrg/hcd/wire"
+	"github.com/davecgh/go-spew/spew"
 	"io"
 	"math/rand"
 	"net"
@@ -18,13 +22,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/davecgh/go-spew/spew"
 )
-
 
 var (
 	// nodeCount is the total number of WitnessPeer connections made since startup
@@ -76,7 +74,6 @@ type WitnessMessageListeners struct {
 	// OnTx is invoked when a WitnessPeer receives a tx wire message.
 	OnTx func(p *WitnessPeer, msg *wire.MsgTx)
 
-
 	// OnInv is invoked when a WitnessPeer receives an inv wire message.
 	OnInv func(p *WitnessPeer, msg *wire.MsgInv)
 
@@ -88,7 +85,6 @@ type WitnessMessageListeners struct {
 
 	// OnGetData is invoked when a WitnessPeer receives a getdata wire message.
 	OnGetData func(p *WitnessPeer, msg *wire.MsgGetData)
-
 
 	// OnFeeFilter is invoked when a WitnessPeer receives a feefilter wire message.
 	OnFeeFilter func(p *WitnessPeer, msg *wire.MsgFeeFilter)
@@ -180,8 +176,6 @@ type WitnessConfig struct {
 	Listeners WitnessMessageListeners
 }
 
-
-
 // WitnessStatsSnap is a snapshot of WitnessPeer stats at a point in time.
 type WitnessStatsSnap struct {
 	ID             int32
@@ -197,12 +191,11 @@ type WitnessStatsSnap struct {
 	UserAgent      string
 	Inbound        bool
 	StartingHeight int64
-	LastBlock      int64
+
 	LastPingNonce  uint64
 	LastPingTime   time.Time
 	LastPingMicros int64
 }
-
 
 // NOTE: The overall data flow of a WitnessPeer is split into 3 goroutines.  Inbound
 // messages are read via the inHandler goroutine and generally dispatched to
@@ -259,25 +252,18 @@ type WitnessPeer struct {
 	versionSent          bool
 	verAckReceived       bool
 
-	knownInventory     *mruInventoryMap
-	prevGetBlocksMtx   sync.Mutex
-	prevGetBlocksBegin *chainhash.Hash
-	prevGetBlocksStop  *chainhash.Hash
-	prevGetHdrsMtx     sync.Mutex
-	prevGetHdrsBegin   *chainhash.Hash
-	prevGetHdrsStop    *chainhash.Hash
+	knownInventory *mruInventoryMap
 
 	// These fields keep track of statistics for the WitnessPeer and are protected
 	// by the statsMtx mutex.
-	statsMtx           sync.RWMutex
-	timeOffset         int64
-	timeConnected      time.Time
-	startingHeight     int64
-	lastBlock          int64
-	lastAnnouncedBlock *chainhash.Hash
-	lastPingNonce      uint64    // Set to nonce if we have a pending ping.
-	lastPingTime       time.Time // Time we sent last ping.
-	lastPingMicros     int64     // Time for last ping to return.
+	statsMtx       sync.RWMutex
+	timeOffset     int64
+	timeConnected  time.Time
+	startingHeight int64
+
+	lastPingNonce  uint64    // Set to nonce if we have a pending ping.
+	lastPingTime   time.Time // Time we sent last ping.
+	lastPingMicros int64     // Time for last ping to return.
 
 	stallControl  chan stallControlMsg
 	outputQueue   chan outMsg
@@ -296,33 +282,6 @@ type WitnessPeer struct {
 // This function is safe for concurrent access.
 func (p *WitnessPeer) String() string {
 	return fmt.Sprintf("%s (%s)", p.addr, directionString(p.inbound))
-}
-
-// UpdateLastBlockHeight updates the last known block for the WitnessPeer.
-//
-// This function is safe for concurrent access.
-func (p *WitnessPeer) UpdateLastBlockHeight(newHeight int64) {
-	p.statsMtx.Lock()
-	if newHeight <= p.lastBlock {
-		p.statsMtx.Unlock()
-		return
-	}
-	log.Tracef("Updating last block height of WitnessPeer %v from %v to %v",
-		p.addr, p.lastBlock, newHeight)
-	p.lastBlock = newHeight
-	p.statsMtx.Unlock()
-}
-
-// UpdateLastAnnouncedBlock updates meta-data about the last block hash this
-// WitnessPeer is known to have announced.
-//
-// This function is safe for concurrent access.
-func (p *WitnessPeer) UpdateLastAnnouncedBlock(blkHash *chainhash.Hash) {
-	log.Tracef("Updating last blk for WitnessPeer %v, %v", p.addr, blkHash)
-
-	p.statsMtx.Lock()
-	p.lastAnnouncedBlock = blkHash
-	p.statsMtx.Unlock()
 }
 
 // AddKnownInventory adds the passed inventory to the cache of known inventory
@@ -362,7 +321,6 @@ func (p *WitnessPeer) WitnessStatsSnapshot() *WitnessStatsSnap {
 		Version:        protocolVersion,
 		Inbound:        p.inbound,
 		StartingHeight: p.startingHeight,
-		LastBlock:      p.lastBlock,
 		LastPingNonce:  p.lastPingNonce,
 		LastPingMicros: p.lastPingMicros,
 		LastPingTime:   p.lastPingTime,
@@ -432,17 +390,6 @@ func (p *WitnessPeer) UserAgent() string {
 	return userAgent
 }
 
-// LastAnnouncedBlock returns the last announced block of the remote WitnessPeer.
-//
-// This function is safe for concurrent access.
-func (p *WitnessPeer) LastAnnouncedBlock() *chainhash.Hash {
-	p.statsMtx.RLock()
-	lastAnnouncedBlock := p.lastAnnouncedBlock
-	p.statsMtx.RUnlock()
-
-	return lastAnnouncedBlock
-}
-
 // LastPingNonce returns the last ping nonce of the remote WitnessPeer.
 //
 // This function is safe for concurrent access.
@@ -509,17 +456,6 @@ func (p *WitnessPeer) ProtocolVersion() uint32 {
 	p.flagsMtx.Unlock()
 
 	return protocolVersion
-}
-
-// LastBlock returns the last block of the WitnessPeer.
-//
-// This function is safe for concurrent access.
-func (p *WitnessPeer) LastBlock() int64 {
-	p.statsMtx.RLock()
-	lastBlock := p.lastBlock
-	p.statsMtx.RUnlock()
-
-	return lastBlock
 }
 
 // LastSend returns the last send time of the WitnessPeer.
@@ -715,95 +651,6 @@ func (p *WitnessPeer) PushAddrMsg(addresses []*wire.NetAddress) ([]*wire.NetAddr
 	return msg.AddrList, nil
 }
 
-// PushGetBlocksMsg sends a getblocks message for the provided block locator
-// and stop hash.  It will ignore back-to-back duplicate requests.
-//
-// This function is safe for concurrent access.
-func (p *WitnessPeer) PushGetBlocksMsg(locator blockchain.BlockLocator, stopHash *chainhash.Hash) error {
-	// Extract the begin hash from the block locator, if one was specified,
-	// to use for filtering duplicate getblocks requests.
-	var beginHash *chainhash.Hash
-	if len(locator) > 0 {
-		beginHash = locator[0]
-	}
-
-	// Filter duplicate getblocks requests.
-	p.prevGetBlocksMtx.Lock()
-	isDuplicate := p.prevGetBlocksStop != nil && p.prevGetBlocksBegin != nil &&
-		beginHash != nil && stopHash.IsEqual(p.prevGetBlocksStop) &&
-		beginHash.IsEqual(p.prevGetBlocksBegin)
-	p.prevGetBlocksMtx.Unlock()
-
-	if isDuplicate {
-		log.Tracef("Filtering duplicate [getblocks] with begin "+
-			"hash %v, stop hash %v", beginHash, stopHash)
-		return nil
-	}
-
-	// Construct the getblocks request and queue it to be sent.
-	msg := wire.NewMsgGetBlocks(stopHash)
-	for _, hash := range locator {
-		err := msg.AddBlockLocatorHash(hash)
-		if err != nil {
-			return err
-		}
-	}
-	p.QueueMessage(msg, nil)
-
-	// Update the previous getblocks request information for filtering
-	// duplicates.
-	p.prevGetBlocksMtx.Lock()
-	p.prevGetBlocksBegin = beginHash
-	p.prevGetBlocksStop = stopHash
-	p.prevGetBlocksMtx.Unlock()
-	return nil
-}
-
-// PushGetHeadersMsg sends a getblocks message for the provided block locator
-// and stop hash.  It will ignore back-to-back duplicate requests.
-//
-// This function is safe for concurrent access.
-func (p *WitnessPeer) PushGetHeadersMsg(locator blockchain.BlockLocator, stopHash *chainhash.Hash) error {
-	// Extract the begin hash from the block locator, if one was specified,
-	// to use for filtering duplicate getheaders requests.
-	var beginHash *chainhash.Hash
-	if len(locator) > 0 {
-		beginHash = locator[0]
-	}
-
-	// Filter duplicate getheaders requests.
-	p.prevGetHdrsMtx.Lock()
-	isDuplicate := p.prevGetHdrsStop != nil && p.prevGetHdrsBegin != nil &&
-		beginHash != nil && stopHash.IsEqual(p.prevGetHdrsStop) &&
-		beginHash.IsEqual(p.prevGetHdrsBegin)
-	p.prevGetHdrsMtx.Unlock()
-
-	if isDuplicate {
-		log.Tracef("Filtering duplicate [getheaders] with begin hash %v",
-			beginHash)
-		return nil
-	}
-
-	// Construct the getheaders request and queue it to be sent.
-	msg := wire.NewMsgGetHeaders()
-	msg.HashStop = *stopHash
-	for _, hash := range locator {
-		err := msg.AddBlockLocatorHash(hash)
-		if err != nil {
-			return err
-		}
-	}
-	p.QueueMessage(msg, nil)
-
-	// Update the previous getheaders request information for filtering
-	// duplicates.
-	p.prevGetHdrsMtx.Lock()
-	p.prevGetHdrsBegin = beginHash
-	p.prevGetHdrsStop = stopHash
-	p.prevGetHdrsMtx.Unlock()
-	return nil
-}
-
 // PushRejectMsg sends a reject message for the provided command, reject code,
 // reject reason, and hash.  The hash will only be used when the command is a tx
 // or block and should be nil in other cases.  The wait parameter will cause the
@@ -870,7 +717,7 @@ func (p *WitnessPeer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 
 	// Updating a bunch of stats.
 	p.statsMtx.Lock()
-	p.lastBlock = int64(msg.LastBlock)
+
 	p.startingHeight = int64(msg.LastBlock)
 
 	// Set the WitnessPeer's time offset.
@@ -890,7 +737,7 @@ func (p *WitnessPeer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 	// advertised.
 	p.services = msg.Services
 
-	p.na.Services=msg.Services
+	p.na.Services = msg.Services
 	// Set the remote WitnessPeer's user agent.
 	p.userAgent = msg.UserAgent
 	p.flagsMtx.Unlock()
@@ -1040,29 +887,11 @@ func (p *WitnessPeer) maybeAddDeadline(pendingResponses map[string]time.Time, ms
 		// Expects a verack message.
 		pendingResponses[wire.CmdVerAck] = deadline
 
-	case wire.CmdMemPool:
-		// Expects an inv message.
-		pendingResponses[wire.CmdInv] = deadline
-
-	case wire.CmdGetBlocks:
-		// Expects an inv message.
-		pendingResponses[wire.CmdInv] = deadline
-
 	case wire.CmdGetData:
-		// Expects a block, tx, or notfound message.
-		pendingResponses[wire.CmdBlock] = deadline
+		// Expects tx, or notfound message.
 		pendingResponses[wire.CmdTx] = deadline
 		pendingResponses[wire.CmdNotFound] = deadline
 
-	case wire.CmdGetHeaders:
-		// Expects a headers message.  Use a longer deadline since it
-		// can take a while for the remote WitnessPeer to load all of the
-		// headers.
-		deadline = time.Now().Add(stallResponseTimeout * 3)
-		pendingResponses[wire.CmdHeaders] = deadline
-
-	case wire.CmdGetMiningState:
-		pendingResponses[wire.CmdMiningState] = deadline
 	}
 }
 
@@ -1108,12 +937,10 @@ out:
 				// one of a group of responses, remove
 				// everything in the expected group accordingly.
 				switch msgCmd := msg.message.Command(); msgCmd {
-				case wire.CmdBlock:
-					fallthrough
+
 				case wire.CmdTx:
 					fallthrough
 				case wire.CmdNotFound:
-					delete(pendingResponses, wire.CmdBlock)
 					delete(pendingResponses, wire.CmdTx)
 					delete(pendingResponses, wire.CmdNotFound)
 
@@ -1173,12 +1000,11 @@ out:
 					continue
 				}
 
-				if command != wire.CmdMiningState {
-					log.Infof("WitnessPeer %s appears to be stalled or "+
-						"misbehaving, %s timeout -- "+
-						"disconnecting", p, command)
-					p.Disconnect()
-				}
+				log.Infof("WitnessPeer %s appears to be stalled or "+
+					"misbehaving, %s timeout -- "+
+					"disconnecting", p, command)
+				p.Disconnect()
+
 				break
 			}
 
@@ -1308,11 +1134,6 @@ out:
 				p.cfg.Listeners.OnAlert(p, msg)
 			}
 
-		case *wire.MsgMemPool:
-			if p.cfg.Listeners.OnMemPool != nil {
-				p.cfg.Listeners.OnMemPool(p, msg)
-			}
-
 		case *wire.MsgTx:
 			if p.cfg.Listeners.OnTx != nil {
 				p.cfg.Listeners.OnTx(p, msg)
@@ -1323,10 +1144,6 @@ out:
 				p.cfg.Listeners.OnInv(p, msg)
 			}
 
-		case *wire.MsgHeaders:
-			if p.cfg.Listeners.OnHeaders != nil {
-				p.cfg.Listeners.OnHeaders(p, msg)
-			}
 
 		case *wire.MsgNotFound:
 			if p.cfg.Listeners.OnNotFound != nil {
@@ -1363,7 +1180,6 @@ out:
 				p.cfg.Listeners.OnReject(p, msg)
 			}
 
-
 		default:
 			log.Debugf("Received unhandled message of type %v "+
 				"from %v", rmsg.Command(), p)
@@ -1383,12 +1199,11 @@ out:
 	close(p.inQuit)
 	log.Tracef("WitnessPeer input handler done for %s", p)
 }
+
 //KnownInverntory list
-func (p *WitnessPeer)KnownInventory() *list.List {
+func (p *WitnessPeer) KnownInventory() *list.List {
 	return p.knownInventory.invList
 }
-
-
 
 // queueHandler handles the queuing of outgoing data for the WitnessPeer. This runs as
 // a muxer for various sources of input so we can ensure that server and WitnessPeer
@@ -1532,6 +1347,7 @@ cleanup:
 	close(p.queueQuit)
 	log.Tracef("WitnessPeer queue handler done for %s", p)
 }
+
 // shouldLogWriteError returns whether or not the passed error, which is
 // expected to have come from writing to the remote WitnessPeer in the outHandler,
 // should be logged.

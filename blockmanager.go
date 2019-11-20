@@ -86,6 +86,12 @@ type invMsg struct {
 	peer *serverPeer
 }
 
+type witnessInvMsg struct {
+	inv  *wire.MsgInv
+	peer *serverWitnessPeer
+}
+
+
 // headersMsg packages a hcd headers message and the peer it came from
 // together so the block handler has access to that information.
 type headersMsg struct {
@@ -104,6 +110,15 @@ type txMsg struct {
 	tx   *hcutil.Tx
 	peer *serverPeer
 }
+
+
+type witnessTxMsg struct {
+	tx   *hcutil.Tx
+	peer *serverWitnessPeer
+}
+
+
+
 
 // getSyncPeerMsg is a message type to be sent across the message channel for
 // retrieving the current sync peer.
@@ -2254,6 +2269,17 @@ func (b *blockManager) QueueTx(tx *hcutil.Tx, sp *serverPeer) {
 	b.msgChan <- &txMsg{tx: tx, peer: sp}
 }
 
+
+func (b *blockManager) QueueWitnessTx(tx *hcutil.Tx, sp *serverWitnessPeer) {
+	// Don't accept more transactions if we're shutting down.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		sp.txProcessed <- struct{}{}
+		return
+	}
+
+	b.msgChan <- &witnessTxMsg{tx: tx, peer: sp}
+}
+
 // QueueBlock adds the passed block message and peer to the block handling queue.
 func (b *blockManager) QueueBlock(block *hcutil.Block, sp *serverPeer) {
 	// Don't accept more blocks if we're shutting down.
@@ -2275,6 +2301,20 @@ func (b *blockManager) QueueInv(inv *wire.MsgInv, sp *serverPeer) {
 
 	b.msgChan <- &invMsg{inv: inv, peer: sp}
 }
+
+
+// QueueInv adds the passed inv message and peer to the block handling queue.
+func (b *blockManager) QueueWitnessInv(inv *wire.MsgInv, sp *serverWitnessPeer) {
+	// No channel handling here because peers do not need to block on inv
+	// messages.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		return
+	}
+
+	b.msgChan <- &witnessInvMsg{inv: inv, peer: sp}
+}
+
+
 
 // QueueHeaders adds the passed headers message and peer to the block handling
 // queue.
