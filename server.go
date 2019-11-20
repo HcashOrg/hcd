@@ -2672,8 +2672,17 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 		return nil, err
 	}
 
-	s.connManager = cmgr
+	witnessCmgr,err:=connmgr.New(&connmgr.Config{
+		Listeners:witnessListeners,
 
+	})
+	if err != nil {
+		return nil, err
+	}
+
+
+	s.connManager = cmgr
+	s.witnessConnManager = witnessCmgr
 	// Start up persistent peers.
 	permanentPeers := cfg.ConnectPeers
 	if len(permanentPeers) == 0 {
