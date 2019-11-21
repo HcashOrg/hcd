@@ -145,46 +145,46 @@ func (ps *peerState) forAllPeers(closure func(sp *serverPeer)) {
 type server struct {
 	// The following variables must only be used atomically.
 	// Putting the uint64s first makes them 64-bit aligned for 32-bit systems.
-	bytesReceived uint64 // Total bytes received from all peers since start.
-	bytesSent     uint64 // Total bytes sent by all peers since start.
-	bytesWitnessSent uint64
+	bytesReceived        uint64 // Total bytes received from all peers since start.
+	bytesSent            uint64 // Total bytes sent by all peers since start.
+	bytesWitnessSent     uint64
 	bytesWitnessReceived uint64
-	started       int32
-	shutdown      int32
-	shutdownSched int32
+	started              int32
+	shutdown             int32
+	shutdownSched        int32
 
-	chainParams          *chaincfg.Params
-	addrManager          *addrmgr.AddrManager
-	witnessAddrManager   *addrmgr.AddrManager
-	connManager          *connmgr.ConnManager
-	witnessConnManager   *connmgr.ConnManager
-	sigCache             *txscript.SigCache
-	rpcServer            *rpcServer
-	blockManager         *blockManager
-	txMemPool            *mempool.TxPool
-	cpuMiner             *CPUMiner
-	modifyRebroadcastInv chan interface{}
+	chainParams                 *chaincfg.Params
+	addrManager                 *addrmgr.AddrManager
+	witnessAddrManager          *addrmgr.AddrManager
+	connManager                 *connmgr.ConnManager
+	witnessConnManager          *connmgr.ConnManager
+	sigCache                    *txscript.SigCache
+	rpcServer                   *rpcServer
+	blockManager                *blockManager
+	txMemPool                   *mempool.TxPool
+	cpuMiner                    *CPUMiner
+	modifyRebroadcastInv        chan interface{}
 	modifyRebroadcastWitnessInv chan interface{}
-	newPeers             chan *serverPeer
-	donePeers            chan *serverPeer
-	banPeers             chan *serverPeer
+	newPeers                    chan *serverPeer
+	donePeers                   chan *serverPeer
+	banPeers                    chan *serverPeer
 	newWitnessPeers             chan *serverWitnessPeer
 	doneWitnessPeers            chan *serverWitnessPeer
 	banWitnessPeers             chan *serverWitnessPeer
-	query                chan interface{}
-	queryWitness         chan interface{}
-	relayInv             chan relayMsg
-	relayWitnessInv      chan relayMsg
-	broadcast            chan broadcastMsg
-	broadcastWitness     chan broadcastWitnessMsg
-	peerHeightsUpdate    chan updatePeerHeightsMsg
-	wg                   sync.WaitGroup
-	quit                 chan struct{}
-	nat                  NAT
-	witnessNat           NAT
-	db                   database.DB
-	timeSource           blockchain.MedianTimeSource
-	services             wire.ServiceFlag
+	query                       chan interface{}
+	queryWitness                chan interface{}
+	relayInv                    chan relayMsg
+	relayWitnessInv             chan relayMsg
+	broadcast                   chan broadcastMsg
+	broadcastWitness            chan broadcastWitnessMsg
+	peerHeightsUpdate           chan updatePeerHeightsMsg
+	wg                          sync.WaitGroup
+	quit                        chan struct{}
+	nat                         NAT
+	witnessNat                  NAT
+	db                          database.DB
+	timeSource                  blockchain.MedianTimeSource
+	services                    wire.ServiceFlag
 
 	// The following fields are used for optional indexes.  They will be nil
 	// if the associated index is not enabled.  These fields are set during
@@ -1236,7 +1236,6 @@ func (s *server) pushTxMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<-
 	return nil
 }
 
-
 // pushBlockMsg sends a block message for the provided block hash to the
 // connected peer.  An error is returned if the block hash is not known.
 func (s *server) pushBlockMsg(sp *serverPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
@@ -1856,8 +1855,6 @@ func (s *server) AddPeer(sp *serverPeer) {
 func (s *server) BanPeer(sp *serverPeer) {
 	s.banPeers <- sp
 }
-
-
 
 // RelayInventory relays the passed inventory vector to all connected peers
 // that are not already known to have it.
@@ -2627,7 +2624,7 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 	// discovered peers in order to prevent it from becoming a public test
 	// network.
 	var newAddressFunc func() (net.Addr, error)
-	var newWitnessAddressFunc func()(net.Addr,error)
+	var newWitnessAddressFunc func() (net.Addr, error)
 	if !cfg.SimNet && len(cfg.ConnectPeers) == 0 {
 		newAddressFunc = func() (net.Addr, error) {
 			for tries := 0; tries < 100; tries++ {
@@ -2722,19 +2719,18 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 		return nil, err
 	}
 
-	witnessCmgr,err:=connmgr.New(&connmgr.Config{
-		Listeners:witnessListeners,
-		OnAccept:s.inboundWitnessPeerConnected,
-		RetryDuration:connectionRetryInterval,
-		TargetOutbound:uint32(targetOutbound),
-		Dial:hcdDial,
-		OnConnection:s.outboundWitnessPeerConnected,
-		GetNewAddress:newWitnessAddressFunc,
+	witnessCmgr, err := connmgr.New(&connmgr.Config{
+		Listeners:      witnessListeners,
+		OnAccept:       s.inboundWitnessPeerConnected,
+		RetryDuration:  connectionRetryInterval,
+		TargetOutbound: uint32(targetOutbound),
+		Dial:           hcdDial,
+		OnConnection:   s.outboundWitnessPeerConnected,
+		GetNewAddress:  newWitnessAddressFunc,
 	})
 	if err != nil {
 		return nil, err
 	}
-
 
 	s.connManager = cmgr
 	s.witnessConnManager = witnessCmgr

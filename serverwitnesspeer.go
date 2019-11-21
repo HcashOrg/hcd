@@ -72,6 +72,7 @@ type broadcastWitnessMsg struct {
 	message      wire.Message
 	excludePeers []*serverWitnessPeer
 }
+
 // addKnownAddresses adds the given addresses to the set of known addreses to
 // the peer to prevent sending duplicate addresses.
 func (sp *serverWitnessPeer) addKnownAddresses(addresses []*wire.NetAddress) {
@@ -166,7 +167,7 @@ func (sp *serverWitnessPeer) addBanScore(persistent, transient uint32, reason st
 // OnVersion is invoked when a peer receives a version wire message and is used
 // to negotiate the protocol version details as well as kick start the
 // communications.
-func (sp *serverWitnessPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
+func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion) {
 	// Update the address manager with the advertised services for outbound
 	// connections in case they have changed.  This is not done for inbound
 	// connections to help prevent malicious behavior and is skipped when
@@ -191,7 +192,6 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// Add the remote peer time as a sample for creating an offset against
 	// the local clock to keep the network time in sync.
 	sp.server.timeSource.AddTimeSample(p.Addr(), msg.Timestamp)
-
 
 	//format example /hcd:2.0.0/
 	var valid = regexp.MustCompile("hcd:[0-9]*.[0-9]*.[0-9]*")
@@ -289,7 +289,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 // transaction has been fully processed.  Unlock the block handler this does not
 // serialize all transactions through a single thread transactions don't rely on
 // the previous one in a linear fashion like blocks.
-func (sp *serverWitnessPeer) OnWitnessTx(p *peer.Peer, msg *wire.MsgTx) {
+func (sp *serverWitnessPeer) OnWitnessTx(p *peer.WitnessPeer, msg *wire.MsgTx) {
 
 	// Add the transaction to the known inventory for the peer.
 	// Convert the raw MsgTx to a hcutil.Tx which provides some convenience
@@ -311,7 +311,7 @@ func (sp *serverWitnessPeer) OnWitnessTx(p *peer.Peer, msg *wire.MsgTx) {
 // examine the inventory being advertised by the remote peer and react
 // accordingly.  We pass the message down to blockmanager which will call
 // QueueMessage with any appropriate responses.
-func (sp *serverWitnessPeer) OnWitnessInv(p *peer.Peer, msg *wire.MsgInv) {
+func (sp *serverWitnessPeer) OnWitnessInv(p *peer.WitnessPeer, msg *wire.MsgInv) {
 
 	if len(msg.InvList) > 0 {
 		sp.server.blockManager.QueueWitnessInv(msg, sp)
@@ -322,7 +322,7 @@ func (sp *serverWitnessPeer) OnWitnessInv(p *peer.Peer, msg *wire.MsgInv) {
 
 // handleGetData is invoked when a peer receives a getdata wire message and is
 // used to deliver block and transaction information.
-func (sp *serverWitnessPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
+func (sp *serverWitnessPeer) OnGetData(p *peer.WitnessPeer, msg *wire.MsgGetData) {
 	// Ignore empty getdata messages.
 	if len(msg.InvList) == 0 {
 		return
@@ -395,7 +395,179 @@ func (sp *serverWitnessPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 	}
 }
 
+// enforceNodeBloomFlag disconnects the peer if the server is not configured to
+// allow bloom filters.  Additionally, if the peer has negotiated to a protocol
+// version  that is high enough to observe the bloom filter service support bit,
+// it will be banned since it is intentionally violating the protocol.
+func (sp *serverWitnessPeer) enforceWitnessNodeBloomFlag(cmd string) bool {
+	if sp.server.services&wire.SFNodeBloom != wire.SFNodeBloom {
+		// Ban the peer if the protocol version is high enough that the
+		// peer is knowingly violating the protocol and banning is
+		// enabled.
+		//
+		// NOTE: Even though the addBanScore function already examines
+		// whether or not banning is enabled, it is checked here as well
+		// to ensure the violation is logged and the peer is
+		// disconnected regardless.
+		if sp.ProtocolVersion() >= wire.BIP0111Version &&
+			!cfg.DisableBanning {
 
+			// Disonnect the peer regardless of whether it was
+			// banned.
+			sp.addBanScore(100, 0, cmd)
+			sp.Disconnect()
+			return false
+		}
+
+		// Disconnect the peer regardless of protocol version or banning
+		// state.
+		peerLog.Debugf("%s sent an unsupported %s request -- "+
+			"disconnecting", sp, cmd)
+		sp.Disconnect()
+		return false
+	}
+
+	return true
+}
+
+// OnFilterAdd is invoked when a peer receives a filteradd wire message and is
+// used by remote peers to add data to an already loaded bloom filter.  The peer
+// will be disconnected if a filter is not loaded when this message is received.
+func (sp *serverWitnessPeer) OnWitnessFilterAdd(p *peer.WitnessPeer, msg *wire.MsgFilterAdd) {
+	// Disconnect and/or ban depending on the node bloom services flag and
+	// negotiated protocol version.
+	if !sp.enforceWitnessNodeBloomFlag(msg.Command()) {
+		return
+	}
+
+	if sp.filter.IsLoaded() {
+		peerLog.Debugf("%s sent a filteradd request with no filter "+
+			"loaded -- disconnecting", p)
+		p.Disconnect()
+		return
+	}
+
+	sp.filter.Add(msg.Data)
+}
+
+// OnFilterClear is invoked when a peer receives a filterclear wire message and
+// is used by remote peers to clear an already loaded bloom filter.  The peer
+// will be disconnected if a filter is not loaded when this message is received.
+func (sp *serverWitnessPeer) OnWitnessFilterClear(p *peer.WitnessPeer, msg *wire.MsgFilterClear) {
+	// Disconnect and/or ban depending on the node bloom services flag and
+	// negotiated protocol version.
+	if !sp.enforceWitnessNodeBloomFlag(msg.Command()) {
+		return
+	}
+
+	if !sp.filter.IsLoaded() {
+		peerLog.Debugf("%s sent a filterclear request with no "+
+			"filter loaded -- disconnecting", p)
+		p.Disconnect()
+		return
+	}
+
+	sp.filter.Unload()
+}
+
+// OnFilterLoad is invoked when a peer receives a filterload wire message and it
+// is used to load a bloom filter that should be used for delivering merkle
+// blocks and associated transactions that match the filter.
+func (sp *serverWitnessPeer) OnWitnessFilterLoad(p *peer.WitnessPeer, msg *wire.MsgFilterLoad) {
+	// Disconnect and/or ban depending on the node bloom services flag and
+	// negotiated protocol version.
+	if !sp.enforceWitnessNodeBloomFlag(msg.Command()) {
+		return
+	}
+
+	// Transaction relay is no longer disabled once a filterload message is
+	// received regardless of its original state.
+	sp.setDisableRelayTx(false)
+
+	sp.filter.Reload(msg)
+}
+
+// OnGetAddr is invoked when a peer receives a getaddr wire message and is used
+// to provide the peer with known addresses from the address manager.
+func (sp *serverWitnessPeer) OnGetWitnessAddr(p *peer.WitnessPeer, msg *wire.MsgGetAddr) {
+	// Don't return any addresses when running on the simulation test
+	// network.  This helps prevent the network from becoming another
+	// public test network since it will not be able to learn about other
+	// peers that have not specifically been provided.
+	if cfg.SimNet {
+		return
+	}
+
+	// Do not accept getaddr requests from outbound peers.  This reduces
+	// fingerprinting attacks.
+	if !p.Inbound() {
+		return
+	}
+
+	// Get the current known addresses from the address manager.
+	addrCache := sp.server.witnessAddrManager.AddressCache()
+
+	// Push the addresses.
+	sp.pushAddrMsg(addrCache)
+}
+
+// OnAddr is invoked when a peer receives an addr wire message and is used to
+// notify the server about advertised addresses.
+func (sp *serverWitnessPeer) OnWitnessAddr(p *peer.WitnessPeer, msg *wire.MsgAddr) {
+	// Ignore addresses when running on the simulation test network.  This
+	// helps prevent the network from becoming another public test network
+	// since it will not be able to learn about other peers that have not
+	// specifically been provided.
+	if cfg.SimNet {
+		return
+	}
+
+	// A message that has no addresses is invalid.
+	if len(msg.AddrList) == 0 {
+		peerLog.Errorf("Command [%s] from %s does not contain any addresses",
+			msg.Command(), p)
+		p.Disconnect()
+		return
+	}
+
+	now := time.Now()
+	for _, na := range msg.AddrList {
+		// Don't add more address if we're disconnecting.
+		if !p.Connected() {
+			return
+		}
+
+		// Set the timestamp to 5 days ago if it's more than 24 hours
+		// in the future so this address is one of the first to be
+		// removed when space is needed.
+
+		if na.Timestamp.After(now.Add(time.Minute * 10)) {
+			na.Timestamp = now.Add(-1 * time.Hour * 24 * 5)
+		}
+
+		// Add address to known addresses for this peer.
+		sp.addKnownAddresses([]*wire.NetAddress{na})
+	}
+
+	// Add addresses to server address manager.  The address manager handles
+	// the details of things such as preventing duplicate addresses, max
+	// addresses, and last seen updates.
+	// XXX bitcoind gives a 2 hour time penalty here, do we want to do the
+	// same?
+	sp.server.witnessAddrManager.AddAddresses(msg.AddrList, p.NA())
+}
+
+// OnRead is invoked when a peer receives a message and it is used to update
+// the bytes received by the server.
+func (sp *serverWitnessPeer) OnWitnessRead(p *peer.WitnessPeer, bytesRead int, msg wire.Message, err error) {
+	sp.server.AddBytesWitnessReceived(uint64(bytesRead))
+}
+
+// OnWrite is invoked when a peer sends a message and it is used to update
+// the bytes sent by the server.
+func (sp *serverWitnessPeer) OnWitnessWrite(p *peer.WitnessPeer, bytesWritten int, msg wire.Message, err error) {
+	sp.server.AddBytesWitnessSent(uint64(bytesWritten))
+}
 
 // AddRebroadcastInventory adds 'iv' to the list of inventories to be
 // rebroadcasted at random intervals until they show up in a block.
@@ -418,10 +590,6 @@ func (s *server) RemoveRebroadcastWitnessInventory(iv *wire.InvVect) {
 
 	s.modifyRebroadcastWitnessInv <- broadcastInventoryDel(iv)
 }
-
-
-
-
 
 func (s *server) pushWitnessTxMsg(sp *serverWitnessPeer, hash *chainhash.Hash, doneChan chan<- struct{}, waitChan <-chan struct{}) error {
 	// Attempt to fetch the requested transaction from the pool.  A
@@ -451,9 +619,6 @@ func (s *server) pushWitnessTxMsg(sp *serverWitnessPeer, hash *chainhash.Hash, d
 
 	return nil
 }
-
-
-
 
 // handleAddPeerMsg deals with adding new peers.  It is invoked from the
 // peerHandler goroutine.
@@ -576,7 +741,6 @@ func (s *server) handleRelayWitnessInvMsg(state *witnessPeerState, msg relayMsg)
 			return
 		}
 
-
 		if msg.invVect.Type == wire.InvTypeTx {
 			// Don't relay the transaction to the peer when it has
 			// transaction relaying disabled.
@@ -624,13 +788,9 @@ func (s *server) handleBroadcastWitnessMsg(state *witnessPeerState, bmsg *broadc
 	})
 }
 
-
-
 type getWitnessPeersMsg struct {
 	reply chan []*serverWitnessPeer
 }
-
-
 
 type getAddedWitnessNodesMsg struct {
 	reply chan []*serverWitnessPeer
@@ -789,36 +949,28 @@ func disconnectWitnessPeer(peerList map[int32]*serverWitnessPeer, compareFunc fu
 }
 
 // newPeerConfig returns the configuration for the given serverPeer.
-func newWitnessPeerConfig(sp *serverPeer) *peer.Config {
-	return &peer.Config{
-		Listeners: peer.MessageListeners{
-			OnVersion:        sp.OnVersion,
-			OnMemPool:        sp.OnMemPool,
-			OnGetMiningState: sp.OnGetMiningState,
-			OnMiningState:    sp.OnMiningState,
-			OnTx:             sp.OnTx,
-			OnBlock:          sp.OnBlock,
-			OnInv:            sp.OnInv,
-			OnHeaders:        sp.OnHeaders,
-			OnGetData:        sp.OnGetData,
-			OnGetBlocks:      sp.OnGetBlocks,
-			OnGetHeaders:     sp.OnGetHeaders,
-			OnFilterAdd:      sp.OnFilterAdd,
-			OnFilterClear:    sp.OnFilterClear,
-			OnFilterLoad:     sp.OnFilterLoad,
-			OnGetAddr:        sp.OnGetAddr,
-			OnAddr:           sp.OnAddr,
-			OnRead:           sp.OnRead,
-			OnWrite:          sp.OnWrite,
+func newWitnessPeerConfig(sp *serverWitnessPeer) *peer.WitnessConfig {
+	return &peer.WitnessConfig{
+		Listeners: peer.WitnessMessageListeners{
+			OnVersion:     sp.OnVersion,
+			OnTx:          sp.OnWitnessTx,
+			OnInv:         sp.OnWitnessInv,
+			OnGetData:     sp.OnGetData,
+			OnFilterAdd:   sp.OnWitnessFilterAdd,
+			OnFilterClear: sp.OnWitnessFilterClear,
+			OnFilterLoad:  sp.OnWitnessFilterLoad,
+			OnGetAddr:     sp.OnGetWitnessAddr,
+			OnAddr:        sp.OnWitnessAddr,
+			OnRead:        sp.OnWitnessRead,
+			OnWrite:       sp.OnWitnessWrite,
 		},
-		NewestBlock:      sp.newestBlock,
-		HostToNetAddress: sp.server.addrManager.HostToNetAddress,
+		HostToNetAddress: sp.server.witnessAddrManager.HostToNetAddress,
 		Proxy:            cfg.Proxy,
 		UserAgentName:    userAgentName,
 		UserAgentVersion: userAgentVersion,
 		ChainParams:      sp.server.chainParams,
 		Services:         sp.server.services,
-		DisableRelayTx:   cfg.BlocksOnly,
+		DisableRelayTx:   false,
 		ProtocolVersion:  maxProtocolVersion,
 	}
 }
@@ -828,11 +980,11 @@ func newWitnessPeerConfig(sp *serverPeer) *peer.Config {
 // instance, associates it with the connection, and starts a goroutine to wait
 // for disconnection.
 func (s *server) inboundWitnessPeerConnected(conn net.Conn) {
-	sp := newServerPeer(s, false)
+	sp := newserverWitnessPeer(s, false)
 	sp.isWhitelisted = isWhitelisted(conn.RemoteAddr())
-	sp.Peer = peer.NewInboundPeer(newPeerConfig(sp))
+	sp.WitnessPeer = peer.NewInboundWitnessPeer(newWitnessPeerConfig(sp))
 	sp.AssociateConnection(conn)
-	go s.peerDoneHandler(sp)
+	go s.witnessPeerDoneHandler(sp)
 }
 
 // outboundPeerConnected is invoked by the connection manager when a new
@@ -841,30 +993,30 @@ func (s *server) inboundWitnessPeerConnected(conn net.Conn) {
 // request instance and the connection itself, and finally notifies the address
 // manager of the attempt.
 func (s *server) outboundWitnessPeerConnected(c *connmgr.ConnReq, conn net.Conn) {
-	sp := newServerPeer(s, c.Permanent)
-	p, err := peer.NewOutboundPeer(newPeerConfig(sp), c.Addr.String())
+	sp := newserverWitnessPeer(s, c.Permanent)
+	p, err := peer.NewOutboundWitnessPeer(newWitnessPeerConfig(sp), c.Addr.String())
 	if err != nil {
 		srvrLog.Debugf("Cannot create outbound peer %s: %v", c.Addr, err)
 		s.connManager.Disconnect(c.ID())
 		return
 	}
-	sp.Peer = p
+	sp.WitnessPeer = p
 	sp.connReq = c
 	sp.isWhitelisted = isWhitelisted(conn.RemoteAddr())
 	sp.AssociateConnection(conn)
-	go s.peerDoneHandler(sp)
-	s.addrManager.Attempt(sp.NA())
+	go s.witnessPeerDoneHandler(sp)
+	s.witnessAddrManager.Attempt(sp.NA())
 }
 
 // peerDoneHandler handles peer disconnects by notifiying the server that it's
 // done.
-func (s *server) witnessPeerDoneHandler(sp *serverPeer) {
+func (s *server) witnessPeerDoneHandler(sp *serverWitnessPeer) {
 	sp.WaitForDisconnect()
-	s.donePeers <- sp
+	s.doneWitnessPeers <- sp
 
 	// Only tell block manager we are gone if we ever told it we existed.
 	if sp.VersionKnown() {
-		s.blockManager.DonePeer(sp)
+		s.blockManager.DoneWitnessPeer(sp)
 	}
 	close(sp.quit)
 }
@@ -969,8 +1121,6 @@ func (s *server) AddWitnessPeer(sp *serverWitnessPeer) {
 func (s *server) BanWitnessPeer(sp *serverWitnessPeer) {
 	s.banWitnessPeers <- sp
 }
-
-
 
 // RelayInventory relays the passed inventory vector to all connected peers
 // that are not already known to have it.
@@ -1105,8 +1255,6 @@ func (s *server) WitnessNetTotals() (uint64, uint64) {
 		atomic.LoadUint64(&s.bytesWitnessSent)
 }
 
-
-
 // rebroadcastHandler keeps track of user submitted inventories that we have
 // sent out but have not yet made it into a block. We periodically rebroadcast
 // them in case our peers restarted or otherwise lost track of them.
@@ -1167,6 +1315,7 @@ cleanup:
 	}
 	s.wg.Done()
 }
+
 type witnessPeerState struct {
 	inboundPeers    map[int32]*serverWitnessPeer
 	outboundPeers   map[int32]*serverWitnessPeer

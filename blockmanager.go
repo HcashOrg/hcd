@@ -104,6 +104,10 @@ type donePeerMsg struct {
 	peer *serverPeer
 }
 
+type doneWitnessPeerMsg struct{
+	peer *serverWitnessPeer
+}
+
 // txMsg packages a hcd tx message and the peer it came from together
 // so the block handler has access to that information.
 type txMsg struct {
@@ -2337,6 +2341,19 @@ func (b *blockManager) DonePeer(sp *serverPeer) {
 
 	b.msgChan <- &donePeerMsg{peer: sp}
 }
+
+
+func (b *blockManager) DoneWitnessPeer(sp *serverWitnessPeer) {
+	// Ignore if we are shutting down.
+	if atomic.LoadInt32(&b.shutdown) != 0 {
+		return
+	}
+
+	b.msgChan <- &doneWitnessPeerMsg{peer: sp}
+}
+
+
+
 
 // Start begins the core block handler which processes block and inv messages.
 func (b *blockManager) Start() {

@@ -68,8 +68,6 @@ type WitnessMessageListeners struct {
 	// OnAlert is invoked when a WitnessPeer receives an alert wire message.
 	OnAlert func(p *WitnessPeer, msg *wire.MsgAlert)
 
-	// OnMemPool is invoked when a WitnessPeer receives a mempool wire message.
-	OnMemPool func(p *WitnessPeer, msg *wire.MsgMemPool)
 
 	// OnTx is invoked when a WitnessPeer receives a tx wire message.
 	OnTx func(p *WitnessPeer, msg *wire.MsgTx)
@@ -77,8 +75,6 @@ type WitnessMessageListeners struct {
 	// OnInv is invoked when a WitnessPeer receives an inv wire message.
 	OnInv func(p *WitnessPeer, msg *wire.MsgInv)
 
-	// OnHeaders is invoked when a WitnessPeer receives a headers wire message.
-	OnHeaders func(p *WitnessPeer, msg *wire.MsgHeaders)
 
 	// OnNotFound is invoked when a WitnessPeer receives a notfound wire message.
 	OnNotFound func(p *WitnessPeer, msg *wire.MsgNotFound)
