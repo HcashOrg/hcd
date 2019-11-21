@@ -63,3 +63,40 @@ func SeedFromDNS(chainParams *chaincfg.Params, lookupFn LookupFunc, seedFn OnSee
 		}(seeder)
 	}
 }
+
+
+// SeedFromDNS uses DNS seeding to populate the address manager with peers.
+func SeedFromWitnessDNS(chainParams *chaincfg.Params, lookupFn LookupFunc, seedFn OnSeed) {
+	for _, seeder := range chainParams.WitnessDNSSeeds {
+		go func(seeder string) {
+			randSource := mrand.New(mrand.NewSource(time.Now().UnixNano()))
+
+			seedpeers, err := lookupFn(seeder)
+			if err != nil {
+				log.Infof("DNS discovery failed on seed %s: %v", seeder, err)
+				return
+			}
+			numPeers := len(seedpeers)
+
+			log.Infof("%d addresses found from DNS seed %s", numPeers, seeder)
+
+			if numPeers == 0 {
+				return
+			}
+			addresses := make([]*wire.NetAddress, len(seedpeers))
+			// if this errors then we have *real* problems
+			intPort, _ := strconv.Atoi(chainParams.DefaultWitnessPort)
+			for i, peer := range seedpeers {
+				addresses[i] = wire.NewNetAddressTimestamp(
+					// bitcoind seeds with addresses from
+					// a time randomly selected between 3
+					// and 7 days ago.
+					time.Now().Add(-1*time.Second*time.Duration(secondsIn3Days+
+						randSource.Int31n(secondsIn4Days))),
+					0, peer, uint16(intPort))
+			}
+
+			seedFn(addresses)
+		}(seeder)
+	}
+}

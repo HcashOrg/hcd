@@ -206,6 +206,8 @@ type Params struct {
 	// as one method to discover peers.
 	DNSSeeds []string
 
+	WitnessDNSSeeds []string
+
 	// GenesisBlock defines the first block of the chain.
 	GenesisBlock *wire.MsgBlock
 
@@ -466,6 +468,9 @@ var MainNetParams = Params{
 		"mainnet4.h.cash",
 		"mainnet5.h.cash",
 	},
+	WitnessDNSSeeds:[]string{
+
+	},
 
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
@@ -578,7 +583,9 @@ var TestNet2Params = Params{
 		//"testnet2.h.cash",
 		//"testnet3.h.cash",
 	},
+	WitnessDNSSeeds:[]string{
 
+	},
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
 	GenesisHash:              &testNet2GenesisHash,
@@ -721,7 +728,9 @@ var SimNetParams = Params{
 	DefaultPort: "13008",
 	DefaultWitnessPort:"13009",
 	DNSSeeds:    []string{}, // NOTE: There must NOT be any seeds.
+	WitnessDNSSeeds:[]string{
 
+	},
 	// Chain parameters
 	GenesisBlock:             &simNetGenesisBlock,
 	GenesisHash:              &simNetGenesisHash,
