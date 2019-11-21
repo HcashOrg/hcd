@@ -460,7 +460,7 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "14008",
-	DefaultWitnessPort:"14009",
+	DefaultWitnessPort:"14007",
 	DNSSeeds: []string{
 		"mainnet1.h.cash",
 		"mainnet2.h.cash",
@@ -577,7 +577,7 @@ var TestNet2Params = Params{
 	Name:        "testnet2",
 	Net:         wire.TestNet2,
 	DefaultPort: "12008",
-	DefaultWitnessPort:"12009",
+	DefaultWitnessPort:"12007",
 	DNSSeeds: []string{
 		//"testnet1.h.cash",
 		//"testnet2.h.cash",
@@ -726,7 +726,7 @@ var SimNetParams = Params{
 	Name:        "simnet",
 	Net:         wire.SimNet,
 	DefaultPort: "13008",
-	DefaultWitnessPort:"13009",
+	DefaultWitnessPort:"13007",
 	DNSSeeds:    []string{}, // NOTE: There must NOT be any seeds.
 	WitnessDNSSeeds:[]string{
 

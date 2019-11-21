@@ -2076,6 +2076,9 @@ func (s *server) Start() {
 	s.wg.Add(1)
 	go s.peerHandler()
 
+	s.wg.Add(1)
+	go s.witnessPeerHandler()
+
 	if s.nat != nil {
 		s.wg.Add(1)
 		go s.upnpUpdateThread()
