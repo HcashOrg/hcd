@@ -2627,6 +2627,7 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 	// discovered peers in order to prevent it from becoming a public test
 	// network.
 	var newAddressFunc func() (net.Addr, error)
+	var newWitnessAddressFunc func()(net.Addr,error)
 	if !cfg.SimNet && len(cfg.ConnectPeers) == 0 {
 		newAddressFunc = func() (net.Addr, error) {
 			for tries := 0; tries < 100; tries++ {
@@ -2664,6 +2665,43 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 
 			return nil, errors.New("no valid connect address")
 		}
+
+		newWitnessAddressFunc = func() (net.Addr, error) {
+			for tries := 0; tries < 100; tries++ {
+				addr := s.witnessAddrManager.GetAddress()
+				if addr == nil {
+					break
+				}
+
+				// Address will not be invalid, local or unroutable
+				// because addrmanager rejects those on addition.
+				// Just check that we don't already have an address
+				// in the same group so that we are not connecting
+				// to the same network segment at the expense of
+				// others.
+				key := addrmgr.GroupKey(addr.NetAddress())
+				if s.WitnessOutboundGroupCount(key) != 0 {
+					continue
+				}
+
+				// only allow recent nodes (10mins) after we failed 30
+				// times
+				if tries < 30 && time.Now().Sub(addr.LastAttempt()) < 10*time.Minute {
+					continue
+				}
+
+				// allow nondefault ports after 50 failed tries.
+				if fmt.Sprintf("%d", addr.NetAddress().Port) !=
+					activeNetParams.DefaultWitnessPort && tries < 50 {
+					continue
+				}
+
+				addrString := addrmgr.NetAddressKey(addr.NetAddress())
+				return addrStringToNetAddr(addrString)
+			}
+
+			return nil, errors.New("no valid connect witness address")
+		}
 	}
 
 	// Create a connection manager.
@@ -2686,7 +2724,12 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 
 	witnessCmgr,err:=connmgr.New(&connmgr.Config{
 		Listeners:witnessListeners,
-
+		OnAccept:s.inboundWitnessPeerConnected,
+		RetryDuration:connectionRetryInterval,
+		TargetOutbound:uint32(targetOutbound),
+		Dial:hcdDial,
+		OnConnection:s.outboundWitnessPeerConnected,
+		GetNewAddress:newWitnessAddressFunc,
 	})
 	if err != nil {
 		return nil, err
