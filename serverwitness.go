@@ -9,6 +9,7 @@ import (
 	"github.com/HcashOrg/hcd/hcutil/bloom"
 	"github.com/HcashOrg/hcd/peer"
 	"github.com/HcashOrg/hcd/wire"
+	"go-common/library/log"
 	"net"
 	"regexp"
 	"strconv"
@@ -1050,6 +1051,7 @@ func (s *server) witnessPeerHandler() {
 			// DNS seed lookups will vary quite a lot.
 			// to replicate this behaviour we put all addresses as
 			// having come from the first one.
+			log.Info("SeedFromWitnessDNS",addrs[0])
 			s.witnessAddrManager.AddAddresses(addrs, addrs[0])
 		})
 	}

@@ -78,7 +78,7 @@ func SeedFromWitnessDNS(chainParams *chaincfg.Params, lookupFn LookupFunc, seedF
 			}
 			numPeers := len(seedpeers)
 
-			log.Infof("%d addresses found from DNS seed %s", numPeers, seeder)
+			log.Infof("%d witness addresses found from DNS seed %s", numPeers, seeder)
 
 			if numPeers == 0 {
 				return

@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"go-common/library/log"
 	"net"
 	"os"
 	"os/user"
@@ -1135,6 +1136,7 @@ func loadConfig() (*config, []string, error) {
 // one was specified, but will otherwise use the normal dial function (which
 // could itself use a proxy or not).
 func hcdDial(addr net.Addr) (net.Conn, error) {
+	log.Info("hcddail:",addr.String())
 	if strings.Contains(addr.String(), ".onion:") {
 		return cfg.oniondial(addr.Network(), addr.String())
 	}

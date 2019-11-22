@@ -469,7 +469,7 @@ var MainNetParams = Params{
 		"mainnet5.h.cash",
 	},
 	WitnessDNSSeeds:[]string{
-
+		//"47.75.209.228",
 	},
 
 	// Chain parameters

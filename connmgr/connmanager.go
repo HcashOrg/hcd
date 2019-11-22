@@ -262,7 +262,7 @@ out:
 			case handleFailed:
 				connReq := msg.c
 				connReq.updateState(ConnFailed)
-				log.Debugf("Failed to connect to %v: %v", connReq, msg.err)
+				log.Errorf("Failed to connect to %v: %v", connReq, msg.err)
 				cm.handleFailedConn(connReq)
 			}
 
@@ -289,6 +289,7 @@ func (cm *ConnManager) NewConnReq() {
 	atomic.StoreUint64(&c.id, atomic.AddUint64(&cm.connReqCount, 1))
 
 	addr, err := cm.cfg.GetNewAddress()
+	log.Info("new connreq ",addr,err)
 	if err != nil {
 		cm.requests <- handleFailed{c, err}
 		return
