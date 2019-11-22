@@ -169,6 +169,7 @@ func (sp *serverWitnessPeer) addBanScore(persistent, transient uint32, reason st
 // to negotiate the protocol version details as well as kick start the
 // communications.
 func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion) {
+	fmt.Println("onversion",p.String())
 	// Update the address manager with the advertised services for outbound
 	// connections in case they have changed.  This is not done for inbound
 	// connections to help prevent malicious behavior and is skipped when
@@ -1051,7 +1052,6 @@ func (s *server) witnessPeerHandler() {
 			// DNS seed lookups will vary quite a lot.
 			// to replicate this behaviour we put all addresses as
 			// having come from the first one.
-			fmt.Println("SeedFromWitnessDNS",addrs[0])
 			s.witnessAddrManager.AddAddresses(addrs, addrs[0])
 		})
 	}

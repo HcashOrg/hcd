@@ -1194,6 +1194,8 @@ func (s *server) AnnounceNewTransactions(newTxs []*hcutil.Tx) {
 		iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
 		s.RelayInventory(iv, tx)
 
+		s.RelayWitnessInventory(iv,tx)
+
 		if s.rpcServer != nil {
 			// Notify websocket clients about mempool transactions.
 			s.rpcServer.ntfnMgr.NotifyMempoolTx(tx, true)
@@ -2523,6 +2525,7 @@ func newServer(listenAddrs []string, witnessListenAddrs []string, db database.DB
 		query:                       make(chan interface{}),
 		queryWitness:                make(chan interface{}),
 		relayInv:                    make(chan relayMsg, cfg.MaxPeers),
+		relayWitnessInv:make(chan relayMsg,cfg.MaxPeers),
 		broadcast:                   make(chan broadcastMsg, cfg.MaxPeers),
 		broadcastWitness:            make(chan broadcastWitnessMsg, cfg.MaxPeers),
 		quit:                        make(chan struct{}),

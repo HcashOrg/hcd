@@ -584,7 +584,7 @@ var TestNet2Params = Params{
 		//"testnet3.h.cash",
 	},
 	WitnessDNSSeeds:[]string{
-
+		//"47.75.209.228",
 	},
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
