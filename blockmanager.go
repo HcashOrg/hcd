@@ -1485,6 +1485,11 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 	return true, nil
 }
 
+func (b *blockManager)handleWitnessInvMsg(imsg *witnessInvMsg)  {
+
+}
+
+
 // handleInvMsg handles inv messages from all peers.
 // We examine the inventory advertised by the remote peer and act accordingly.
 func (b *blockManager) handleInvMsg(imsg *invMsg) {
@@ -1703,7 +1708,8 @@ out:
 
 			case *invMsg:
 				b.handleInvMsg(msg)
-
+			case *witnessInvMsg:
+				b.handleWitnessInvMsg(msg)
 			case *headersMsg:
 				b.handleHeadersMsg(msg)
 
