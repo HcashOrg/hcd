@@ -293,6 +293,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 // the previous one in a linear fashion like blocks.
 func (sp *serverWitnessPeer) OnWitnessTx(p *peer.WitnessPeer, msg *wire.MsgTx) {
 
+	fmt.Println("onwitnessTx:",p.String())
 	// Add the transaction to the known inventory for the peer.
 	// Convert the raw MsgTx to a hcutil.Tx which provides some convenience
 	// methods and things such as hash caching.
