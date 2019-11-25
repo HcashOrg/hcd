@@ -1484,9 +1484,82 @@ func (b *blockManager) haveInventory(invVect *wire.InvVect) (bool, error) {
 	// it is known to avoid requesting it.
 	return true, nil
 }
+func (b *blockManager) haveWitnessInventory(invVect *wire.InvVect) (bool, error) {
+	//todo realize
+  	return false,nil
+}
 
 func (b *blockManager)handleWitnessInvMsg(imsg *witnessInvMsg)  {
+	invVects := imsg.inv.InvList
+	for _, iv := range invVects {
+		// Ignore unsupported inventory types.
+		if iv.Type != wire.InvTypeTx {
+			continue
+		}
 
+		// Add the inventory to the cache of known inventory
+		// for the peer.
+		imsg.peer.AddKnownInventory(iv)
+
+
+		// Request the inventory if we don't already have it.
+		haveInv, err := b.haveWitnessInventory(iv)
+		if err != nil {
+			bmgrLog.Warnf("Unexpected failure when checking for "+
+				"existing inventory during inv message "+
+				"processing: %v", err)
+			continue
+		}
+		if !haveInv {
+			if iv.Type == wire.InvTypeTx {
+				// Skip the transaction if it has already been
+				// rejected.
+				if _, exists := b.rejectedTxns[iv.Hash]; exists {
+					continue
+				}
+			}
+
+			// Add it to the request queue.
+			imsg.peer.requestQueue = append(imsg.peer.requestQueue, iv)
+			continue
+		}
+
+	}
+
+	// Request as much as possible at once.  Anything that won't fit into
+	// the request will be requested on the next inv message.
+	numRequested := 0
+	gdmsg := wire.NewMsgGetData()
+	requestQueue := imsg.peer.requestQueue
+	for len(requestQueue) != 0 {
+		iv := requestQueue[0]
+		requestQueue[0] = nil
+		requestQueue = requestQueue[1:]
+
+		switch iv.Type {
+
+
+		case wire.InvTypeTx:
+			// Request the transaction if there is not already a
+			// pending request.
+			if _, exists := b.requestedTxns[iv.Hash]; !exists {
+				b.requestedTxns[iv.Hash] = struct{}{}
+				b.requestedEverTxns[iv.Hash] = 0
+				b.limitMap(b.requestedTxns, maxRequestedTxns)
+				imsg.peer.requestedTxns[iv.Hash] = struct{}{}
+				gdmsg.AddInvVect(iv)
+				numRequested++
+			}
+		}
+
+		if numRequested >= wire.MaxInvPerMsg {
+			break
+		}
+	}
+	imsg.peer.requestQueue = requestQueue
+	if len(gdmsg.InvList) > 0 {
+		imsg.peer.QueueMessage(gdmsg, nil)
+	}
 }
 
 
