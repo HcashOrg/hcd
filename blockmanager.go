@@ -86,6 +86,8 @@ type invMsg struct {
 	peer *serverPeer
 }
 
+// witnesInvMsg packages a hcd witness inv message and the peer it came from together
+// so the block handler has access to that information.
 type witnessInvMsg struct {
 	inv  *wire.MsgInv
 	peer *serverWitnessPeer
@@ -1497,16 +1499,16 @@ func (b *blockManager)handleWitnessInvMsg(imsg *witnessInvMsg)  {
 			continue
 		}
 
-		// Add the inventory to the cache of known inventory
+		// Add the witness inventory to the cache of known inventory
 		// for the peer.
 		imsg.peer.AddKnownInventory(iv)
 
 
-		// Request the inventory if we don't already have it.
+		// Request the witness inventory if we don't already have it.
 		haveInv, err := b.haveWitnessInventory(iv)
 		if err != nil {
 			bmgrLog.Warnf("Unexpected failure when checking for "+
-				"existing inventory during inv message "+
+				"existing witnesss inventory during inv message "+
 				"processing: %v", err)
 			continue
 		}
