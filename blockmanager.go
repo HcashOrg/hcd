@@ -1501,7 +1501,7 @@ func (b *blockManager)handleWitnessInvMsg(imsg *witnessInvMsg)  {
 
 		// Add the witness inventory to the cache of known inventory
 		// for the peer.
-		imsg.peer.AddKnownInventory(iv)
+		imsg.peer.AddKnownWitnessInventory(iv)
 
 
 		// Request the witness inventory if we don't already have it.

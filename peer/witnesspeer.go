@@ -280,11 +280,11 @@ func (p *WitnessPeer) String() string {
 	return fmt.Sprintf("%s (%s)", p.addr, directionString(p.inbound))
 }
 
-// AddKnownInventory adds the passed inventory to the cache of known inventory
+// AddKnownWitnessInventory adds the passed inventory to the cache of known inventory
 // for the WitnessPeer.
 //
 // This function is safe for concurrent access.
-func (p *WitnessPeer) AddKnownInventory(invVect *wire.InvVect) {
+func (p *WitnessPeer) AddKnownWitnessInventory(invVect *wire.InvVect) {
 	p.knownInventory.Add(invVect)
 }
 
@@ -1303,7 +1303,7 @@ out:
 
 				// Add the inventory that is being relayed to
 				// the known inventory for the WitnessPeer.
-				p.AddKnownInventory(iv)
+				p.AddKnownWitnessInventory(iv)
 			}
 			if len(invMsg.InvList) > 0 {
 				waiting = queuePacket(outMsg{msg: invMsg},

@@ -477,7 +477,7 @@ func (p *Peer) UpdateLastAnnouncedBlock(blkHash *chainhash.Hash) {
 	p.statsMtx.Unlock()
 }
 
-// AddKnownInventory adds the passed inventory to the cache of known inventory
+// AddKnownWitnessInventory adds the passed inventory to the cache of known inventory
 // for the peer.
 //
 // This function is safe for concurrent access.

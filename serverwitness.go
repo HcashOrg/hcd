@@ -299,7 +299,7 @@ func (sp *serverWitnessPeer) OnWitnessTx(p *peer.WitnessPeer, msg *wire.MsgTx) {
 	// methods and things such as hash caching.
 	tx := hcutil.NewTx(msg)
 	iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
-	p.AddKnownInventory(iv)
+	p.AddKnownWitnessInventory(iv)
 
 	// Queue the transaction up to be handled by the block manager and
 	// intentionally block further receives until the transaction is fully
