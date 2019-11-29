@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	// nodeCount is the total number of WitnessPeer connections made since startup
+	// witness nodeCount is the total number of WitnessPeer connections made since startup
 	// and is used to assign an id to a WitnessPeer.
 	witnessNodeCount int32
 
@@ -33,17 +33,17 @@ var (
 	// convenience.
 	witnessZeroHash chainhash.Hash
 
-	// sentNonces houses the unique nonces that are generated when pushing
+	//witness sentNonces houses the unique nonces that are generated when pushing
 	// version messages that are used to detect self connections.
 	witnessSentNonces = newMruNonceMap(50)
 
-	// allowSelfConns is only used to allow the tests to bypass the self
+	// witness allowSelfConns is only used to allow the tests to bypass the self
 	// connection detecting and disconnect logic since they intentionally
 	// do so for testing purposes.
 	witnessAllowSelfConns bool
 )
 
-// MessageListeners defines callback function pointers to invoke with message
+// witnessMessageListeners defines callback function pointers to invoke with message
 // listeners for a WitnessPeer. Any listener which is not set to a concrete callback
 // during WitnessPeer initialization is ignored. Execution of multiple message
 // listeners occurs serially, so one callback blocks the execution of the next.
@@ -121,7 +121,7 @@ type WitnessMessageListeners struct {
 	OnWrite func(p *WitnessPeer, bytesWritten int, msg wire.Message, err error)
 }
 
-// Config is the struct to hold configuration options useful to WitnessPeer.
+// witnessConfig is the struct to hold configuration options useful to WitnessPeer.
 type WitnessConfig struct {
 	// NewestBlock specifies a callback which provides the newest block
 	// details to the WitnessPeer as needed.  This can be nil in which case the
