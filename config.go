@@ -967,6 +967,10 @@ func loadConfig() (*config, []string, error) {
 	cfg.Listeners = normalizeAddresses(cfg.Listeners,
 		activeNetParams.DefaultPort)
 
+
+	cfg.WitnessListeners = normalizeAddresses(cfg.WitnessListeners,
+		activeNetParams.DefaultWitnessPort)
+
 	// Add default port to all rpc listener addresses if needed and remove
 	// duplicate addresses.
 	cfg.RPCListeners = normalizeAddresses(cfg.RPCListeners,
