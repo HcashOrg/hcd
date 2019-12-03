@@ -3,8 +3,10 @@ package peer_test
 import (
 	"errors"
 	"github.com/HcashOrg/hcd/chaincfg"
+	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/peer"
 	"github.com/HcashOrg/hcd/wire"
+	"io"
 	"sync"
 	"testing"
 	"time"
@@ -224,9 +226,8 @@ func TestWitnessPeerConnection(t *testing.T) {
 // TestWitnessPeerListeners tests that the peer listeners are called as expected.
 func TestWitnessPeerListeners(t *testing.T) {
 	verack := make(chan struct{}, 1)
-	version:=make(chan wire.Message,1)
+	version := make(chan wire.Message, 1)
 	ok := make(chan wire.Message, 15)
-
 
 	peerCfg := &peer.WitnessConfig{
 		Listeners: peer.WitnessMessageListeners{
@@ -307,11 +308,11 @@ func TestWitnessPeerListeners(t *testing.T) {
 	outPeer.AssociateConnection(outConn)
 
 	select {
-	 case <-version:
-	 case <-time.After(time.Second * 1):
+	case <-version:
+	case <-time.After(time.Second * 1):
 		t.Errorf("TestPeerListeners: verack timeout\n")
 		return
-	 }
+	}
 
 	for i := 0; i < 2; i++ {
 		select {
@@ -391,8 +392,8 @@ func TestWitnessPeerListeners(t *testing.T) {
 		outPeer.QueueMessage(test.msg, nil)
 		//wait until ok or fail , then next test
 		select {
-		case msg:=<-ok:
-			t.Log("ok",msg.Command(),test.listener)
+		case msg := <-ok:
+			t.Log("ok", msg.Command(), test.listener)
 		case <-time.After(time.Second * 1):
 			t.Errorf("TestPeerListeners: %s timeout", test.listener)
 			return
@@ -400,4 +401,115 @@ func TestWitnessPeerListeners(t *testing.T) {
 	}
 	inPeer.Disconnect()
 	outPeer.Disconnect()
+}
+
+// TestOutboundWitnessPeer tests that the outbound peer works as expected.
+func TestOutboundWitnessPeer(t *testing.T) {
+	peerCfg := &peer.WitnessConfig{
+		NewestBlock: func() (*chainhash.Hash, int64, error) {
+			return nil, 0, errors.New("newest block not found")
+		},
+		UserAgentName:    "witnesspeer",
+		UserAgentVersion: "1.0",
+		ChainParams:      &chaincfg.MainNetParams,
+		Services:         0,
+	}
+
+	//test connect
+	r, w := io.Pipe()
+	c := &conn{raddr: "10.0.0.1:8333", Writer: w, Reader: r}
+
+	p, err := peer.NewOutboundWitnessPeer(peerCfg, "10.0.0.1:8333")
+	if err != nil {
+		t.Errorf("NewOutboundPeer: unexpected err - %v\n", err)
+		return
+	}
+
+	// Test trying to connect twice.
+	p.AssociateConnection(c)
+	p.AssociateConnection(c)
+
+
+	disconnected := make(chan struct{})
+	go func() {
+		p.WaitForDisconnect()
+		disconnected <- struct{}{}
+	}()
+
+	select {
+	case <-disconnected:
+		close(disconnected)
+	case <-time.After(time.Second):
+		t.Fatal("Peer did not automatically disconnect.")
+	}
+
+	if p.Connected() {
+		t.Fatalf("Should not be connected as c.close error.")
+	}
+
+	// Test Queue Inv
+	fakeTxHash := &chainhash.Hash{0: 0x00, 1: 0x01}
+
+	fakeInv := wire.NewInvVect(wire.InvTypeTx, fakeTxHash)
+
+	// Should be noops as the peer could not connect.
+	p.QueueInventory(fakeInv)
+	p.AddKnownWitnessInventory(fakeInv)
+	p.QueueInventory(fakeInv)
+
+	fakeMsg := wire.NewMsgVerAck()
+	p.QueueMessage(fakeMsg, nil)
+	done := make(chan struct{})
+	p.QueueMessage(fakeMsg, done)
+	<-done
+	p.Disconnect()
+
+	r1, w1 := io.Pipe()
+	c1 := &conn{raddr: "10.0.0.1:8333", Writer: w1, Reader: r1}
+	p1, err := peer.NewOutboundWitnessPeer(peerCfg, "10.0.0.1:8333")
+	if err != nil {
+		t.Errorf("NewOutboundPeer: unexpected err - %v\n", err)
+		return
+	}
+	p1.AssociateConnection(c1)
+
+	// Test Queue Inv after connection
+	p1.QueueInventory(fakeInv)
+	p1.Disconnect()
+
+	// Test testnet
+	peerCfg.ChainParams = &chaincfg.TestNet2Params
+	peerCfg.Services = wire.SFNodeBloom
+	r2, w2 := io.Pipe()
+	c2 := &conn{raddr: "10.0.0.1:8333", Writer: w2, Reader: r2}
+	p2, err := peer.NewOutboundWitnessPeer(peerCfg, "10.0.0.1:8333")
+	if err != nil {
+		t.Errorf("NewOutboundPeer: unexpected err - %v\n", err)
+		return
+	}
+	p2.AssociateConnection(c2)
+
+	// Test PushXXX
+	var addrs []*wire.NetAddress
+	for i := 0; i < 5; i++ {
+		na := wire.NetAddress{}
+		addrs = append(addrs, &na)
+	}
+	if _, err := p2.PushAddrMsg(addrs); err != nil {
+		t.Errorf("PushAddrMsg: unexpected err %v\n", err)
+		return
+	}
+
+	p2.PushRejectMsg("block", wire.RejectMalformed, "malformed", nil, false)
+	p2.PushRejectMsg("block", wire.RejectInvalid, "invalid", nil, false)
+
+	// Test Queue Messages
+	p2.QueueMessage(wire.NewMsgGetAddr(), nil)
+	p2.QueueMessage(wire.NewMsgPing(1), nil)
+	p2.QueueMessage(wire.NewMsgMemPool(), nil)
+	p2.QueueMessage(wire.NewMsgGetData(), nil)
+	p2.QueueMessage(wire.NewMsgGetHeaders(), nil)
+	p2.QueueMessage(wire.NewMsgFeeFilter(20000), nil)
+
+	p2.Disconnect()
 }
