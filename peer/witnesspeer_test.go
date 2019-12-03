@@ -107,8 +107,6 @@ func testWitnessPeer(t *testing.T, p *peer.WitnessPeer, s peerStats) {
 	}
 }
 
-
-
 // TestWitnessPeerConnection tests connection between inbound and outbound peers.
 func TestWitnessPeerConnection(t *testing.T) {
 	var pause sync.Mutex
@@ -221,4 +219,185 @@ func TestWitnessPeerConnection(t *testing.T) {
 		inPeer.WaitForDisconnect()
 		outPeer.WaitForDisconnect()
 	}
+}
+
+// TestWitnessPeerListeners tests that the peer listeners are called as expected.
+func TestWitnessPeerListeners(t *testing.T) {
+	verack := make(chan struct{}, 1)
+	version:=make(chan wire.Message,1)
+	ok := make(chan wire.Message, 15)
+
+
+	peerCfg := &peer.WitnessConfig{
+		Listeners: peer.WitnessMessageListeners{
+			OnGetAddr: func(p *peer.WitnessPeer, msg *wire.MsgGetAddr) {
+				ok <- msg
+			},
+			OnAddr: func(p *peer.WitnessPeer, msg *wire.MsgAddr) {
+				ok <- msg
+			},
+			OnPing: func(p *peer.WitnessPeer, msg *wire.MsgPing) {
+				ok <- msg
+			},
+			OnPong: func(p *peer.WitnessPeer, msg *wire.MsgPong) {
+				ok <- msg
+			},
+			OnAlert: func(p *peer.WitnessPeer, msg *wire.MsgAlert) {
+				ok <- msg
+			},
+			OnTx: func(p *peer.WitnessPeer, msg *wire.MsgTx) {
+				ok <- msg
+			},
+
+			OnInv: func(p *peer.WitnessPeer, msg *wire.MsgInv) {
+				ok <- msg
+			},
+
+			OnNotFound: func(p *peer.WitnessPeer, msg *wire.MsgNotFound) {
+				ok <- msg
+			},
+			OnGetData: func(p *peer.WitnessPeer, msg *wire.MsgGetData) {
+				ok <- msg
+			},
+
+			OnFeeFilter: func(p *peer.WitnessPeer, msg *wire.MsgFeeFilter) {
+				ok <- msg
+			},
+			OnFilterAdd: func(p *peer.WitnessPeer, msg *wire.MsgFilterAdd) {
+				ok <- msg
+			},
+			OnFilterClear: func(p *peer.WitnessPeer, msg *wire.MsgFilterClear) {
+				ok <- msg
+			},
+			OnFilterLoad: func(p *peer.WitnessPeer, msg *wire.MsgFilterLoad) {
+				ok <- msg
+			},
+			OnVersion: func(p *peer.WitnessPeer, msg *wire.MsgVersion) {
+				version <- msg
+			},
+			OnVerAck: func(p *peer.WitnessPeer, msg *wire.MsgVerAck) {
+				verack <- struct{}{}
+			},
+			OnReject: func(p *peer.WitnessPeer, msg *wire.MsgReject) {
+				ok <- msg
+			},
+		},
+		UserAgentName:    "witnesspeer",
+		UserAgentVersion: "1.0",
+		ChainParams:      &chaincfg.MainNetParams,
+		Services:         wire.SFNodeBloom,
+	}
+	inConn, outConn := pipe(
+		&conn{raddr: "10.0.0.1:8333"},
+		&conn{raddr: "10.0.0.2:8333"},
+	)
+	inPeer := peer.NewInboundWitnessPeer(peerCfg)
+	inPeer.AssociateConnection(inConn)
+
+	peerCfg.Listeners = peer.WitnessMessageListeners{
+		OnVerAck: func(p *peer.WitnessPeer, msg *wire.MsgVerAck) {
+			verack <- struct{}{}
+		},
+	}
+	outPeer, err := peer.NewOutboundWitnessPeer(peerCfg, "10.0.0.1:8333")
+	if err != nil {
+		t.Errorf("NewOutboundPeer: unexpected err %v\n", err)
+		return
+	}
+	outPeer.AssociateConnection(outConn)
+
+	select {
+	 case <-version:
+	 case <-time.After(time.Second * 1):
+		t.Errorf("TestPeerListeners: verack timeout\n")
+		return
+	 }
+
+	for i := 0; i < 2; i++ {
+		select {
+		case <-verack:
+		case <-time.After(time.Second * 1):
+			t.Errorf("TestPeerListeners: verack timeout\n")
+			return
+		}
+	}
+
+	tests := []struct {
+		listener string
+		msg      wire.Message
+	}{
+		{
+			"OnGetAddr",
+			wire.NewMsgGetAddr(),
+		},
+		{
+			"OnAddr",
+			wire.NewMsgAddr(),
+		},
+		{
+			"OnPing",
+			wire.NewMsgPing(42),
+		},
+		{
+			"OnPong",
+			wire.NewMsgPong(42),
+		},
+		{
+			"OnAlert",
+			wire.NewMsgAlert([]byte("payload"), []byte("signature")),
+		},
+		{
+			"OnTx",
+			wire.NewMsgTx(),
+		},
+		{
+			"OnInv",
+			wire.NewMsgInv(),
+		},
+		{
+			"OnNotFound",
+			wire.NewMsgNotFound(),
+		},
+		{
+			"OnGetData",
+			wire.NewMsgGetData(),
+		},
+		{
+			"OnFeeFilter",
+			wire.NewMsgFeeFilter(15000),
+		},
+		{
+			"OnFilterAdd",
+			wire.NewMsgFilterAdd([]byte{0x01}),
+		},
+		{
+			"OnFilterClear",
+			wire.NewMsgFilterClear(),
+		},
+		{
+			"OnFilterLoad",
+			wire.NewMsgFilterLoad([]byte{0x01}, 10, 0, wire.BloomUpdateNone),
+		},
+		// only one version message is allowed
+		// only one verack message is allowed
+		{
+			"OnReject",
+			wire.NewMsgReject("block", wire.RejectDuplicate, "dupe block"),
+		},
+	}
+	t.Logf("Running %d tests", len(tests))
+	for _, test := range tests {
+		// Queue the test message
+		outPeer.QueueMessage(test.msg, nil)
+		//wait until ok or fail , then next test
+		select {
+		case msg:=<-ok:
+			t.Log("ok",msg.Command(),test.listener)
+		case <-time.After(time.Second * 1):
+			t.Errorf("TestPeerListeners: %s timeout", test.listener)
+			return
+		}
+	}
+	inPeer.Disconnect()
+	outPeer.Disconnect()
 }
