@@ -89,7 +89,7 @@ func TestCalcMinRequiredTxRelayFee(t *testing.T) {
 			"2800 bytes with 2000 relay fee",
 			2800,
 			2000,
-			4500,
+			5600,
 		},
 	}
 
