@@ -40,7 +40,7 @@ var (
 	// witness allowSelfConns is only used to allow the tests to bypass the self
 	// connection detecting and disconnect logic since they intentionally
 	// do so for testing purposes.
-	witnessAllowSelfConns bool
+	allowSelfWitnessConns bool
 )
 
 // witnessMessageListeners defines callback function pointers to invoke with message
@@ -682,7 +682,7 @@ func (p *WitnessPeer) PushRejectMsg(command string, code wire.RejectCode, reason
 // is not compatible with ours.
 func (p *WitnessPeer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 	// Detect self connections.
-	if !witnessAllowSelfConns && witnessSentNonces.Exists(msg.Nonce) {
+	if !allowSelfWitnessConns && witnessSentNonces.Exists(msg.Nonce) {
 		return errors.New("disconnecting WitnessPeer connected to self")
 	}
 

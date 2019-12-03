@@ -17,3 +17,7 @@ package peer
 func TstAllowSelfConns() {
 	allowSelfConns = true
 }
+
+func TstAllowSelfWitnessConns() {
+	allowSelfWitnessConns = true
+}
