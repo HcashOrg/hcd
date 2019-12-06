@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -625,18 +626,7 @@ func TestExtendedKeyAPI(t *testing.T) {
 			continue
 		}
 
-		addr, err := key.Address(&chaincfg.MainNetParams)
-		if err != nil {
-			t.Errorf("Address #%d (%s): unexpected error: %v", i,
-				test.name, err)
-			continue
-		}
-		if addr.EncodeAddress() != test.address {
-			t.Errorf("Address #%d (%s): mismatched address -- want "+
-				"%s, got %s", i, test.name, test.address,
-				addr.EncodeAddress())
-			continue
-		}
+
 	}
 }
 
@@ -905,19 +895,8 @@ func TestZero(t *testing.T) {
 			return false
 		}
 
-		wantAddr := "DsWuefL3Rgj6NXoMFqqBzxY2nmh87RZyPkv"
-		addr, err := key.Address(&chaincfg.MainNetParams)
-		if err != nil {
-			t.Errorf("Addres s #%d (%s): unexpected error: %v", i,
-				testName, err)
-			return false
-		}
-		if addr.EncodeAddress() != wantAddr {
-			t.Errorf("Address #%d (%s): mismatched address -- want "+
-				"%s, got %s", i, testName, wantAddr,
-				addr.EncodeAddress())
-			return false
-		}
+
+
 
 		return true
 	}
@@ -1022,4 +1001,31 @@ func mockTestNetParams() *mockNetParams {
 		privKeyID: [4]byte{0x04, 0x35, 0x83, 0x97}, // starts with tprv
 		pubKeyID:  [4]byte{0x04, 0x35, 0x87, 0xd1}, // starts with tpub
 	}
+}
+
+func TestExtendedKey_Address(t *testing.T) {
+	m:="dpubZFVg6fVw97EPa3NBSk5YmzegBymXZf11ZGByLjESxYXgj8ScJxUAjgPCSmQeF7uFAz4VQnRRo82z9BEJ89SADDKkc7c59qQc5GhiULr35Ka"
+
+	//m:="dpubZFHNFBUNrmxomukpp3APock6pQdYmEfyVHCKtjsZbStRURozNqwAYr2oJuvDJoxw14QWnm7D3cHH7qFrfSMvevXbTiiJQftP4Mr6CeDvm43"
+	masterKey,err:=hdkeychain.NewKeyFromString(m)
+	//purpose,err:=masterKey.Child(44)
+	//coint,_:=purpose.Child(171)
+	change,_:=masterKey.Child(1)
+	//change,_:=account.Child(0)
+
+	for i:=0;i<100000;i++{
+		index,_:=change.Child(uint32(i))
+
+		addr,_:=index.Address(&chaincfg.MainNetParams,0)
+
+		as:=addr.EncodeAddress()
+		//t.Log(as)  HsMdySfSe8RszpPs81z2G3qGPJZjEh7UyQW
+
+		if as == "HsSeVaLKNFQnx1RZBCG8nvmj6aLb5JQz65Y"{
+			fmt.Println(i,"ffffffffff")
+		}
+	}
+
+	t.Log(err)
+	t.Log(masterKey)
 }
