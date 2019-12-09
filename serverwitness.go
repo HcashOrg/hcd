@@ -1228,7 +1228,7 @@ func (s *server) RemoveWitnessNodeByID(id int32) error {
 	return <-replyChan
 }
 
-// ConnectNode adds `addr' as a new outbound peer. If permanent is true then the
+// ConnectWitnessNode adds `addr' as a new outbound peer. If permanent is true then the
 // peer will be persistent and reconnect if the connection is lost.
 // It is an error to call this with an already existing peer.
 func (s *server) ConnectWitnessNode(addr string, permanent bool) error {
@@ -1258,7 +1258,7 @@ func (s *server) WitnessNetTotals() (uint64, uint64) {
 		atomic.LoadUint64(&s.bytesWitnessSent)
 }
 
-// rebroadcastHandler keeps track of user submitted inventories that we have
+// rebroadcastWitnessHandler keeps track of user submitted inventories that we have
 // sent out but have not yet made it into a block. We periodically rebroadcast
 // them in case our peers restarted or otherwise lost track of them.
 func (s *server) rebroadcastWitnessHandler() {
@@ -1333,7 +1333,7 @@ func (ps *witnessPeerState) Count() int {
 		len(ps.persistentPeers)
 }
 
-// forAllOutboundPeers is a helper function that runs closure on all outbound
+// forAllOutboundWitnessPeers is a helper function that runs closure on all outbound
 // peers known to peerState.
 func (ps *witnessPeerState) forAllOutboundPeers(closure func(sp *serverWitnessPeer)) {
 	for _, e := range ps.outboundPeers {
@@ -1344,7 +1344,7 @@ func (ps *witnessPeerState) forAllOutboundPeers(closure func(sp *serverWitnessPe
 	}
 }
 
-// forAllPeers is a helper function that runs closure on all peers known to
+// forAllWitnessPeers is a helper function that runs closure on all peers known to
 // peerState.
 func (ps *witnessPeerState) forAllPeers(closure func(sp *serverWitnessPeer)) {
 	for _, e := range ps.inboundPeers {
