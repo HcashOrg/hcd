@@ -16,7 +16,7 @@ func init() {
 	peer.TstAllowSelfWitnessConns()
 }
 
-// testPeer tests the given peer's flags and stats
+// testWitnessPeer tests the given witness peer's flags and stats
 func testWitnessPeer(t *testing.T, p *peer.WitnessPeer, s peerStats) {
 	if p.UserAgent() != s.wantUserAgent {
 		t.Errorf("testPeer: wrong UserAgent - got %v, want %v", p.UserAgent(), s.wantUserAgent)
@@ -109,7 +109,7 @@ func testWitnessPeer(t *testing.T, p *peer.WitnessPeer, s peerStats) {
 	}
 }
 
-// TestWitnessPeerConnection tests connection between inbound and outbound peers.
+// TestWitnessPeerConnection tests connection between inbound and outbound witness peers.
 func TestWitnessPeerConnection(t *testing.T) {
 	var pause sync.Mutex
 	verack := make(chan struct{})
@@ -223,7 +223,7 @@ func TestWitnessPeerConnection(t *testing.T) {
 	}
 }
 
-// TestWitnessPeerListeners tests that the peer listeners are called as expected.
+// TestWitnessPeerListeners tests that the witness peer listeners are called as expected.
 func TestWitnessPeerListeners(t *testing.T) {
 	verack := make(chan struct{}, 1)
 	version := make(chan wire.Message, 1)
