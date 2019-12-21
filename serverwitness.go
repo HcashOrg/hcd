@@ -47,14 +47,6 @@ type serverWitnessPeer struct {
 	txProcessed chan struct{}
 }
 
-// Only respond with addresses once per connection
-//if sp.addrsSent {
-//	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
-//	return
-//}
-
-//sp.addrsSent = true
-
 // newserverWitnessPeer returns a new serverWitnessPeer instance. The peer needs to be set by
 // the caller.
 func newserverWitnessPeer(s *server, isPersistent bool) *serverWitnessPeer {
