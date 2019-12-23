@@ -1123,6 +1123,8 @@ func New(dataDir string, lookupFunc func(string) ([]net.IP, error)) *AddrManager
 	return &am
 }
 
+// New returns a new hcd witness address manager.
+// Use Start to begin processing asynchronous witness address updates.
 func NewWitnessAddrManager(dataDir string, lookupFunc func(string) ([]net.IP, error)) *AddrManager {
 	am := AddrManager{
 		peersFile:      filepath.Join(dataDir, "witness_peers.json"),
