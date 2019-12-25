@@ -686,6 +686,7 @@ func (p *WitnessPeer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 		return errors.New("disconnecting WitnessPeer connected to self")
 	}
 
+	//check witnessprotocol
 	if msg.ProtocolVersion <int32(wire.WitnessVersion){
 		reason := fmt.Sprintf("witness protocol version must be %d or greater",
 			wire.WitnessVersion)
