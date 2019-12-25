@@ -172,7 +172,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 	// NOTE: This is done before rejecting peers that are too old to ensure
 	// it is updated regardless in the case a new minimum protocol version is
 	// enforced and the remote node has not upgraded yet.
-	addrManager := sp.server.addrManager
+	addrManager := sp.server.witnessAddrManager
 	isInbound := sp.Inbound()
 	remoteAddr := sp.NA()
 	if !cfg.SimNet && !isInbound {
@@ -254,7 +254,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 			// TODO(davec): Only do this if not doing the initial block
 			// download and the local address is routable.
 			//if !cfg.DisableListen /* && isCurrent? */ {
-			if !cfg.DisableListen && sp.server.blockManager.IsCurrent() {
+			if !cfg.DisableWitnessListen && sp.server.blockManager.IsCurrent() {
 				// Get address that best matches.
 				lna := addrManager.GetBestLocalAddress(remoteAddr)
 				if addrmgr.IsRoutable(lna) {

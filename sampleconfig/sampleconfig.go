@@ -168,6 +168,41 @@ const FileContents = `[Application Options]
 ; Disable listening for incoming connections.  This will override all listeners.
 ; nolisten=1
 
+
+; Specify the interfaces to witness listen on.  One witness listen address per line.
+; NOTE: The default port is modified by some options such as 'testnet', so it is
+; recommended to not specify a port and allow a proper default to be chosen
+; unless you have a specific reason to do otherwise.
+; All interfaces on default port (this is the default):
+;  witnesslisten=
+; All ipv4 interfaces on default port:
+;  witnesslisten=0.0.0.0
+; All ipv6 interfaces on default port:
+;   witnesslisten=::
+; All interfaces on port 9107:
+;   witnesslisten=:9107
+; All ipv4 interfaces on port 9107:
+;   witnesslisten=0.0.0.0:9107
+; All ipv6 interfaces on port 9107:
+;   witnesslisten=[::]:9107
+; Only ipv4 localhost on port 9107:
+;   witnesslisten=127.0.0.1:9107
+; Only ipv6 localhost on port 9107:
+;   witnesslisten=[::1]:9107
+; Only ipv4 localhost on non-standard port 8337:
+;   witnesslisten=127.0.0.1:8337
+; All interfaces on non-standard port 8337:
+;   witnesslisten=:8337
+; All ipv4 interfaces on non-standard port 8337:
+;   witnesslisten=0.0.0.0:8337
+; All ipv6 interfaces on non-standard port 8337:
+;   witnesslisten=[::]:8337
+
+
+; Disable witness listening for incoming connections.  This will override all listeners.
+; nowitnesslisten=1
+
+
 ; Disable peer bloom filtering.  See BIP0111.
 ; nopeerbloomfilters=1
 

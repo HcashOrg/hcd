@@ -96,7 +96,7 @@ type config struct {
 	AddPeers             []string      `short:"a" long:"addpeer" description:"Add a peer to connect with at startup"`
 	ConnectPeers         []string      `long:"connect" description:"Connect only to the specified peers at startup"`
 	DisableListen        bool          `long:"nolisten" description:"Disable listening for incoming connections -- NOTE: Listening is automatically disabled if the --connect or --proxy options are used without also specifying listen interfaces via --listen"`
-	DisableWitnessListen bool          `long:"nowitnesslisten" description:"Disable listening for incoming witness connections -- NOTE: Listening is automatically disabled"`
+	DisableWitnessListen bool          `long:"nowitnesslisten" description:"Disable listening for incoming witness connections"`
 	Listeners            []string      `long:"listen" description:"Add an interface/port to listen for connections (default all interfaces port: 9108, testnet: 19108)"`
 	WitnessListeners     []string      `long:"witnesslisten" description:"Add an interface/port to listen for witness connections (default all interfaces port: 9109, testnet: 19109)"`
 	MaxPeers             int           `long:"maxpeers" description:"Max number of inbound and outbound peers"`
