@@ -58,6 +58,9 @@ const (
 
 	// maxProtocolVersion is the max protocol version the server supports.
 	maxProtocolVersion = wire.MaxBlockSizeVersion
+
+	//for witnesspeer protocol
+	maxWitnessProtocolVersion = wire.WitnessVersion
 )
 
 var (

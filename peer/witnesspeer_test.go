@@ -135,7 +135,7 @@ func TestWitnessPeerConnection(t *testing.T) {
 	wantStats := peerStats{
 		wantUserAgent:       wire.DefaultUserAgent + "witnesspeer:1.0/",
 		wantServices:        0,
-		wantProtocolVersion: peer.MaxProtocolVersion,
+		wantProtocolVersion: peer.MaxWitnessProtocolVersion,
 		wantConnected:       true,
 		wantVersionKnown:    true,
 		wantVerAckReceived:  true,

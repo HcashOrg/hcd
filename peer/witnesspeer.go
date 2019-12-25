@@ -686,6 +686,14 @@ func (p *WitnessPeer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 		return errors.New("disconnecting WitnessPeer connected to self")
 	}
 
+	if msg.ProtocolVersion <int32(wire.WitnessVersion){
+		reason := fmt.Sprintf("witness protocol version must be %d or greater",
+			wire.WitnessVersion)
+		rejectMsg := wire.NewMsgReject(msg.Command(), wire.RejectObsolete,
+			reason)
+		return p.writeMessage(rejectMsg)
+	}
+
 	// Notify and disconnect clients that have a protocol version that is
 	// too old.
 	if msg.ProtocolVersion < int32(wire.InitialProcotolVersion) {
@@ -1661,7 +1669,7 @@ func (p *WitnessPeer) negotiateOutboundProtocol() error {
 func newWitnessPeerBase(cfg *WitnessConfig, inbound bool) *WitnessPeer {
 	// Default to the max supported protocol version.  Override to the
 	// version specified by the caller if configured.
-	protocolVersion := MaxProtocolVersion
+	protocolVersion := MaxWitnessProtocolVersion
 	if cfg.ProtocolVersion != 0 {
 		protocolVersion = cfg.ProtocolVersion
 	}

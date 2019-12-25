@@ -35,6 +35,8 @@ const (
 	// FeeFilterVersion is the protocol version which added a new
 	// feefilter message.
 	FeeFilterVersion uint32 = 5
+
+	WitnessVersion uint32 = 6
 )
 
 // ServiceFlag identifies services supported by a hcd peer.

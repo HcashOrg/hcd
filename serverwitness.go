@@ -966,7 +966,7 @@ func newWitnessPeerConfig(sp *serverWitnessPeer) *peer.WitnessConfig {
 		ChainParams:      sp.server.chainParams,
 		Services:         sp.server.services,
 		DisableRelayTx:   false,
-		ProtocolVersion:  maxProtocolVersion,
+		ProtocolVersion:  maxWitnessProtocolVersion,
 	}
 }
 
