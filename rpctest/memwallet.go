@@ -18,7 +18,7 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	hcrpcclient "github.com/HcashOrg/hcrpcclient"
+	hcrpcclient "github.com/HcashOrg/hcd/hcrpcclient"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/hcutil/hdkeychain"
 )

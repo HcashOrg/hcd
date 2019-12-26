@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/HcashOrg/hcd/hcjson"
-	hcrpcclient "github.com/HcashOrg/hcrpcclient"
+	hcrpcclient "github.com/HcashOrg/hcd/hcrpcclient"
 )
 
 // JoinType is an enum representing a particular type of "node join". A node

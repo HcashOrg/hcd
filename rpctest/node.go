@@ -20,7 +20,7 @@ import (
 
 	"github.com/HcashOrg/hcd/wire"
 
-	rpc "github.com/HcashOrg/hcrpcclient"
+	rpc "github.com/HcashOrg/hcd/hcrpcclient"
 	"github.com/HcashOrg/hcd/hcutil"
 )
 

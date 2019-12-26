@@ -1,6 +1,7 @@
 hcd
 cmd/hcctl/hcctl
 cmd/promptsecret/promptsecret
+cmd/checkdevpremine/checkdevpremine
 *~
 *.pyc
 vendor/
