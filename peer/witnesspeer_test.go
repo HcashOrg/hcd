@@ -237,6 +237,9 @@ func TestWitnessPeerListeners(t *testing.T) {
 			OnAddr: func(p *peer.WitnessPeer, msg *wire.MsgAddr) {
 				ok <- msg
 			},
+			OnRouteAddr: func(p *peer.WitnessPeer, msg *wire.MsgRouteAddr) {
+				ok <-msg
+			},
 			OnPing: func(p *peer.WitnessPeer, msg *wire.MsgPing) {
 				ok <- msg
 			},
@@ -334,6 +337,10 @@ func TestWitnessPeerListeners(t *testing.T) {
 		{
 			"OnAddr",
 			wire.NewMsgAddr(),
+		},
+		{
+			"OnRouteAddr",
+			wire.NewMsgRouteAddr(),
 		},
 		{
 			"OnPing",

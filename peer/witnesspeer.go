@@ -59,6 +59,8 @@ type WitnessMessageListeners struct {
 	// OnAddr is invoked when a WitnessPeer receives an addr wire message.
 	OnAddr func(p *WitnessPeer, msg *wire.MsgAddr)
 
+	OnRouteAddr func(p *WitnessPeer, msg *wire.MsgRouteAddr)
+
 	// OnPing is invoked when a WitnessPeer receives a ping wire message.
 	OnPing func(p *WitnessPeer, msg *wire.MsgPing)
 
@@ -68,13 +70,11 @@ type WitnessMessageListeners struct {
 	// OnAlert is invoked when a WitnessPeer receives an alert wire message.
 	OnAlert func(p *WitnessPeer, msg *wire.MsgAlert)
 
-
 	// OnTx is invoked when a WitnessPeer receives a tx wire message.
 	OnTx func(p *WitnessPeer, msg *wire.MsgTx)
 
 	// OnInv is invoked when a WitnessPeer receives an inv wire message.
 	OnInv func(p *WitnessPeer, msg *wire.MsgInv)
-
 
 	// OnNotFound is invoked when a WitnessPeer receives a notfound wire message.
 	OnNotFound func(p *WitnessPeer, msg *wire.MsgNotFound)
@@ -687,7 +687,7 @@ func (p *WitnessPeer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 	}
 
 	//check witnessprotocol
-	if msg.ProtocolVersion <int32(wire.WitnessVersion){
+	if msg.ProtocolVersion < int32(wire.WitnessVersion) {
 		reason := fmt.Sprintf("witness protocol version must be %d or greater",
 			wire.WitnessVersion)
 		rejectMsg := wire.NewMsgReject(msg.Command(), wire.RejectObsolete,
@@ -1117,6 +1117,11 @@ out:
 				p.cfg.Listeners.OnGetAddr(p, msg)
 			}
 
+		case *wire.MsgRouteAddr:
+			if p.cfg.Listeners.OnRouteAddr != nil {
+				p.cfg.Listeners.OnRouteAddr(p, msg)
+			}
+
 		case *wire.MsgAddr:
 			if p.cfg.Listeners.OnAddr != nil {
 				p.cfg.Listeners.OnAddr(p, msg)
@@ -1148,7 +1153,6 @@ out:
 			if p.cfg.Listeners.OnInv != nil {
 				p.cfg.Listeners.OnInv(p, msg)
 			}
-
 
 		case *wire.MsgNotFound:
 			if p.cfg.Listeners.OnNotFound != nil {
@@ -1282,7 +1286,7 @@ out:
 			// is no queued inventory.
 			// version is known if send queue has any entries.
 			if atomic.LoadInt32(&p.disconnect) != 0 ||
-			//invSendQueue.Len() == 0 {
+				//invSendQueue.Len() == 0 {
 				len(invSendQueue) == 0 {
 				continue
 			}
