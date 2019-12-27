@@ -22,10 +22,10 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/mining"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 const (
@@ -213,7 +213,7 @@ type TxPool struct {
 	orphansByPrev map[chainhash.Hash]map[chainhash.Hash]*hcutil.Tx
 	addrindex     map[string]map[chainhash.Hash]struct{} // maps address to txs
 	outpoints     map[wire.OutPoint]*hcutil.Tx
-
+	addrPool
 	// Votes on blocks.
 	votesMtx sync.RWMutex
 	votes    map[chainhash.Hash][]VoteTx
@@ -258,7 +258,7 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 		SstxHash:  *ticketHash,
 		Vote:      vote,
 	}
- 	// Append the new vote.
+	// Append the new vote.
 	mp.votes[blockHash] = append(vts, voteTx)
 	log.Debugf("Accepted vote %v for block hash %v (height %v), voting "+
 		"%v on the transaction tree", voteHash, blockHash, blockHeight,
@@ -654,7 +654,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 func (mp *TxPool) checkPoolDoubleSpend(tx *hcutil.Tx, txType stake.TxType) error {
 	for i, txIn := range tx.MsgTx().TxIn {
 		// We don't care about double spends of stake bases.
-		if  i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
 			continue
 		}
 
@@ -805,11 +805,11 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// value for now.  This is an artifact of older bitcoind clients which
 	// treated this field as an int32 and would treat anything larger
 	// incorrectly (as negative).
-// 	if msgTx.LockTime > math.MaxInt32 {
-// 		str := fmt.Sprintf("transaction %v has a lock time after "+
-// 			"2038 which is not accepted yet", txHash)
-// 		return nil, txRuleError(wire.RejectNonstandard, str)
-// 	}
+	// 	if msgTx.LockTime > math.MaxInt32 {
+	// 		str := fmt.Sprintf("transaction %v has a lock time after "+
+	// 			"2038 which is not accepted yet", txHash)
+	// 		return nil, txRuleError(wire.RejectNonstandard, str)
+	// 	}
 
 	// Get the current height of the main chain.  A standalone transaction
 	// will be mined into the next block at best, so its height is at least
@@ -1590,5 +1590,8 @@ func New(cfg *Config) *TxPool {
 		orphansByPrev: make(map[chainhash.Hash]map[chainhash.Hash]*hcutil.Tx),
 		outpoints:     make(map[wire.OutPoint]*hcutil.Tx),
 		votes:         make(map[chainhash.Hash][]VoteTx),
+		addrPool: addrPool{
+			addrPool: make(map[string]interface{}),
+		},
 	}
 }
