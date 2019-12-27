@@ -273,7 +273,7 @@ func TestBlockHeaderWire(t *testing.T) {
 			continue
 		}
 		// Ensure Bytes encodes block header correctly.
-		bts, err := test.out.Bytes()
+		bts, err = test.out.Bytes()
 		if err != nil {
 			t.Errorf("Bytes #%d error %v", i, err)
 			continue
@@ -286,7 +286,7 @@ func TestBlockHeaderWire(t *testing.T) {
 		}
 
  		// Ensure FromBytes decodes encoded block header correctly.
-		bh2 := &BlockHeader{}
+		bh2 = &BlockHeader{}
 		err = bh2.FromBytes(test.buf)
 		if err != nil {
 			t.Errorf("FromBytes #%d error %v", i, err)

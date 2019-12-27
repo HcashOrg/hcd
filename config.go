@@ -143,6 +143,7 @@ type config struct {
 	MaxOrphanTxs         int           `long:"maxorphantx" description:"Max number of orphan transactions to keep in memory"`
 	Generate             bool          `long:"generate" description:"Generate (mine) coins using the CPU"`
 	MiningAddrs          []string      `long:"miningaddr" description:"Add the specified payment address to the list of addresses to use for generated blocks -- At least one address is required if the generate option is set"`
+	RouteAddr            string        `long:"routeaddr" description:"Route address"`
 	BlockMinSize         uint32        `long:"blockminsize" description:"Mininum block size in bytes to be used when creating a block"`
 	BlockMaxSize         uint32        `long:"blockmaxsize" description:"Maximum block size in bytes to be used when creating a block"`
 	BlockPrioritySize    uint32        `long:"blockprioritysize" description:"Size in bytes for high-priority/low-fee transactions when creating a block"`
@@ -962,11 +963,23 @@ func loadConfig() (*config, []string, error) {
 		return nil, nil, err
 	}
 
+	// check route address
+
+	if len(cfg.RouteAddr) != 0 {
+		_, err := hcutil.DecodeAddress(cfg.RouteAddr)
+		if err != nil {
+			str := "%s: route address '%s' failed to decode: %v"
+			err := fmt.Errorf(str, funcName, cfg.RouteAddr, err)
+			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, usageMessage)
+			return nil, nil, err
+		}
+	}
+
 	// Add default port to all listener addresses if needed and remove
 	// duplicate addresses.
 	cfg.Listeners = normalizeAddresses(cfg.Listeners,
 		activeNetParams.DefaultPort)
-
 
 	cfg.WitnessListeners = normalizeAddresses(cfg.WitnessListeners,
 		activeNetParams.DefaultWitnessPort)
@@ -1139,7 +1152,7 @@ func loadConfig() (*config, []string, error) {
 // one was specified, but will otherwise use the normal dial function (which
 // could itself use a proxy or not).
 func hcdDial(addr net.Addr) (net.Conn, error) {
-	fmt.Println("hcddail:",addr.String())
+	fmt.Println("hcddail:", addr.String())
 	if strings.Contains(addr.String(), ".onion:") {
 		return cfg.oniondial(addr.Network(), addr.String())
 	}

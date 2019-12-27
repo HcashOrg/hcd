@@ -338,6 +338,10 @@ const FileContents = `[Application Options]
 ; miningaddr=youraddress2
 ; miningaddr=youraddress3
 
+; Add Route address
+; routeaddr=youraddress
+
+
 ; Specify the minimum block size in bytes to create.  By default, only
 ; transactions which have enough fees or a high enough priority will be included
 ; in generated block templates.  Specifying a minimum block size will instead
