@@ -61,6 +61,8 @@ type WitnessMessageListeners struct {
 
 	OnRouteAddr func(p *WitnessPeer, msg *wire.MsgRouteAddr)
 
+	OnGetRouteAddr func(p *WitnessPeer,msg *wire.MsgGetRouteAddr)
+
 	// OnPing is invoked when a WitnessPeer receives a ping wire message.
 	OnPing func(p *WitnessPeer, msg *wire.MsgPing)
 
@@ -1115,6 +1117,11 @@ out:
 		case *wire.MsgGetAddr:
 			if p.cfg.Listeners.OnGetAddr != nil {
 				p.cfg.Listeners.OnGetAddr(p, msg)
+			}
+
+		case *wire.MsgGetRouteAddr:
+			if p.cfg.Listeners.OnGetRouteAddr!=nil{
+				p.cfg.Listeners.OnGetRouteAddr(p,msg)
 			}
 
 		case *wire.MsgRouteAddr:
