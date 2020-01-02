@@ -11,11 +11,11 @@ import (
 "io"
 )
 
-// MaxAddrPerMsg is the maximum number of addresses that can be in a single
+// MaxRouteAddrPerMsg is the maximum number of addresses that can be in a single
 // bitcoin addr message (MsgAddr).
 const MaxRouteAddrPerMsg = 1000
 
-// MsgAddr implements the Message interface and represents a bitcoin
+// MsgRouteAddr implements the Message interface and represents a bitcoin
 // addr message.  It is used to provide a list of known active peers on the
 // network.  An active peer is considered one that has transmitted a message
 // within the last 3 hours.  Nodes which have not transmitted in that time
