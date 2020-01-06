@@ -36,6 +36,8 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -223,6 +225,7 @@ func getOurIP() (ip string, err error) {
 // getServiceURL parses the xml description at the given root url to find the
 // url for the WANIPConnection service to be used for port forwarding.
 func getServiceURL(rootURL string) (url string, err error) {
+
 	r, err := http.Get(rootURL)
 	if err != nil {
 		return
@@ -233,10 +236,25 @@ func getServiceURL(rootURL string) (url string, err error) {
 		return
 	}
 	var root root
-	err = xml.NewDecoder(r.Body).Decode(&root)
-	if err != nil {
+	//dump,err:=httputil.DumpResponse(r,true)
+	//fmt.Println(string(decodeBytes))
+	body,err:=ioutil.ReadAll(r.Body)
+	if err!=nil{
 		return
 	}
+	err = xml.Unmarshal(body,&root)
+	if err != nil {
+		utfbody,errDec:=simplifiedchinese.GB18030.NewDecoder().Bytes(body)
+		if errDec!=nil{
+			err = errDec
+			return
+		}
+		err = xml.Unmarshal(utfbody,&root)
+		if err != nil {
+			return
+		}
+	}
+
 	a := &root.Device
 	if a.DeviceType != "urn:schemas-upnp-org:device:InternetGatewayDevice:1" {
 		err = errors.New("no internet gateway device")
