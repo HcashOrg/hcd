@@ -118,6 +118,17 @@ func (sp *serverWitnessPeer) pushAddrMsg(addresses []*wire.NetAddress) {
 	sp.addKnownAddresses(known)
 }
 
+func (sp *serverWitnessPeer) pushRouteAddrMsg(addresses []string) {
+	// todo Filter addresses already known to the peer.
+
+	_, err := sp.PushRouteAddrMsg(addresses)
+	if err != nil {
+		peerLog.Errorf("Can't push address message to %s: %v", sp.WitnessPeer, err)
+		sp.Disconnect()
+		return
+	}
+}
+
 // addBanScore increases the persistent and decaying ban score fields by the
 // values passed as parameters. If the resulting score exceeds half of the ban
 // threshold, a warning is logged including the reason provided. Further, if
@@ -161,7 +172,7 @@ func (sp *serverWitnessPeer) addBanScore(persistent, transient uint32, reason st
 // to negotiate the protocol version details as well as kick start the
 // communications.
 func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion) {
-	fmt.Println("onversion",p.String())
+	fmt.Println("onversion", p.String())
 	// Update the address manager with the advertised services for outbound
 	// connections in case they have changed.  This is not done for inbound
 	// connections to help prevent malicious behavior and is skipped when
@@ -285,7 +296,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 // the previous one in a linear fashion like blocks.
 func (sp *serverWitnessPeer) OnWitnessTx(p *peer.WitnessPeer, msg *wire.MsgTx) {
 
-	fmt.Println("onwitnessTx:",p.String())
+	fmt.Println("onwitnessTx:", p.String())
 	// Add the transaction to the known inventory for the peer.
 	// Convert the raw MsgTx to a hcutil.Tx which provides some convenience
 	// methods and things such as hash caching.
@@ -506,6 +517,27 @@ func (sp *serverWitnessPeer) OnGetWitnessAddr(p *peer.WitnessPeer, msg *wire.Msg
 	sp.pushAddrMsg(addrCache)
 }
 
+func (sp *serverWitnessPeer) OnGetRouteAddr(p *peer.WitnessPeer, msg *wire.MsgGetRouteAddr) {
+	// Don't return any addresses when running on the simulation test
+	// network.  This helps prevent the network from becoming another
+	// public test network since it will not be able to learn about other
+	// peers that have not specifically been provided.
+	if cfg.SimNet {
+		return
+	}
+
+	// Do not accept getaddr requests from outbound peers.  This reduces
+	// fingerprinting attacks.
+	if !p.Inbound() {
+		return
+	}
+
+	//todo get addrs from pool
+	var addrs []string
+	// Push the addresses.
+	sp.pushRouteAddrMsg(addrs)
+}
+
 // OnAddr is invoked when a peer receives an addr wire message and is used to
 // notify the server about advertised addresses.
 func (sp *serverWitnessPeer) OnWitnessAddr(p *peer.WitnessPeer, msg *wire.MsgAddr) {
@@ -550,6 +582,26 @@ func (sp *serverWitnessPeer) OnWitnessAddr(p *peer.WitnessPeer, msg *wire.MsgAdd
 	// XXX bitcoind gives a 2 hour time penalty here, do we want to do the
 	// same?
 	sp.server.witnessAddrManager.AddAddresses(msg.AddrList, p.NA())
+}
+
+func (sp *serverWitnessPeer) OnRouteAddr(p *peer.WitnessPeer, msg *wire.MsgRouteAddr) {
+	// Ignore addresses when running on the simulation test network.  This
+	// helps prevent the network from becoming another public test network
+	// since it will not be able to learn about other peers that have not
+	// specifically been provided.
+	if cfg.SimNet {
+		return
+	}
+
+	// A message that has no addresses is invalid.
+	if len(msg.AddrList) == 0 {
+		peerLog.Errorf("Command [%s] from %s does not contain any addresses",
+			msg.Command(), p)
+		p.Disconnect()
+		return
+	}
+
+	//todo add addr to pool
 }
 
 // OnRead is invoked when a peer receives a message and it is used to update
@@ -947,17 +999,19 @@ func disconnectWitnessPeer(peerList map[int32]*serverWitnessPeer, compareFunc fu
 func newWitnessPeerConfig(sp *serverWitnessPeer) *peer.WitnessConfig {
 	return &peer.WitnessConfig{
 		Listeners: peer.WitnessMessageListeners{
-			OnVersion:     sp.OnVersion,
-			OnTx:          sp.OnWitnessTx,
-			OnInv:         sp.OnWitnessInv,
-			OnGetData:     sp.OnGetData,
-			OnFilterAdd:   sp.OnWitnessFilterAdd,
-			OnFilterClear: sp.OnWitnessFilterClear,
-			OnFilterLoad:  sp.OnWitnessFilterLoad,
-			OnGetAddr:     sp.OnGetWitnessAddr,
-			OnAddr:        sp.OnWitnessAddr,
-			OnRead:        sp.OnWitnessRead,
-			OnWrite:       sp.OnWitnessWrite,
+			OnVersion:      sp.OnVersion,
+			OnTx:           sp.OnWitnessTx,
+			OnInv:          sp.OnWitnessInv,
+			OnGetData:      sp.OnGetData,
+			OnFilterAdd:    sp.OnWitnessFilterAdd,
+			OnFilterClear:  sp.OnWitnessFilterClear,
+			OnFilterLoad:   sp.OnWitnessFilterLoad,
+			OnGetAddr:      sp.OnGetWitnessAddr,
+			OnAddr:         sp.OnWitnessAddr,
+			OnRouteAddr:    sp.OnRouteAddr,
+			OnGetRouteAddr: sp.OnGetRouteAddr,
+			OnRead:         sp.OnWitnessRead,
+			OnWrite:        sp.OnWitnessWrite,
 		},
 		HostToNetAddress: sp.server.witnessAddrManager.HostToNetAddress,
 		Proxy:            cfg.Proxy,

@@ -649,6 +649,33 @@ func (p *WitnessPeer) PushAddrMsg(addresses []*wire.NetAddress) ([]*wire.NetAddr
 	return msg.AddrList, nil
 }
 
+
+func (p *WitnessPeer) PushRouteAddrMsg(addresses []string) ([]string, error) {
+
+	// Nothing to send.
+	if len(addresses) == 0 {
+		return nil, nil
+	}
+
+	msg := wire.NewMsgRouteAddr()
+	msg.AddrList = make([]string, len(addresses))
+	copy(msg.AddrList, addresses)
+
+	// Randomize the addresses sent if there are more than the maximum allowed.
+	if len(msg.AddrList) > wire.MaxAddrPerMsg {
+		// Shuffle the address list.
+		for i := range msg.AddrList {
+			j := rand.Intn(i + 1)
+			msg.AddrList[i], msg.AddrList[j] = msg.AddrList[j], msg.AddrList[i]
+		}
+
+		// Truncate it to the maximum size.
+		msg.AddrList = msg.AddrList[:wire.MaxAddrPerMsg]
+	}
+
+	p.QueueMessage(msg, nil)
+	return msg.AddrList, nil
+}
 // PushRejectMsg sends a reject message for the provided command, reject code,
 // reject reason, and hash.  The hash will only be used when the command is a tx
 // or block and should be nil in other cases.  The wait parameter will cause the
