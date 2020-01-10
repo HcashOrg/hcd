@@ -532,10 +532,10 @@ func (sp *serverWitnessPeer) OnGetRouteAddr(p *peer.WitnessPeer, msg *wire.MsgGe
 		return
 	}
 
-	//todo get addrs from pool
-	var addrs []string
+
+	addrList:=sp.server.txMemPool.GetAddrList()
 	// Push the addresses.
-	sp.pushRouteAddrMsg(addrs)
+	sp.pushRouteAddrMsg(addrList)
 }
 
 // OnAddr is invoked when a peer receives an addr wire message and is used to
@@ -601,7 +601,7 @@ func (sp *serverWitnessPeer) OnRouteAddr(p *peer.WitnessPeer, msg *wire.MsgRoute
 		return
 	}
 
-	//todo add addr to pool
+	//
 	sp.server.txMemPool.AddToAddrPool(msg.AddrList)
 }
 
