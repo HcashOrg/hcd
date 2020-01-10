@@ -8,24 +8,27 @@ type addrPool struct {
 	addrPool map[string]interface{}
 }
 
-
-func (mp *TxPool) AddToAddrPool(addr string) error {
+func (mp *TxPool) AddToAddrPool(addrList []string) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
-	return mp.maybeAddtoAddrPool(addr)
+
+	for _, addr := range addrList {
+		err:=mp.maybeAddtoAddrPool(addr)
+		if err!=nil{
+			log.Errorf("AddToAddrPool addr %v ,err: %v",addr,err)
+		}
+	}
 }
 
 func (mp *TxPool) maybeAddtoAddrPool(addr string) error {
-	_,err:=hcutil.DecodeAddress(addr)
-	if err!=nil{
+	_, err := hcutil.DecodeAddress(addr)
+	if err != nil {
 		return err
 	}
 	mp.addrPool.addrPool[addr] = nil
 
 	return nil
 }
-
-
 
 func (mp *TxPool) RemoveAddr(addr string) {
 	mp.mtx.Lock()
@@ -35,21 +38,21 @@ func (mp *TxPool) RemoveAddr(addr string) {
 }
 
 func (mp *TxPool) removeAddr(addr string) {
-	delete(mp.addrPool.addrPool,addr)
+	delete(mp.addrPool.addrPool, addr)
 }
 
-func (mp *TxPool)GetAddrList()[]string{
+func (mp *TxPool) GetAddrList() []string {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 	return mp.getAddrList()
 }
 
-func (mp *TxPool)getAddrList()[]string {
+func (mp *TxPool) getAddrList() []string {
 
-	addrSlice:=make([]string,0,len(mp.addrPool.addrPool))
+	addrSlice := make([]string, 0, len(mp.addrPool.addrPool))
 
-	for addr,_:=range mp.addrPool.addrPool {
-		addrSlice=append(addrSlice,addr)
+	for addr, _ := range mp.addrPool.addrPool {
+		addrSlice = append(addrSlice, addr)
 	}
 	return addrSlice
 }

@@ -602,6 +602,7 @@ func (sp *serverWitnessPeer) OnRouteAddr(p *peer.WitnessPeer, msg *wire.MsgRoute
 	}
 
 	//todo add addr to pool
+	sp.server.txMemPool.AddToAddrPool(msg.AddrList)
 }
 
 // OnRead is invoked when a peer receives a message and it is used to update
