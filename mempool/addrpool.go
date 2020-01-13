@@ -8,6 +8,21 @@ type addrPool struct {
 	addrPool map[string]interface{}
 }
 
+func (mp *TxPool) FetchRouteAddrPoolState() []string{
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+	return mp.fetchRouteAddrPoolState()
+}
+
+func (mp *TxPool)fetchRouteAddrPoolState()[]string {
+	addrSlice:=make([]string,0,len(mp.addrPool.addrPool))
+	for addr,_:=range mp.addrPool.addrPool{
+		addrSlice = append(addrSlice,addr)
+	}
+
+	return addrSlice
+}
+
 func (mp *TxPool) AddToAddrPool(addrList []string) {
 	mp.mtx.Lock()
 	defer mp.mtx.Unlock()
