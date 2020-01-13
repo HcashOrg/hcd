@@ -283,8 +283,18 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 
 			// Mark the address as a known good address.
 			addrManager.Good(remoteAddr)
+
 		}
+
 	}
+
+
+	if !p.Inbound(){
+		p.QueueMessage(wire.NewMsgGetRouteAddr(),nil)
+	}
+	msgRouteAddr:=wire.NewMsgRouteAddr()
+	msgRouteAddr.AddAddress(cfg.RouteAddr)
+	p.QueueMessage(wire.NewMsgRouteAddr(),nil)
 
 	// Add valid peer to the server.
 	sp.server.AddWitnessPeer(sp)
