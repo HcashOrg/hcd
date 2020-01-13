@@ -31,6 +31,10 @@ type MsgRouteAddr struct {
 
 // AddAddress adds a known active peer to the message.
 func (msg *MsgRouteAddr) AddAddress(na string) error {
+	if len(na)==0{
+		str := fmt.Sprintf("address is can not be nil ")
+		return messageError("MsgRouteAddr.AddAddress", str)
+	}
 	if len(msg.AddrList)+1 > MaxRouteAddrPerMsg {
 		str := fmt.Sprintf("too many route addresses in message [max %v]",
 			MaxRouteAddrPerMsg)

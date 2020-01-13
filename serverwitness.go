@@ -294,7 +294,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 	}
 	msgRouteAddr:=wire.NewMsgRouteAddr()
 	msgRouteAddr.AddAddress(cfg.RouteAddr)
-	p.QueueMessage(wire.NewMsgRouteAddr(),nil)
+	p.QueueMessage(msgRouteAddr,nil)
 
 	// Add valid peer to the server.
 	sp.server.AddWitnessPeer(sp)

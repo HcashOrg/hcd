@@ -2081,6 +2081,9 @@ func (s *server) Start() {
 	s.wg.Add(1)
 	go s.peerHandler()
 
+	//add self router addr
+	s.txMemPool.AddToAddrPool([]string{cfg.RouteAddr})
+
 	s.wg.Add(1)
 	go s.witnessPeerHandler()
 
