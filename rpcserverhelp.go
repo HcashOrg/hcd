@@ -930,6 +930,7 @@ var rpcResultTypes = map[string][]interface{}{
 	"getheaders":            {(*hcjson.GetHeadersResult)(nil)},
 	"getinfo":               {(*hcjson.InfoChainResult)(nil)},
 	"getmempoolinfo":        {(*hcjson.GetMempoolInfoResult)(nil)},
+	"getrouteaddrpoolinfo":  {(*hcjson.GetRouteAddrPoolInfoResult)(nil)},
 	"getmininginfo":         {(*hcjson.GetMiningInfoResult)(nil)},
 	"getnettotals":          {(*hcjson.GetNetTotalsResult)(nil)},
 	"getnetworkhashps":      {(*int64)(nil)},

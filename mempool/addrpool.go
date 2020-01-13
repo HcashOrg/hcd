@@ -8,13 +8,13 @@ type addrPool struct {
 	addrPool map[string]interface{}
 }
 
-func (mp *TxPool) FetchRouteAddrPoolState() []string{
+func (mp *TxPool) RouteAddrPoolInfo() []string{
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
-	return mp.fetchRouteAddrPoolState()
+	return mp.routeAddrPoolInfo()
 }
 
-func (mp *TxPool)fetchRouteAddrPoolState()[]string {
+func (mp *TxPool)routeAddrPoolInfo()[]string {
 	addrSlice:=make([]string,0,len(mp.addrPool.addrPool))
 	for addr,_:=range mp.addrPool.addrPool{
 		addrSlice = append(addrSlice,addr)

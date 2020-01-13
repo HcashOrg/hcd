@@ -389,6 +389,13 @@ func NewGetMempoolInfoCmd() *GetMempoolInfoCmd {
 	return &GetMempoolInfoCmd{}
 }
 
+
+type GetRouteAddrPoolInfoCmd struct {}
+
+func NewGetRouteAddrPoolInfoCmd() *GetRouteAddrPoolInfoCmd {
+	return &GetRouteAddrPoolInfoCmd{}
+}
+
 // GetMiningInfoCmd defines the getmininginfo JSON-RPC command.
 type GetMiningInfoCmd struct{}
 
@@ -762,6 +769,7 @@ func init() {
 	MustRegisterCmd("getheaders", (*GetHeadersCmd)(nil), flags)
 	MustRegisterCmd("getinfo", (*GetInfoCmd)(nil), flags)
 	MustRegisterCmd("getmempoolinfo", (*GetMempoolInfoCmd)(nil), flags)
+	MustRegisterCmd("getrouteaddrpoolinfo",(*GetRouteAddrPoolInfoCmd)(nil),flags)
 	MustRegisterCmd("getmininginfo", (*GetMiningInfoCmd)(nil), flags)
 	MustRegisterCmd("getnetworkinfo", (*GetNetworkInfoCmd)(nil), flags)
 	MustRegisterCmd("getnettotals", (*GetNetTotalsCmd)(nil), flags)

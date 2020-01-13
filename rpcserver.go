@@ -213,6 +213,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getinfo":               handleGetInfo,
 	"getblockchaininfo":     handleGetBlockchainInfo,
 	"getmempoolinfo":        handleGetMempoolInfo,
+	"getrouteaddrpoolinfo":  handleGetRouteAddrPoolInfo,
 	"getmininginfo":         handleGetMiningInfo,
 	"getnettotals":          handleGetNetTotals,
 	"getnetworkhashps":      handleGetNetworkHashPS,
@@ -463,14 +464,14 @@ type gbtWorkState struct {
 	minTimestamp  time.Time
 	template      *BlockTemplate
 	notifyMap     map[chainhash.Hash]map[int64]chan struct{}
-	timeSource    blockchain.MedianTimeSource
+	timeSource blockchain.MedianTimeSource
 }
 
 // newGbtWorkState returns a new instance of a gbtWorkState with all internal
 // fields initialized and ready to use.
 func newGbtWorkState(timeSource blockchain.MedianTimeSource) *gbtWorkState {
 	return &gbtWorkState{
-		notifyMap:  make(map[chainhash.Hash]map[int64]chan struct{}),
+		notifyMap: make(map[chainhash.Hash]map[int64]chan struct{}),
 		timeSource: timeSource,
 	}
 }
@@ -3286,6 +3287,16 @@ func handleGetMempoolInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	ret := &hcjson.GetMempoolInfoResult{
 		Size:  int64(len(mempoolTxns)),
 		Bytes: numBytes,
+	}
+
+	return ret, nil
+}
+
+func handleGetRouteAddrPoolInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	info := s.server.txMemPool.RouteAddrPoolInfo()
+
+	ret := hcjson.GetRouteAddrPoolInfoResult{
+		Addrs: info,
 	}
 
 	return ret, nil

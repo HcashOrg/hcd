@@ -184,6 +184,9 @@ type GetMempoolInfoResult struct {
 	Bytes int64 `json:"bytes"`
 }
 
+type GetRouteAddrPoolInfoResult struct {
+	Addrs []string
+}
 // GetNetworkInfoResult models the data returned from the getnetworkinfo
 // command.
 type GetNetworkInfoResult struct {
