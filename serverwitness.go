@@ -1296,7 +1296,7 @@ func (s *server) RemoveWitnessNodeByID(id int32) error {
 func (s *server) ConnectWitnessNode(addr string, permanent bool) error {
 	replyChan := make(chan error)
 
-	s.queryWitness <- connectNodeMsg{addr: addr, permanent: permanent, reply: replyChan}
+	s.queryWitness <- connectWitnessNodeMsg{addr: addr, permanent: permanent, reply: replyChan}
 
 	return <-replyChan
 }

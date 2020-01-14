@@ -495,20 +495,25 @@ func handleAddNode(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (in
 	c := cmd.(*hcjson.AddNodeCmd)
 
 	addr := normalizeAddress(c.Addr, activeNetParams.DefaultPort)
+	witnessAddr := normalizeAddress(c.Addr, activeNetParams.DefaultWitnessPort)
 	var err error
+	var witnessErr error
 	switch c.SubCmd {
 	case "add":
 		err = s.server.ConnectNode(addr, true)
+		witnessErr = s.server.ConnectWitnessNode(witnessAddr, true)
 	case "remove":
 		err = s.server.RemoveNodeByAddr(addr)
+		witnessErr = s.server.RemoveWitnessNodeByAddr(witnessAddr)
 	case "onetry":
 		err = s.server.ConnectNode(addr, false)
+		witnessErr = s.server.ConnectWitnessNode(witnessAddr, false)
 	default:
 		return nil, rpcInvalidError("Invalid subcommand for addnode")
 	}
 
-	if err != nil {
-		return nil, rpcInvalidError("%v: %v", c.SubCmd, err)
+	if err != nil||witnessErr!=nil {
+		return nil, rpcInvalidError("%v: peer : %v\nwitnessPeer : %v", c.SubCmd, err,witnessErr)
 	}
 
 	// no data returned unless an error.
