@@ -450,6 +450,13 @@ func NewGetPeerInfoCmd() *GetPeerInfoCmd {
 	return &GetPeerInfoCmd{}
 }
 
+type GetWitnessPeerInfoCmd struct {}
+
+func NewGetWitnessPeerInfoCmd() *GetWitnessPeerInfoCmd {
+	return &GetWitnessPeerInfoCmd{}
+}
+
+
 // GetRawMempoolTxTypeCmd defines the type used in the getrawmempool JSON-RPC
 // command for the TxType command field.
 type GetRawMempoolTxTypeCmd string
@@ -775,6 +782,7 @@ func init() {
 	MustRegisterCmd("getnettotals", (*GetNetTotalsCmd)(nil), flags)
 	MustRegisterCmd("getnetworkhashps", (*GetNetworkHashPSCmd)(nil), flags)
 	MustRegisterCmd("getpeerinfo", (*GetPeerInfoCmd)(nil), flags)
+	MustRegisterCmd("getwitnesspeerinfo", (*GetWitnessPeerInfoCmd)(nil), flags)
 	MustRegisterCmd("getrawmempool", (*GetRawMempoolCmd)(nil), flags)
 	MustRegisterCmd("getrawtransaction", (*GetRawTransactionCmd)(nil), flags)
 	MustRegisterCmd("gettxout", (*GetTxOutCmd)(nil), flags)

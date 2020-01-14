@@ -935,6 +935,7 @@ var rpcResultTypes = map[string][]interface{}{
 	"getnettotals":          {(*hcjson.GetNetTotalsResult)(nil)},
 	"getnetworkhashps":      {(*int64)(nil)},
 	"getpeerinfo":           {(*[]hcjson.GetPeerInfoResult)(nil)},
+	"getwitnesspeerinfo":    {(*[]hcjson.GetPeerInfoResult)(nil)},
 	"getrawmempool":         {(*[]string)(nil), (*hcjson.GetRawMempoolVerboseResult)(nil)},
 	"getrawtransaction":     {(*string)(nil), (*hcjson.TxRawResult)(nil)},
 	"getticketpoolvalue":    {(*float64)(nil)},

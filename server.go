@@ -1196,8 +1196,6 @@ func (s *server) AnnounceNewTransactions(newTxs []*hcutil.Tx) {
 		// Generate the inventory vector and relay it.
 		iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
 		s.RelayInventory(iv, tx)
-		fmt.Println("RelayWitnessInventory")
-		s.RelayWitnessInventory(iv,tx)
 
 		if s.rpcServer != nil {
 			// Notify websocket clients about mempool transactions.

@@ -218,6 +218,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"getnettotals":          handleGetNetTotals,
 	"getnetworkhashps":      handleGetNetworkHashPS,
 	"getpeerinfo":           handleGetPeerInfo,
+	"getwitnesspeerinfo":    handleGetWitnessPeerInfo,
 	"getrawmempool":         handleGetRawMempool,
 	"getrawtransaction":     handleGetRawTransaction,
 	"getstakedifficulty":    handleGetStakeDifficulty,
@@ -3488,6 +3489,47 @@ func handleGetPeerInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 			CurrentHeight:  statsSnap.LastBlock,
 			BanScore:       int32(p.banScore.Int()),
 			SyncNode:       p == syncPeer,
+		}
+		if p.LastPingNonce() != 0 {
+			wait := float64(time.Since(statsSnap.LastPingTime).Nanoseconds())
+			// We actually want microseconds.
+			info.PingWait = wait / 1000
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
+}
+
+// handleGetPeerInfo implements the getpeerinfo command.
+func handleGetWitnessPeerInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
+	peers := s.server.WitnessPeers()
+	syncPeer := s.server.blockManager.SyncPeer()
+	infos := make([]*hcjson.GetPeerInfoResult, 0, len(peers))
+	for _, p := range peers {
+		statsSnap := p.WitnessStatsSnapshot()
+		info := &hcjson.GetPeerInfoResult{
+			ID:             statsSnap.ID,
+			Addr:           statsSnap.Addr,
+			Services:       fmt.Sprintf("%08d", uint64(statsSnap.Services)),
+			LastSend:       statsSnap.LastSend.Unix(),
+			LastRecv:       statsSnap.LastRecv.Unix(),
+			BytesSent:      statsSnap.BytesSent,
+			BytesRecv:      statsSnap.BytesRecv,
+			ConnTime:       statsSnap.ConnTime.Unix(),
+			PingTime:       float64(statsSnap.LastPingMicros),
+			TimeOffset:     statsSnap.TimeOffset,
+			Version:        statsSnap.Version,
+			SubVer:         statsSnap.UserAgent,
+			Inbound:        statsSnap.Inbound,
+			StartingHeight: statsSnap.StartingHeight,
+			BanScore:       int32(p.banScore.Int()),
+			SyncNode: func() bool {
+				if syncPeer == nil {
+					return false
+				} else {
+					return p.Addr() == syncPeer.Addr()
+				}
+			}(),
 		}
 		if p.LastPingNonce() != 0 {
 			wait := float64(time.Since(statsSnap.LastPingTime).Nanoseconds())

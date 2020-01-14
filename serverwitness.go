@@ -982,6 +982,11 @@ func (s *server) handleQueryWitness(state *witnessPeerState, querymsg interface{
 	}
 }
 
+
+
+
+
+
 // disconnectPeer attempts to drop the connection of a tageted peer in the
 // passed peer list. Targets are identified via usage of the passed
 // `compareFunc`, which should return `true` if the passed peer is the target
