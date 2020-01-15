@@ -24,19 +24,20 @@ import (
 type serverWitnessPeer struct {
 	*peer.WitnessPeer
 
-	connReq        *connmgr.ConnReq
-	server         *server
-	persistent     bool
-	continueHash   *chainhash.Hash
-	relayMtx       sync.Mutex
-	disableRelayTx bool
-	isWhitelisted  bool
-	requestQueue   []*wire.InvVect
-	requestedTxns  map[chainhash.Hash]struct{}
-	filter         *bloom.Filter
-	knownAddresses map[string]struct{}
-	banScore       connmgr.DynamicBanScore
-	quit           chan struct{}
+	connReq             *connmgr.ConnReq
+	server              *server
+	persistent          bool
+	continueHash        *chainhash.Hash
+	relayMtx            sync.Mutex
+	disableRelayTx      bool
+	isWhitelisted       bool
+	requestQueue        []*wire.InvVect
+	requestedTxns       map[chainhash.Hash]struct{}
+	filter              *bloom.Filter
+	knownAddresses      map[string]struct{}
+	knownRouteAddresses map[string]struct{}
+	banScore            connmgr.DynamicBanScore
+	quit                chan struct{}
 	// It is used to prevent more than one response per connection.
 	addrsSent bool
 	// addrsSent  track whether or not the peer
@@ -51,13 +52,14 @@ type serverWitnessPeer struct {
 // the caller.
 func newserverWitnessPeer(s *server, isPersistent bool) *serverWitnessPeer {
 	return &serverWitnessPeer{
-		server:         s,
-		persistent:     isPersistent,
-		requestedTxns:  make(map[chainhash.Hash]struct{}),
-		filter:         bloom.LoadFilter(nil),
-		knownAddresses: make(map[string]struct{}),
-		quit:           make(chan struct{}),
-		txProcessed:    make(chan struct{}, 1),
+		server:              s,
+		persistent:          isPersistent,
+		requestedTxns:       make(map[chainhash.Hash]struct{}),
+		filter:              bloom.LoadFilter(nil),
+		knownAddresses:      make(map[string]struct{}),
+		knownRouteAddresses: make(map[string]struct{}),
+		quit:                make(chan struct{}),
+		txProcessed:         make(chan struct{}, 1),
 	}
 }
 
@@ -79,6 +81,18 @@ func (sp *serverWitnessPeer) addressKnown(na *wire.NetAddress) bool {
 	_, exists := sp.knownAddresses[addrmgr.NetAddressKey(na)]
 	return exists
 }
+
+func(sp *serverWitnessPeer) addKnownRouteAddresses(address []string) {
+	for _,addr:=range address{
+		sp.knownRouteAddresses[addr] = struct{}{}
+	}
+}
+func (sp *serverWitnessPeer)routeAddressKnown(address string) bool {
+	_,exists:=sp.knownRouteAddresses[address]
+	return exists
+}
+
+
 
 // setDisableRelayTx toggles relaying of transactions for the given peer.
 // It is safe for concurrent access.
@@ -288,13 +302,12 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 
 	}
 
-
-	if !p.Inbound(){
-		p.QueueMessage(wire.NewMsgGetRouteAddr(),nil)
+	if !p.Inbound() {
+		p.QueueMessage(wire.NewMsgGetRouteAddr(), nil)
 	}
-	msgRouteAddr:=wire.NewMsgRouteAddr()
+	msgRouteAddr := wire.NewMsgRouteAddr()
 	msgRouteAddr.AddAddress(cfg.RouteAddr)
-	p.QueueMessage(msgRouteAddr,nil)
+	p.QueueMessage(msgRouteAddr, nil)
 
 	// Add valid peer to the server.
 	sp.server.AddWitnessPeer(sp)
@@ -542,8 +555,7 @@ func (sp *serverWitnessPeer) OnGetRouteAddr(p *peer.WitnessPeer, msg *wire.MsgGe
 		return
 	}
 
-
-	addrList:=sp.server.txMemPool.GetAddrList()
+	addrList := sp.server.txMemPool.GetAddrList()
 	// Push the addresses.
 	sp.pushRouteAddrMsg(addrList)
 }
@@ -611,7 +623,9 @@ func (sp *serverWitnessPeer) OnRouteAddr(p *peer.WitnessPeer, msg *wire.MsgRoute
 		return
 	}
 
-	//
+	sp.addKnownRouteAddresses(msg.AddrList)
+
+
 	sp.server.txMemPool.AddToAddrPool(msg.AddrList)
 }
 
@@ -981,11 +995,6 @@ func (s *server) handleQueryWitness(state *witnessPeerState, querymsg interface{
 		msg.reply <- errors.New("peer not found")
 	}
 }
-
-
-
-
-
 
 // disconnectPeer attempts to drop the connection of a tageted peer in the
 // passed peer list. Targets are identified via usage of the passed
