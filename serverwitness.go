@@ -83,11 +83,16 @@ func (sp *serverWitnessPeer) addressKnown(na *wire.NetAddress) bool {
 }
 
 func (sp *serverWitnessPeer) addKnownRouteAddresses(address []string) {
+	sp.relayMtx.Lock()
+	defer sp.relayMtx.Unlock()
 	for _, addr := range address {
 		sp.knownRouteAddresses[addr] = struct{}{}
 	}
 }
 func (sp *serverWitnessPeer) routeAddressKnown(address string) bool {
+	sp.relayMtx.Lock()
+	defer sp.relayMtx.Unlock()
+
 	_, exists := sp.knownRouteAddresses[address]
 	return exists
 }
@@ -571,7 +576,7 @@ func (sp *serverWitnessPeer) OnWitnessAddr(p *peer.WitnessPeer, msg *wire.MsgAdd
 
 	// A message that has no addresses is invalid.
 	if len(msg.AddrList) == 0 {
-		peerLog.Errorf("Command [%s] from %s does not contain any addresses",
+		peerLog.Errorf("Command [%s] from %s does not contain any witness addresses",
 			msg.Command(), p)
 		p.Disconnect()
 		return
@@ -615,7 +620,7 @@ func (sp *serverWitnessPeer) OnRouteAddr(p *peer.WitnessPeer, msg *wire.MsgRoute
 
 	// A message that has no addresses is invalid.
 	if len(msg.AddrList) == 0 {
-		peerLog.Errorf("Command [%s] from %s does not contain any addresses",
+		peerLog.Errorf("Command [%s] from %s does not contain any route addresses",
 			msg.Command(), p)
 		p.Disconnect()
 		return
