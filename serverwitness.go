@@ -82,17 +82,15 @@ func (sp *serverWitnessPeer) addressKnown(na *wire.NetAddress) bool {
 	return exists
 }
 
-func(sp *serverWitnessPeer) addKnownRouteAddresses(address []string) {
-	for _,addr:=range address{
+func (sp *serverWitnessPeer) addKnownRouteAddresses(address []string) {
+	for _, addr := range address {
 		sp.knownRouteAddresses[addr] = struct{}{}
 	}
 }
-func (sp *serverWitnessPeer)routeAddressKnown(address string) bool {
-	_,exists:=sp.knownRouteAddresses[address]
+func (sp *serverWitnessPeer) routeAddressKnown(address string) bool {
+	_, exists := sp.knownRouteAddresses[address]
 	return exists
 }
-
-
 
 // setDisableRelayTx toggles relaying of transactions for the given peer.
 // It is safe for concurrent access.
@@ -625,8 +623,11 @@ func (sp *serverWitnessPeer) OnRouteAddr(p *peer.WitnessPeer, msg *wire.MsgRoute
 
 	sp.addKnownRouteAddresses(msg.AddrList)
 
-
 	sp.server.txMemPool.AddToAddrPool(msg.AddrList)
+
+	//broadcast to other  peers
+
+	sp.server.BroadcastWitnessMessage(msg,nil)
 }
 
 // OnRead is invoked when a peer receives a message and it is used to update
@@ -845,19 +846,52 @@ func (s *server) handleRelayWitnessInvMsg(state *witnessPeerState, msg relayMsg)
 // handlebroadcastWitnessMsg deals with broadcasting messages to peers.  It is invoked
 // from the peerHandler goroutine.
 func (s *server) handleBroadcastWitnessMsg(state *witnessPeerState, bmsg *broadcastWitnessMsg) {
-	state.forAllPeers(func(sp *serverWitnessPeer) {
-		if !sp.Connected() {
-			return
-		}
 
-		for _, ep := range bmsg.excludePeers {
-			if sp == ep {
+	if bmsg.message.Command() == wire.CmdRouteAddr {
+
+		state.forAllPeers(func(sp *serverWitnessPeer) {
+			if !sp.Connected() {
 				return
 			}
-		}
 
-		sp.QueueMessage(bmsg.message, nil)
-	})
+			for _, ep := range bmsg.excludePeers {
+				if sp == ep {
+					return
+				}
+			}
+
+			msg:=bmsg.message.(*wire.MsgRouteAddr)
+			addrList:=msg.AddrList
+
+			queueAddrs:=make([]string,0)
+			for _,addr:=range addrList{
+				if !sp.routeAddressKnown(addr){
+					queueAddrs=append(queueAddrs,addr)
+				}
+			}
+
+			msg.AddrList = queueAddrs
+			sp.addKnownRouteAddresses(queueAddrs)
+			sp.QueueMessage(msg, nil)
+		})
+
+	} else {
+
+		state.forAllPeers(func(sp *serverWitnessPeer) {
+			if !sp.Connected() {
+				return
+			}
+
+			for _, ep := range bmsg.excludePeers {
+				if sp == ep {
+					return
+				}
+			}
+
+			sp.QueueMessage(bmsg.message, nil)
+		})
+
+	}
 }
 
 type getWitnessPeersMsg struct {
