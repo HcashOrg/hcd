@@ -875,6 +875,10 @@ func (s *server) handleBroadcastWitnessMsg(state *witnessPeerState, bmsg *broadc
 				}
 			}
 
+			if len(queueAddrs)==0{
+				return
+			}
+
 			msg.AddrList = queueAddrs
 			sp.addKnownRouteAddresses(queueAddrs)
 			sp.QueueMessage(msg, nil)
