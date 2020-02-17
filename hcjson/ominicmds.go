@@ -1438,6 +1438,7 @@ func init() {
 	// The commands in this file are only usable with a wallet server.
 	flags := Omni
 	MustRegisterCmd("omni_send", (*OmniSendCmd)(nil), flags)
+	MustRegisterCmd("omni_aisend", (*OmniSendCmd)(nil), flags)
 	MustRegisterCmd("omni_senddexsell", (*OmniSenddexsellCmd)(nil), flags)
 	MustRegisterCmd("omni_senddexaccept", (*OmniSenddexacceptCmd)(nil), flags)
 	MustRegisterCmd("omni_sendissuancecrowdsale", (*OmniSendissuancecrowdsaleCmd)(nil), flags)
