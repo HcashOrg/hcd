@@ -3,6 +3,8 @@ module github.com/HcashOrg/hcd
 go 1.13
 
 require (
+    github.com/ethereum/go-ethereum/common latest
+    github.com/ethereum/go-ethereum/accounts/abi latest
 	github.com/HcashOrg/bitset v0.0.0-20170930031026-3b5f0c752dfb
 	github.com/HcashOrg/bliss v0.0.0-20180719035130-f5d53c2a9b7d
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412

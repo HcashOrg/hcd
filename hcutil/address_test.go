@@ -577,13 +577,11 @@ func TestAddresses(t *testing.T) {
 		}
 	}
 }
-// testAddressPubKey makes an AddressPubKey, setting the unexported fields with
-// the parameters.
-func testAddressPubKey(serializedPubKey []byte, pubKeyFormat PubKeyFormat, netID [2]byte) *AddressSecpPubKey {
-	pubKey, _ := secp256k1.ParsePubKey(serializedPubKey)
-	return &AddressSecpPubKey{
-		pubKeyFormat: pubKeyFormat,
-		pubKey:       chainec.PublicKey(pubKey),
-		pubKeyHashID: netID,
+
+func TestDecodeAddress(t *testing.T) {
+	addr,err:=hcutil.DecodeAddress("HsaSRUENPTuao1fJCYpBKCaFyZ1Pq4EEU9W")
+	if err!=nil{
+		t.Fatal(err)
 	}
+	t.Log(addr.Net(),addr.ScriptAddress())
 }
