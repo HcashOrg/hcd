@@ -24,10 +24,6 @@ func TestStakeTxFeePrioHeap(t *testing.T) {
 	// Create some fake priority items that exercise the expected sort
 	// edge conditions.
 	testItems := []*txPrioItem{
-		{feePerKB: 5678, txType: stake.TxTypeRegular, priority: 3},
-		{feePerKB: 5678, txType: stake.TxTypeRegular, priority: 1},
-		{feePerKB: 5678, txType: stake.TxTypeRegular, priority: 1}, // Duplicate fee and prio
-		{feePerKB: 5678, txType: stake.TxTypeRegular, priority: 5},
 		{feePerKB: 5678, txType: stake.TxTypeRegular, priority: 2},
 		{feePerKB: 1234, txType: stake.TxTypeRegular, priority: 3},
 		{feePerKB: 1234, txType: stake.TxTypeRegular, priority: 1},
