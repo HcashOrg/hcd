@@ -9,6 +9,7 @@ package txscript
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"github.com/HcashOrg/hcd/chaincfg"
@@ -282,6 +283,8 @@ func parseScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode,
 	return retScript, nil
 }
 
+
+
 // parseScript preparses the script in bytes into a list of parsedOpcodes while
 // applying a number of sanity checks.
 func parseScript(script []byte) ([]parsedOpcode, error) {
@@ -326,7 +329,21 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 */
 }
 
+func GetOpReturnData(pkScript []byte)([]byte, error){
+	pops, err := parseScript(pkScript)
+	if err != nil || len(pops) != 2 {
+		return nil, err
+	}
+	opCode := pops[0].opcode.value
+	data := pops[1].data
 
+	if opCode == OP_RETURN{
+		return data,nil
+	}
+
+	return nil,errors.New("not opreturn out")
+
+}
 // unparseScript reversed the action of parseScript and returns the
 // parsedOpcodes as a list of bytes
 func unparseScript(pops []parsedOpcode) ([]byte, error) {
