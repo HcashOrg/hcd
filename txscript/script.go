@@ -391,6 +391,35 @@ func removeOpcode(pkscript []parsedOpcode, opcode byte) []parsedOpcode {
 	return retScript
 }
 
+
+func GetEvmData(pkScript []byte) (bool, []byte) {
+	if len(pkScript) < 80 {
+		return false, nil
+	}
+	pops, err := parseScript(pkScript)
+	if err != nil || len(pops) != 2 {
+		return false, nil
+	}
+	opCode := pops[0].opcode.value
+	if opCode == OP_RETURN {
+		return true, pops[1].data
+		//code, err := hex.DecodeString(string(pops[1].data));
+		//if err != nil {
+		//	return false, nil
+		//}
+		//popSub, err := parseScript(code)
+		//if err != nil {
+		//	return false, nil
+		//}
+		//if len(popSub) > 0{
+		//	if popSub[len(popSub) - 1].opcode.value == 193{
+		//		return true, pops[1].data
+		//	}
+		//}
+	}
+	return false, nil
+}
+
 // canonicalPush returns true if the object is either not a push instruction
 // or the push instruction contained wherein is matches the canonical form
 // or using the smallest instruction to do the job. False otherwise.
