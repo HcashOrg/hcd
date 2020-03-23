@@ -8,13 +8,8 @@ package txscript
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
-
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
 )
 
 // SigHashType represents hash type bits at the end of a signature.
@@ -137,7 +132,7 @@ func parseAltScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode
 		instr := script[i]
 
 		// TODO for read
-		if i == 24 && script[i] < (OP_1) && script[i] != (OP_0){  //OP_O
+		if i == 24 && script[i] < (OP_1) && script[i] != (OP_0) { //OP_O
 			instr = instr + 80
 		}
 		op := &opcodes[instr]
@@ -283,8 +278,6 @@ func parseScriptTemplate(script []byte, opcodes *[256]opcode) ([]parsedOpcode,
 	return retScript, nil
 }
 
-
-
 // parseScript preparses the script in bytes into a list of parsedOpcodes while
 // applying a number of sanity checks.
 func parseScript(script []byte) ([]parsedOpcode, error) {
@@ -306,30 +299,30 @@ func GetPayLoadData(pkScript []byte) (bool, []byte) {
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if len(data) <= 4{
+	if len(data) <= 4 {
 		return false, nil
 	}
 	if opCode == OP_RETURN &&
 		data[0] == 111 &&
 		data[1] == 109 &&
 		data[2] == 110 &&
-		data[3] == 105{
+		data[3] == 105 {
 		return true, data[4:]
 	}
 	return false, nil
-/*
-	byte := op[1].bytes()
-	if byte[0] == 111 &&
-		byte[1] == 109 &&
-		byte[2] == 110 &&
-		byte[3] == 105 {
-		return true, byte
-	}
-	return false, nil
-*/
+	/*
+		byte := op[1].bytes()
+		if byte[0] == 111 &&
+			byte[1] == 109 &&
+			byte[2] == 110 &&
+			byte[3] == 105 {
+			return true, byte
+		}
+		return false, nil
+	*/
 }
 
-func GetOpReturnData(pkScript []byte)([]byte, error){
+func GetOpReturnData(pkScript []byte) ([]byte, error) {
 	pops, err := parseScript(pkScript)
 	if err != nil || len(pops) != 2 {
 		return nil, err
@@ -337,13 +330,14 @@ func GetOpReturnData(pkScript []byte)([]byte, error){
 	opCode := pops[0].opcode.value
 	data := pops[1].data
 
-	if opCode == OP_RETURN{
-		return data,nil
+	if opCode == OP_RETURN {
+		return data, nil
 	}
 
-	return nil,errors.New("not opreturn out")
+	return nil, errors.New("not opreturn out")
 
 }
+
 // unparseScript reversed the action of parseScript and returns the
 // parsedOpcodes as a list of bytes
 func unparseScript(pops []parsedOpcode) ([]byte, error) {
@@ -391,7 +385,6 @@ func removeOpcode(pkscript []parsedOpcode, opcode byte) []parsedOpcode {
 	return retScript
 }
 
-
 func GetEvmData(pkScript []byte) (bool, []byte) {
 	if len(pkScript) < 80 {
 		return false, nil
@@ -403,19 +396,6 @@ func GetEvmData(pkScript []byte) (bool, []byte) {
 	opCode := pops[0].opcode.value
 	if opCode == OP_RETURN {
 		return true, pops[1].data
-		//code, err := hex.DecodeString(string(pops[1].data));
-		//if err != nil {
-		//	return false, nil
-		//}
-		//popSub, err := parseScript(code)
-		//if err != nil {
-		//	return false, nil
-		//}
-		//if len(popSub) > 0{
-		//	if popSub[len(popSub) - 1].opcode.value == 193{
-		//		return true, pops[1].data
-		//	}
-		//}
 	}
 	return false, nil
 }
@@ -458,8 +438,6 @@ func removeOpcodeByData(pkscript []parsedOpcode, data []byte) []parsedOpcode {
 	return retScript
 
 }
-
-
 
 // asSmallInt returns the passed opcode, which must be true according to
 // isSmallInt(), as an integer.
