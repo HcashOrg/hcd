@@ -8,6 +8,8 @@ package hcutil_test
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -15,8 +17,8 @@ import (
 
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/wire"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/wire"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -584,4 +586,14 @@ func TestDecodeAddress(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(addr.Net(),addr.ScriptAddress())
+
+	t.Log([]byte("HsaSRUENPTuao1fJCYpBKCaFyZ1Pq4EEU9W"))
+}
+
+func TestRsa(t *testing.T){
+	prvKey,_:=rsa.GenerateKey(rand.Reader,1024)
+	t.Log("N:",prvKey.PublicKey.N)
+	t.Log("E:",prvKey.PublicKey.E)
+	t.Log("D:",prvKey.D)
+
 }
