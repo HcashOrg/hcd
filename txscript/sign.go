@@ -88,6 +88,11 @@ func RawTxInSignatureAlt(tx *wire.MsgTx, idx int, subScript []byte,
 	return append(sig.Serialize(), byte(hashType)), nil
 }
 
+func MergeScripts(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
+	pkScript []byte, class ScriptClass, addresses []hcutil.Address,
+	nRequired int, sigScript, prevScript []byte) []byte {
+	return mergeScripts(chainParams,tx,idx,pkScript,class,addresses,nRequired,sigScript,prevScript)
+}
 // SignatureScript creates an input signature script for tx to spend coins sent
 // from a previous output to the owner of privKey. tx must include all
 // transaction inputs and outputs, however txin scripts are allowed to be filled
