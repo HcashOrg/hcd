@@ -9,12 +9,12 @@ package txscript
 import (
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/hcutil"
 
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	hccrypto "github.com/HcashOrg/hcd/crypto"
 	bs "github.com/HcashOrg/hcd/crypto/bliss"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/wire"
 )
 
@@ -87,6 +87,79 @@ func RawTxInSignatureAlt(tx *wire.MsgTx, idx int, subScript []byte,
 
 	return append(sig.Serialize(), byte(hashType)), nil
 }
+
+
+//getSigsMap of one input
+func GetSigsMap(tx *wire.MsgTx, idx int, addresses []string, sigScript []byte) (map[string][]byte, error) {
+	if len(sigScript) == 0 {
+		return nil, errors.New("sigScript is nil")
+	}
+	// Convenience function to avoid duplication.
+	var possibleSigs [][]byte
+	extractSigs := func(script []byte) error {
+		const scriptVersion = 0
+		return nil
+	}
+	if err := extractSigs(sigScript); err != nil {
+		return nil, fmt.Errorf("extractSigs err:", err)
+	}
+
+	addrToSig := make(map[string][]byte)
+sigLoop:
+	for _, sig := range possibleSigs {
+
+		// can't have a valid signature that doesn't at least have a
+		// hashtype, in practise it is even longer than this. but
+		// that'll be checked next.
+		if len(sig) < 1 {
+			continue
+		}
+		tSig := sig[:len(sig)-1]
+		hashType := SigHashType(sig[len(sig)-1])
+
+		pSig, err := chainec.Secp256k1.ParseDERSignature(tSig)
+		if err != nil {
+			continue
+		}
+
+		// We have to do this each round since hash types may vary
+		// between signatures and so the hash will vary. We can,
+		// however, assume no sigs etc are in the script since that
+		// would make the transaction nonstandard and thus not
+		// MultiSigTy, so we just need to hash the full thing.
+		hash, err := calcSignatureHash(nil, hashType, tx, idx, nil)
+		if err != nil {
+			// Utopia -- is this the right handling for SIGHASH_SINGLE error ?
+			// TODO make sure this doesn't break anything.
+			continue
+		}
+
+		for _, addr := range addresses {
+			// All multisig addresses should be pubkey addreses
+			// it is an error to call this internal function with
+			// bad input.
+			pkaddr := (*hcutil.AddressSecpPubKey)(nil)
+
+			pubKey := pkaddr.PubKey()
+
+			// If it matches we put it in the map. We only
+			// can take one signature per public key so if we
+			// already have one, we can throw this away.
+			r := pSig.GetR()
+			s := pSig.GetS()
+			if chainec.Secp256k1.Verify(pubKey, hash, r, s) {
+
+				if _, ok := addrToSig[addr]; !ok {
+					addrToSig[addr] = sig
+				}
+				continue sigLoop
+			}
+		}
+	}
+
+	return addrToSig,nil
+}
+
 
 func MergeScripts(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 	pkScript []byte, class ScriptClass, addresses []hcutil.Address,
