@@ -150,7 +150,10 @@ sigLoop:
 			if chainec.Secp256k1.Verify(pubKey, hash, r, s) {
 
 				if _, ok := addrToSig[addr]; !ok {
-					addrToSig[addr] = sig
+					builder := NewScriptBuilder()
+					builder.addData(sig)
+					finalSig,_:=builder.Script()
+					addrToSig[addr] = finalSig
 				}
 				continue sigLoop
 			}
