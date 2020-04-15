@@ -8,8 +8,13 @@ package txscript
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/chaincfg"
+	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/hcutil/base58"
+	"golang.org/x/crypto/ripemd160"
 )
 
 // SigHashType represents hash type bits at the end of a signature.
@@ -486,6 +491,35 @@ func getSigOpCount(pops []parsedOpcode, precise bool) int {
 
 	return nSigs
 }
+
+
+func GenMultiSigAddress(flagN int, publicKeyStrings []string) (string, string, error) {
+
+	pubKeys := make([]hcutil.Address, len(publicKeyStrings))
+	for i, addr := range publicKeyStrings {
+		hexAddr, err:= hex.DecodeString(addr)
+		if err != nil {
+			return "", "", err
+		}
+		pubKey,err:=hcutil.NewAddressPubKey(hexAddr, &chaincfg.MainNetParams)
+		if err != nil {
+			return "", "", err
+		}
+		pubKeys[i]=pubKey
+	}
+	redeemScript, err := MultiSigScript(pubKeys, flagN)
+	if err != nil {
+		return "", "", err
+	}
+	redeemScriptHash := hcutil.Hash160(redeemScript)
+	//Get P2SH address by base58 encoding with P2SH prefix 0x05
+	P2SHAddress := base58.CheckEncode(redeemScriptHash[:ripemd160.Size], [2]byte{0x05,0x01})
+	//Get redeemScript in Hex
+	redeemScriptHex := hex.EncodeToString(redeemScript)
+
+	return P2SHAddress, redeemScriptHex, nil
+}
+
 
 // GetSigOpCount provides a quick count of the number of signature operations
 // in a script. a CHECKSIG operations counts for 1, and a CHECK_MULTISIG for 20.

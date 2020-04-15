@@ -872,29 +872,3 @@ func (a *AddressBlissPubKey) PubKey() chainec.PublicKey {
 }
 
 
-func GenMultiSigAddress(flagN int, publicKeyStrings []string) (string, string, error) {
-
-	pubKeys := make([]Address, len(publicKeyStrings))
-	for i, addr := range publicKeyStrings {
-		hexAddr, err:= hex.DecodeString(addr)
-		if err != nil {
-			return "", "", err
-		}
-		pubKey,err:=NewAddressPubKey(hexAddr, &chaincfg.MainNetParams)
-		if err != nil {
-			return "", "", err
-		}
-		pubKeys[i]=pubKey
-	}
-	redeemScript, err := txscript.MultiSigScript(pubKeys, flagN)
-	if err != nil {
-		return "", "", err
-	}
-	redeemScriptHash := Hash160(redeemScript)
-	//Get P2SH address by base58 encoding with P2SH prefix 0x05
-	P2SHAddress := base58.CheckEncode(redeemScriptHash[:ripemd160.Size], [2]byte{0x05,0x01})
-	//Get redeemScript in Hex
-	redeemScriptHex := hex.EncodeToString(redeemScript)
-
-	return P2SHAddress, redeemScriptHex, nil
-}
