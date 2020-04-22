@@ -7,10 +7,8 @@
 package hcutil
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/HcashOrg/hcd/txscript"
 
 	"golang.org/x/crypto/ripemd160"
 
