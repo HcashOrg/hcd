@@ -20,7 +20,7 @@ import (
 // type.
 func TestStakeTxFeePrioHeap(t *testing.T) {
 	numElements := 1000
-	numEdgeConditionElements := 12
+	numEdgeConditionElements := 9
 	// Create some fake priority items that exercise the expected sort
 	// edge conditions.
 	testItems := []*txPrioItem{
