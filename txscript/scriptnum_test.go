@@ -108,7 +108,7 @@ func TestMakeScriptNum(t *testing.T) {
 		// Minimally encoded valid values with minimal encoding flag.
 		// Should not error and return expected integral number.
 		{nil, 0, mathOpCodeMaxScriptNumLen, true, nil},
-		{hexToBytes("80"), 0, mathOpCodeMaxScriptNumLen, true, errMinimalData},
+		{hexToBytes("80"), 0, mathOpCodeMaxScriptNumLen, true, nil},
 		{hexToBytes("01"), 1, mathOpCodeMaxScriptNumLen, true, nil},
 		{hexToBytes("81"), -1, mathOpCodeMaxScriptNumLen, true, nil},
 		{hexToBytes("7f"), 127, mathOpCodeMaxScriptNumLen, true, nil},

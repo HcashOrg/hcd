@@ -88,7 +88,6 @@ func RawTxInSignatureAlt(tx *wire.MsgTx, idx int, subScript []byte,
 	return append(sig.Serialize(), byte(hashType)), nil
 }
 
-
 //getSigsMap of one input
 func GetSigsMap(tx *wire.MsgTx, idx int, addresses []string, sigScript []byte) (map[string][]byte, error) {
 	if len(sigScript) == 0 {
@@ -101,7 +100,7 @@ func GetSigsMap(tx *wire.MsgTx, idx int, addresses []string, sigScript []byte) (
 		return nil
 	}
 	if err := extractSigs(sigScript); err != nil {
-		return nil, fmt.Errorf("extractSigs err:", err)
+		return nil, fmt.Errorf("extractSigs err:%v", err)
 	}
 
 	addrToSig := make(map[string][]byte)
@@ -152,7 +151,7 @@ sigLoop:
 				if _, ok := addrToSig[addr]; !ok {
 					builder := NewScriptBuilder()
 					builder.addData(sig)
-					finalSig,_:=builder.Script()
+					finalSig, _ := builder.Script()
 					addrToSig[addr] = finalSig
 				}
 				continue sigLoop
@@ -160,15 +159,15 @@ sigLoop:
 		}
 	}
 
-	return addrToSig,nil
+	return addrToSig, nil
 }
-
 
 func MergeScripts(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 	pkScript []byte, class ScriptClass, addresses []hcutil.Address,
 	nRequired int, sigScript, prevScript []byte) []byte {
-	return mergeScripts(chainParams,tx,idx,pkScript,class,addresses,nRequired,sigScript,prevScript)
+	return mergeScripts(chainParams, tx, idx, pkScript, class, addresses, nRequired, sigScript, prevScript)
 }
+
 // SignatureScript creates an input signature script for tx to spend coins sent
 // from a previous output to the owner of privKey. tx must include all
 // transaction inputs and outputs, however txin scripts are allowed to be filled
