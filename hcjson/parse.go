@@ -143,3 +143,9 @@ func DecodeConcatenatedVoteBits(voteBitsString string) ([]stake.VoteBits, error)
 
 	return dvbs, nil
 }
+
+type Key struct {
+	PublicKey []byte // Represents the public key of the user.
+
+	SecretKey []byte // Represents the private key of the user.
+}
