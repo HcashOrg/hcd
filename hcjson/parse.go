@@ -158,3 +158,8 @@ func NewKey(pubkey,blsKey []byte) (*Key, error) {
 
 	return key, nil
 }
+
+type plainKeyJSON struct {
+	PublicKey string `json:"address"`
+	SecretKey string `json:"privatekey"`
+}
