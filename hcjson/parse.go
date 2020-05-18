@@ -149,3 +149,12 @@ type Key struct {
 
 	SecretKey []byte // Represents the private key of the user.
 }
+
+func NewKey(pubkey,blsKey []byte) (*Key, error) {
+	key := &Key{
+		PublicKey: pubkey,
+		SecretKey: blsKey,
+	}
+
+	return key, nil
+}
