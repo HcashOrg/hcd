@@ -20,7 +20,7 @@ The master branch is regularly built and tested, but is not guaranteed to be com
 
 ## Requirements
 
-[Go](http://golang.org) 1.7 or newer.
+[Go](http://golang.org) 1.13 or newer.
 
 ## Getting Started
 
@@ -33,29 +33,14 @@ The master branch is regularly built and tested, but is not guaranteed to be com
 
 #### Build from Source
 
-- **Dep**
-
-  Dep is used to manage project dependencies and provide reproducible builds.
-  To install:
-
-  `go get -u github.com/golang/dep/cmd/dep`
-
-Unfortunately, the use of `dep` prevents a handy tool such as `go get` from
-automatically downloading, building, and installing the source in a single
-command.  Instead, the latest project and dependency sources must be first
-obtained manually with `git` and `dep`, and then `go` is used to build and
-install the project.
-
-
 **Getting the source**:
 
 For a first time installation, the project and dependency sources can be
-obtained manually with `git` and `dep` (create directories as needed):
+obtained manually with `git`
 
 ```
 git clone https://github.com/HcashOrg/hcd $GOPATH/src/github.com/HcashOrg/hcd
 cd $GOPATH/src/github.com/HcashOrg/hcd
-dep ensure
 go install . ./cmd/...
 ```
 
@@ -65,7 +50,6 @@ matching dependencies:
 ```
 cd $GOPATH/src/github.com/HcashOrg/hcd
 git pull
-dep ensure -update
 go install . ./cmd/...
 ```
 
