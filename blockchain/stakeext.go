@@ -70,7 +70,7 @@ func (b *BlockChain) LotteryDataForBlock(hash *chainhash.Hash) ([]chainhash.Hash
 
 // LiveTickets returns all currently live tickets from the stake database.
 //
-// This function is NOT safe for concurrent access.
+// This function is safe for concurrent access.
 func (b *BlockChain) LiveTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
@@ -81,7 +81,7 @@ func (b *BlockChain) LiveTickets() ([]chainhash.Hash, error) {
 
 // MissedTickets returns all currently missed tickets from the stake database.
 //
-// This function is NOT safe for concurrent access.
+// This function is safe for concurrent access.
 func (b *BlockChain) MissedTickets() ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
