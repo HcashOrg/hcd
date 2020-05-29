@@ -4162,11 +4162,13 @@ func handleGetTxOut(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 	} else {
 		entry, err := s.chain.FetchUtxoEntry(txHash)
 		if err != nil {
-			return nil, rpcNoTxInfoError(txHash)
+			context := "Failed to retrieve utxo entry"
+			return nil, rpcInternalError(err.Error(), context)
 		}
 
 		// To match the behavior of the reference client, return nil
-		// (JSON null) if the transaction output is spent by another
+		// (JSON null) if the transaction output could not be found
+		// (never existed or was pruned) or is spent by another
 		// transaction already in the main chain.  Mined transactions
 		// that are spent by a mempool transaction are not affected by
 		// this.
