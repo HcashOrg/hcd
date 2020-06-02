@@ -5260,7 +5260,23 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 
 	return tx.Hash().String(), nil
 }
-
+func decodeHashes(strs []string) ([]chainhash.Hash, error) {
+	hashes := make([]chainhash.Hash, len(strs))
+	for i, s := range strs {
+			if len(s) != 2*chainhash.HashSize {
+				return nil, rpcDecodeHexError(s)
+			}
+			_, err := hex.Decode(hashes[i][:], []byte(s))
+			if err != nil {
+				return nil, rpcDecodeHexError(s)
+			}
+			// unreverse hash string bytes
+			for j := 0; j < 16; j++ {
+				hashes[i][j], hashes[i][31-j] = hashes[i][31-j], hashes[i][j]
+			}
+		}
+		return hashes, nil
+	}
 // handleSetGenerate implements the setgenerate command.
 func handleSetGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*hcjson.SetGenerateCmd)
