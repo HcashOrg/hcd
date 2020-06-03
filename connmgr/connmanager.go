@@ -163,6 +163,12 @@ type handleFailed struct {
 	err error
 }
 
+// handleCancelPending is used to remove failing connections from retries.
+type handleCancelPending struct {
+	addr net.Addr
+	done chan error
+}
+
 // ConnManager provides a manager to handle network connections.
 type ConnManager struct {
 	// The following variables must only be used atomically.
