@@ -21,8 +21,6 @@ via an RPC interface.
 - Address-ever-seen (existsaddridx) Index
   - Stores a key with an empty value for every address that has ever existed 
     and was seen by the client
-  - Requires the transaction-by-hash index
-
 ## Installation
 
 ```bash
