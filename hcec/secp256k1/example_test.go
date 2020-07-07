@@ -89,53 +89,6 @@ func Example_verifySignature() {
 	// Signature Verified? true
 }
 
-// This example demonstrates encrypting a message for a public key that is first
-// parsed from raw bytes, then decrypting it using the corresponding private key.
-func Example_encryptMessage() {
-	// Decode the hex-encoded pubkey of the recipient.
-	pubKeyBytes, err := hex.DecodeString("04115c42e757b2efb7671c578530ec191a1" +
-		"359381e6a71127a9d37c486fd30dae57e76dc58f693bd7e7010358ce6b165e483a29" +
-		"21010db67ac11b1b51b651953d2") // uncompressed pubkey
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes, secp256k1.S256())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// Encrypt a message decryptable by the private key corresponding to pubKey
-	message := "test message"
-	ciphertext, err := secp256k1.Encrypt(pubKey, []byte(message))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// Decode the hex-encoded private key.
-	pkBytes, err := hex.DecodeString("a11b0a4e1a132305652ee7a8eb7848f6ad" +
-		"5ea381e3ce20a2c086a2e388230811")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	// note that we already have corresponding pubKey
-	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pkBytes)
-
-	// Try decrypting and verify if it's the same message.
-	plaintext, err := secp256k1.Decrypt(privKey, ciphertext)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println(string(plaintext))
-
-	// Output:
-	// test message
-}
 
 // This example demonstrates decrypting a message using a private key that is
 // first parsed from raw bytes.
