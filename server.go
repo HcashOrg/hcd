@@ -749,8 +749,8 @@ func (sp *serverPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 		case wire.InvTypeBlock:
 			err = sp.server.pushBlockMsg(sp, &iv.Hash, c, waitChan)
 		default:
-			peerLog.Warnf("Unknown type in inventory request %d",
-				iv.Type)
+			peerLog.Warnf("Unknown type %d in inventory request from %s",
+				iv.Type,sp)
 			continue
 		}
 		if err != nil {
