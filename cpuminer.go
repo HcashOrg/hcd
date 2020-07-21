@@ -84,6 +84,9 @@ type CPUMiner struct {
 	minedOnParents map[chainhash.Hash]uint8
 }
 
+func (m *CPUMiner) Wait() {
+	m.wg.Wait()
+}
 // speedMonitor handles tracking the number of hashes per second the mining
 // process is performing.  It must be run as a goroutine.
 func (m *CPUMiner) speedMonitor() {
