@@ -207,3 +207,20 @@ func testGetBlockCountTwo(r *rpctest.Harness, t *testing.T) {
 	}
 
 }
+
+
+var blocktest = func() wire.MsgBlock {
+	// Load and deserialize the test block.
+	blockDataFile := filepath.Join(testDataPath, "block34799.bz2")
+	fi, err := os.Open(blockDataFile)
+	if err != nil {
+		panic(err)
+	}
+	defer fi.Close()
+	var block wire.MsgBlock
+	err = block.Deserialize(bzip2.NewReader(fi))
+	if err != nil {
+		panic(err)
+	}
+	return block
+}()
