@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/internal/version"
 	"io"
 	"io/ioutil"
 	"math"
@@ -3266,8 +3267,8 @@ func handleGetHeaders(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) 
 func handleGetInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	best := s.chain.BestSnapshot()
 	ret := &hcjson.InfoChainResult{
-		Version: int32(1000000*appMajor + 10000*appMinor +
-			100*appPatch),
+		Version: int32(1000000*version.AppMajor + 10000*version.AppMinor +
+			100*version.AppPatch),
 		ProtocolVersion: int32(maxProtocolVersion),
 		Blocks:          best.Height,
 		TimeOffset:      int64(s.server.timeSource.Offset().Seconds()),

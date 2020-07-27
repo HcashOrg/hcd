@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/internal/version"
 	"net"
 	"os"
 	"os/user"
@@ -477,7 +478,7 @@ func loadConfig() (*config, []string, error) {
 	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
 	usageMessage := fmt.Sprintf("Use %s -h to show usage", appName)
 	if preCfg.ShowVersion {
-		fmt.Printf("%s version %s (Go version %s)\n", appName, version(), runtime.Version())
+		fmt.Printf("%s version %s (Go version %s)\n", appName, version.Version(), runtime.Version())
 		os.Exit(0)
 	}
 

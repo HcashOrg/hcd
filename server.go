@@ -12,6 +12,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/HcashOrg/hcd/internal/version"
 	"math"
 	"net"
 	"regexp"
@@ -70,7 +71,7 @@ var (
 
 	// userAgentVersion is the user agent version and is used to help
 	// identify ourselves to other peers.
-	userAgentVersion = fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
+	userAgentVersion = fmt.Sprintf("%d.%d.%d", version.AppMajor, version.AppMinor, version.AppPatch)
 )
 
 // broadcastMsg provides the ability to house a hcd message to be broadcast
@@ -429,7 +430,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	}
 
 	oldVersion := int32(1000000*oldAppMajor + 10000*oldAppMinor + 100*oldAppPatch)
-	currVersion := int32(1000000*appMajor + 10000*appMinor + 100*appPatch)
+	currVersion := int32(1000000*version.AppMajor + 10000*version.AppMinor + 100*version.AppPatch)
 
 	if oldVersion < currVersion {
 		peerLog.Warnf("too old version peer %s ", sp)

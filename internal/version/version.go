@@ -4,7 +4,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package main
+package version
 
 import (
 	"bytes"
@@ -18,13 +18,13 @@ const semanticAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr
 // These constants define the application version and follow the semantic
 // versioning 2.0.0 spec (http://semver.org/).
 const (
-	appMajor uint = 2
-	appMinor uint = 0
-	appPatch uint = 3
+	AppMajor uint = 2
+	AppMinor uint = 0
+	AppPatch uint = 3
 
-	// appPreRelease MUST only contain characters from semanticAlphabet
+	// AppPreRelease MUST only contain characters from semanticAlphabet
 	// per the semantic versioning spec.
-	appPreRelease = ""
+	AppPreRelease = ""
 )
 
 // appBuild is defined as a variable so it can be overridden during the build
@@ -34,15 +34,15 @@ var appBuild = "dev"
 
 // version returns the application version as a properly formed string per the
 // semantic versioning 2.0.0 spec (http://semver.org/).
-func version() string {
+func Version() string {
 	// Start with the major, minor, and patch versions.
-	version := fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
+	version := fmt.Sprintf("%d.%d.%d", AppMajor, AppMinor, AppPatch)
 
 	// Append pre-release version if there is one.  The hyphen called for
 	// by the semantic versioning spec is automatically appended and should
 	// not be contained in the pre-release string.  The pre-release version
 	// is not appended if it contains invalid characters.
-	preRelease := normalizeVerString(appPreRelease)
+	preRelease := normalizeVerString(AppPreRelease)
 	if preRelease != "" {
 		version = fmt.Sprintf("%s-%s", version, preRelease)
 	}

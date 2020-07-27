@@ -8,6 +8,7 @@ import (
 	"github.com/HcashOrg/hcd/connmgr"
 	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/hcutil/bloom"
+	"github.com/HcashOrg/hcd/internal/version"
 	"github.com/HcashOrg/hcd/peer"
 	"github.com/HcashOrg/hcd/wire"
 	"net"
@@ -257,7 +258,7 @@ func (sp *serverWitnessPeer) OnVersion(p *peer.WitnessPeer, msg *wire.MsgVersion
 	}
 
 	oldVersion := int32(1000000*oldAppMajor + 10000*oldAppMinor + 100*oldAppPatch)
-	currVersion := int32(1000000*appMajor + 10000*appMinor + 100*appPatch)
+	currVersion := int32(1000000*version.AppMajor + 10000*version.AppMinor + 100*version.AppPatch)
 
 	if oldVersion < currVersion {
 		peerLog.Warnf("too old version peer %s ", sp)

@@ -8,6 +8,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/HcashOrg/hcd/internal/version"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -52,7 +53,7 @@ func hcdMain(serverChan chan<- *server) error {
 	defer hcdLog.Info("Shutdown complete")
 
 	// Show version and home dir at startup.
-	hcdLog.Infof("Version %s (Go version %s)", version(), runtime.Version())
+	hcdLog.Infof("Version %s (Go version %s)", version.Version(), runtime.Version())
 	hcdLog.Infof("Home dir: %s", cfg.HomeDir)
 
 	// Enable http profiling server if requested.
