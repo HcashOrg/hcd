@@ -46,8 +46,8 @@ import (
 	"github.com/HcashOrg/hcd/database"
 	"github.com/HcashOrg/hcd/hcjson"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/internal/mining"
 	"github.com/HcashOrg/hcd/mempool"
-	"github.com/HcashOrg/hcd/mining"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
 )
