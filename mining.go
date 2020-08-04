@@ -19,8 +19,8 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/HcashOrg/hcd/internal/mempool"
 	"github.com/HcashOrg/hcd/internal/mining"
-	"github.com/HcashOrg/hcd/mempool"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
 )

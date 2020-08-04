@@ -17,7 +17,7 @@ import (
 	"github.com/HcashOrg/hcd/blockchain/stake"
 	"github.com/HcashOrg/hcd/connmgr"
 	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/mempool"
+	"github.com/HcashOrg/hcd/internal/mempool"
 	"github.com/HcashOrg/hcd/peer"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/btcsuite/btclog"

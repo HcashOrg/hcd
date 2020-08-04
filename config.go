@@ -27,7 +27,7 @@ import (
 	"github.com/HcashOrg/hcd/database"
 	_ "github.com/HcashOrg/hcd/database/ffldb"
 	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/mempool"
+	"github.com/HcashOrg/hcd/internal/mempool"
 	"github.com/HcashOrg/hcd/sampleconfig"
 	"github.com/btcsuite/btclog"
 	"github.com/btcsuite/go-socks/socks"

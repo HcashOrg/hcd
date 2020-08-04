@@ -18,9 +18,9 @@ import (
 	"github.com/HcashOrg/hcd/chaincfg/chainec"
 	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/HcashOrg/hcd/hcec/secp256k1"
+	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/HcashOrg/hcd/txscript"
 	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
 )
 
 // fakeChain is used by the pool harness to provide generated test utxos and
