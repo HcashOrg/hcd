@@ -2,8 +2,8 @@ github.com/HcashOrg/bitset v0.0.0-20170930031026-3b5f0c752dfb h1:XmMHZh7XHUj2TNE
 github.com/HcashOrg/bitset v0.0.0-20170930031026-3b5f0c752dfb/go.mod h1:wpl2yM06pqJmmK6QNjF8xLY7hpmG+Dueop4ehfzQ3/w=
 github.com/HcashOrg/bliss v0.0.0-20180719035130-f5d53c2a9b7d h1:uBrdipThpidikHT2aB/v9QZoW8ehVNaK3CvbEKBx7Ak=
 github.com/HcashOrg/bliss v0.0.0-20180719035130-f5d53c2a9b7d/go.mod h1:Ey5JSoZdhxhRcRZnLGrOD9Q1sUzl4gpQkF14F4NVlE4=
-github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 h1:w1UutsfOrms1J05zt7ISrnJIXKzwaspym5BTKGx93EI=
-github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
+github.com/HcashOrg/hcd/ed25519 v0.0.0-20170116200512-5312a6153412 h1:w1UutsfOrms1J05zt7ISrnJIXKzwaspym5BTKGx93EI=
+github.com/HcashOrg/hcd/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f h1:bAs4lUbRJpnnkd9VhRV3jjAVU7DJVjMaK+IsvSeZvFo=
 github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f/go.mod h1:TdznJufoqS23FtqVCzL0ZqgP5MqXbb4fg/WgDys70nA=
 github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd h1:R/opQEbFEy9JGkIguV40SvRY1uliPX8ifOvi6ICsFCw=

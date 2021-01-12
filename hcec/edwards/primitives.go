@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/agl/ed25519/edwards25519"
+	"github.com/HcashOrg/hcd/hcec/ed25519/edwards25519"
 )
 
 // Some notes on primitives in Ed25519:
