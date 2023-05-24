@@ -9,12 +9,11 @@ package hcutil_test
 import (
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	. "github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
 )
 
-//TestEncodeDecodeWIF tests encode and decode wallet import format
+// TestEncodeDecodeWIF tests encode and decode wallet import format
 func TestEncodeDecodeWIF(t *testing.T) {
 	suites := []int{
 		chainec.ECTypeSecp256k1,

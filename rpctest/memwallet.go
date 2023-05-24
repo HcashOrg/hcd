@@ -12,15 +12,15 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	hcrpcclient "github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/hcutil/hdkeychain"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil/hdkeychain"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
+	hcrpcclient "github.com/james-ray/hcrpcclient"
 )
 
 var (

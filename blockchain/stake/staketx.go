@@ -16,18 +16,18 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 // TxType indicates the type of tx (regular or stake type).
 type TxType int
 
-// Declare Possible TxTypes. 
+// Declare Possible TxTypes.
 // Statically declare these so that they might be used in consensus code.
 const (
 	TxTypeRegular TxType = iota
@@ -646,19 +646,19 @@ func VerifySStxAmounts(sstxAmts []int64, sstxCalcAmts []int64) error {
 }
 
 // VerifyStakingPkhsAndAmounts takes the following:
-// 1. sstxTypes: A list of types for what the output should be (P2PK or P2SH).
-// 2. sstxPkhs: A list of payee PKHs from NullDataTy outputs of an input SStx.
-// 3. ssSpendAmts: What the payouts in an SSGen/SSRtx tx actually were.
-// 4. ssSpendTypes: A list of types for what the outputs actually were.
-// 5. ssSpendPkhs: A list of payee PKHs from OP_SSGEN tagged outputs of the SSGen
+//  1. sstxTypes: A list of types for what the output should be (P2PK or P2SH).
+//  2. sstxPkhs: A list of payee PKHs from NullDataTy outputs of an input SStx.
+//  3. ssSpendAmts: What the payouts in an SSGen/SSRtx tx actually were.
+//  4. ssSpendTypes: A list of types for what the outputs actually were.
+//  5. ssSpendPkhs: A list of payee PKHs from OP_SSGEN tagged outputs of the SSGen
 //     or SSRtx.
-// 6. ssSpendCalcAmts: A list of payee amounts that was calculated based on
+//  6. ssSpendCalcAmts: A list of payee amounts that was calculated based on
 //     the input SStx.  These are the maximum possible amounts that can be
 //     transacted from this output.
-// 7. isVote: Whether this is a vote (true) or revocation (false).
-// 8. spendRules: Spending rules for each output in terms of fees allowable
+//  7. isVote: Whether this is a vote (true) or revocation (false).
+//  8. spendRules: Spending rules for each output in terms of fees allowable
 //     as extracted from the origin output Version.
-// 9. spendLimits: Spending limits for each output in terms of fees allowable
+//  9. spendLimits: Spending limits for each output in terms of fees allowable
 //     as extracted from the origin output Version.
 //
 // and determines if the two pairs of slices are congruent or not.
@@ -795,7 +795,9 @@ func VerifyStakingPkhsAndAmounts(
 // OP_SSTXCHANGE tagged output for input 2 [index 4]
 // ...
 // OP_RETURN push of input MaxInputsPerSStx's address for reward receiving
-//     [index (MaxInputsPerSStx*2)-2]
+//
+//	[index (MaxInputsPerSStx*2)-2]
+//
 // OP_SSTXCHANGE tagged output [index (MaxInputsPerSStx*2)-1]
 //
 // The output OP_RETURN pushes should be of size 20 bytes (standard address).
@@ -916,16 +918,23 @@ func IsSStx(tx *wire.MsgTx) (bool, error) {
 //
 // Outputs:
 // OP_RETURN push of 40 bytes containing: [index 0]
-//     i. 32-byte block header of block being voted on.
-//     ii. 8-byte int of this block's height.
+//
+//	i. 32-byte block header of block being voted on.
+//	ii. 8-byte int of this block's height.
+//
 // OP_RETURN push of 2 bytes containing votebits [index 1]
 // SSGen-tagged output to address from SStx-tagged output's tx index output 1
-//     [index 2]
+//
+//	[index 2]
+//
 // SSGen-tagged output to address from SStx-tagged output's tx index output 2
-//     [index 3]
+//
+//	[index 3]
+//
 // ...
 // SSGen-tagged output to address from SStx-tagged output's tx index output
-//     MaxInputsPerSStx [index MaxOutputsPerSSgen - 1]
+//
+//	MaxInputsPerSStx [index MaxOutputsPerSSgen - 1]
 //
 // The errors in this function can be ignored if you want to use it in to
 // identify SSGen from a list of stake tx.
@@ -1089,12 +1098,17 @@ func IsSSGen(tx *wire.MsgTx) (bool, error) {
 //
 // Outputs:
 // SSGen-tagged output to address from SStx-tagged output's tx index output 1
-//     [index 0]
+//
+//	[index 0]
+//
 // SSGen-tagged output to address from SStx-tagged output's tx index output 2
-//     [index 1]
+//
+//	[index 1]
+//
 // ...
 // SSGen-tagged output to address from SStx-tagged output's tx index output
-//     MaxInputsPerSStx [index MaxOutputsPerSSRtx - 1]
+//
+//	MaxInputsPerSStx [index MaxOutputsPerSSRtx - 1]
 //
 // The errors in this function can be ignored if you want to use it in to
 // identify SSRtx from a list of stake tx.

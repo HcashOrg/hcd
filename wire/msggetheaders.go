@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // MsgGetHeaders implements the Message interface and represents a hcd
@@ -128,7 +128,7 @@ func (msg *MsgGetHeaders) MaxPayloadLength(pver uint32) uint32 {
 		chainhash.HashSize) + chainhash.HashSize
 }
 
- // NewMsgGetHeaders returns a new hcd getheaders message that conforms to
+// NewMsgGetHeaders returns a new hcd getheaders message that conforms to
 // the Message interface.  See MsgGetHeaders for details.
 func NewMsgGetHeaders() *MsgGetHeaders {
 	return &MsgGetHeaders{

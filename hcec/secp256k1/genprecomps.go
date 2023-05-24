@@ -1,5 +1,5 @@
 // Copyright 2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -7,6 +7,7 @@
 // This file is ignored during the regular build due to the following build tag.
 // It is called by go generate and used to automatically generate pre-computed
 // tables used to accelerate operations.
+//go:build ignore
 // +build ignore
 
 package main
@@ -19,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
+	"github.com/james-ray/hcd/hcec/secp256k1"
 )
 
 func main() {

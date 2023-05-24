@@ -14,14 +14,14 @@ import (
 	"math"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/blockchain/chaingen"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/blockchain/chaingen"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcec/secp256k1"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (

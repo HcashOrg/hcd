@@ -1,9 +1,9 @@
 coinset
 =======
 
-[![Build Status](http://img.shields.io/travis/HcashOrg/hcutil.svg)](https://travis-ci.org/HcashOrg/hcutil)
+[![Build Status](http://img.shields.io/travis/james-ray/hcutil.svg)](https://travis-ci.org/james-ray/hcutil)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/HcashOrg/hcd/hcutil/coinset)
+[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/james-ray/hcd/hcutil/coinset)
 
 Package coinset provides HC-specific convenience functions for selecting
 from and managing sets of unspent transaction outpoints (UTXOs).
@@ -16,7 +16,7 @@ report.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/HcashOrg/hcd/hcutil/coinset
+$ go get -u github.com/james-ray/hcd/hcutil/coinset
 ```
 
 ## Usage

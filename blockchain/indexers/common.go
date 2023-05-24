@@ -12,9 +12,9 @@ package indexers
 import (
 	"encoding/binary"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 var (

@@ -22,9 +22,9 @@ import (
 
 	"github.com/btcsuite/goleveldb/leveldb"
 	ldberrors "github.com/btcsuite/goleveldb/leveldb/errors"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 var (

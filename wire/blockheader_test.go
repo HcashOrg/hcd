@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // TestBlockHeader tests the BlockHeader API.
@@ -207,7 +207,6 @@ func TestBlockHeaderWire(t *testing.T) {
 				spew.Sdump(buf.Bytes()), spew.Sdump(test.buf))
 			continue
 		}
-		
 
 		buf.Reset()
 		err = test.in.BtcEncode(buf, pver)
@@ -246,7 +245,7 @@ func TestBlockHeaderWire(t *testing.T) {
 				spew.Sdump(&bh), spew.Sdump(test.out))
 			continue
 		}
-			// Ensure Bytes encodes block header correctly.
+		// Ensure Bytes encodes block header correctly.
 		bts, err := test.out.Bytes()
 		if err != nil {
 			t.Errorf("Bytes #%d error %v", i, err)
@@ -279,13 +278,13 @@ func TestBlockHeaderWire(t *testing.T) {
 			continue
 		}
 
- 		if !bytes.Equal(bts, test.buf) {
+		if !bytes.Equal(bts, test.buf) {
 			t.Errorf("Bytes #%d\n got: %s want: %s", i,
 				spew.Sdump(&bts), spew.Sdump(test.out))
 			continue
 		}
 
- 		// Ensure FromBytes decodes encoded block header correctly.
+		// Ensure FromBytes decodes encoded block header correctly.
 		bh2 := &BlockHeader{}
 		err = bh2.FromBytes(test.buf)
 		if err != nil {
@@ -293,7 +292,7 @@ func TestBlockHeaderWire(t *testing.T) {
 			continue
 		}
 
- 		if !reflect.DeepEqual(bh2, test.out) {
+		if !reflect.DeepEqual(bh2, test.out) {
 			t.Errorf("FromBytes #%d\n got: %s want: %s", i,
 				spew.Sdump(bh2), spew.Sdump(test.out))
 			continue

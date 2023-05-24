@@ -16,10 +16,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
-	. "github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 // testName returns a descriptive test name for the given reference test data.
@@ -38,7 +37,6 @@ func testName(test []string) (string, error) {
 	}
 	return name, nil
 }
-
 
 // shortFormOps holds a map of opcode names to values for use in short form
 // parsing.  It is declared here so it only needs to be created once.
@@ -153,7 +151,7 @@ func parseScriptFlags(flagStr string) (ScriptFlags, error) {
 		case "SHA256":
 			flags |= ScriptVerifySHA256
 		case "P2SH_STAKE_OPCODES":
-			flags |= ScriptVerifyLowS	
+			flags |= ScriptVerifyLowS
 		default:
 			return flags, fmt.Errorf("invalid flag: %s", flag)
 		}

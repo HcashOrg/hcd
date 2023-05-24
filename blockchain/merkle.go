@@ -9,8 +9,8 @@ package blockchain
 import (
 	"math"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // nextPowerOfTwo returns the next highest power of two from a given number if
@@ -58,7 +58,7 @@ func HashMerkleBranches(left *chainhash.Hash, right *chainhash.Hash) *chainhash.
 //
 // The above stored as a linear array is as follows:
 //
-// 	[h1 h2 h3 h4 h12 h34 root]
+//	[h1 h2 h3 h4 h12 h34 root]
 //
 // As the above shows, the merkle root is always the last element in the array.
 //

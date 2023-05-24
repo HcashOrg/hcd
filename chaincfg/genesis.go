@@ -9,8 +9,8 @@ package chaincfg
 import (
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
 )
 
 // MainNet ------------------------------------------------------------------------
@@ -84,7 +84,8 @@ var genesisMerkleRoot = genesisCoinbaseTx.TxHashFull()
 // (2) The difficulty starts off at the value given by bits.
 // (3) The stake difficulty starts off at the value given by SBits.
 // (4) The timestamp, which guides when blocks can be built on top of it
-//      and what the initial difficulty calculations come out to be.
+//
+//	and what the initial difficulty calculations come out to be.
 //
 // The genesis block is valid by definition and none of the fields within
 // it are validated for correctness.

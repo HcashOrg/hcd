@@ -9,7 +9,7 @@ package schnorr
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
+	"github.com/james-ray/hcd/hcec/secp256k1"
 )
 
 // These constants define the lengths of serialized public keys.

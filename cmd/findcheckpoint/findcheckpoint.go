@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -11,10 +11,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
 )
 
 const blockDbNamePrefix = "blocks"

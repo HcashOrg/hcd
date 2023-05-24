@@ -2,7 +2,7 @@ wire
 ====
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/HcashOrg/hcd/wire)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/james-ray/hcd/wire)
 
 Package wire implements the HC wire protocol.  A comprehensive suite of
 tests with 100% test coverage is provided to ensure proper functionality.
@@ -14,7 +14,7 @@ protocol level.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/HcashOrg/hcd/wire
+$ go get -u github.com/james-ray/hcd/wire
 ```
 
 ## Hcd Message Overview

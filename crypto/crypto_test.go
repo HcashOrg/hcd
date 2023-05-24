@@ -1,7 +1,8 @@
 package crypto
+
 import (
 	"fmt"
-	_"github.com/HcashOrg/hcd/chaincfg/chainec"
+	_ "github.com/james-ray/hcd/chaincfg/chainec"
 	"testing"
 )
 

@@ -2,7 +2,7 @@ hcjson
 =======
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/HcashOrg/hcd/hcjson)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/james-ray/hcd/hcjson)
 
 Package hcjson implements concrete types for marshalling to and from the
 bitcoin JSON-RPC API.  A comprehensive suite of tests is provided to ensure
@@ -15,7 +15,7 @@ projects needing to marshal to and from HC JSON-RPC requests and responses.
 Note that although it's possible to use this package directly to implement an
 RPC client, it is not recommended since it is only intended as an infrastructure
 package.  Instead, RPC clients should use the
-[hcrpcclient](https://github.com/HcashOrg/hcrpcclient) package which provides
+[hcrpcclient](https://github.com/james-ray/hcrpcclient) package which provides
 a full blown RPC client with many features such as automatic connection
 management, websocket support, automatic notification re-registration on
 reconnect, and conversion from the raw underlying RPC types (strings, floats,
@@ -24,22 +24,22 @@ ints, etc) to higher-level types with many nice and useful properties.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/HcashOrg/hcd/hcjson
+$ go get -u github.com/james-ray/hcd/hcjson
 ```
 
 ## Examples
 
-* [Marshal Command](http://godoc.org/github.com/HcashOrg/hcd/hcjson#example-MarshalCmd)  
+* [Marshal Command](http://godoc.org/github.com/james-ray/hcd/hcjson#example-MarshalCmd)  
   Demonstrates how to create and marshal a command into a JSON-RPC request.
 
-* [Unmarshal Command](http://godoc.org/github.com/HcashOrg/hcd/hcjson#example-UnmarshalCmd)  
+* [Unmarshal Command](http://godoc.org/github.com/james-ray/hcd/hcjson#example-UnmarshalCmd)  
   Demonstrates how to unmarshal a JSON-RPC request and then unmarshal the
   concrete request into a concrete command.
 
-* [Marshal Response](http://godoc.org/github.com/HcashOrg/hcd/hcjson#example-MarshalResponse)  
+* [Marshal Response](http://godoc.org/github.com/james-ray/hcd/hcjson#example-MarshalResponse)  
   Demonstrates how to marshal a JSON-RPC response.
 
-* [Unmarshal Response](http://godoc.org/github.com/HcashOrg/hcd/hcjson#example-package--UnmarshalResponse)  
+* [Unmarshal Response](http://godoc.org/github.com/james-ray/hcd/hcjson#example-package--UnmarshalResponse)  
   Demonstrates how to unmarshal a JSON-RPC response and then unmarshal the
   result field in the response to a concrete type.
 

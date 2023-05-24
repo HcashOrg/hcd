@@ -15,13 +15,13 @@ import (
 	"sort"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain/internal/dbnamespace"
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain/internal/dbnamespace"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 var (
@@ -460,7 +460,7 @@ func deserializeSpendJournalEntry(serialized []byte, txns []*wire.MsgTx) ([]spen
 		// the associated stxo.
 		for txInIdx := len(tx.TxIn) - 1; txInIdx > -1; txInIdx-- {
 			// Skip stakebase.
-			if txType == stake.TxTypeSSGen && txInIdx == 0  {
+			if txType == stake.TxTypeSSGen && txInIdx == 0 {
 				continue
 			}
 

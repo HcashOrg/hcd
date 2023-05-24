@@ -11,10 +11,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/database"
-	_ "github.com/HcashOrg/hcd/database/ffldb"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/database"
+	_ "github.com/james-ray/hcd/database/ffldb"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 var (

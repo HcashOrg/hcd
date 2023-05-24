@@ -9,7 +9,7 @@ package base58_test
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/hcutil/base58"
+	"github.com/james-ray/hcd/hcutil/base58"
 )
 
 // This example demonstrates how to decode modified base58 encoded data.

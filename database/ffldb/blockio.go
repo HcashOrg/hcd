@@ -19,9 +19,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -627,8 +627,8 @@ func (s *blockStore) syncBlocks() error {
 // were partially written.
 //
 // There are effectively two scenarios to consider here:
-//   1) Transient write failures from which recovery is possible
-//   2) More permanent failures such as hard disk death and/or removal
+//  1. Transient write failures from which recovery is possible
+//  2. More permanent failures such as hard disk death and/or removal
 //
 // In either case, the write cursor will be repositioned to the old block file
 // offset regardless of any other errors that occur while attempting to undo

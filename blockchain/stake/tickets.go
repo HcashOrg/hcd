@@ -8,13 +8,13 @@ package stake
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/dbnamespace"
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/ticketdb"
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/tickettreap"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain/stake/internal/dbnamespace"
+	"github.com/james-ray/hcd/blockchain/stake/internal/ticketdb"
+	"github.com/james-ray/hcd/blockchain/stake/internal/tickettreap"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/wire"
 )
 
 // UndoTicketDataSlice is a pass through for ticketdb's UndoTicketData, which is
@@ -383,7 +383,8 @@ func hashInSlice(h chainhash.Hash, list []chainhash.Hash) bool {
 // copies the value so that the original pointer to the key is never written
 // to accidentally later.
 // TODO This function could also check to make sure the states of the ticket
-//       treap value are valid.
+//
+//	treap value are valid.
 func safeGet(t *tickettreap.Immutable, k tickettreap.Key) (*tickettreap.Value, error) {
 	v := t.Get(k)
 	if v == nil {
@@ -406,7 +407,8 @@ func safeGet(t *tickettreap.Immutable, k tickettreap.Key) (*tickettreap.Value, e
 // the mutated, immutable treap given as a result.  It first checks to see if
 // there is already this key in the treap. If there is, it returns an error.
 // TODO This function could also check to make sure the states of the ticket
-//       treap value are valid.
+//
+//	treap value are valid.
 func safePut(t *tickettreap.Immutable, k tickettreap.Key, v *tickettreap.Value) (*tickettreap.Immutable, error) {
 	if t.Has(k) {
 		return nil, stakeRuleError(ErrDuplicateTicket, fmt.Sprintf("attempted "+

@@ -1,5 +1,5 @@
 // Copyright (c) 2015-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -9,11 +9,11 @@ package blockchain
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
 )
 
 // StakeViewpoint is the viewpoint of the blockchain depending on stake

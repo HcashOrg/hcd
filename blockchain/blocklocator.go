@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 
 // Use of this source code is governed by an ISC
@@ -8,9 +8,9 @@
 package blockchain
 
 import (
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/wire"
 )
 
 // BlockLocator is used to help locate a specific block.  The algorithm for
@@ -26,8 +26,9 @@ import (
 // numbers are derived.
 // For example, assume you have a block chain with a side chain as depicted
 // below:
-// 	genesis -> 1 -> 2 -> ... -> 15 -> 16  -> 17  -> 18
-// 	                              \-> 16a -> 17a
+//
+//	genesis -> 1 -> 2 -> ... -> 15 -> 16  -> 17  -> 18
+//	                              \-> 16a -> 17a
 //
 // The block locator for block 17a would be the hashes of blocks:
 // [17a 16a 15 14 13 12 11 10 9 8 6 2 genesis]
@@ -39,10 +40,10 @@ type BlockLocator []*chainhash.Hash
 // In addition to the general algorithm referenced above, there are a couple of
 // special cases which are handled:
 //
-//  - If the genesis hash is passed, there are no previous hashes to add and
-//    therefore the block locator will only consist of the genesis hash
-//  - If the passed hash is not currently known, the block locator will be for
-//    the latest known tip of the main (best) chain
+//   - If the genesis hash is passed, there are no previous hashes to add and
+//     therefore the block locator will only consist of the genesis hash
+//   - If the passed hash is not currently known, the block locator will be for
+//     the latest known tip of the main (best) chain
 //
 // This function MUST be called with the chain state lock held (for reads).
 func (b *BlockChain) blockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
@@ -148,6 +149,7 @@ func (b *BlockChain) blockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
 	locator = append(locator, b.chainParams.GenesisHash)
 	return locator
 }
+
 // fastLog2Floor calculates and returns floor(log2(x)) in a constant 5 steps.
 //func fastLog2Floor(n uint32) uint8 {
 //	rv := uint8(0)
@@ -168,10 +170,10 @@ func (b *BlockChain) blockLocatorFromHash(hash *chainhash.Hash) BlockLocator {
 // In addition to the general algorithm referenced above, there are a couple of
 // special cases which are handled:
 //
-//  - If the genesis hash is passed, there are no previous hashes to add and
-//    therefore the block locator will only consist of the genesis hash
-//  - If the passed hash is not currently known, the block locator will only
-//    consist of the passed hash
+//   - If the genesis hash is passed, there are no previous hashes to add and
+//     therefore the block locator will only consist of the genesis hash
+//   - If the passed hash is not currently known, the block locator will only
+//     consist of the passed hash
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) BlockLocatorFromHash(hash *chainhash.Hash) BlockLocator {

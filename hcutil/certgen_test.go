@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // TestNewTLSCertPair ensures the NewTLSCertPair function works as expected.

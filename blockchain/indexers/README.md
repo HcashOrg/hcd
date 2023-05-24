@@ -2,7 +2,7 @@ indexers
 ========
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://godoc.org/github.com/HcashOrg/hcd/blockchain/indexers?status.png)](http://godoc.org/github.com/HcashOrg/hcd/blockchain/indexers)
+[![GoDoc](https://godoc.org/github.com/james-ray/hcd/blockchain/indexers?status.png)](http://godoc.org/github.com/james-ray/hcd/blockchain/indexers)
 
 Package indexers implements optional block chain indexes.
 
@@ -24,7 +24,7 @@ via an RPC interface.
 ## Installation
 
 ```bash
-$ go get -u github.com/HcashOrg/hcd/blockchain/indexers
+$ go get -u github.com/james-ray/hcd/blockchain/indexers
 ```
 
 ## License

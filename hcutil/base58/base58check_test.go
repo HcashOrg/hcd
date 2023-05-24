@@ -9,7 +9,7 @@ package base58_test
 import (
 	"testing"
 
-	"github.com/HcashOrg/hcd/hcutil/base58"
+	"github.com/james-ray/hcd/hcutil/base58"
 )
 
 var checkEncodingStringTests = []struct {

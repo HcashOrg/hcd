@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/dbnamespace"
-	"github.com/HcashOrg/hcd/blockchain/stake/internal/tickettreap"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	_ "github.com/HcashOrg/hcd/database/ffldb"
+	"github.com/james-ray/hcd/blockchain/stake/internal/dbnamespace"
+	"github.com/james-ray/hcd/blockchain/stake/internal/tickettreap"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	_ "github.com/james-ray/hcd/database/ffldb"
 )
 
 const (

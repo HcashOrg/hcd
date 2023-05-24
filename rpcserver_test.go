@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file.
 
 // This file is ignored during the regular tests due to the following build tag.
+//go:build rpctest
 // +build rpctest
 
 package main
@@ -15,8 +16,8 @@ import (
 	"runtime/debug"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/rpctest"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/rpctest"
 )
 
 func testGetBestBlock(r *rpctest.Harness, t *testing.T) {
@@ -178,15 +179,11 @@ func testGetBlockCountTwo(r *rpctest.Harness, t *testing.T) {
 
 	}
 
-
-
 	if _, err := r.Node.Generate(2); err != nil {
 
 		t.Fatalf("Unable to generate block: %v", err)
 
 	}
-
-
 
 	// Count should have increased by one.
 

@@ -13,7 +13,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/james-ray/hcd/hcjson"
 )
 
 // TestWalletSvrWsNtfns tests all of the chain server websocket-specific
@@ -124,7 +124,7 @@ func TestWalletSvrWsNtfns(t *testing.T) {
 				test.name, err)
 			continue
 		}
-		fmt.Println("marshalled:",marshalled);
+		fmt.Println("marshalled:", marshalled)
 
 		if !bytes.Equal(marshalled, []byte(test.marshalled)) {
 			t.Errorf("Test #%d (%s) unexpected marshalled data - "+

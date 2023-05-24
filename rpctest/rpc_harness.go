@@ -1,10 +1,12 @@
+//go:build rpctest
+// +build rpctest
+
 // Copyright (c) 2016 The btcsuite developers
 // Copyright (c) 2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 // This file is ignored during the regular tests due to the following build tag.
-// +build rpctest
 package rpctest
 
 import (
@@ -18,11 +20,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
-	hcrpcclient "github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
+	hcrpcclient "github.com/james-ray/hcrpcclient"
 )
 
 const (
@@ -58,6 +60,7 @@ var (
 	// Used to protest concurrent access to above declared variables.
 	harnessStateMtx sync.RWMutex
 )
+
 // Harness fully encapsulates an active hcd process to provide a unified
 // platform for creating rpc driven integration tests involving hcd. The
 // active hcd node will typically be run in simnet mode in order to allow for
@@ -94,8 +97,6 @@ const (
 // HarnessTestCase represents a test-case which utilizes an instance of the
 // Harness to exercise functionality.
 type HarnessTestCase func(r *Harness, t *testing.T)
-
-
 
 // New creates and initializes new instance of the rpc test harness.
 // Optionally, websocket handlers and a specified configuration may be passed.
@@ -277,8 +278,6 @@ func (h *Harness) TearDown() error {
 	return nil
 }
 
-
-
 // NewAddress returns a fresh address spendable by the Harness' internal
 // wallet.
 //
@@ -322,6 +321,7 @@ func (h *Harness) connectRPCClient() error {
 	h.wallet.SetRPCClient(client)
 	return nil
 }
+
 // SendOutputs creates, signs, and finally broadcasts a transaction spending
 // the harness' available mature coinbase outputs creating new outputs
 // according to targetOutputs.

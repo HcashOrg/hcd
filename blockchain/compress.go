@@ -7,10 +7,10 @@ package blockchain
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/crypto/bliss"
-	"github.com/HcashOrg/hcd/txscript"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/crypto/bliss"
+	"github.com/james-ray/hcd/txscript"
 )
 
 // currentCompressionVersion is the current script compression version of the

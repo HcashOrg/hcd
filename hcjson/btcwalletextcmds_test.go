@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -13,7 +13,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/james-ray/hcd/hcjson"
 )
 
 // TestBtcWalletExtCmds tests all of the btcwallet extended commands marshal and
@@ -37,7 +37,7 @@ func TestBtcWalletExtCmds(t *testing.T) {
 				return hcjson.NewCmd("createnewaccount", "acct")
 			},
 			staticCmd: func() interface{} {
-				return hcjson.NewCreateNewAccountCmd("acct","default")//return hcjson.NewCreateNewAccountCmd("acct")
+				return hcjson.NewCreateNewAccountCmd("acct", "default") //return hcjson.NewCreateNewAccountCmd("acct")
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"createnewaccount","params":["acct"],"id":1}`,
 			unmarshalled: &hcjson.CreateNewAccountCmd{

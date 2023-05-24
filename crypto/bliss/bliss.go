@@ -4,10 +4,10 @@ import (
 	"crypto/rand"
 	"io"
 
-	"github.com/HcashOrg/bliss"
-	"github.com/HcashOrg/bliss/poly"
-	"github.com/HcashOrg/bliss/sampler"
-	hccrypto "github.com/HcashOrg/hcd/crypto"
+	"github.com/HCashOrg/bliss"
+	"github.com/HCashOrg/bliss/poly"
+	"github.com/HCashOrg/bliss/sampler"
+	hccrypto "github.com/james-ray/hcd/crypto"
 )
 
 var pqcTypeBliss = 4

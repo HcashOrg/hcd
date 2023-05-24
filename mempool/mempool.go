@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -16,16 +16,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/blockchain/indexers"
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcjson"
-	"github.com/HcashOrg/hcd/mining"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/blockchain/indexers"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcjson"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/mining"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -258,7 +258,7 @@ func (mp *TxPool) insertVote(ssgen *hcutil.Tx) error {
 		SstxHash:  *ticketHash,
 		Vote:      vote,
 	}
- 	// Append the new vote.
+	// Append the new vote.
 	mp.votes[blockHash] = append(vts, voteTx)
 	log.Debugf("Accepted vote %v for block hash %v (height %v), voting "+
 		"%v on the transaction tree", voteHash, blockHash, blockHeight,
@@ -654,7 +654,7 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 func (mp *TxPool) checkPoolDoubleSpend(tx *hcutil.Tx, txType stake.TxType) error {
 	for i, txIn := range tx.MsgTx().TxIn {
 		// We don't care about double spends of stake bases.
-		if  i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
+		if i == 0 && (txType == stake.TxTypeSSGen || txType == stake.TxTypeSSRtx) {
 			continue
 		}
 
@@ -805,11 +805,11 @@ func (mp *TxPool) maybeAcceptTransaction(tx *hcutil.Tx, isNew, rateLimit, allowH
 	// value for now.  This is an artifact of older bitcoind clients which
 	// treated this field as an int32 and would treat anything larger
 	// incorrectly (as negative).
-// 	if msgTx.LockTime > math.MaxInt32 {
-// 		str := fmt.Sprintf("transaction %v has a lock time after "+
-// 			"2038 which is not accepted yet", txHash)
-// 		return nil, txRuleError(wire.RejectNonstandard, str)
-// 	}
+	// 	if msgTx.LockTime > math.MaxInt32 {
+	// 		str := fmt.Sprintf("transaction %v has a lock time after "+
+	// 			"2038 which is not accepted yet", txHash)
+	// 		return nil, txRuleError(wire.RejectNonstandard, str)
+	// 	}
 
 	// Get the current height of the main chain.  A standalone transaction
 	// will be mined into the next block at best, so its height is at least

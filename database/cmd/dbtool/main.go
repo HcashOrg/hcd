@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/btcsuite/btclog"
-	"github.com/HcashOrg/hcd/database"
+	"github.com/james-ray/hcd/database"
 	flags "github.com/jessevdk/go-flags"
 )
 

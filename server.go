@@ -22,20 +22,20 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/HcashOrg/hcd/addrmgr"
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/blockchain/indexers"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/connmgr"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/hcutil/bloom"
-	"github.com/HcashOrg/hcd/mempool"
-	"github.com/HcashOrg/hcd/mining"
-	"github.com/HcashOrg/hcd/peer"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/addrmgr"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/blockchain/indexers"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/connmgr"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil/bloom"
+	"github.com/james-ray/hcd/mempool"
+	"github.com/james-ray/hcd/mining"
+	"github.com/james-ray/hcd/peer"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -212,6 +212,7 @@ type serverPeer struct {
 	txProcessed    chan struct{}
 	blockProcessed chan struct{}
 }
+
 // Only respond with addresses once per connection
 //if sp.addrsSent {
 //	peerLog.Tracef("Ignoring getaddr from %v - already sent", sp.Peer)
@@ -334,13 +335,11 @@ func (sp *serverPeer) addBanScore(persistent, transient uint32, reason string) {
 	}
 }
 
-
 // hasServices returns whether or not the provided advertised service flags have
 // all of the provided desired service flags set.
 func hasServices(advertised, desired wire.ServiceFlag) bool {
 	return advertised&desired == desired
 }
-
 
 // OnVersion is invoked when a peer receives a version wire message and is used
 // to negotiate the protocol version details as well as kick start the
@@ -357,7 +356,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// it is updated regardless in the case a new minimum protocol version is
 	// enforced and the remote node has not upgraded yet.
 	addrManager := sp.server.addrManager
-	isInbound:=sp.Inbound()
+	isInbound := sp.Inbound()
 	remoteAddr := sp.NA()
 	if !cfg.SimNet && !isInbound {
 		addrManager.SetServices(remoteAddr, msg.Services)
@@ -365,7 +364,7 @@ func (sp *serverPeer) OnVersion(p *peer.Peer, msg *wire.MsgVersion) {
 	// Ignore peers that have a protcol version that is too old.  The peer
 	// negotiation logic will disconnect it after this callback returns.
 	if msg.ProtocolVersion < int32(wire.InitialProcotolVersion) {
-		return 
+		return
 	}
 	// Add the remote peer time as a sample for creating an offset against
 	// the local clock to keep the network time in sync.
@@ -750,7 +749,7 @@ func (sp *serverPeer) OnGetData(p *peer.Peer, msg *wire.MsgGetData) {
 			err = sp.server.pushBlockMsg(sp, &iv.Hash, c, waitChan)
 		default:
 			peerLog.Warnf("Unknown type %d in inventory request from %s",
-				iv.Type,sp)
+				iv.Type, sp)
 			continue
 		}
 		if err != nil {
@@ -796,7 +795,6 @@ func (sp *serverPeer) OnGetBlocks(p *peer.Peer, msg *wire.MsgGetBlocks) {
 		}
 	}
 
-	
 	// Use the block after the genesis block if no other blocks in the
 	// provided locator are known.  This does mean the client will start
 	// over with the genesis block if unknown block locators are provided.
@@ -1102,7 +1100,7 @@ func (sp *serverPeer) OnAddr(p *peer.Peer, msg *wire.MsgAddr) {
 		// Set the timestamp to 5 days ago if it's more than 24 hours
 		// in the future so this address is one of the first to be
 		// removed when space is needed.
-		
+
 		if na.Timestamp.After(now.Add(time.Minute * 10)) {
 			na.Timestamp = now.Add(-1 * time.Hour * 24 * 5)
 		}
@@ -2118,8 +2116,6 @@ func (s *server) WaitForShutdown() {
 	s.wg.Wait()
 }
 
-
-
 // parseListeners splits the list of listen addresses passed in addrs into
 // IPv4 and IPv6 slices and returns them.  This allows easy creation of the
 // listeners on the correct interface "tcp4" and "tcp6".  It also properly
@@ -2609,7 +2605,6 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 		Port: port,
 	}, nil
 }
-
 
 // isWhitelisted returns whether the IP address is included in the whitelisted
 // networks and IPs.

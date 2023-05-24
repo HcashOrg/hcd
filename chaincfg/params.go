@@ -14,8 +14,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
 )
 
 // These variables are the chain proof-of-work limit parameters for each default
@@ -80,35 +80,35 @@ type Checkpoint struct {
 // and only one abstain (bits = 0) and reject vote (IsNo = true).
 //
 // For example, change block height from int64 to uint64.
-// Vote {
-//	Id:          "blockheight",
-//	Description: "Change block height from int64 to uint64"
-//	Mask:        0x0006,
-//	Choices:     []Choice{
-//		{
-//			Id:          "abstain",
-//			Description: "abstain voting for change",
-//			Bits:        0x0000,
-//			IsAbstain:   true,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "no",
-//			Description: "reject changing block height to uint64",
-//			Bits:        0x0002,
-//			IsAbstain:   false,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "yes",
-//			Description: "accept changing block height to uint64",
-//			Bits:        0x0004,
-//			IsAbstain:   false,
-//			IsNo:        true,
-//		},
-//	},
-// }
 //
+//	Vote {
+//		Id:          "blockheight",
+//		Description: "Change block height from int64 to uint64"
+//		Mask:        0x0006,
+//		Choices:     []Choice{
+//			{
+//				Id:          "abstain",
+//				Description: "abstain voting for change",
+//				Bits:        0x0000,
+//				IsAbstain:   true,
+//				IsNo:        false,
+//			},
+//			{
+//				Id:          "no",
+//				Description: "reject changing block height to uint64",
+//				Bits:        0x0002,
+//				IsAbstain:   false,
+//				IsNo:        false,
+//			},
+//			{
+//				Id:          "yes",
+//				Description: "accept changing block height to uint64",
+//				Bits:        0x0004,
+//				IsAbstain:   false,
+//				IsNo:        true,
+//			},
+//		},
+//	}
 type Vote struct {
 	// Single unique word identifying the vote.
 	Id string
@@ -448,7 +448,7 @@ type Params struct {
 	// DNSSeeds defines a list of DNS seeds for the network that are used
 	// as one method to discover peers.
 	OmniMoneyReceive string
-	OmniStartHeight uint64
+	OmniStartHeight  uint64
 }
 
 // MainNetParams defines the network parameters for the main Hcd network.
@@ -559,7 +559,7 @@ var MainNetParams = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerMainNet,
 	OmniMoneyReceive:            "HsTJckn6hjhP4QYHF7CE87ok3y5TDA2gd6D",
-	OmniStartHeight:			 46000,
+	OmniStartHeight:             46000,
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -701,7 +701,7 @@ var TestNet2Params = Params{
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerTestNet2,
 	OmniMoneyReceive:            "TsSmoC9HdBhDhq4ut4TqJY7SBjPqJFAPkGK",
-	OmniStartHeight:			 46000,
+	OmniStartHeight:             46000,
 }
 
 // SimNetParams defines the network parameters for the simulation test Hcd
@@ -870,7 +870,7 @@ var SimNetParams = Params{
 	OrganizationPkScript:        hexDecode("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger:              BlockOneLedgerSimNet,
-	OmniStartHeight:			 46000,
+	OmniStartHeight:             46000,
 }
 
 var (

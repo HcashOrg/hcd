@@ -11,8 +11,8 @@ import (
 
 	"github.com/btcsuite/btclog"
 
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 // BlockProgressLogger provides periodic logging for other services in order
@@ -30,8 +30,9 @@ type BlockProgressLogger struct {
 
 // NewBlockProgressLogger returns a new block progress logger.
 // The progress message is templated as follows:
-//  {progressAction} {numProcessed} {blocks|block} in the last {timePeriod}
-//  ({numTxs}, height {lastBlockHeight}, {lastBlockTimeStamp})
+//
+//	{progressAction} {numProcessed} {blocks|block} in the last {timePeriod}
+//	({numTxs}, height {lastBlockHeight}, {lastBlockTimeStamp})
 func NewBlockProgressLogger(progressMessage string, logger btclog.Logger) *BlockProgressLogger {
 	return &BlockProgressLogger{
 		lastBlockLogTime: time.Now(),

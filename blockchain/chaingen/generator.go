@@ -15,12 +15,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 var (
@@ -254,17 +254,17 @@ func UniqueOpReturnScript() []byte {
 //A(n) = (a1+(n-1)d)q^(n-1)
 //S(n) = a1(1-q^n)/(1-q) + d[q(1-q^(n-1))/((1-q)^2) - (n-1)q^n/(1-q)]
 //A(n) = A(n-1) *q + d*q^(n-1)
-	
+
 func (g *Generator) calcFullSubsidy(blockHeight uint32) hcutil.Amount {
 	iterations := int64(blockHeight) / g.params.SubsidyReductionInterval
 	subsidy := g.params.BaseSubsidy
-	var q float64 = float64(g.params.MulSubsidy)/float64(g.params.DivSubsidy)
+	var q float64 = float64(g.params.MulSubsidy) / float64(g.params.DivSubsidy)
 	var temp float64 = 0.0
-	
+
 	if iterations < 1682 {
-		temp = float64(g.params.BaseSubsidy) * (1.0 - float64(iterations) * 59363.0 / 100000000.0) * math.Pow(q,float64(iterations))
-	}else{//after 99 years
-		temp = 100000000.0/float64(g.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iterations)-1681.0))
+		temp = float64(g.params.BaseSubsidy) * (1.0 - float64(iterations)*59363.0/100000000.0) * math.Pow(q, float64(iterations))
+	} else { //after 99 years
+		temp = 100000000.0 / float64(g.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iterations)-1681.0))
 	}
 	subsidy = int64(temp)
 	return hcutil.Amount(subsidy)
@@ -350,10 +350,10 @@ func standardCoinbaseOpReturnScript(blockHeight uint32) []byte {
 
 // addCoinbaseTxOutputs adds the following outputs to the provided transaction
 // which is assumed to be a coinbase transaction:
-// - First output pays the development subsidy portion to the dev org
-// - Second output is a standard provably prunable data-only coinbase output
-// - Third and subsequent outputs pay the pow subsidy portion to the generic
-//   OP_TRUE p2sh script hash
+//   - First output pays the development subsidy portion to the dev org
+//   - Second output is a standard provably prunable data-only coinbase output
+//   - Third and subsequent outputs pay the pow subsidy portion to the generic
+//     OP_TRUE p2sh script hash
 func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, devSubsidy, powSubsidy hcutil.Amount) {
 	// First output is the developer subsidy.
 	tx.AddTxOut(&wire.TxOut{
@@ -582,10 +582,10 @@ func voteBitsScript(bits uint16, voteVersion uint32) []byte {
 // original commitments.
 //
 // The transaction consists of the following outputs:
-// - First output is an OP_RETURN followed by the block hash and height
-// - Second output is an OP_RETURN followed by the vote bits
-// - Third and subsequent outputs are the payouts according to the ticket
-//   commitments and the appropriate proportion of the vote subsidy.
+//   - First output is an OP_RETURN followed by the block hash and height
+//   - Second output is an OP_RETURN followed by the vote bits
+//   - Third and subsequent outputs are the payouts according to the ticket
+//     commitments and the appropriate proportion of the vote subsidy.
 func (g *Generator) createVoteTx(parentBlock *wire.MsgBlock, ticket *stakeTicket) *wire.MsgTx {
 	// Calculate the proof-of-stake subsidy proportion based on the block
 	// height.
@@ -706,16 +706,16 @@ func (g *Generator) limitRetarget(oldDiff, newDiff int64) int64 {
 // the block after the current tip block the generator is associated with.
 //
 // An overview of the algorithm is as follows:
-// 1) Use the proof-of-work limit for all blocks before the first retarget
-//    window
-// 2) Use the previous block's difficulty if the next block is not at a retarget
-//    interval
-// 3) Calculate the ideal retarget difficulty for each window based on the
-//    actual timespan of the window versus the target timespan and exponentially
-//    weight each difficulty such that the most recent window has the highest
-//    weight
-// 4) Calculate the final retarget difficulty based on the exponential weighted
-//    average and ensure it is limited to the max retarget adjustment factor
+//  1. Use the proof-of-work limit for all blocks before the first retarget
+//     window
+//  2. Use the previous block's difficulty if the next block is not at a retarget
+//     interval
+//  3. Calculate the ideal retarget difficulty for each window based on the
+//     actual timespan of the window versus the target timespan and exponentially
+//     weight each difficulty such that the most recent window has the highest
+//     weight
+//  4. Calculate the final retarget difficulty based on the exponential weighted
+//     average and ensure it is limited to the max retarget adjustment factor
 func (g *Generator) calcNextRequiredDifficulty() uint32 {
 	// Target difficulty before the first retarget interval is the pow
 	// limit.
@@ -808,31 +808,31 @@ func (g *Generator) calcNextRequiredDifficulty() uint32 {
 // associated with.
 //
 // An overview of the algorithm is as follows:
-// 1) Use the minimum value for any blocks before any tickets could have
-//    possibly been purchased due to coinbase maturity requirements
-// 2) Return 0 if the current tip block stake difficulty is 0.  This is a
-//    safety check against a condition that should never actually happen.
-// 3) Use the previous block's difficulty if the next block is not at a retarget
-//    interval
-// 4) Calculate the ideal retarget difficulty for each window based on the
-//    actual pool size in the window versus the target pool size skewed by a
-//    constant factor to weight the ticket pool size instead of the tickets per
-//    block and exponentially weight each difficulty such that the most recent
-//    window has the highest weight
-// 5) Calculate the pool size retarget difficulty based on the exponential
-//    weighted average and ensure it is limited to the max retarget adjustment
-//    factor -- This is the first metric used to calculate the final difficulty
-// 6) Calculate the ideal retarget difficulty for each window based on the
-//    actual new tickets in the window versus the target new tickets per window
-//    and exponentially weight each difficulty such that the most recent window
-//    has the highest weight
-// 7) Calculate the tickets per window retarget difficulty based on the
-//    exponential weighted average and ensure it is limited to the max retarget
-//    adjustment factor
-// 8) Calculate the final difficulty by averaging the pool size retarget
-//    difficulty from #5 and the tickets per window retarget difficulty from #7
-//    using scaled multiplication and ensure it is limited to the max retarget
-//    adjustment factor
+//  1. Use the minimum value for any blocks before any tickets could have
+//     possibly been purchased due to coinbase maturity requirements
+//  2. Return 0 if the current tip block stake difficulty is 0.  This is a
+//     safety check against a condition that should never actually happen.
+//  3. Use the previous block's difficulty if the next block is not at a retarget
+//     interval
+//  4. Calculate the ideal retarget difficulty for each window based on the
+//     actual pool size in the window versus the target pool size skewed by a
+//     constant factor to weight the ticket pool size instead of the tickets per
+//     block and exponentially weight each difficulty such that the most recent
+//     window has the highest weight
+//  5. Calculate the pool size retarget difficulty based on the exponential
+//     weighted average and ensure it is limited to the max retarget adjustment
+//     factor -- This is the first metric used to calculate the final difficulty
+//  6. Calculate the ideal retarget difficulty for each window based on the
+//     actual new tickets in the window versus the target new tickets per window
+//     and exponentially weight each difficulty such that the most recent window
+//     has the highest weight
+//  7. Calculate the tickets per window retarget difficulty based on the
+//     exponential weighted average and ensure it is limited to the max retarget
+//     adjustment factor
+//  8. Calculate the final difficulty by averaging the pool size retarget
+//     difficulty from #5 and the tickets per window retarget difficulty from #7
+//     using scaled multiplication and ensure it is limited to the max retarget
+//     adjustment factor
 //
 // NOTE: In order to simplify the test code, this implementation does not use
 // big integers so it will NOT match the actual consensus code for really big
@@ -1130,7 +1130,8 @@ func winningTickets(voteBlock *wire.MsgBlock, liveTickets []*stakeTicket, numVot
 // calcFinalLotteryState calculates the final lottery state for a set of winning
 // tickets and the associated deterministic prng state hash after selecting the
 // winners.  It is the first 6 bytes of:
-//   blake256(firstTicketHash || ... || lastTicketHash || prngStateHash)
+//
+//	blake256(firstTicketHash || ... || lastTicketHash || prngStateHash)
 func calcFinalLotteryState(winners []*stakeTicket, prngStateHash chainhash.Hash) [6]byte {
 	data := make([]byte, (len(winners)+1)*chainhash.HashSize)
 	for i := 0; i < len(winners); i++ {
@@ -1627,23 +1628,26 @@ func (g *Generator) SetTip(blockName string) {
 //   - One that pays the required 10% subsidy to the dev org
 //   - One that contains a standard coinbase OP_RETURN script
 //   - Six that pay the required 60% subsidy to an OP_TRUE p2sh script
+//
 // - When a spendable output is provided:
 //   - A transaction that spends from the provided output the following outputs:
-//     - One that pays the inputs amount minus 1 atom to an OP_TRUE p2sh script
+//   - One that pays the inputs amount minus 1 atom to an OP_TRUE p2sh script
+//
 // - Once the coinbase maturity has been reached:
 //   - A ticket purchase transaction (sstx) for each provided ticket spendable
 //     output with the following outputs:
-//     - One OP_SSTX output that grants voting rights to an OP_TRUE p2sh script
-//     - One OP_RETURN output that contains the required commitment and pays
-//       the subsidy to an OP_TRUE p2sh script
-//     - One OP_SSTXCHANGE output that sends change to an OP_TRUE p2sh script
+//   - One OP_SSTX output that grants voting rights to an OP_TRUE p2sh script
+//   - One OP_RETURN output that contains the required commitment and pays
+//     the subsidy to an OP_TRUE p2sh script
+//   - One OP_SSTXCHANGE output that sends change to an OP_TRUE p2sh script
+//
 // - Once the stake validation height has been reached:
 //   - 5 vote transactions (ssgen) as required according to the live ticket
 //     pool and vote selection rules with the following outputs:
-//     - One OP_RETURN followed by the block hash and height being voted on
-//     - One OP_RETURN followed by the vote bits
-//     - One or more OP_SSGEN outputs with the payouts according to the original
-//       ticket commitments
+//   - One OP_RETURN followed by the block hash and height being voted on
+//   - One OP_RETURN followed by the vote bits
+//   - One or more OP_SSGEN outputs with the payouts according to the original
+//     ticket commitments
 //
 // Additionally, if one or more munge functions are specified, they will be
 // invoked with the block prior to solving it.  This provides callers with the

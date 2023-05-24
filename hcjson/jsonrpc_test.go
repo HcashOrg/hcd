@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/james-ray/hcd/hcjson"
 )
 
 // TestIsValidIDType ensures the IsValidIDType function behaves as expected.
@@ -162,19 +162,14 @@ func TestRPCError(t *testing.T) {
 	}
 }
 
-
-
 func TestIsValidIDTypeB(t *testing.T) {
 
-
 	tests := []struct {
+		name string
 
-		name    string
-
-		id      interface{}
+		id interface{}
 
 		isValid bool
-
 	}{
 
 		{"int", int(10), true},
@@ -214,10 +209,7 @@ func TestIsValidIDTypeB(t *testing.T) {
 		{"complex128", complex128(1), false},
 
 		{"func", func() {}, false},
-
 	}
-
-
 
 	t.log("for test start")
 
@@ -226,7 +218,6 @@ func TestIsValidIDTypeB(t *testing.T) {
 		if hcjson.IsValidIDType(test.id) != test.isValid {
 
 			t.Errorf("Test #%d (%s) valid mismatch - got %v, "+
-
 				"want %v", i, test.name, !test.isValid,
 
 				test.isValid)
@@ -238,4 +229,3 @@ func TestIsValidIDTypeB(t *testing.T) {
 	}
 
 }
-

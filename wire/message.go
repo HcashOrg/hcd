@@ -12,7 +12,7 @@ import (
 	"io"
 	"unicode/utf8"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // MessageHeaderSize is the number of bytes in a HC message header.

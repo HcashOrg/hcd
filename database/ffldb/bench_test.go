@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // BenchmarkBlockHeader benchmarks how long it takes to load the mainnet genesis

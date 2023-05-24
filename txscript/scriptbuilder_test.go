@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/HcashOrg/hcd/txscript"
+	"github.com/james-ray/hcd/txscript"
 )
 
 // TestScriptBuilderAddOp tests that pushing opcodes to a script via the

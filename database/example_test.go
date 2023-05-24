@@ -11,11 +11,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/database"
-	_ "github.com/HcashOrg/hcd/database/ffldb"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/database"
+	_ "github.com/james-ray/hcd/database/ffldb"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 // This example demonstrates creating a new database.
@@ -39,11 +39,13 @@ func ExampleCreate() {
 // This example demonstrates creating a new database and using a managed
 // read-write transaction to store and retrieve metadata.
 // This example assumes the ffldb driver is imported.
-	//
-	// import (
-	// 	"github.com/HcashOrg/hcd/database2"
-	// 	_ "github.com/HcashOrg/hcd/database/ffldb"
-	// )
+//
+// import (
+//
+//	"github.com/james-ray/hcd/database2"
+//	_ "github.com/james-ray/hcd/database/ffldb"
+//
+// )
 func Example_basicUsage() {
 	// Create a database and schedule it to be closed and removed on exit.
 	// Typically you wouldn't want to remove the database right away like
@@ -107,8 +109,8 @@ func Example_blockStorageAndRetrieval() {
 	// This example assumes the ffldb driver is imported.
 	//
 	// import (
-	// 	"github.com/HcashOrg/hcd/database2"
-	// 	_ "github.com/HcashOrg/hcd/database/ffldb"
+	// 	"github.com/james-ray/hcd/database2"
+	// 	_ "github.com/james-ray/hcd/database/ffldb"
 	// )
 
 	// Create a database and schedule it to be closed and removed on exit.

@@ -5,7 +5,7 @@
 
 package mining
 
-import "github.com/HcashOrg/hcd/hcutil"
+import "github.com/james-ray/hcd/hcutil"
 
 // Policy houses the policy (configuration parameters) which is used to control
 // the generation of block templates.  See the documentation for

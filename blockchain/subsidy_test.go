@@ -9,8 +9,8 @@ package blockchain_test
 import (
 	"testing"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
 )
 
 func TestBlockSubsidy(t *testing.T) {

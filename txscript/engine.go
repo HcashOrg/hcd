@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/wire"
 )
 
 // ScriptFlags is a bitmask defining additional operations or tests that will be
@@ -162,7 +162,6 @@ func (vm *Engine) executeOpcode(pop *parsedOpcode) error {
 		return nil
 	}
 
-	
 	// Ensure all executed data push opcodes use the minimal encoding.
 	if vm.dstack.verifyMinimalData && vm.isBranchExecuting() &&
 		pop.opcode.value <= OP_PUSHDATA4 {

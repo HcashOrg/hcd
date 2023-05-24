@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 const (
