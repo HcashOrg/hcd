@@ -1,8 +1,8 @@
 package bliss
 
 import (
-	"github.com/HcashOrg/bliss"
-	hccrypto "github.com/HcashOrg/hcd/crypto"
+	"github.com/HCashOrg/bliss"
+	hccrypto "github.com/james-ray/hcd/crypto"
 )
 
 type PublicKey struct {

@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/wire"
 )
 
 // KnownAddress tracks information about a known network address that is used
@@ -84,7 +84,7 @@ func (ka *KnownAddress) chance() float64 {
 func (ka *KnownAddress) isBad() bool {
 	ka.mtx.Lock()
 	defer ka.mtx.Unlock()
-	
+
 	if ka.lastattempt.After(time.Now().Add(-1 * time.Minute)) {
 		return false
 	}
@@ -112,8 +112,8 @@ func (ka *KnownAddress) isBad() bool {
 
 	return false
 }
+
 // Services returns the services supported by the peer with the known address.
 func (ka *KnownAddress) Services() wire.ServiceFlag {
 	return ka.na.Services
 }
-

@@ -33,7 +33,7 @@ differences between hcd and bitcoind as far as how RPCs are serviced:
   further details on why they were separated.  This means that if you are
   talking directly to hcd, only chain-related RPCs are available.  However both
   chain-related and wallet-related RPCs are available via
-  [hcwallet](https://github.com/HcashOrg/hcwallet).
+  [hcwallet](https://github.com/james-ray/hcwallet).
 * hcd is secure by default which means that the RPC connection is TLS-enabled
   by default
 * hcd provides access to the API through both
@@ -41,7 +41,7 @@ differences between hcd and bitcoind as far as how RPCs are serviced:
   [Websockets](http://en.wikipedia.org/wiki/WebSocket)
 
 Websockets are the preferred transport for hcd RPC and are used by applications
-such as [hcwallet](https://github.com/HcashOrg/hcwallet) for inter-process
+such as [hcwallet](https://github.com/james-ray/hcwallet) for inter-process
 communication with hcd.  The websocket connection endpoint for hcd is
 `wss://your_ip_or_domain:14009/ws`.
 
@@ -1015,7 +1015,7 @@ various languages.
 **8.1 Go**
 
 This section provides examples of using the RPC interface using Go and the
-[hcrpcclient](https://github.com/HcashOrg/hcrpcclient) package.
+[hcrpcclient](https://github.com/james-ray/hcrpcclient) package.
 
 * [Using getblockcount to Retrieve the Current Block Height](#ExampleGetBlockCount)
 * [Using getblock to Retrieve the Genesis Block](#ExampleGetBlock)
@@ -1027,7 +1027,7 @@ This section provides examples of using the RPC interface using Go and the
 **8.1.1 Using getblockcount to Retrieve the Current Block Height**<br />
 
 The following is an example Go application which uses the
-[hcrpcclient](https://github.com/HcashOrg/hcrpcclient) package to connect with
+[hcrpcclient](https://github.com/james-ray/hcrpcclient) package to connect with
 a hcd instance via Websockets, issues [getblockcount](#getblockcount) to
 retrieve the current block height, and displays it.
 
@@ -1035,8 +1035,8 @@ retrieve the current block height, and displays it.
 package main
 
 import (
-	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcrpcclient"
+	"github.com/james-ray/hcd/hcutil"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -1088,7 +1088,7 @@ Block count: 276978
 **8.1.2 Using getblock to Retrieve the Genesis Block**<br />
 
 The following is an example Go application which uses the
-[hcrpcclient](https://github.com/HcashOrg/hcrpcclient) package to connect with
+[hcrpcclient](https://github.com/james-ray/hcrpcclient) package to connect with
 a hcd instance via Websockets, issues [getblock](#getblock) to retrieve
 information about the Genesis block, and display a few details about it.
 
@@ -1096,9 +1096,9 @@ information about the Genesis block, and display a few details about it.
 package main
 
 import (
-	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcrpcclient"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -1177,7 +1177,7 @@ Num transactions: 1
 Notifications (Websocket-specific)**<br />
 
 The following is an example Go application which uses the
-[hcrpcclient](https://github.com/HcashOrg/hcrpcclient) package to connect with
+[hcrpcclient](https://github.com/james-ray/hcrpcclient) package to connect with
 a hcd instance via Websockets and registers for
 [blockconnected](#blockconnected) and [blockdisconnected](#blockdisconnected)
 notifications with [notifyblocks](#notifyblocks).  It also sets up handlers for
@@ -1187,9 +1187,9 @@ the notifications.
 package main
 
 import (
-	"github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcrpcclient"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 	"io/ioutil"
 	"log"
 	"path/filepath"

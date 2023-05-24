@@ -10,11 +10,11 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/crypto/bliss"
-	"github.com/HcashOrg/hcd/hcutil/base58"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/crypto/bliss"
+	"github.com/james-ray/hcd/hcutil/base58"
 )
 
 // ErrMalformedPrivateKey describes an error where a WIF-encoded private
@@ -65,12 +65,12 @@ func (w *WIF) IsForNet(net *chaincfg.Params) bool {
 // The WIF string must be a base58-encoded string of the following byte
 // sequence:
 //
-//  * 2 bytes to identify the network, must be 0x80 for mainnet or 0xef for testnet
-//  * 1 byte for DSA type
-//  * bytes of a binary-encoded, big-endian, zero-padded private key
-//  * 32 bytes for ECDSA, 385 bytes for BLISS
-//  * 4 bytes of checksum, must equal the first four bytes of the double SHA256
-//    of every byte before the checksum in this sequence
+//   - 2 bytes to identify the network, must be 0x80 for mainnet or 0xef for testnet
+//   - 1 byte for DSA type
+//   - bytes of a binary-encoded, big-endian, zero-padded private key
+//   - 32 bytes for ECDSA, 385 bytes for BLISS
+//   - 4 bytes of checksum, must equal the first four bytes of the double SHA256
+//     of every byte before the checksum in this sequence
 //
 // If the base58-decoded byte sequence does not match this, DecodeWIF will
 // return a non-nil error.  ErrMalformedPrivateKey is returned when the WIF

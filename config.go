@@ -22,14 +22,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HcashOrg/hcd/connmgr"
-	"github.com/HcashOrg/hcd/database"
-	_ "github.com/HcashOrg/hcd/database/ffldb"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/mempool"
-	"github.com/HcashOrg/hcd/sampleconfig"
 	"github.com/btcsuite/btclog"
 	"github.com/btcsuite/go-socks/socks"
+	"github.com/james-ray/hcd/connmgr"
+	"github.com/james-ray/hcd/database"
+	_ "github.com/james-ray/hcd/database/ffldb"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/mempool"
+	"github.com/james-ray/hcd/sampleconfig"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -409,10 +409,10 @@ func createDefaultConfigFile(destPath string) error {
 // line options.
 //
 // The configuration proceeds as follows:
-// 	1) Start with a default config with sane settings
-// 	2) Pre-parse the command line to check for an alternative config file
-// 	3) Load configuration file overwriting defaults with any specified options
-// 	4) Parse CLI options and overwrite/add any specified options
+//  1. Start with a default config with sane settings
+//  2. Pre-parse the command line to check for an alternative config file
+//  3. Load configuration file overwriting defaults with any specified options
+//  4. Parse CLI options and overwrite/add any specified options
 //
 // The above results in hcd functioning properly without any config settings
 // while still allowing the user to override settings with config files and
@@ -639,7 +639,7 @@ func loadConfig() (*config, []string, error) {
 	var oldTestNets []string
 	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet"))
 	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet2"))
-	
+
 	cfg.DataDir = filepath.Join(cfg.DataDir, netName(activeNetParams))
 
 	// Append the network type to the log directory so it is "namespaced"

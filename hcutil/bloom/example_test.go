@@ -11,9 +11,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil/bloom"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil/bloom"
+	"github.com/james-ray/hcd/wire"
 )
 
 // This example demonstrates how to create a new bloom filter, add a transaction

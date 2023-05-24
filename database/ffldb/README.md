@@ -2,7 +2,7 @@ ffldb
 =====
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/HcashOrg/hcd/database/ffldb)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/james-ray/hcd/database/ffldb)
 
 Package ffldb implements a driver for the database package that uses leveldb for
 the backing metadata and flat files for block storage.

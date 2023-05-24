@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/HcashOrg/hcd/hcjson"
-	hcrpcclient "github.com/HcashOrg/hcrpcclient"
+	"github.com/james-ray/hcd/hcjson"
+	hcrpcclient "github.com/james-ray/hcrpcclient"
 )
 
 // JoinType is an enum representing a particular type of "node join". A node
@@ -164,8 +164,6 @@ func ActiveHarnesses() []*Harness {
 	return activeNodes
 }
 
-
-
 // NodesConnected verifies whether there is a connection via the p2p interface
 // between the specified nodes. If allowReverse is true, connectivity is also
 // checked in the reverse direction (to->from).
@@ -202,7 +200,6 @@ func NodesConnected(from, to *Harness, allowReverse bool) (bool, error) {
 	return false, nil
 }
 
-
 // RemoveNode removes the peer-to-peer connection between the "from" harness and
 // the "to" harness. The connection is only removed in this direction, therefore
 // if the reverse connection exists, the nodes may still be connected.
@@ -234,4 +231,3 @@ func RemoveNode(from *Harness, to *Harness) error {
 
 	return nil
 }
-

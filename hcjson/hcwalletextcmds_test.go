@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/james-ray/hcd/hcjson"
 )
 
 // TestHcWalletExtCmds tests all of the btcwallet extended commands marshal and

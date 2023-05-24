@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (

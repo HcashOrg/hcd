@@ -12,10 +12,10 @@ import (
 	"math"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/txscript"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
 )
 
 // checkCoinbaseUniqueHeight checks to ensure that for all blocks height > 1
@@ -101,8 +101,8 @@ func IsFinalizedTransaction(tx *hcutil.Tx, blockHeight int64, blockTime time.Tim
 // on its position within the block chain.
 //
 // The flags modify the behavior of this function as follows:
-//  - BFFastAdd: The transaction are not checked to see if they are finalized
-//    and the somewhat expensive duplication transaction check is not performed.
+//   - BFFastAdd: The transaction are not checked to see if they are finalized
+//     and the somewhat expensive duplication transaction check is not performed.
 //
 // The flags are also passed to checkBlockHeaderContext.  See its documentation
 // for how the flags modify its behavior.
@@ -234,8 +234,8 @@ func voteBitsInBlock(bl *hcutil.Block) []VoteVersionTuple {
 // ProcessBlock before calling this function with it.
 //
 // The flags modify the behavior of this function as follows:
-//  - BFDryRun: The memory chain index will not be pruned and no accept
-//    notification will be sent since the block is not being accepted.
+//   - BFDryRun: The memory chain index will not be pruned and no accept
+//     notification will be sent since the block is not being accepted.
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) maybeAcceptBlock(block *hcutil.Block, flags BehaviorFlags) (bool, error) {

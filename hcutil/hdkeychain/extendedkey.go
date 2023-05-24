@@ -21,14 +21,14 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/HcashOrg/bliss"
-	"github.com/HcashOrg/bliss/sampler"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	hccrypto "github.com/HcashOrg/hcd/crypto/bliss"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/hcutil/base58"
+	"github.com/HCashOrg/bliss"
+	"github.com/HCashOrg/bliss/sampler"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	hccrypto "github.com/james-ray/hcd/crypto/bliss"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil/base58"
 	"golang.org/x/crypto/sha3"
 )
 

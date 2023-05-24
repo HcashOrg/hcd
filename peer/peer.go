@@ -8,11 +8,11 @@ package peer
 
 import (
 	"bytes"
+	"container/list"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand"
-	"container/list"
 	"net"
 	"strconv"
 	"sync"
@@ -21,10 +21,10 @@ import (
 
 	"github.com/btcsuite/go-socks/socks"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -1042,7 +1042,7 @@ func (p *Peer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 	// advertised.
 	p.services = msg.Services
 
-	p.na.Services=msg.Services
+	p.na.Services = msg.Services
 	// Set the remote peer's user agent.
 	p.userAgent = msg.UserAgent
 	p.flagsMtx.Unlock()
@@ -1568,12 +1568,11 @@ out:
 	close(p.inQuit)
 	log.Tracef("Peer input handler done for %s", p)
 }
-//KnownInverntory list
-func (p *Peer)KnownInventory() *list.List {
+
+// KnownInverntory list
+func (p *Peer) KnownInventory() *list.List {
 	return p.knownInventory.invList
 }
-
-
 
 // queueHandler handles the queuing of outgoing data for the peer. This runs as
 // a muxer for various sources of input so we can ensure that server and peer
@@ -1694,7 +1693,7 @@ out:
 	// waiting for us.
 	//for e := pendingMsgs.Front(); e != nil; e = pendingMsgs.Front() {
 	//	val := pendingMsgs.Remove(e)
-		//msg := val.(outMsg)
+	//msg := val.(outMsg)
 	for _, msg := range pendingMsgs {
 		if msg.doneChan != nil {
 			msg.doneChan <- struct{}{}
@@ -1717,6 +1716,7 @@ cleanup:
 	close(p.queueQuit)
 	log.Tracef("Peer queue handler done for %s", p)
 }
+
 // shouldLogWriteError returns whether or not the passed error, which is
 // expected to have come from writing to the remote peer in the outHandler,
 // should be logged.

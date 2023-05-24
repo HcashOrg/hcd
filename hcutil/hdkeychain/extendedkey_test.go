@@ -17,8 +17,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/hcutil/hdkeychain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/hcutil/hdkeychain"
 )
 
 // TestBIP0032Vectors tests the vectors provided by [BIP32] to ensure the
@@ -981,6 +981,7 @@ func TestZero(t *testing.T) {
 		}
 	}
 }
+
 // mockNetParams implements the NetworkParams interface and is used throughout
 // the tests to mock multiple networks.
 type mockNetParams struct {

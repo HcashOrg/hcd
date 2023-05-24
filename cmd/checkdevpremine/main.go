@@ -15,11 +15,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
-	hcrpcclient "github.com/HcashOrg/hcrpcclient"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
+	hcrpcclient "github.com/james-ray/hcrpcclient"
 )
 
 // Codes that are returned to the operating system.

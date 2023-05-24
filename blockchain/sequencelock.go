@@ -7,9 +7,9 @@ package blockchain
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 // SequenceLock represents the minimum timestamp and minimum block height after
@@ -172,19 +172,24 @@ func (b *BlockChain) CalcSequenceLock(tx *hcutil.Tx, view *UtxoViewpoint) (*Sequ
 // A sequence number is defined as follows:
 //
 //   - bit 31 is the disable bit
-//   - the next 8 bits are reserved
-//   - bit 22 is the relative lock type (unset = block height, set = seconds)
-//   - the next 6 bites are reserved
-//   - the least significant 16 bits represent the value
-//     - value has a granularity of 512 when interpreted as seconds (bit 22 set)
 //
-//   ---------------------------------------------------
-//   | Disable | Reserved |  Type | Reserved |  Value  |
-//   ---------------------------------------------------
-//   |  1 bit  |  8 bits  | 1 bit |  6 bits  | 16 bits |
-//   ---------------------------------------------------
-//   |   [31]  |  [30-23] |  [22] |  [21-16] | [15-0]  |
-//   ---------------------------------------------------
+//   - the next 8 bits are reserved
+//
+//   - bit 22 is the relative lock type (unset = block height, set = seconds)
+//
+//   - the next 6 bites are reserved
+//
+//   - the least significant 16 bits represent the value
+//
+//   - value has a granularity of 512 when interpreted as seconds (bit 22 set)
+//
+//     ---------------------------------------------------
+//     | Disable | Reserved |  Type | Reserved |  Value  |
+//     ---------------------------------------------------
+//     |  1 bit  |  8 bits  | 1 bit |  6 bits  | 16 bits |
+//     ---------------------------------------------------
+//     |   [31]  |  [30-23] |  [22] |  [21-16] | [15-0]  |
+//     ---------------------------------------------------
 //
 // The above implies that the maximum relative block height that can be encoded
 // is 65535 and the maximum relative number of seconds that can be encoded is

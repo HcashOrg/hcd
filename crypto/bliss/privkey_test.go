@@ -1,17 +1,17 @@
 package bliss
+
 import (
-	"testing"
-	_ "github.com/HcashOrg/hcd/chaincfg/chainec"
-	_ "github.com/HcashOrg/hcd/crypto"
-	"crypto/rand"
 	"bytes"
+	"crypto/rand"
+	_ "github.com/james-ray/hcd/chaincfg/chainec"
+	_ "github.com/james-ray/hcd/crypto"
+	"testing"
 )
 
 func TestPrivateKey(t *testing.T) {
 
-
 	sk, pk, err := Bliss.GenerateKey(rand.Reader)
-	if err != nil{
+	if err != nil {
 		t.Fatal("Error in Generate keys")
 	}
 
@@ -23,27 +23,27 @@ func TestPrivateKey(t *testing.T) {
 	skBytes := sk.Serialize()
 	skBytes2 := sk.(*PrivateKey).PrivateKey.Serialize()
 
-	if !bytes.Equal(pkBytes, pkBytes2){
+	if !bytes.Equal(pkBytes, pkBytes2) {
 		t.Fatal("Error in PublicKey(), the result is not same as the result of Generatekey()")
 	}
 
-	if !bytes.Equal(pkBytes, pkBytes3){
+	if !bytes.Equal(pkBytes, pkBytes3) {
 		t.Fatalf("Generated Public Key is not same as the result of the PublicKey() of bliss privateKey")
 	}
 
-	if !bytes.Equal(skBytes, skBytes2){
+	if !bytes.Equal(skBytes, skBytes2) {
 		t.Fatalf("Error in Serialization(), the result is not same as the result of function in Bliss")
 	}
 
 	prk, _ := Bliss.PrivKeyFromBytes(skBytes)
 	skBytes3 := prk.Serialize()
 
-	if !bytes.Equal(skBytes, skBytes3){
+	if !bytes.Equal(skBytes, skBytes3) {
 		t.Fatalf("serilization() and PrivKeyFromBytes() do not match")
 	}
 
 	tp := sk.GetType()
-	if tp != pqcTypeBliss{
+	if tp != pqcTypeBliss {
 		t.Fatal("GetType() result not matched")
 	}
 

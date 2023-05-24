@@ -11,9 +11,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
 )
 
 // newHashFromStr converts the passed big-endian hex string into a

@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -8,12 +8,12 @@ package blockchain
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"time"
-	"math"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 var (
@@ -55,18 +55,21 @@ func HashToBig(hash *chainhash.Hash) *big.Int {
 // Like IEEE754 floating point, there are three basic components: the sign,
 // the exponent, and the mantissa.  They are broken out as follows:
 //
-//	* the most significant 8 bits represent the unsigned base 256 exponent
-// 	* bit 23 (the 24th bit) represents the sign bit
-//	* the least significant 23 bits represent the mantissa
+//   - the most significant 8 bits represent the unsigned base 256 exponent
 //
-//	-------------------------------------------------
-//	|   Exponent     |    Sign    |    Mantissa     |
-//	-------------------------------------------------
-//	| 8 bits [31-24] | 1 bit [23] | 23 bits [22-00] |
-//	-------------------------------------------------
+//   - bit 23 (the 24th bit) represents the sign bit
+//
+//   - the least significant 23 bits represent the mantissa
+//
+//     -------------------------------------------------
+//     |   Exponent     |    Sign    |    Mantissa     |
+//     -------------------------------------------------
+//     | 8 bits [31-24] | 1 bit [23] | 23 bits [22-00] |
+//     -------------------------------------------------
 //
 // The formula to calculate N is:
-// 	N = (-1^sign) * mantissa * 256^(exponent-3)
+//
+//	N = (-1^sign) * mantissa * 256^(exponent-3)
 //
 // This compact form is only used in hcd to encode unsigned 256-bit numbers
 // which represent difficulty targets, thus there really is not a need for a
@@ -511,30 +514,30 @@ func estimateSupply(params *chaincfg.Params, height int64) int64 {
 	//A(n) = A(n-1) *q + d*q^(n-1)
 
 	var temp float64 = 0.0
-	var q float64 = float64(params.MulSubsidy)/float64(params.DivSubsidy)
+	var q float64 = float64(params.MulSubsidy) / float64(params.DivSubsidy)
 	var d float64 = -59363.0 / 100000000.0
 	supply := params.BlockOneSubsidy()
 	reductions := int64(height) / params.SubsidyReductionInterval
 	subsidy := params.BaseSubsidy
 
 	if reductions > 0 {
-		n:= float64(reductions)
+		n := float64(reductions)
 		if reductions >= 1681 {
 			n = 1681.0
 		}
-		temp1 := (1 * (1-math.Pow(q,n)))/(1-q)
-		temp2 := (1-math.Pow(q,n-1))/(1-q)/(1-q)*d*q
-		temp3 := (n-1)*math.Pow(q,n)/(1-q)*d
-		
-		sum := float64(subsidy * params.SubsidyReductionInterval) * (temp1 + temp2 - temp3)
-		supply += int64(sum);
-		
-		temp = float64(params.BaseSubsidy) * (1.0 - float64(n) * 59363.0 / 100000000.0) * math.Pow(q,float64(n))
+		temp1 := (1 * (1 - math.Pow(q, n))) / (1 - q)
+		temp2 := (1 - math.Pow(q, n-1)) / (1 - q) / (1 - q) * d * q
+		temp3 := (n - 1) * math.Pow(q, n) / (1 - q) * d
+
+		sum := float64(subsidy*params.SubsidyReductionInterval) * (temp1 + temp2 - temp3)
+		supply += int64(sum)
+
+		temp = float64(params.BaseSubsidy) * (1.0 - float64(n)*59363.0/100000000.0) * math.Pow(q, float64(n))
 		subsidy = int64(temp)
 
-		if reductions > 1681{
+		if reductions > 1681 {
 			n := reductions - 1681
-			sum:= 0.1 *(1-math.Pow(0.1, float64(n)))/ (1-q) * float64(params.BaseSubsidy)
+			sum := 0.1 * (1 - math.Pow(0.1, float64(n))) / (1 - q) * float64(params.BaseSubsidy)
 			supply += int64(sum)
 			A := float64(params.BaseSubsidy) * math.Pow(0.1, float64(n))
 			subsidy = int64(A)

@@ -13,14 +13,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcec/secp256k1"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 // fakeChain is used by the pool harness to provide generated test utxos and
@@ -36,8 +36,6 @@ type fakeChain struct {
 	medianTime    time.Time
 	scriptFlags   txscript.ScriptFlags
 }
-
-
 
 // SetNextStakeDifficulty sets the next stake difficulty associated with the
 // fake chain instance.
@@ -75,8 +73,6 @@ func (s *fakeChain) FetchUtxoView(tx *hcutil.Tx, treeValid bool) (*blockchain.Ut
 	return viewpoint, nil
 }
 
-
-
 // AddBlock adds a block that will be available to the BlockByHash function to
 // the fake chain instance.
 func (s *fakeChain) AddBlock(block *hcutil.Block) {
@@ -85,22 +81,21 @@ func (s *fakeChain) AddBlock(block *hcutil.Block) {
 	s.Unlock()
 }
 
-
 // SetHash sets the current best hash associated with the fake chain instance.
 func (s *fakeChain) SetBestHash(hash *chainhash.Hash) {
 	s.Lock()
 	s.currentHash = *hash
 	s.Unlock()
 }
+
 // NextStakeDifficulty returns the next stake difficulty associated with the
 // fake chain instance.
 func (s *fakeChain) NextStakeDifficulty() (int64, error) {
-    s.RLock()
-    nextStakeDiff := s.nextStakeDiff
-    s.RUnlock()
-    return nextStakeDiff, nil
+	s.RLock()
+	nextStakeDiff := s.nextStakeDiff
+	s.RUnlock()
+	return nextStakeDiff, nil
 }
-
 
 // BestHeight returns the current height associated with the fake chain
 // instance.
@@ -121,12 +116,11 @@ func (s *fakeChain) SetHeight(height int64) {
 // BestHash returns the current best hash associated with the fake chain
 // instance.
 func (s *fakeChain) BestHash() *chainhash.Hash {
-    s.RLock()
-    hash := &s.currentHash
-    s.RUnlock()
-    return hash
+	s.RLock()
+	hash := &s.currentHash
+	s.RUnlock()
+	return hash
 }
-
 
 // PastMedianTime returns the current median time associated with the fake chain
 // instance.
@@ -144,6 +138,7 @@ func (s *fakeChain) SetPastMedianTime(medianTime time.Time) {
 	s.medianTime = medianTime
 	s.Unlock()
 }
+
 // BlockByHash returns the block with the given hash from the fake chain
 // instance.  Blocks can be added to the instance with the AddBlock function.
 func (s *fakeChain) BlockByHash(hash *chainhash.Hash) (*hcutil.Block, error) {
@@ -174,7 +169,6 @@ func (s *fakeChain) BestHash() *chainhash.Hash {
 	s.RUnlock()
 	return hash
 }
-
 
 // StandardVerifyFlags returns the standard verification script flags associated
 // with the fake chain instance.
@@ -674,7 +668,7 @@ func TestOrphanEviction(t *testing.T) {
 	}
 }
 
-// add test for tx lock 
+// add test for tx lock
 func TestTxLockPool(t *testing.T) {
 	t.Parallel()
 	var txLen = 10
@@ -742,7 +736,7 @@ func TestTxLockPool(t *testing.T) {
 
 	harness.txPool.RemoveConfirmedLockTransaction(45768)
 
-	if len(harness.txPool.txLockPool) != 0||len(harness.txPool.lockOutpoints)!=0 {
+	if len(harness.txPool.txLockPool) != 0 || len(harness.txPool.lockOutpoints) != 0 {
 		t.Fatalf("RemoveConfirmedLockTransaction err")
 	}
 
@@ -754,13 +748,12 @@ func TestTxLockPool(t *testing.T) {
 			0, 0)
 	}
 
-
 	if len(harness.txPool.txLockPool) != txLen {
 		t.Fatalf("maybeAddtoLockPool err")
 	}
-	harness.chain.currentHeight=45888
+	harness.chain.currentHeight = 45888
 	t.Log(harness.txPool.FetchPendingLockTx(1))
-	
+
 	t.Log(harness.txPool.TxLockPoolInfo())
 
 	for _, tx := range chainedTxns[:] {
@@ -770,7 +763,7 @@ func TestTxLockPool(t *testing.T) {
 		harness.txPool.RemoveTxLockDoubleSpends(chainedTxns2[0])
 		//t.Log(harness.txPool.TxLockPoolInfo())
 	}
-	if len(harness.txPool.txLockPool) != 0 ||len(harness.txPool.lockOutpoints)!=0{
+	if len(harness.txPool.txLockPool) != 0 || len(harness.txPool.lockOutpoints) != 0 {
 		t.Fatalf("RemoveTxLockDoubleSpends err")
 	}
 
@@ -789,7 +782,6 @@ func TestTxLockPool(t *testing.T) {
 		harness.txPool.ModifyLockTransaction(tx, 45668)
 	}
 
-
 	t.Log(harness.txPool.TxLockPoolInfo())
 	for _, tx := range chainedTxns[:] {
 
@@ -805,4 +797,3 @@ func TestTxLockPool(t *testing.T) {
 
 	t.Log(harness.txPool.TxLockPoolInfo())
 }
-

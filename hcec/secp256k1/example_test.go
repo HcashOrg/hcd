@@ -1,5 +1,5 @@
 // Copyright (c) 2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,8 +10,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcec/secp256k1"
 )
 
 // This example demonstrates signing a message with a secp256k1 private key that
@@ -88,7 +88,6 @@ func Example_verifySignature() {
 	// Output:
 	// Signature Verified? true
 }
-
 
 // This example demonstrates decrypting a message using a private key that is
 // first parsed from raw bytes.

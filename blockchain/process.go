@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // BehaviorFlags is a bitmask defining tweaks to the normal behavior when

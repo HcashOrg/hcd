@@ -9,8 +9,8 @@ package blockchain
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // NotificationType represents the type of a notification message.
@@ -97,12 +97,12 @@ type TicketNotificationsData struct {
 // Notification defines notification that is sent to the caller via the callback
 // function provided during the call to New and consists of a notification type
 // as well as associated data that depends on the type as follows:
-// 	- NTBlockAccepted:         *BlockAcceptedNtfnsData
-// 	- NTBlockConnected:        []*hcutil.Block of len 2
-// 	- NTBlockDisconnected:     []*hcutil.Block of len 2
-//  - NTReorganization:        *ReorganizationNtfnsData
-//  - NTSpentAndMissedTickets: *TicketNotificationsData
-//  - NTNewTickets:            *TicketNotificationsData
+//   - NTBlockAccepted:         *BlockAcceptedNtfnsData
+//   - NTBlockConnected:        []*hcutil.Block of len 2
+//   - NTBlockDisconnected:     []*hcutil.Block of len 2
+//   - NTReorganization:        *ReorganizationNtfnsData
+//   - NTSpentAndMissedTickets: *TicketNotificationsData
+//   - NTNewTickets:            *TicketNotificationsData
 type Notification struct {
 	Type NotificationType
 	Data interface{}

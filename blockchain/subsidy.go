@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2015 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 	"math"
 )
 
@@ -94,13 +94,13 @@ func (s *SubsidyCache) CalcBlockSubsidy(height int64) int64 {
 	//S(n) = a1(1-q^n)/(1-q) + d[q(1-q^(n-1))/((1-q)^2) - (n-1)q^n/(1-q)]
 	//A(n) = A(n-1) *q + d*q^(n-1)
 
-	var q float64 = float64(s.params.MulSubsidy)/float64(s.params.DivSubsidy)
+	var q float64 = float64(s.params.MulSubsidy) / float64(s.params.DivSubsidy)
 	var temp float64 = 0.0
 
 	if iteration < 1682 {
-		temp = float64(s.params.BaseSubsidy) * (1.0 - float64(iteration) * 59363.0 / 100000000.0) * math.Pow(q,float64(iteration))
-	}else{//after 99 years
-		temp = 100000000.0/float64(s.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iteration)-1681.0))
+		temp = float64(s.params.BaseSubsidy) * (1.0 - float64(iteration)*59363.0/100000000.0) * math.Pow(q, float64(iteration))
+	} else { //after 99 years
+		temp = 100000000.0 / float64(s.params.SubsidyReductionInterval) * math.Pow(0.1, float64(float64(iteration)-1681.0))
 	}
 	subsidy := int64(temp)
 	s.subsidyCacheLock.Lock()

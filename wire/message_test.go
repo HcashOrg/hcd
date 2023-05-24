@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // makeHeader is a convenience function to make a message header in the form of
@@ -75,23 +75,23 @@ func TestMessage(t *testing.T) {
 	msgFilterClear := NewMsgFilterClear()
 	msgFilterLoad := NewMsgFilterLoad([]byte{0x01}, 10, 0, BloomUpdateNone)
 	bh := NewBlockHeader(
-		int32(0),                                    // Version
-		&chainhash.Hash{},                           // PrevHash
-		&chainhash.Hash{},                           // MerkleRoot
-		&chainhash.Hash{},                           // StakeRoot
-		uint16(0x0000),                              // VoteBits
+		int32(0),          // Version
+		&chainhash.Hash{}, // PrevHash
+		&chainhash.Hash{}, // MerkleRoot
+		&chainhash.Hash{}, // StakeRoot
+		uint16(0x0000),    // VoteBits
 		[6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // FinalState
-		uint16(0x0000),                              // Voters
-		uint8(0x00),                                 // FreshStake
-		uint8(0x00),                                 // Revocations
-		uint32(0),                                   // Poolsize
-		uint32(0x00000000),                          // Bits
-		int64(0x0000000000000000),                   // Sbits
-		uint32(0),                                   // Height
-		uint32(0),                                   // Size
-		uint32(0x00000000),                          // Nonce
-		[32]byte{},                                  // ExtraData
-		uint32(0xcab005e0),                          // StakeVersion
+		uint16(0x0000),            // Voters
+		uint8(0x00),               // FreshStake
+		uint8(0x00),               // Revocations
+		uint32(0),                 // Poolsize
+		uint32(0x00000000),        // Bits
+		int64(0x0000000000000000), // Sbits
+		uint32(0),                 // Height
+		uint32(0),                 // Size
+		uint32(0x00000000),        // Nonce
+		[32]byte{},                // ExtraData
+		uint32(0xcab005e0),        // StakeVersion
 	)
 	msgMerkleBlock := NewMsgMerkleBlock(bh)
 	msgReject := NewMsgReject("block", RejectDuplicate, "duplicate block")

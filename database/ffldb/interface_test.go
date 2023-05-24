@@ -25,10 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 )
 
 var (
@@ -37,7 +37,7 @@ var (
 
 	// blockDataFile is the path to a file containing the first 168 blocks
 	// of the simulation network.
-	blockDataFile = filepath.Join("..","blockchain", "testdata", "blocks0to168.bz2")
+	blockDataFile = filepath.Join("..", "blockchain", "testdata", "blocks0to168.bz2")
 
 	// errSubTestFail is used to signal that a sub test returned false.
 	errSubTestFail = fmt.Errorf("sub test failure")

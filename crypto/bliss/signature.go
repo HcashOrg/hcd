@@ -3,9 +3,9 @@ package bliss
 import (
 	"crypto/rand"
 
-	"github.com/HcashOrg/bliss"
-	"github.com/HcashOrg/bliss/sampler"
-	hxcrypto "github.com/HcashOrg/hcd/crypto"
+	"github.com/HCashOrg/bliss"
+	"github.com/HCashOrg/bliss/sampler"
+	hxcrypto "github.com/james-ray/hcd/crypto"
 )
 
 type Signature struct {

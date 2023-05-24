@@ -38,8 +38,8 @@ docker pull hcd/$DOCKER_IMAGE_TAG
 
 docker run --rm -it -v $(pwd):/src hcd/$DOCKER_IMAGE_TAG /bin/bash -c "\
   rsync -ra --filter=':- .gitignore'  \
-  /src/ /go/src/github.com/HcashOrg/$REPO/ && \
-  cd github.com/HcashOrg/$REPO/ && \
+  /src/ /go/src/github.com/james-ray/$REPO/ && \
+  cd github.com/james-ray/$REPO/ && \
   glide install && \
   go install \$(glide novendor) && \
   $TESTCMD

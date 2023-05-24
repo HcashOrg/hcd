@@ -10,8 +10,8 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/HcashOrg/hcd/hcec/secp256k1"
-	"github.com/HcashOrg/hcd/hcec/secp256k1/schnorr"
+	"github.com/james-ray/hcd/hcec/secp256k1"
+	"github.com/james-ray/hcd/hcec/secp256k1/schnorr"
 )
 
 type secSchnorrDSA struct {

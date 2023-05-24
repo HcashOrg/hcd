@@ -18,10 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/wire"
 
-	rpc "github.com/HcashOrg/hcrpcclient"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil"
+	rpc "github.com/james-ray/hcrpcclient"
 )
 
 // nodeConfig contains all the args, and data required to launch a hcd process

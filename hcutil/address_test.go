@@ -13,10 +13,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/wire"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -577,6 +577,7 @@ func TestAddresses(t *testing.T) {
 		}
 	}
 }
+
 // testAddressPubKey makes an AddressPubKey, setting the unexported fields with
 // the parameters.
 func testAddressPubKey(serializedPubKey []byte, pubKeyFormat PubKeyFormat, netID [2]byte) *AddressSecpPubKey {

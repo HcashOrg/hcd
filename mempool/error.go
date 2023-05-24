@@ -1,5 +1,5 @@
 // Copyright (c) 2014-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -7,8 +7,8 @@
 package mempool
 
 import (
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/wire"
 )
 
 // RuleError identifies a rule violation.  It is used to indicate that

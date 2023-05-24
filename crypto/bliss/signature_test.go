@@ -1,19 +1,19 @@
 package bliss
 
 import (
-	"testing"
-	_ "github.com/HcashOrg/hcd/chaincfg/chainec"
-	_ "github.com/HcashOrg/hcd/crypto"
-	"crypto/rand"
 	"bytes"
+	"crypto/rand"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	_ "github.com/james-ray/hcd/chaincfg/chainec"
+	_ "github.com/james-ray/hcd/crypto"
 	"golang.org/x/crypto/sha3"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
+	"testing"
 )
 
 func TestSignature(t *testing.T) {
 
 	sk, _, err := Bliss.GenerateKey(rand.Reader)
-	if err != nil{
+	if err != nil {
 		t.Fatal("Error in Generate keys")
 	}
 
@@ -24,23 +24,23 @@ func TestSignature(t *testing.T) {
 
 	var sig chainec.Signature
 	sig, err = Bliss.Sign(sk, hash[:])
-	if err != nil{
+	if err != nil {
 		t.Fatal("Error in Sign()")
 	}
 
 	sigBytes := sig.Serialize()
 	restoredSig, err := Bliss.ParseSignature(sigBytes)
-	if err != nil{
+	if err != nil {
 		t.Fatal("Error in ParseSignature")
 	}
 	sigBytes2 := restoredSig.Serialize()
 
-	if !bytes.Equal(sigBytes, sigBytes2){
+	if !bytes.Equal(sigBytes, sigBytes2) {
 		t.Fatal("Serialization() and ParseSignature() do not match")
 	}
 
 	tp := sig.GetType()
-	if tp != pqcTypeBliss{
+	if tp != pqcTypeBliss {
 		t.Fatal("GetType() result not matched")
 	}
 

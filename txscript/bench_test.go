@@ -2,8 +2,8 @@ package txscript
 
 import (
 	"bytes"
+	"github.com/james-ray/hcd/wire"
 	"testing"
-	"github.com/HcashOrg/hcd/wire"
 )
 
 var (
@@ -12,7 +12,7 @@ var (
 	manyInputsBenchTx wire.MsgTx
 
 	// A mock previous output script to use in the signing benchmark.
-	prevOutScript = []parsedOpcode{{&(opcodeArray[1]),hexToBytes("a914f5916158e3e2c4551c1796708db8367207ed13bb87")}}
+	prevOutScript = []parsedOpcode{{&(opcodeArray[1]), hexToBytes("a914f5916158e3e2c4551c1796708db8367207ed13bb87")}}
 )
 
 func genComplexScript() ([]byte, error) {
@@ -53,7 +53,6 @@ func BenchmarkCalcSigHash(b *testing.B) {
 		}
 	}
 }
-
 
 // BenchmarkScriptParsing benchmarks how long it takes to parse a very large
 // script.

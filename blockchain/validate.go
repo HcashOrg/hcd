@@ -13,13 +13,13 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -173,7 +173,6 @@ func IsFinalzedTransaction(tx *hcutil.Tx, blockHeight int64, blockTime time.Time
 	}
 	return true
 }
-
 
 // CheckTransactionSanity performs some preliminary checks on a transaction to
 // ensure it is sane.  These checks are context free.
@@ -363,8 +362,8 @@ func CheckProofOfStake(block *hcutil.Block, posLimit int64) error {
 // target difficulty as claimed.
 //
 // The flags modify the behavior of this function as follows:
-//  - BFNoPoWCheck: The check to ensure the block hash is less than the target
-//    difficulty is not performed.
+//   - BFNoPoWCheck: The check to ensure the block hash is less than the target
+//     difficulty is not performed.
 func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags BehaviorFlags) error {
 	// The target difficulty must be larger than zero.
 	target := CompactToBig(header.Bits)
@@ -557,7 +556,7 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 		}
 	}
 
-		// A block must not contain more than the maximum allowed number of
+	// A block must not contain more than the maximum allowed number of
 	// revocations.
 	if totalRevocations > maxRevocationsPerBlock {
 		errStr := fmt.Sprintf("block contains %d revocations which "+
@@ -565,7 +564,6 @@ func checkBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, flags Be
 			totalRevocations, maxRevocationsPerBlock)
 		return ruleError(ErrTooManyRevocations, errStr)
 	}
-
 
 	if totalTickets != int(block.MsgBlock().Header.FreshStake) {
 		errStr := fmt.Sprintf("%v tickets found in block, while "+
@@ -704,8 +702,8 @@ func CheckWorklessBlockSanity(block *hcutil.Block, timeSource MedianTimeSource, 
 // header which depend on its position within the block chain.
 //
 // The flags modify the behavior of this function as follows:
-//  - BFFastAdd: All checks except those involving comparing the header against
-//    the checkpoints are not performed.
+//   - BFFastAdd: All checks except those involving comparing the header against
+//     the checkpoints are not performed.
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode *blockNode, flags BehaviorFlags) error {
@@ -789,7 +787,7 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 	return nil
 }
 
-//CheckMainnetStakeVersion  ensure the block sync with block version
+// CheckMainnetStakeVersion  ensure the block sync with block version
 func (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error {
 	//Enforce the stake version in the header
 	expectedStakeVer := b.calcStakeVersion(prevNode)
@@ -802,7 +800,7 @@ func (b *BlockChain) CheckMainnetStakeVersion(header *wire.BlockHeader, prevNode
 	return nil
 }
 
-//CheckTestnetStakeVersion  ensure the block sync with block version
+// CheckTestnetStakeVersion  ensure the block sync with block version
 func (b *BlockChain) CheckTestnetStakeVersion(header *wire.BlockHeader, prevNode *blockNode) error {
 	// Reject version 6 blocks once a majority of the network has
 	// upgraded.

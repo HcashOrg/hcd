@@ -9,11 +9,11 @@ package blockchain
 import (
 	"fmt"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/txscript"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
 )
 
 // CheckpointConfirmations is the number of blocks before the end of the current
@@ -237,14 +237,14 @@ func isNonstandardTransaction(tx *hcutil.Tx) bool {
 // checkpoint candidate.
 //
 // The factors used to determine a good checkpoint are:
-//  - The block must be in the main chain
-//  - The block must be at least 'CheckpointConfirmations' blocks prior to the
-//    current end of the main chain
-//  - The timestamps for the blocks before and after the checkpoint must have
-//    timestamps which are also before and after the checkpoint, respectively
-//    (due to the median time allowance this is not always the case)
-//  - The block must not contain any strange transaction such as those with
-//    nonstandard scripts
+//   - The block must be in the main chain
+//   - The block must be at least 'CheckpointConfirmations' blocks prior to the
+//     current end of the main chain
+//   - The timestamps for the blocks before and after the checkpoint must have
+//     timestamps which are also before and after the checkpoint, respectively
+//     (due to the median time allowance this is not always the case)
+//   - The block must not contain any strange transaction such as those with
+//     nonstandard scripts
 //
 // The intent is that candidates are reviewed by a developer to make the final
 // decision and then manually added to the list of checkpoints for a network.

@@ -9,10 +9,11 @@ package txscript_test
 import (
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
+
 // TestCheckPubKeyEncoding ensures the internal checkPubKeyEncoding function
 // works as expected.
 func TestCheckPubKeyEncoding(t *testing.T) {
@@ -96,10 +97,10 @@ func TestBadPC(t *testing.T) {
 		SerType: wire.TxSerializeFull,
 		Version: 1,
 		TxOut: []*wire.TxOut{
-		    {
-			Value:    1000000000,
-			PkScript: nil,
-		    },
+			{
+				Value:    1000000000,
+				PkScript: nil,
+			},
 		},
 		TxIn: []*wire.TxIn{
 			{
@@ -120,7 +121,7 @@ func TestBadPC(t *testing.T) {
 				Sequence:        4294967295,
 			},
 		},
-		
+
 		LockTime: 0,
 	}
 	pkScript := []byte{txscript.OP_NOP}
@@ -147,7 +148,6 @@ func TestBadPC(t *testing.T) {
 		}
 	}
 }
-
 
 // TestInvalidFlagCombinations ensures the script engine returns the expected
 // error when disallowed flag combinations are specified.
@@ -474,5 +474,3 @@ func TestCheckErrorCondition(t *testing.T) {
 		t.Errorf("unexpected error %v on final check", err)
 	}
 }
-
-

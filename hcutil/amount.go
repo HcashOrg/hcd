@@ -74,7 +74,7 @@ func round(f float64) Amount {
 // NewAmount is for specifically for converting HC to Atoms (atomic units).
 // For creating a new Amount with an int64 value which denotes a quantity of
 // Atoms, do a simple type conversion from type int64 to Amount.
-// See GoDoc for example: http://godoc.org/github.com/HcashOrg/hcd/hcutil#example-Amount
+// See GoDoc for example: http://godoc.org/github.com/james-ray/hcd/hcutil#example-Amount
 func NewAmount(f float64) (Amount, error) {
 	// The amount is only considered invalid if it cannot be represented
 	// as an integer type.  This may happen if f is NaN or +-Infinity.

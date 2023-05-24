@@ -9,8 +9,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // EncodeConcatenatedHashes serializes a slice of chainhash.Hash values into a
@@ -64,10 +64,10 @@ func DecodeConcatenatedHashes(hashes string) ([]chainhash.Hash, error) {
 // slice.  The entirety of the voteBits are encoded individually in series as
 // follows:
 //
-//   Size            Description
-//   1 byte          Length of the concatenated voteBits in bytes
-//   2 bytes         Vote bits
-//   up to 73 bytes  Extended vote bits
+//	Size            Description
+//	1 byte          Length of the concatenated voteBits in bytes
+//	2 bytes         Vote bits
+//	up to 73 bytes  Extended vote bits
 //
 // The result may be concatenated into a slice and then passed to callers
 func EncodeConcatenatedVoteBits(voteBitsSlice []stake.VoteBits) (string, error) {

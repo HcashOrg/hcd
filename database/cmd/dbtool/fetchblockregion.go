@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
 )
 
 // blockRegionCmd defines the configuration options for the fetchblockregion

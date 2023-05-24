@@ -11,9 +11,9 @@ hcd maintains the entire past transactional ledger of Hc and allows
  relaying of quantum resistant transactions to other Hc nodes across the world.
 
 Note: To send or receive funds and join Proof-of-Stake mining, you will also need
-[hcwallet](https://github.com/HcashOrg/hcwallet).
+[hcwallet](https://github.com/james-ray/hcwallet).
 
-HC is forked from [Decred](https://github.com/HcashOrg) and [btcd](https://github.com/btcsuite/btcd) which are full node implementations written in Go. Both projects are ongoing and under active development. Since hcd is synced and will merge with upstream commits from hcd and btcd, it will get the benefit of both hcd and btcd's ongoing upgrades to staking, voting, peer and connection handling, database optimization and other blockchain related technology improvements. Advances made by hcd can also be pulled back upstream to hcd and btcd including quantum resistant signature schemes and more.
+HC is forked from [Decred](https://github.com/james-ray) and [btcd](https://github.com/btcsuite/btcd) which are full node implementations written in Go. Both projects are ongoing and under active development. Since hcd is synced and will merge with upstream commits from hcd and btcd, it will get the benefit of both hcd and btcd's ongoing upgrades to staking, voting, peer and connection handling, database optimization and other blockchain related technology improvements. Advances made by hcd can also be pulled back upstream to hcd and btcd including quantum resistant signature schemes and more.
 
 ## Development Process
 The master branch is regularly built and tested, but is not guaranteed to be completely stable. Tags are created regularly to indicate new official, stable release versions of hcd.
@@ -39,8 +39,8 @@ For a first time installation, the project and dependency sources can be
 obtained manually with `git`
 
 ```
-git clone https://github.com/HcashOrg/hcd $GOPATH/src/github.com/HcashOrg/hcd
-cd $GOPATH/src/github.com/HcashOrg/hcd
+git clone https://github.com/james-ray/hcd $GOPATH/src/github.com/james-ray/hcd
+cd $GOPATH/src/github.com/james-ray/hcd
 go install . ./cmd/...
 ```
 
@@ -48,7 +48,7 @@ To update an existing source tree, pull the latest changes and install the
 matching dependencies:
 
 ```
-cd $GOPATH/src/github.com/HcashOrg/hcd
+cd $GOPATH/src/github.com/james-ray/hcd
 git pull
 go install . ./cmd/...
 ```
@@ -67,7 +67,7 @@ To use your node for mining add the miningaddr flag when running hcd:
 hcd -u YOURUNIQUERPCUSERNAME -P YOURUNIQUERPCPASSWORD --testnet --miningaddr=YOURTESTNETADDRESS
 ```
 
-To generate a testnet mining address you must install [hcwallet](https://github.com/HcashOrg/hcwallet)
+To generate a testnet mining address you must install [hcwallet](https://github.com/james-ray/hcwallet)
 
 To begin CPU mining after hcd is already running you can run the following in your terminal:
 
@@ -82,7 +82,7 @@ hcctl -u YOURUNIQUEUSERNAME -P YOURUNIQUEPASSWORD --testnet setgenerate true
 ```
 $ rm -rf $HOME/.hcd
 $ rm -rf $HOME/.hcwallet
-$ cd $HOME/go/src/github.com/HcashOrg/hcd
+$ cd $HOME/go/src/github.com/james-ray/hcd
 $ git pull
 $ go install $(glide nv)
 ```
@@ -91,19 +91,19 @@ $ go install $(glide nv)
 ```
 $ rm -rf $HOME/Library/Application\ Support/Hcwallet
 $ rm -rf $HOME/Library/Application\ Support/Hcd
-$ cd $HOME/go/src/github.com/HcashOrg/hcd
+$ cd $HOME/go/src/github.com/james-ray/hcd
 $ git pull
 $ go install $(glide nv)
 ```
 
 ## Issue Tracker
 
-The [integrated github issue tracker](https://github.com/HcashOrg/hcd/issues)
+The [integrated github issue tracker](https://github.com/james-ray/hcd/issues)
 is used for this project.
 
 ## Documentation
 
-The documentation is a work-in-progress.  It is located in the [docs](https://github.com/HcashOrg/hcd/tree/master/docs) folder.
+The documentation is a work-in-progress.  It is located in the [docs](https://github.com/james-ray/hcd/tree/master/docs) folder.
 
 ## License
 

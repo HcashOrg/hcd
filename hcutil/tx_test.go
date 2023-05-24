@@ -12,9 +12,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // TestTx tests the API for Tx.

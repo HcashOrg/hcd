@@ -11,10 +11,10 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/hcutil/bloom"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil/bloom"
+	"github.com/james-ray/hcd/wire"
 )
 
 // TestFilterLarge ensures a maximum sized filter can be created.
@@ -477,7 +477,6 @@ func TestFilterInsertUpdateNone(t *testing.T) {
 		return
 	}
 }
-
 
 func TestFilterReload(t *testing.T) {
 	f := bloom.NewFilter(10, 0, 0.000001, wire.BloomUpdateAll)

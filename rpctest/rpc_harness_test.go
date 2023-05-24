@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcjson"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcjson"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -380,8 +380,8 @@ func testJoinBlocks(r *Harness, t *testing.T) {
 func testMemWalletLockedOutputs(r *Harness, t *testing.T) {
 	// Obtain the initial balance of the wallet at this point.
 	startingBalance := r.ConfirmedBalance()
-	
-	fmt.Println("startingBalance:",startingBalance)
+
+	fmt.Println("startingBalance:", startingBalance)
 
 	// First, create a signed transaction spending some outputs.
 	addr, err := r.NewAddress()
@@ -453,7 +453,7 @@ func TestMain(m *testing.M) {
 	}
 
 	exitCode := m.Run()
-	fmt.Println("exitCode:",exitCode)
+	fmt.Println("exitCode:", exitCode)
 
 	// Clean up any active harnesses that are still currently running.
 	if len(ActiveHarnesses()) > 0 {
@@ -465,7 +465,6 @@ func TestMain(m *testing.M) {
 
 	os.Exit(exitCode)
 }
-
 
 func assertConnectedOut(t *testing.T, nodeA *Harness, nodeB *Harness) {
 	nodeAPeers, err := nodeA.Node.GetPeerInfo()
@@ -490,7 +489,7 @@ func assertConnectedOut(t *testing.T, nodeA *Harness, nodeB *Harness) {
 func TestHarness(t *testing.T) {
 	// We should have the expected amount of mature unspent outputs.
 	expectedBalance := hcutil.Amount(numMatureOutputs * 300 * hcutil.AtomsPerCoin)
-	fmt.Println("expectedBalance:",expectedBalance)
+	fmt.Println("expectedBalance:", expectedBalance)
 	harnessBalance := mainHarness.ConfirmedBalance()
 	if harnessBalance != expectedBalance {
 		t.Fatalf("expected wallet balance of %v instead have %v",
@@ -517,7 +516,6 @@ func TestHarness(t *testing.T) {
 
 	testTearDownAll(t)
 }
-
 
 func testNodesConnected(r *Harness, t *testing.T) {
 	// Create a fresh test harness.
@@ -584,4 +582,3 @@ func testNodesConnected(r *Harness, t *testing.T) {
 	}
 
 }
-

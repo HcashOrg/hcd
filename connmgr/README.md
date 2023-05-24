@@ -2,7 +2,7 @@ connmgr
 =======
 
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/HcashOrg/hcd/connmgr)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/james-ray/hcd/connmgr)
 
 Package connmgr implements a generic Hcd network connection manager.
 
@@ -28,7 +28,7 @@ In addition the connection manager provides the following utilities:
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/HcashOrg/hcd/connmgr
+$ go get -u github.com/james-ray/hcd/connmgr
 ```
 
 ## License

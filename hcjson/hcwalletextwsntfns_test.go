@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HcashOrg/hcd/hcjson"
+	"github.com/james-ray/hcd/hcjson"
 )
 
 // TestChainSvrWsNtfns tests all of the chain server websocket-specific

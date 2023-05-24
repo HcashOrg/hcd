@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
 )
 
 // newFakeChain returns a chain that is usable for syntetic tests.  It is
@@ -27,10 +27,10 @@ func newFakeChain(params *chaincfg.Params) *BlockChain {
 	index[node.hash] = node
 
 	return &BlockChain{
-		chainParams:      params,
-		deploymentCaches: newThresholdCaches(params),
-		bestNode:         node,
-		index:            index,
+		chainParams:                   params,
+		deploymentCaches:              newThresholdCaches(params),
+		bestNode:                      node,
+		index:                         index,
 		isVoterMajorityVersionCache:   make(map[[stakeMajorityCacheKeySize]byte]bool),
 		isStakeMajorityVersionCache:   make(map[[stakeMajorityCacheKeySize]byte]bool),
 		calcPriorStakeVersionCache:    make(map[[chainhash.HashSize]byte]uint32),
@@ -763,7 +763,6 @@ func newTestNode(parent *blockNode, blockVersion int32, timestamp time.Time) *bl
 	node.workSum.Add(parent.workSum, node.workSum)
 	return node
 }
-
 
 func TestLarge(t *testing.T) {
 	params := &chaincfg.MainNetParams

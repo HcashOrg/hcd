@@ -10,8 +10,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // genRandomSig returns a random message, a signature of the message under the
@@ -157,7 +157,7 @@ func genTargetSig(bytes []byte) (*chainhash.Hash, chainec.Signature, error) {
 
 	r, s, err := secp256k1.Sign(priv, msgHash[:])
 	if err != nil {
-		return nil, nil,  err
+		return nil, nil, err
 	}
 	sig := secp256k1.NewSignature(r, s)
 

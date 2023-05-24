@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2014 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -24,8 +24,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/wire"
 )
 
 // AddrManager provides a concurrency safe address manager for caching potential
@@ -673,6 +673,7 @@ func (a *AddrManager) AddressCache() []*wire.NetAddress {
 	// slice off the limit we are willing to share.
 	return allAddr[0:numAddresses]
 }
+
 // getAddresses returns all of the addresses currently found within the
 // manager's address cache.
 func (a *AddrManager) getAddresses() []*wire.NetAddress {
@@ -691,6 +692,7 @@ func (a *AddrManager) getAddresses() []*wire.NetAddress {
 
 	return addrs
 }
+
 // reset resets the address manager by reinitialising the random source
 // and allocating fresh empty bucket storage.
 func (a *AddrManager) reset() {
@@ -1122,7 +1124,6 @@ func New(dataDir string, lookupFunc func(string) ([]net.IP, error)) *AddrManager
 	am.reset()
 	return &am
 }
-
 
 // SetServices sets the services for the giiven address to the provided value.
 func (a *AddrManager) SetServices(addr *wire.NetAddress, services wire.ServiceFlag) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -9,8 +9,6 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
-
-	. "github.com/HcashOrg/hcd/chaincfg"
 )
 
 // Define some of the required parameters for a user-registered
@@ -25,7 +23,7 @@ var mockNetParams = Params{
 	HDPublicKeyID:    [4]byte{0x05, 0x06, 0x07, 0x08},
 }
 
-//TestRegister test registered network
+// TestRegister test registered network
 func TestRegister(t *testing.T) {
 	type registerTest struct {
 		name   string

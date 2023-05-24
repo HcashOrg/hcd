@@ -17,11 +17,11 @@ import (
 
 	"golang.org/x/crypto/ripemd160"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainec"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	bs "github.com/HcashOrg/hcd/crypto/bliss"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainec"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	bs "github.com/james-ray/hcd/crypto/bliss"
+	"github.com/james-ray/hcd/wire"
 )
 
 var optimizeSigVerification = chaincfg.SigHashOptimization

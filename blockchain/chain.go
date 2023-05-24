@@ -14,13 +14,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/HcashOrg/hcd/blockchain/stake"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/database"
-	"github.com/HcashOrg/hcd/hcutil"
-	"github.com/HcashOrg/hcd/txscript"
-	"github.com/HcashOrg/hcd/wire"
+	"github.com/james-ray/hcd/blockchain/stake"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/database"
+	"github.com/james-ray/hcd/hcutil"
+	"github.com/james-ray/hcd/txscript"
+	"github.com/james-ray/hcd/wire"
 )
 
 const (
@@ -982,19 +982,19 @@ func (b *BlockChain) pruneStakeNodes() {
 	// just before each new node is created.  However, that might be tuned
 	// later to only prune at intervals, so the code needs to account for
 	// the possibility of multiple nodes.
-// 	deleteNodes := list.New()
+	// 	deleteNodes := list.New()
 	var deleteNodes []*blockNode
-	
+
 	for node := pruneToNode.parent; node != nil; node = node.parent {
-// 		deleteNodes.PushFront(node)
+		// 		deleteNodes.PushFront(node)
 		deleteNodes = append(deleteNodes, node)
 	}
 
 	// Loop through each node to prune, unlink its children, remove it from
 	// the dependency index, and remove it from the node index.
-// 	for e := deleteNodes.Front(); e != nil; e = e.Next() {
+	// 	for e := deleteNodes.Front(); e != nil; e = e.Next() {
 	for i := len(deleteNodes) - 1; i >= 0; i-- {
-// 		node := e.Value.(*blockNode)
+		// 		node := e.Value.(*blockNode)
 		node := deleteNodes[i]
 		// Do not attempt to prune if the node should already have been pruned,
 		// for example if you're adding an old side chain block.
@@ -1591,8 +1591,8 @@ func countNumberOfTransactions(block, parent *hcutil.Block) uint64 {
 // (think pushing them onto the end of the chain).
 //
 // The flags modify the behavior of this function as follows:
-//  - BFDryRun: Only the checks which ensure the reorganize can be completed
-//    successfully are performed.  The chain is not reorganized.
+//   - BFDryRun: Only the checks which ensure the reorganize can be completed
+//     successfully are performed.  The chain is not reorganized.
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) reorganizeChain(detachNodes, attachNodes *list.List,
@@ -1928,11 +1928,11 @@ func (b *BlockChain) ForceHeadReorganization(formerBest chainhash.Hash, newBest 
 // a reorganization to become the main chain).
 //
 // The flags modify the behavior of this function as follows:
-//  - BFFastAdd: Avoids several expensive transaction validation operations.
-//    This is useful when using checkpoints.
-//  - BFDryRun: Prevents the block from being connected and avoids modifying the
-//    state of the memory chain index.  Also, any log messages related to
-//    modifying the state are avoided.
+//   - BFFastAdd: Avoids several expensive transaction validation operations.
+//     This is useful when using checkpoints.
+//   - BFDryRun: Prevents the block from being connected and avoids modifying the
+//     state of the memory chain index.  Also, any log messages related to
+//     modifying the state are avoided.
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) connectBestChain(node *blockNode, block *hcutil.Block, flags BehaviorFlags) (bool, error) {
@@ -2113,8 +2113,8 @@ func (b *BlockChain) connectBestChain(node *blockNode, block *hcutil.Block, flag
 // isCurrent returns whether or not the chain believes it is current.  Several
 // factors are used to guess, but the key factors that allow the chain to
 // believe it is current are:
-//  - Latest block height is after the latest checkpoint (if enabled)
-//  - Latest block has a timestamp newer than 24 hours ago
+//   - Latest block height is after the latest checkpoint (if enabled)
+//   - Latest block has a timestamp newer than 24 hours ago
 //
 // This function MUST be called with the chain state lock held (for reads).
 func (b *BlockChain) isCurrent() bool {
@@ -2137,8 +2137,8 @@ func (b *BlockChain) isCurrent() bool {
 // IsCurrent returns whether or not the chain believes it is current.  Several
 // factors are used to guess, but the key factors that allow the chain to
 // believe it is current are:
-//  - Latest block height is after the latest checkpoint (if enabled)
-//  - Latest block has a timestamp newer than 24 hours ago
+//   - Latest block height is after the latest checkpoint (if enabled)
+//   - Latest block has a timestamp newer than 24 hours ago
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsCurrent() bool {

@@ -14,7 +14,7 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // TestAppDataDir tests the API for AppDataDir to ensure it gives expected

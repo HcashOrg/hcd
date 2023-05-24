@@ -1,5 +1,5 @@
 // Copyright (c) 2013-2016 The btcsuite developers
-// Copyright (c) 2015-2017 The Decred developers 
+// Copyright (c) 2015-2017 The Decred developers
 // Copyright (c) 2018-2020 The Hc developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -14,10 +14,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/HcashOrg/hcd/blockchain"
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
-	"github.com/HcashOrg/hcd/hcutil"
+	"github.com/james-ray/hcd/blockchain"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/hcutil"
 )
 
 // cloneParams returns a deep copy of the provided parameters so the caller is
@@ -47,6 +47,7 @@ func mustParseHash(s string) *chainhash.Hash {
 	}
 	return hash
 }
+
 // rejected expects the block to be rejected with the provided error
 // TestBlockchainFunction tests the various blockchain API to ensure proper
 // functionality.
@@ -88,17 +89,17 @@ func TestBlockchainFunctions(t *testing.T) {
 		t.Errorf("error decoding test blockchain: %v", err.Error())
 	}
 	// Insert blocks 1 to 180 and perform various tests.
-	 for i := 1; i <= 180; i++ {
+	for i := 1; i <= 180; i++ {
 		bl, err := hcutil.NewBlockFromBytes(blockChain[int64(i)])
 		if err != nil {
-		    t.Errorf("NewBlockFromBytes error: %v", err.Error())
+			t.Errorf("NewBlockFromBytes error: %v", err.Error())
 		}
 
 		_, _, err = chain.ProcessBlock(bl, blockchain.BFNone)
 		if err != nil {
-		    t.Fatalf("ProcessBlock error at height %v: %v", i, err.Error())
+			t.Fatalf("ProcessBlock error at height %v: %v", i, err.Error())
 		}
-	    }
+	}
 
 	val, err := chain.TicketPoolValue()
 	if err != nil {

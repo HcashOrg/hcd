@@ -13,8 +13,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/HcashOrg/hcd/chaincfg"
-	"github.com/HcashOrg/hcd/chaincfg/chainhash"
+	"github.com/james-ray/hcd/chaincfg"
+	"github.com/james-ray/hcd/chaincfg/chainhash"
 )
 
 // TestImmutableEmpty ensures calling functions on an empty immutable treap
